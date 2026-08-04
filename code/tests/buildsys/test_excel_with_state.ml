@@ -66,7 +66,7 @@ let test_const =
         { Bs.Tasks.get = (fun _ k -> Excel.C.return @@ Hmap.find (coerce k) tasks_map) }
       in
       let ret = Bs.build () rebuilder tasks a1 st in
-      assert (ret = Some 10))
+      Oth.Assert.true_ "ret = Some 10" (ret = Some 10))
 
 let test_dynamic =
   Oth.test ~name:"dynamic" (fun _ ->
@@ -84,7 +84,7 @@ let test_dynamic =
         { Bs.Tasks.get = (fun _ k -> Excel.C.return @@ Hmap.find (coerce k) tasks_map) }
       in
       let ret = Bs.build () rebuilder tasks b1 st in
-      assert (ret = Some 11))
+      Oth.Assert.true_ "ret = Some 11" (ret = Some 11))
 
 let test_dynamic2 =
   Oth.test ~name:"dynamic2" (fun _ ->
@@ -106,7 +106,7 @@ let test_dynamic2 =
         { Bs.Tasks.get = (fun _ k -> Excel.C.return @@ Hmap.find (coerce k) tasks_map) }
       in
       let ret = Bs.build () rebuilder tasks b2 st in
-      assert (ret = Some 21))
+      Oth.Assert.true_ "ret = Some 21" (ret = Some 21))
 
 let test_key_does_not_exist =
   Oth.test ~name:"Key does not exist" (fun _ ->
@@ -118,10 +118,10 @@ let test_key_does_not_exist =
         { Bs.Tasks.get = (fun _ k -> Excel.C.return @@ Hmap.find (coerce k) tasks_map) }
       in
       let ret = Bs.build () rebuilder tasks a1 st in
-      assert (ret = None))
+      Oth.Assert.none ret)
 
 let test = Oth.parallel [ test_const; test_dynamic; test_dynamic2; test_key_does_not_exist ]
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

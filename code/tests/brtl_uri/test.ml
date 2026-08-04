@@ -57,4 +57,4 @@ let test =
       test_query_is_taken_from_uri;
     ]
 
-let () = Oth.run ~file:__FILE__ test
+let () = Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

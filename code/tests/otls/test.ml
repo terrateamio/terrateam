@@ -2,7 +2,7 @@ let test_simple =
   Oth.test ~name:"Simple test" (fun _ ->
       let client = Otls.Tls.client () in
       let cfg = Otls.Tls_config.create () in
-      assert (Ok () = Otls.configure client cfg);
+      Oth.Assert.true_ "Ok () = Otls.configure client cfg" (Ok () = Otls.configure client cfg);
       Otls.Tls_config.destroy cfg;
       Otls.Tls.destroy client)
 
@@ -10,4 +10,4 @@ let test = Oth.parallel [ test_simple ]
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

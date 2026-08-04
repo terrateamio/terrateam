@@ -2445,63 +2445,62 @@ let test_large_jsonb_fetch =
 
 let test =
   Oth_abb.(
-    to_sync_test
-      (serial
-         [
-           test_listen_notify;
-           test_get_notification;
-           test_notification_during_fetch;
-           test_unlisten_stops_delivery;
-           test_wait_abort_leaves_conn_valid;
-           test_abort_during_delivery_no_loss;
-           test_boundary_sweep;
-           test_in_tx_commit_desync;
-           test_bad_result_dirty_conn;
-           test_large_jsonb_fetch;
-           test_insert_row_null;
-           test_fetch_row;
-           test_fetch_all_rows;
-           test_multiple_tx_success;
-           test_with_cursor;
-           test_bad_bind_too_few_args;
-           test_array;
-           test_insert_execute;
-           test_stmt_fetch;
-           test_integrity_fail;
-           test_integrity_recover;
-           test_rollback;
-           test_bad_state;
-           test_copy_to;
-           test_copy_to_conflict;
-           test_copy_to_bad_data;
-           test_copy_to_bytea;
-           test_text_special_chars;
-           test_text_nul_byte;
-           test_copy_to_special_chars;
-           test_text_empty_vs_null;
-           test_integer_bounds;
-           test_copy_to_integer_bounds;
-           test_float_special_values;
-           test_json_invalid;
-           test_copy_to_jsonb;
-           test_json_round_trip;
-           test_json_cross_type;
-           test_bytea_large;
-           test_copy_to_bytea_large;
-           test_copy_to_empty;
-           test_copy_to_bytea_with_trailer_bytes;
-           test_copy_to_all_nulls;
-           test_copy_to_many_columns;
-           test_copy_to_mixed_types;
-           test_concurrent_exn_raise;
-           test_ret_u_all_types;
-           test_bytea_var_ret;
-           test_bigint_column_smallint_ret;
-           test_bigint_column_smallint_b_ret_fails;
-           test_ret_b_all_types;
-           test_query_dangerous_values;
-           test_copy_to_single_row;
-         ]))
+    serial
+      [
+        test_listen_notify;
+        test_get_notification;
+        test_notification_during_fetch;
+        test_unlisten_stops_delivery;
+        test_wait_abort_leaves_conn_valid;
+        test_abort_during_delivery_no_loss;
+        test_boundary_sweep;
+        test_in_tx_commit_desync;
+        test_bad_result_dirty_conn;
+        test_large_jsonb_fetch;
+        test_insert_row_null;
+        test_fetch_row;
+        test_fetch_all_rows;
+        test_multiple_tx_success;
+        test_with_cursor;
+        test_bad_bind_too_few_args;
+        test_array;
+        test_insert_execute;
+        test_stmt_fetch;
+        test_integrity_fail;
+        test_integrity_recover;
+        test_rollback;
+        test_bad_state;
+        test_copy_to;
+        test_copy_to_conflict;
+        test_copy_to_bad_data;
+        test_copy_to_bytea;
+        test_text_special_chars;
+        test_text_nul_byte;
+        test_copy_to_special_chars;
+        test_text_empty_vs_null;
+        test_integer_bounds;
+        test_copy_to_integer_bounds;
+        test_float_special_values;
+        test_json_invalid;
+        test_copy_to_jsonb;
+        test_json_round_trip;
+        test_json_cross_type;
+        test_bytea_large;
+        test_copy_to_bytea_large;
+        test_copy_to_empty;
+        test_copy_to_bytea_with_trailer_bytes;
+        test_copy_to_all_nulls;
+        test_copy_to_many_columns;
+        test_copy_to_mixed_types;
+        test_concurrent_exn_raise;
+        test_ret_u_all_types;
+        test_bytea_var_ret;
+        test_bigint_column_smallint_ret;
+        test_bigint_column_smallint_b_ret_fails;
+        test_ret_b_all_types;
+        test_query_dangerous_values;
+        test_copy_to_single_row;
+      ])
 
 let reporter ppf =
   let report _src level ~over k msgf =
@@ -2523,4 +2522,8 @@ let () =
   Random.self_init ();
   Logs.set_reporter (reporter Format.std_formatter);
   Logs.set_level ~all:true (Some Logs.Debug);
-  Oth.run ~file:__FILE__ test
+  Oth_abb.run
+    ~file:__FILE__
+    ~setup:(fun () -> Abb.Future.return (Ok ()))
+    ~teardown:(fun () -> Abb.Future.return ())
+    (fun () -> test)

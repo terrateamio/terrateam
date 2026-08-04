@@ -1,5 +1,4 @@
 module Make (Abb : Abb_intf.S) = struct
-  module Oth_abb = Oth_abb.Make (Abb)
   module Concurrency = Abb_test_concurrency.Make (Abb)
   module Thread = Abb_test_thread.Make (Abb)
   module Sleep = Abb_test_sleep.Make (Abb)
@@ -19,29 +18,28 @@ module Make (Abb : Abb_intf.S) = struct
   module Domain = Abb_test_domain.Make (Abb)
 
   let test =
-    Oth_abb.to_sync_test
-      (Oth_abb.serial
-         [
-           Concurrency.test;
-           Thread.test;
-           Sleep.test;
-           Simple.test;
-           Getaddrinfo.test;
-           Socket.test;
-           Socket_closed.test;
-           Process.test;
-           Task.test;
-           Op_queue.test;
-           Chan.test;
-           Unpinned.test;
-           Unpinned_chan.test;
-           Unpinned_send.test;
-           Unpinned_stress.test;
-           Pool_pressure.test;
-           Domain.test;
-         ])
+    Oth.serial
+      [
+        Concurrency.test;
+        Thread.test;
+        Sleep.test;
+        Simple.test;
+        Getaddrinfo.test;
+        Socket.test;
+        Socket_closed.test;
+        Process.test;
+        Task.test;
+        Op_queue.test;
+        Chan.test;
+        Unpinned.test;
+        Unpinned_chan.test;
+        Unpinned_send.test;
+        Unpinned_stress.test;
+        Pool_pressure.test;
+        Domain.test;
+      ]
 
   let run_tests () =
     Random.self_init ();
-    Oth.run ~file:__FILE__ test
+    Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)
 end

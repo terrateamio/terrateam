@@ -60,7 +60,7 @@ let test_const =
       let tasks_map = Hmap.empty |> Hmap.add (coerce a1) (fun _ _ _ -> 10) in
       let tasks = { Bs.Tasks.get = (fun _ k -> Hmap.find (coerce k) tasks_map) } in
       let ret = Bs.build () rebuilder tasks a1 st in
-      assert (ret = 10))
+      Oth.Assert.Eq.int ~expected:10 ~actual:ret)
 
 let test_dynamic =
   Oth.test ~name:"dynamic" (fun _ ->
@@ -74,7 +74,7 @@ let test_dynamic =
       in
       let tasks = { Bs.Tasks.get = (fun _ k -> Hmap.find (coerce k) tasks_map) } in
       let ret = Bs.build () rebuilder tasks b1 st in
-      assert (ret = 11))
+      Oth.Assert.Eq.int ~expected:11 ~actual:ret)
 
 let test_dynamic2 =
   Oth.test ~name:"dynamic2" (fun _ ->
@@ -90,10 +90,10 @@ let test_dynamic2 =
       in
       let tasks = { Bs.Tasks.get = (fun _ k -> Hmap.find (coerce k) tasks_map) } in
       let ret = Bs.build () rebuilder tasks b2 st in
-      assert (ret = 21))
+      Oth.Assert.Eq.int ~expected:21 ~actual:ret)
 
 let test = Oth.parallel [ test_const; test_dynamic; test_dynamic2 ]
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

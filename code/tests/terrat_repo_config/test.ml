@@ -8,9 +8,11 @@ let test_stategraph_minimal_round_trip =
       let json = `Assoc [ ("name", `String "stategraph") ] in
       match Sg.of_yojson json with
       | Ok t ->
-          assert (t.Sg.name = `Stategraph);
-          assert (t.Sg.version = None);
-          assert (Sg.to_yojson t = `Assoc [ ("name", `String "stategraph") ])
+          Oth.Assert.true_ "t.Sg.name = `Stategraph" (t.Sg.name = `Stategraph);
+          Oth.Assert.none t.Sg.version;
+          Oth.Assert.true_
+            "Sg.to_yojson t = `Assoc [ (\"name\", `String \"stategraph\") ]"
+            (Sg.to_yojson t = `Assoc [ ("name", `String "stategraph") ])
       | Error msg -> failwith msg)
 
 let test_stategraph_with_version_round_trip =
@@ -18,11 +20,11 @@ let test_stategraph_with_version_round_trip =
       let json = `Assoc [ ("name", `String "stategraph"); ("version", `String "1.2.1") ] in
       match Sg.of_yojson json with
       | Ok t -> (
-          assert (t.Sg.name = `Stategraph);
-          assert (t.Sg.version = Some "1.2.1");
+          Oth.Assert.true_ "t.Sg.name = `Stategraph" (t.Sg.name = `Stategraph);
+          Oth.Assert.true_ "t.Sg.version = Some \"1.2.1\"" (t.Sg.version = Some "1.2.1");
           let round_tripped = Sg.to_yojson t in
           match Sg.of_yojson round_tripped with
-          | Ok t' -> assert (t'.Sg.version = Some "1.2.1")
+          | Ok t' -> Oth.Assert.true_ "t'.Sg.version = Some \"1.2.1\"" (t'.Sg.version = Some "1.2.1")
           | Error msg -> failwith msg)
       | Error msg -> failwith msg)
 
@@ -52,8 +54,8 @@ let test_engine_chain_picks_stategraph =
       let json = `Assoc [ ("name", `String "stategraph"); ("version", `String "1.2.1") ] in
       match E.of_yojson json with
       | Ok (E.Engine_stategraph t) ->
-          assert (t.Sg.name = `Stategraph);
-          assert (t.Sg.version = Some "1.2.1")
+          Oth.Assert.true_ "t.Sg.name = `Stategraph" (t.Sg.name = `Stategraph);
+          Oth.Assert.true_ "t.Sg.version = Some \"1.2.1\"" (t.Sg.version = Some "1.2.1")
       | Ok _ -> failwith "Expected Engine_stategraph variant, got a different engine"
       | Error msg -> failwith msg)
 
@@ -61,7 +63,9 @@ let test_engine_chain_to_yojson_dispatches =
   Oth.test ~name:"Engine: to_yojson on Engine_stategraph emits stategraph JSON" (fun _ ->
       let t = Sg.make ~name:`Stategraph ~version:(Some "1.2.1") () in
       let json = E.to_yojson (E.Engine_stategraph t) in
-      assert (json = `Assoc [ ("name", `String "stategraph"); ("version", `String "1.2.1") ]))
+      Oth.Assert.true_
+        "json = `Assoc [ (\"name\", `String \"stategraph\"); (\"version\", `String \"1.2.1\") ]"
+        (json = `Assoc [ ("name", `String "stategraph"); ("version", `String "1.2.1") ]))
 
 let test_stategraph_with_tf_fields_round_trip =
   Oth.test ~name:"Engine_stategraph: tf_cmd/tf_version/override_tf_cmd round-trip" (fun _ ->
@@ -76,10 +80,12 @@ let test_stategraph_with_tf_fields_round_trip =
       in
       match Sg.of_yojson json with
       | Ok t ->
-          assert (t.Sg.tf_cmd = Some "tofu");
-          assert (t.Sg.tf_version = Some "1.7.0");
-          assert (t.Sg.override_tf_cmd = Some "tofu");
-          assert (Sg.to_yojson t = json)
+          Oth.Assert.true_ "t.Sg.tf_cmd = Some \"tofu\"" (t.Sg.tf_cmd = Some "tofu");
+          Oth.Assert.true_ "t.Sg.tf_version = Some \"1.7.0\"" (t.Sg.tf_version = Some "1.7.0");
+          Oth.Assert.true_
+            "t.Sg.override_tf_cmd = Some \"tofu\""
+            (t.Sg.override_tf_cmd = Some "tofu");
+          Oth.Assert.true_ "Sg.to_yojson t = json" (Sg.to_yojson t = json)
       | Error msg -> failwith msg)
 
 let test_engine_chain_unknown_falls_to_other =
@@ -106,4 +112,4 @@ let test =
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

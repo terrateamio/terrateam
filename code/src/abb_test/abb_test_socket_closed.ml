@@ -1,5 +1,5 @@
 module Make (Abb : Abb_intf.S) = struct
-  module Oth_abb = Oth_abb.Make (Abb)
+  module Oth_abb = Abb_test_oth.Make (Abb)
 
   (* A closed socket must reject further operations, and [close] must be
      idempotent (a second close cannot fail or double-close a recycled fd). *)

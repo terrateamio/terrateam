@@ -5,8 +5,10 @@ let myers_test =
       let old = [| "A"; "B"; "C"; "A"; "B"; "B"; "A" |] in
       let revised = [| "C"; "B"; "A"; "B"; "A"; "C" |] in
       let diff = Diff.get_diff old revised in
-      assert (
-        diff
+      Oth.Assert.true_
+        "diff = Diff. [ Deleted [| \"A\"; \"B\" |]; Equal [| \"C\" |]; Added [| \"B\" |]; Equal [| \
+         \"A\"; \"B\" |]; Deleted [| \"B\" |]; Equal [| \"A\" |]; Added [| \"C\" |]; ]"
+        (diff
         = Diff.
             [
               Deleted [| "A"; "B" |];
@@ -23,36 +25,44 @@ let simple_equal_test =
       let old = [| "1" |] in
       let revised = [| "1" |] in
       let diff = Diff.get_diff old revised in
-      assert (diff = [ Diff.Equal [| "1" |] ]))
+      Oth.Assert.true_ "diff = [ Diff.Equal [| \"1\" |] ]" (diff = [ Diff.Equal [| "1" |] ]))
 
 let equal_test =
   Oth.test ~desc:"No changes" ~name:"Equal" (fun _ ->
       let old = [| "1"; "2" |] in
       let revised = [| "1"; "2" |] in
       let diff = Diff.get_diff old revised in
-      assert (diff = [ Diff.Equal [| "1"; "2" |] ]))
+      Oth.Assert.true_
+        "diff = [ Diff.Equal [| \"1\"; \"2\" |] ]"
+        (diff = [ Diff.Equal [| "1"; "2" |] ]))
 
 let simple_add_test =
   Oth.test ~desc:"Add one line" ~name:"Simple add" (fun _ ->
       let old = [| "1"; "2" |] in
       let revised = [| "1"; "2"; "3" |] in
       let diff = Diff.get_diff old revised in
-      assert (diff = [ Diff.Equal [| "1"; "2" |]; Diff.Added [| "3" |] ]))
+      Oth.Assert.true_
+        "diff = [ Diff.Equal [| \"1\"; \"2\" |]; Diff.Added [| \"3\" |] ]"
+        (diff = [ Diff.Equal [| "1"; "2" |]; Diff.Added [| "3" |] ]))
 
 let simple_delete_test =
   Oth.test ~desc:"Delete one line" ~name:"Simple delete" (fun _ ->
       let old = [| "1"; "2" |] in
       let revised = [| "1" |] in
       let diff = Diff.get_diff old revised in
-      assert (diff = [ Diff.Equal [| "1" |]; Diff.Deleted [| "2" |] ]))
+      Oth.Assert.true_
+        "diff = [ Diff.Equal [| \"1\" |]; Diff.Deleted [| \"2\" |] ]"
+        (diff = [ Diff.Equal [| "1" |]; Diff.Deleted [| "2" |] ]))
 
 let simple_conflict_test =
   Oth.test ~desc:"Conflict one line" ~name:"Simple conflict" (fun _ ->
       let old = [| "1"; "2"; "3" |] in
       let revised = [| "1"; "4"; "3" |] in
       let diff = Diff.get_diff old revised in
-      assert (
-        diff
+      Oth.Assert.true_
+        "diff = [ Diff.Equal [| \"1\" |]; Diff.Deleted [| \"2\" |]; Diff.Added [| \"4\" |]; \
+         Diff.Equal [| \"3\" |]; ]"
+        (diff
         = [
             Diff.Equal [| "1" |]; Diff.Deleted [| "2" |]; Diff.Added [| "4" |]; Diff.Equal [| "3" |];
           ]))
@@ -62,7 +72,9 @@ let beginning_conflict_test =
       let old = [| "1"; "2"; "3" |] in
       let revised = [| "4"; "2"; "3" |] in
       let diff = Diff.get_diff old revised in
-      assert (diff = [ Diff.Deleted [| "1" |]; Diff.Added [| "4" |]; Diff.Equal [| "2"; "3" |] ]))
+      Oth.Assert.true_
+        "diff = [ Diff.Deleted [| \"1\" |]; Diff.Added [| \"4\" |]; Diff.Equal [| \"2\"; \"3\" |] ]"
+        (diff = [ Diff.Deleted [| "1" |]; Diff.Added [| "4" |]; Diff.Equal [| "2"; "3" |] ]))
 
 let complex_test =
   Oth.test ~desc:"Complex conflicts" ~name:"Complex conflict" (fun _ ->
@@ -135,8 +147,23 @@ let complex_test =
         |]
       in
       let diff = Diff.get_diff old revised in
-      assert (
-        diff
+      Oth.Assert.true_
+        "diff = Diff. [ Equal [| \"Aidan Gillen:\" |]; Deleted [| \" aboolean: 'true'\" |]; Added \
+         [| \" aboolean: true\" |]; Equal [| \" array:\" |]; Deleted [| \" - Game of Thrones\" |]; \
+         Added [| \" - Game of Thron\\\"es\" |]; Equal [| \" - The Wire\" |]; Deleted [| \" \
+         boolean: false\"; \" int: '2'\" |]; Added [| \" boolean: true\"; \" int: 2\" |]; Equal [| \
+         \" object:\"; \" foo: bar\" |]; Deleted [| \" otherint: 4\" |]; Added [| \" object1:\"; \
+         \" new prop1: new prop value\"; \" object2:\"; \" new prop1: new prop value\"; \" \
+         object3:\"; \" new prop1: new prop value\"; \" object4:\"; \" new prop1: new prop \
+         value\"; |]; Equal [| \" string: some string\" |]; Deleted [| \"Alexander Skarsg?rd:\" \
+         |]; Added [| \"Alexander Skarsgard:\" |]; Equal [| \" - Generation Kill\"; \" - True \
+         Blood\" |]; Deleted [| \"Alice Farmer:\"; \" - The Corner\"; \" - Oz\"; \" - The Wire\" \
+         |]; Equal [| \"Amy Ryan:\" |]; Deleted [| \" - In Treatment\"; \" - The Wire\" |]; Added \
+         [| \" one: In Treatment\"; \" two: The Wire\" |]; Equal [| \"Annie Fitzgerald:\" |]; \
+         Deleted [| \" - True Blood\" |]; Equal [| \" - Big Love\" |]; Deleted [| \" - The \
+         Sopranos\"; \" - Oz\" |]; Added [| \" - True Blood\" |]; Equal [| \"Anwan Glover:\"; \" - \
+         Treme\"; \" - The Wire\" |]; Added [| \"Clarke Peters: null\" |]; ]"
+        (diff
         = Diff.
             [
               Equal [| "Aidan Gillen:" |];
@@ -193,4 +220,4 @@ let test =
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

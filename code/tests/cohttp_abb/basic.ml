@@ -12,15 +12,21 @@ let basic =
       Http.Client.do_request ~flush:true transport (Http.Request.make_for_client `GET (Uri.make ()))
       >>= function
       | Ok res ->
-          assert (Cohttp.Code.string_of_status res.Http.Response.status = "200 OK");
+          Oth.Assert.Eq.string
+            ~expected:"200 OK"
+            ~actual:(Cohttp.Code.string_of_status res.Http.Response.status);
           Buffered.read_line rs
           >>= fun ret ->
-          assert (ret = Ok (Some "GET / HTTP/1.1"));
+          Oth.Assert.true_ "ret = Ok (Some \"GET / HTTP/1.1\")" (ret = Ok (Some "GET / HTTP/1.1"));
           Abb.Future.return ()
-      | Error _ -> assert false)
+      | Error _ -> Oth.Assert.false_ "Basic: unexpected value")
 
-let test = Oth_abb.(to_sync_test (parallel [ basic ]))
+let test = Oth_abb.(parallel [ basic ])
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth_abb.run
+    ~file:__FILE__
+    ~setup:(fun () -> Abb.Future.return (Ok ()))
+    ~teardown:(fun () -> Abb.Future.return ())
+    (fun () -> test)

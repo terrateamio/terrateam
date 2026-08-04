@@ -1,17 +1,23 @@
 let test_no_subst =
   Oth.test ~name:"no_subst" (fun _ ->
       let vars = CCFun.const None in
-      assert (Str_template.apply vars "foo" = Ok "foo"))
+      Oth.Assert.true_
+        "Str_template.apply vars \"foo\" = Ok \"foo\""
+        (Str_template.apply vars "foo" = Ok "foo"))
 
 let test_one_subst =
   Oth.test ~name:"one_subst" (fun _ ->
       let vars = CCFun.flip Sln_map.String.find_opt @@ Sln_map.String.of_list [ ("foo", "bar") ] in
-      assert (Str_template.apply vars "${foo}" = Ok "bar"))
+      Oth.Assert.true_
+        "Str_template.apply vars \"${foo}\" = Ok \"bar\""
+        (Str_template.apply vars "${foo}" = Ok "bar"))
 
 let test_two_subst =
   Oth.test ~name:"two_subst" (fun _ ->
       let vars = CCFun.flip Sln_map.String.find_opt @@ Sln_map.String.of_list [ ("foo", "bar") ] in
-      assert (Str_template.apply vars "${foo}${foo}" = Ok "barbar"))
+      Oth.Assert.true_
+        "Str_template.apply vars \"${foo}${foo}\" = Ok \"barbar\""
+        (Str_template.apply vars "${foo}${foo}" = Ok "barbar"))
 
 let test_complicated_subst =
   Oth.test ~name:"complicated_subst" (fun _ ->
@@ -19,14 +25,18 @@ let test_complicated_subst =
         CCFun.flip Sln_map.String.find_opt
         @@ Sln_map.String.of_list [ ("name", "person"); ("job", "manual laborer") ]
       in
-      assert (
-        Str_template.apply vars "Hello ${name}, welcome to your first day as a ${job}."
+      Oth.Assert.true_
+        "Str_template.apply vars \"Hello ${name}, welcome to your first day as a ${job}.\" = Ok \
+         \"Hello person, welcome to your first day as a manual laborer.\""
+        (Str_template.apply vars "Hello ${name}, welcome to your first day as a ${job}."
         = Ok "Hello person, welcome to your first day as a manual laborer."))
 
 let test_escape =
   Oth.test ~name:"escape" (fun _ ->
       let vars = CCFun.const None in
-      assert (Str_template.apply vars "$${foo}" = Ok "${foo}"))
+      Oth.Assert.true_
+        "Str_template.apply vars \"$${foo}\" = Ok \"${foo}\""
+        (Str_template.apply vars "$${foo}" = Ok "${foo}"))
 
 let test_complicated_escape =
   Oth.test ~name:"complicated_escape" (fun _ ->
@@ -34,11 +44,14 @@ let test_complicated_escape =
         CCFun.flip Sln_map.String.find_opt
         @@ Sln_map.String.of_list [ ("name", "person"); ("job", "manual laborer") ]
       in
-      assert (
-        Str_template.apply
-          vars
-          "Hello ${name}, welcome to your first day as a ${job}.  Don't forget you can escape like \
-           $${this}."
+      Oth.Assert.true_
+        "Str_template.apply vars \"Hello ${name}, welcome to your first day as a ${job}. Don't \
+         forget you can escape like \\ $${this}.\" = Ok \"Hello person, welcome to your first day \
+         as a manual laborer. Don't forget you can \\ escape like ${this}.\""
+        (Str_template.apply
+           vars
+           "Hello ${name}, welcome to your first day as a ${job}.  Don't forget you can escape \
+            like $${this}."
         = Ok
             "Hello person, welcome to your first day as a manual laborer.  Don't forget you can \
              escape like ${this}."))
@@ -56,4 +69,4 @@ let test =
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

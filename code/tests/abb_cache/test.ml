@@ -35,20 +35,20 @@ let test_expiring_cache =
       in
       C.fetch cache k1 (count, v1)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 1);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!count;
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 1);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!count;
       C.fetch cache k2 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v2);
-      assert (!count = 2);
+      Oth.Assert.true_ "ret = Ok v2" (ret = Ok v2);
+      Oth.Assert.Eq.int ~expected:2 ~actual:!count;
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 2);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:2 ~actual:!count;
       Abb.Future.return ())
 
 let test_expiring_cache_expiration_eviction =
@@ -84,22 +84,22 @@ let test_expiring_cache_expiration_eviction =
       in
       C.fetch cache k1 (count, v1)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 1);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!count;
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 1);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!count;
       C.fetch cache k2 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v2);
-      assert (!count = 2);
+      Oth.Assert.true_ "ret = Ok v2" (ret = Ok v2);
+      Oth.Assert.Eq.int ~expected:2 ~actual:!count;
       Abb.Sys.sleep 1.2
       >>= fun () ->
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v2);
-      assert (!count = 3);
+      Oth.Assert.true_ "ret = Ok v2" (ret = Ok v2);
+      Oth.Assert.Eq.int ~expected:3 ~actual:!count;
       Abb.Future.return ())
 
 let test_expiring_cache_capacity_eviction =
@@ -135,20 +135,20 @@ let test_expiring_cache_capacity_eviction =
       in
       C.fetch cache k1 (count, v1)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 1);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!count;
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 1);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!count;
       C.fetch cache k2 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v2);
-      assert (!count = 2);
+      Oth.Assert.true_ "ret = Ok v2" (ret = Ok v2);
+      Oth.Assert.Eq.int ~expected:2 ~actual:!count;
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v2);
-      assert (!count = 3);
+      Oth.Assert.true_ "ret = Ok v2" (ret = Ok v2);
+      Oth.Assert.Eq.int ~expected:3 ~actual:!count;
       Abb.Future.return ())
 
 let test_lru_cache =
@@ -182,20 +182,20 @@ let test_lru_cache =
       in
       C.fetch cache k1 (count, v1)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 1);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!count;
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 1);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!count;
       C.fetch cache k2 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v2);
-      assert (!count = 2);
+      Oth.Assert.true_ "ret = Ok v2" (ret = Ok v2);
+      Oth.Assert.Eq.int ~expected:2 ~actual:!count;
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 2);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:2 ~actual:!count;
       Abb.Future.return ())
 
 let test_lru_cache_eviction =
@@ -231,28 +231,28 @@ let test_lru_cache_eviction =
       in
       C.fetch cache k1 (count, v1)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 1);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!count;
       C.fetch cache k2 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v2);
-      assert (!count = 2);
+      Oth.Assert.true_ "ret = Ok v2" (ret = Ok v2);
+      Oth.Assert.Eq.int ~expected:2 ~actual:!count;
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 2);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:2 ~actual:!count;
       C.fetch cache k3 (count, v3)
       >>= fun ret ->
-      assert (ret = Ok v3);
-      assert (!count = 3);
+      Oth.Assert.true_ "ret = Ok v3" (ret = Ok v3);
+      Oth.Assert.Eq.int ~expected:3 ~actual:!count;
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 3);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:3 ~actual:!count;
       C.fetch cache k2 (count, v1)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 4);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:4 ~actual:!count;
       Abb.Future.return ())
 
 let test_lru_cache_capacity_eviction =
@@ -286,35 +286,38 @@ let test_lru_cache_capacity_eviction =
       in
       C.fetch cache k1 (count, v1)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 1);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!count;
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v1);
-      assert (!count = 1);
+      Oth.Assert.true_ "ret = Ok v1" (ret = Ok v1);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!count;
       C.fetch cache k2 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v2);
-      assert (!count = 2);
+      Oth.Assert.true_ "ret = Ok v2" (ret = Ok v2);
+      Oth.Assert.Eq.int ~expected:2 ~actual:!count;
       C.fetch cache k1 (count, v2)
       >>= fun ret ->
-      assert (ret = Ok v2);
-      assert (!count = 3);
+      Oth.Assert.true_ "ret = Ok v2" (ret = Ok v2);
+      Oth.Assert.Eq.int ~expected:3 ~actual:!count;
       Abb.Future.return ())
 
 let test =
   Oth_abb.(
-    to_sync_test
-      (parallel
-         [
-           test_expiring_cache;
-           test_expiring_cache_expiration_eviction;
-           test_expiring_cache_capacity_eviction;
-           test_lru_cache;
-           test_lru_cache_eviction;
-           test_lru_cache_capacity_eviction;
-         ]))
+    parallel
+      [
+        test_expiring_cache;
+        test_expiring_cache_expiration_eviction;
+        test_expiring_cache_capacity_eviction;
+        test_lru_cache;
+        test_lru_cache_eviction;
+        test_lru_cache_capacity_eviction;
+      ])
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth_abb.run
+    ~file:__FILE__
+    ~setup:(fun () -> Abb.Future.return (Ok ()))
+    ~teardown:(fun () -> Abb.Future.return ())
+    (fun () -> test)

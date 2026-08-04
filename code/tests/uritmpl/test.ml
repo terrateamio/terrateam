@@ -22,7 +22,7 @@ let test_vars =
 let expand s =
   match Uritmpl.of_string s with
   | Ok tmpl -> Uritmpl.expand tmpl test_vars
-  | Error _ -> assert false
+  | Error _ -> Oth.Assert.false_ "test: unexpected value"
 
 let of_string_to_string_matches s =
   match Uritmpl.of_string s with
@@ -30,268 +30,497 @@ let of_string_to_string_matches s =
   | Error _ -> failwith s
 
 let test_no_variable_expansion =
-  Oth.test ~name:"No Variables" (fun _ -> assert (expand "foo" = "foo"))
+  Oth.test ~name:"No Variables" (fun _ ->
+      Oth.Assert.Eq.string ~expected:"foo" ~actual:(expand "foo"))
 
 let test_variable_expansion_3_2_1 =
   Oth.test ~name:"Variable Expansion 3.2.1" (fun _ ->
-      assert (expand "{count}" = "one,two,three");
-      assert (expand "{count*}" = "one,two,three");
-      assert (expand "{/count}" = "/one,two,three");
-      assert (expand "{/count*}" = "/one/two/three");
-      assert (expand "{;count}" = ";count=one,two,three");
-      assert (expand "{;count*}" = ";count=one;count=two;count=three");
-      assert (expand "{?count}" = "?count=one,two,three");
-      assert (expand "{?count*}" = "?count=one&count=two&count=three");
-      assert (expand "{&count*}" = "&count=one&count=two&count=three"))
+      Oth.Assert.Eq.string ~expected:"one,two,three" ~actual:(expand "{count}");
+      Oth.Assert.Eq.string ~expected:"one,two,three" ~actual:(expand "{count*}");
+      Oth.Assert.Eq.string ~expected:"/one,two,three" ~actual:(expand "{/count}");
+      Oth.Assert.Eq.string ~expected:"/one/two/three" ~actual:(expand "{/count*}");
+      Oth.Assert.Eq.string ~expected:";count=one,two,three" ~actual:(expand "{;count}");
+      Oth.Assert.Eq.string ~expected:";count=one;count=two;count=three" ~actual:(expand "{;count*}");
+      Oth.Assert.Eq.string ~expected:"?count=one,two,three" ~actual:(expand "{?count}");
+      Oth.Assert.Eq.string ~expected:"?count=one&count=two&count=three" ~actual:(expand "{?count*}");
+      Oth.Assert.Eq.string ~expected:"&count=one&count=two&count=three" ~actual:(expand "{&count*}"))
 
 let test_simple_string_expansion_3_2_2 =
   Oth.test ~name:"Simple String Expansion 3.2.2" (fun _ ->
-      assert (expand "{var}" = "value");
-      assert (expand "{hello}" = "Hello%20World%21");
-      assert (expand "{half}" = "50%25");
-      assert (expand "O{empty}X" = "OX");
-      assert (expand "O{undef}X" = "OX");
-      assert (expand "{x,y}" = "1024,768");
-      assert (expand "{x,hello,y}" = "1024,Hello%20World%21,768");
-      assert (expand "?{x,empty}" = "?1024,");
-      assert (expand "?{x,undef}" = "?1024");
-      assert (expand "?{undef,y}" = "?768");
-      assert (expand "{var:3}" = "val");
-      assert (expand "{var:30}" = "value");
-      assert (expand "{list}" = "red,green,blue");
-      assert (expand "{list*}" = "red,green,blue");
-      assert (expand "{keys}" = "semi,%3B,dot,.,comma,%2C");
-      assert (expand "{keys*}" = "semi=%3B,dot=.,comma=%2C"))
+      Oth.Assert.Eq.string ~expected:"value" ~actual:(expand "{var}");
+      Oth.Assert.Eq.string ~expected:"Hello%20World%21" ~actual:(expand "{hello}");
+      Oth.Assert.Eq.string ~expected:"50%25" ~actual:(expand "{half}");
+      Oth.Assert.Eq.string ~expected:"OX" ~actual:(expand "O{empty}X");
+      Oth.Assert.Eq.string ~expected:"OX" ~actual:(expand "O{undef}X");
+      Oth.Assert.Eq.string ~expected:"1024,768" ~actual:(expand "{x,y}");
+      Oth.Assert.Eq.string ~expected:"1024,Hello%20World%21,768" ~actual:(expand "{x,hello,y}");
+      Oth.Assert.Eq.string ~expected:"?1024," ~actual:(expand "?{x,empty}");
+      Oth.Assert.Eq.string ~expected:"?1024" ~actual:(expand "?{x,undef}");
+      Oth.Assert.Eq.string ~expected:"?768" ~actual:(expand "?{undef,y}");
+      Oth.Assert.Eq.string ~expected:"val" ~actual:(expand "{var:3}");
+      Oth.Assert.Eq.string ~expected:"value" ~actual:(expand "{var:30}");
+      Oth.Assert.Eq.string ~expected:"red,green,blue" ~actual:(expand "{list}");
+      Oth.Assert.Eq.string ~expected:"red,green,blue" ~actual:(expand "{list*}");
+      Oth.Assert.Eq.string ~expected:"semi,%3B,dot,.,comma,%2C" ~actual:(expand "{keys}");
+      Oth.Assert.Eq.string ~expected:"semi=%3B,dot=.,comma=%2C" ~actual:(expand "{keys*}"))
 
 let test_reserved_expansion_3_2_3 =
   Oth.test ~name:"Reserved Expansion 3.2.3" (fun _ ->
-      assert (expand "{+var}" = "value");
-      assert (expand "{+hello}" = "Hello%20World!");
-      assert (expand "{+half}" = "50%25");
-      assert (expand "{base}index" = "http%3A%2F%2Fexample.com%2Fhome%2Findex");
-      assert (expand "{+base}index" = "http://example.com/home/index");
-      assert (expand "O{+empty}X" = "OX");
-      assert (expand "O{+undef}X" = "OX");
-      assert (expand "{+path}/here" = "/foo/bar/here");
-      assert (expand "here?ref={+path}" = "here?ref=/foo/bar");
-      assert (expand "up{+path}{var}/here" = "up/foo/barvalue/here");
-      assert (expand "{+x,hello,y}" = "1024,Hello%20World!,768");
-      assert (expand "{+path,x}/here" = "/foo/bar,1024/here");
-      assert (expand "{+path:6}/here" = "/foo/b/here");
-      assert (expand "{+list}" = "red,green,blue");
-      assert (expand "{+list*}" = "red,green,blue");
-      assert (expand "{+keys}" = "semi,;,dot,.,comma,,");
-      assert (expand "{+keys*}" = "semi=;,dot=.,comma=,"))
+      Oth.Assert.Eq.string ~expected:"value" ~actual:(expand "{+var}");
+      Oth.Assert.Eq.string ~expected:"Hello%20World!" ~actual:(expand "{+hello}");
+      Oth.Assert.Eq.string ~expected:"50%25" ~actual:(expand "{+half}");
+      Oth.Assert.Eq.string
+        ~expected:"http%3A%2F%2Fexample.com%2Fhome%2Findex"
+        ~actual:(expand "{base}index");
+      Oth.Assert.Eq.string ~expected:"http://example.com/home/index" ~actual:(expand "{+base}index");
+      Oth.Assert.Eq.string ~expected:"OX" ~actual:(expand "O{+empty}X");
+      Oth.Assert.Eq.string ~expected:"OX" ~actual:(expand "O{+undef}X");
+      Oth.Assert.Eq.string ~expected:"/foo/bar/here" ~actual:(expand "{+path}/here");
+      Oth.Assert.Eq.string ~expected:"here?ref=/foo/bar" ~actual:(expand "here?ref={+path}");
+      Oth.Assert.Eq.string ~expected:"up/foo/barvalue/here" ~actual:(expand "up{+path}{var}/here");
+      Oth.Assert.Eq.string ~expected:"1024,Hello%20World!,768" ~actual:(expand "{+x,hello,y}");
+      Oth.Assert.Eq.string ~expected:"/foo/bar,1024/here" ~actual:(expand "{+path,x}/here");
+      Oth.Assert.Eq.string ~expected:"/foo/b/here" ~actual:(expand "{+path:6}/here");
+      Oth.Assert.Eq.string ~expected:"red,green,blue" ~actual:(expand "{+list}");
+      Oth.Assert.Eq.string ~expected:"red,green,blue" ~actual:(expand "{+list*}");
+      Oth.Assert.Eq.string ~expected:"semi,;,dot,.,comma,," ~actual:(expand "{+keys}");
+      Oth.Assert.Eq.string ~expected:"semi=;,dot=.,comma=," ~actual:(expand "{+keys*}"))
 
 let test_fragment_expansion_3_2_4 =
   Oth.test ~name:"Fragment Expansion 3.2.4" (fun _ ->
-      assert (expand "{#var}" = "#value");
-      assert (expand "{#hello}" = "#Hello%20World!");
-      assert (expand "{#half}" = "#50%25");
-      assert (expand "foo{#empty}" = "foo#");
-      assert (expand "foo{#undef}" = "foo");
-      assert (expand "{#x,hello,y}" = "#1024,Hello%20World!,768");
-      assert (expand "{#path,x}/here" = "#/foo/bar,1024/here");
-      assert (expand "{#path:6}/here" = "#/foo/b/here");
-      assert (expand "{#list}" = "#red,green,blue");
-      assert (expand "{#list*}" = "#red,green,blue");
-      assert (expand "{#keys}" = "#semi,;,dot,.,comma,,");
-      assert (expand "{#keys*}" = "#semi=;,dot=.,comma=,"))
+      Oth.Assert.Eq.string ~expected:"#value" ~actual:(expand "{#var}");
+      Oth.Assert.Eq.string ~expected:"#Hello%20World!" ~actual:(expand "{#hello}");
+      Oth.Assert.Eq.string ~expected:"#50%25" ~actual:(expand "{#half}");
+      Oth.Assert.Eq.string ~expected:"foo#" ~actual:(expand "foo{#empty}");
+      Oth.Assert.Eq.string ~expected:"foo" ~actual:(expand "foo{#undef}");
+      Oth.Assert.Eq.string ~expected:"#1024,Hello%20World!,768" ~actual:(expand "{#x,hello,y}");
+      Oth.Assert.Eq.string ~expected:"#/foo/bar,1024/here" ~actual:(expand "{#path,x}/here");
+      Oth.Assert.Eq.string ~expected:"#/foo/b/here" ~actual:(expand "{#path:6}/here");
+      Oth.Assert.Eq.string ~expected:"#red,green,blue" ~actual:(expand "{#list}");
+      Oth.Assert.Eq.string ~expected:"#red,green,blue" ~actual:(expand "{#list*}");
+      Oth.Assert.Eq.string ~expected:"#semi,;,dot,.,comma,," ~actual:(expand "{#keys}");
+      Oth.Assert.Eq.string ~expected:"#semi=;,dot=.,comma=," ~actual:(expand "{#keys*}"))
 
 let test_label_expansion_with_dot_prefix_3_2_5 =
   Oth.test ~name:"Label Expansion With Dot Prefix 3.2.5" (fun _ ->
-      assert (expand "{.who}" = ".fred");
-      assert (expand "{.who,who}" = ".fred.fred");
-      assert (expand "{.half,who}" = ".50%25.fred");
-      assert (expand "www{.dom*}" = "www.example.com");
-      assert (expand "X{.var}" = "X.value");
-      assert (expand "X{.empty}" = "X.");
-      assert (expand "X{.undef}" = "X");
-      assert (expand "X{.var:3}" = "X.val");
-      assert (expand "X{.list}" = "X.red,green,blue");
-      assert (expand "X{.list*}" = "X.red.green.blue");
-      assert (expand "X{.keys}" = "X.semi,%3B,dot,.,comma,%2C");
-      assert (expand "X{.keys*}" = "X.semi=%3B.dot=..comma=%2C");
-      assert (expand "X{.empty_keys}" = "X");
-      assert (expand "X{.empty_keys*}" = "X"))
+      Oth.Assert.Eq.string ~expected:".fred" ~actual:(expand "{.who}");
+      Oth.Assert.Eq.string ~expected:".fred.fred" ~actual:(expand "{.who,who}");
+      Oth.Assert.Eq.string ~expected:".50%25.fred" ~actual:(expand "{.half,who}");
+      Oth.Assert.Eq.string ~expected:"www.example.com" ~actual:(expand "www{.dom*}");
+      Oth.Assert.Eq.string ~expected:"X.value" ~actual:(expand "X{.var}");
+      Oth.Assert.Eq.string ~expected:"X." ~actual:(expand "X{.empty}");
+      Oth.Assert.Eq.string ~expected:"X" ~actual:(expand "X{.undef}");
+      Oth.Assert.Eq.string ~expected:"X.val" ~actual:(expand "X{.var:3}");
+      Oth.Assert.Eq.string ~expected:"X.red,green,blue" ~actual:(expand "X{.list}");
+      Oth.Assert.Eq.string ~expected:"X.red.green.blue" ~actual:(expand "X{.list*}");
+      Oth.Assert.Eq.string ~expected:"X.semi,%3B,dot,.,comma,%2C" ~actual:(expand "X{.keys}");
+      Oth.Assert.Eq.string ~expected:"X.semi=%3B.dot=..comma=%2C" ~actual:(expand "X{.keys*}");
+      Oth.Assert.Eq.string ~expected:"X" ~actual:(expand "X{.empty_keys}");
+      Oth.Assert.Eq.string ~expected:"X" ~actual:(expand "X{.empty_keys*}"))
 
 let test_path_segment_expansion_3_2_6 =
   Oth.test ~name:"Path Segment Expansion 3.2.6" (fun _ ->
-      assert (expand "{/who}" = "/fred");
-      assert (expand "{/who,who}" = "/fred/fred");
-      assert (expand "{/half,who}" = "/50%25/fred");
-      assert (expand "{/who,dub}" = "/fred/me%2Ftoo");
-      assert (expand "{/var}" = "/value");
-      assert (expand "{/var,empty}" = "/value/");
-      assert (expand "{/var,undef}" = "/value");
-      assert (expand "{/var,x}/here" = "/value/1024/here");
-      assert (expand "{/var:1,var}" = "/v/value");
-      assert (expand "{/list}" = "/red,green,blue");
-      assert (expand "{/list*}" = "/red/green/blue");
-      assert (expand "{/list*,path:4}" = "/red/green/blue/%2Ffoo");
-      assert (expand "{/keys}" = "/semi,%3B,dot,.,comma,%2C");
-      assert (expand "{/keys*}" = "/semi=%3B/dot=./comma=%2C"))
+      Oth.Assert.Eq.string ~expected:"/fred" ~actual:(expand "{/who}");
+      Oth.Assert.Eq.string ~expected:"/fred/fred" ~actual:(expand "{/who,who}");
+      Oth.Assert.Eq.string ~expected:"/50%25/fred" ~actual:(expand "{/half,who}");
+      Oth.Assert.Eq.string ~expected:"/fred/me%2Ftoo" ~actual:(expand "{/who,dub}");
+      Oth.Assert.Eq.string ~expected:"/value" ~actual:(expand "{/var}");
+      Oth.Assert.Eq.string ~expected:"/value/" ~actual:(expand "{/var,empty}");
+      Oth.Assert.Eq.string ~expected:"/value" ~actual:(expand "{/var,undef}");
+      Oth.Assert.Eq.string ~expected:"/value/1024/here" ~actual:(expand "{/var,x}/here");
+      Oth.Assert.Eq.string ~expected:"/v/value" ~actual:(expand "{/var:1,var}");
+      Oth.Assert.Eq.string ~expected:"/red,green,blue" ~actual:(expand "{/list}");
+      Oth.Assert.Eq.string ~expected:"/red/green/blue" ~actual:(expand "{/list*}");
+      Oth.Assert.Eq.string ~expected:"/red/green/blue/%2Ffoo" ~actual:(expand "{/list*,path:4}");
+      Oth.Assert.Eq.string ~expected:"/semi,%3B,dot,.,comma,%2C" ~actual:(expand "{/keys}");
+      Oth.Assert.Eq.string ~expected:"/semi=%3B/dot=./comma=%2C" ~actual:(expand "{/keys*}"))
 
 let test_path_style_parameter_expansion_3_2_7 =
   Oth.test ~name:"Path-Style Parameter Expansion 3.2.7" (fun _ ->
-      assert (expand "{;who}" = ";who=fred");
-      assert (expand "{;half}" = ";half=50%25");
-      assert (expand "{;empty}" = ";empty");
-      assert (expand "{;v,empty,who}" = ";v=6;empty;who=fred");
-      assert (expand "{;v,bar,who}" = ";v=6;who=fred");
-      assert (expand "{;x,y}" = ";x=1024;y=768");
-      assert (expand "{;x,y,empty}" = ";x=1024;y=768;empty");
-      assert (expand "{;x,y,undef}" = ";x=1024;y=768");
-      assert (expand "{;hello:5}" = ";hello=Hello");
-      assert (expand "{;list}" = ";list=red,green,blue");
-      assert (expand "{;list*}" = ";list=red;list=green;list=blue");
-      assert (expand "{;keys}" = ";keys=semi,%3B,dot,.,comma,%2C");
-      assert (expand "{;keys*}" = ";semi=%3B;dot=.;comma=%2C"))
+      Oth.Assert.Eq.string ~expected:";who=fred" ~actual:(expand "{;who}");
+      Oth.Assert.Eq.string ~expected:";half=50%25" ~actual:(expand "{;half}");
+      Oth.Assert.Eq.string ~expected:";empty" ~actual:(expand "{;empty}");
+      Oth.Assert.Eq.string ~expected:";v=6;empty;who=fred" ~actual:(expand "{;v,empty,who}");
+      Oth.Assert.Eq.string ~expected:";v=6;who=fred" ~actual:(expand "{;v,bar,who}");
+      Oth.Assert.Eq.string ~expected:";x=1024;y=768" ~actual:(expand "{;x,y}");
+      Oth.Assert.Eq.string ~expected:";x=1024;y=768;empty" ~actual:(expand "{;x,y,empty}");
+      Oth.Assert.Eq.string ~expected:";x=1024;y=768" ~actual:(expand "{;x,y,undef}");
+      Oth.Assert.Eq.string ~expected:";hello=Hello" ~actual:(expand "{;hello:5}");
+      Oth.Assert.Eq.string ~expected:";list=red,green,blue" ~actual:(expand "{;list}");
+      Oth.Assert.Eq.string ~expected:";list=red;list=green;list=blue" ~actual:(expand "{;list*}");
+      Oth.Assert.Eq.string ~expected:";keys=semi,%3B,dot,.,comma,%2C" ~actual:(expand "{;keys}");
+      Oth.Assert.Eq.string ~expected:";semi=%3B;dot=.;comma=%2C" ~actual:(expand "{;keys*}"))
 
 let test_form_style_query_expansion_3_2_8 =
   Oth.test ~name:"Form-Style Query Expansion 3.2.8" (fun _ ->
-      assert (expand "{?who}" = "?who=fred");
-      assert (expand "{?half}" = "?half=50%25");
-      assert (expand "{?x,y}" = "?x=1024&y=768");
-      assert (expand "{?x,y,empty}" = "?x=1024&y=768&empty=");
-      assert (expand "{?x,y,undef}" = "?x=1024&y=768");
-      assert (expand "{?var:3}" = "?var=val");
-      assert (expand "{?list}" = "?list=red,green,blue");
-      assert (expand "{?list*}" = "?list=red&list=green&list=blue");
-      assert (expand "{?keys}" = "?keys=semi,%3B,dot,.,comma,%2C");
-      assert (expand "{?keys*}" = "?semi=%3B&dot=.&comma=%2C"))
+      Oth.Assert.Eq.string ~expected:"?who=fred" ~actual:(expand "{?who}");
+      Oth.Assert.Eq.string ~expected:"?half=50%25" ~actual:(expand "{?half}");
+      Oth.Assert.Eq.string ~expected:"?x=1024&y=768" ~actual:(expand "{?x,y}");
+      Oth.Assert.Eq.string ~expected:"?x=1024&y=768&empty=" ~actual:(expand "{?x,y,empty}");
+      Oth.Assert.Eq.string ~expected:"?x=1024&y=768" ~actual:(expand "{?x,y,undef}");
+      Oth.Assert.Eq.string ~expected:"?var=val" ~actual:(expand "{?var:3}");
+      Oth.Assert.Eq.string ~expected:"?list=red,green,blue" ~actual:(expand "{?list}");
+      Oth.Assert.Eq.string ~expected:"?list=red&list=green&list=blue" ~actual:(expand "{?list*}");
+      Oth.Assert.Eq.string ~expected:"?keys=semi,%3B,dot,.,comma,%2C" ~actual:(expand "{?keys}");
+      Oth.Assert.Eq.string ~expected:"?semi=%3B&dot=.&comma=%2C" ~actual:(expand "{?keys*}"))
 
 let test_form_style_query_continuation_3_2_9 =
   Oth.test ~name:"Form-Style Query Continuation 3.2.9" (fun _ ->
-      assert (expand "{&who}" = "&who=fred");
-      assert (expand "{&half}" = "&half=50%25");
-      assert (expand "?fixed=yes{&x}" = "?fixed=yes&x=1024");
-      assert (expand "{&x,y,empty}" = "&x=1024&y=768&empty=");
-      assert (expand "{&x,y,undef}" = "&x=1024&y=768");
-      assert (expand "{&var:3}" = "&var=val");
-      assert (expand "{&list}" = "&list=red,green,blue");
-      assert (expand "{&list*}" = "&list=red&list=green&list=blue");
-      assert (expand "{&keys}" = "&keys=semi,%3B,dot,.,comma,%2C");
-      assert (expand "{&keys*}" = "&semi=%3B&dot=.&comma=%2C"))
+      Oth.Assert.Eq.string ~expected:"&who=fred" ~actual:(expand "{&who}");
+      Oth.Assert.Eq.string ~expected:"&half=50%25" ~actual:(expand "{&half}");
+      Oth.Assert.Eq.string ~expected:"?fixed=yes&x=1024" ~actual:(expand "?fixed=yes{&x}");
+      Oth.Assert.Eq.string ~expected:"&x=1024&y=768&empty=" ~actual:(expand "{&x,y,empty}");
+      Oth.Assert.Eq.string ~expected:"&x=1024&y=768" ~actual:(expand "{&x,y,undef}");
+      Oth.Assert.Eq.string ~expected:"&var=val" ~actual:(expand "{&var:3}");
+      Oth.Assert.Eq.string ~expected:"&list=red,green,blue" ~actual:(expand "{&list}");
+      Oth.Assert.Eq.string ~expected:"&list=red&list=green&list=blue" ~actual:(expand "{&list*}");
+      Oth.Assert.Eq.string ~expected:"&keys=semi,%3B,dot,.,comma,%2C" ~actual:(expand "{&keys}");
+      Oth.Assert.Eq.string ~expected:"&semi=%3B&dot=.&comma=%2C" ~actual:(expand "{&keys*}"))
 
 let test_of_string_to_string =
   Oth.test ~name:"of_string to_string matches" (fun _ ->
-      assert (of_string_to_string_matches "foo");
-      assert (of_string_to_string_matches "{count}");
-      assert (of_string_to_string_matches "{count*}");
-      assert (of_string_to_string_matches "{/count}");
-      assert (of_string_to_string_matches "{/count*}");
-      assert (of_string_to_string_matches "{;count}");
-      assert (of_string_to_string_matches "{;count*}");
-      assert (of_string_to_string_matches "{?count}");
-      assert (of_string_to_string_matches "{?count*}");
-      assert (of_string_to_string_matches "{&count*}");
-      assert (of_string_to_string_matches "{var}");
-      assert (of_string_to_string_matches "{hello}");
-      assert (of_string_to_string_matches "{half}");
-      assert (of_string_to_string_matches "O{empty}X");
-      assert (of_string_to_string_matches "O{undef}X");
-      assert (of_string_to_string_matches "{x,y}");
-      assert (of_string_to_string_matches "{x,hello,y}");
-      assert (of_string_to_string_matches "?{x,empty}");
-      assert (of_string_to_string_matches "?{x,undef}");
-      assert (of_string_to_string_matches "?{undef,y}");
-      assert (of_string_to_string_matches "{var:3}");
-      assert (of_string_to_string_matches "{var:30}");
-      assert (of_string_to_string_matches "{list}");
-      assert (of_string_to_string_matches "{list*}");
-      assert (of_string_to_string_matches "{keys}");
-      assert (of_string_to_string_matches "{keys*}");
-      assert (of_string_to_string_matches "{+var}");
-      assert (of_string_to_string_matches "{+hello}");
-      assert (of_string_to_string_matches "{+half}");
-      assert (of_string_to_string_matches "{base}index");
-      assert (of_string_to_string_matches "{+base}index");
-      assert (of_string_to_string_matches "O{+empty}X");
-      assert (of_string_to_string_matches "O{+undef}X");
-      assert (of_string_to_string_matches "{+path}/here");
-      assert (of_string_to_string_matches "here?ref={+path}");
-      assert (of_string_to_string_matches "up{+path}{var}/here");
-      assert (of_string_to_string_matches "{+x,hello,y}");
-      assert (of_string_to_string_matches "{+path,x}/here");
-      assert (of_string_to_string_matches "{+path:6}/here");
-      assert (of_string_to_string_matches "{+list}");
-      assert (of_string_to_string_matches "{+list*}");
-      assert (of_string_to_string_matches "{+keys}");
-      assert (of_string_to_string_matches "{+keys*}");
-      assert (of_string_to_string_matches "{#var}");
-      assert (of_string_to_string_matches "{#hello}");
-      assert (of_string_to_string_matches "{#half}");
-      assert (of_string_to_string_matches "foo{#empty}");
-      assert (of_string_to_string_matches "foo{#undef}");
-      assert (of_string_to_string_matches "{#x,hello,y}");
-      assert (of_string_to_string_matches "{#path,x}/here");
-      assert (of_string_to_string_matches "{#path:6}/here");
-      assert (of_string_to_string_matches "{#list}");
-      assert (of_string_to_string_matches "{#list*}");
-      assert (of_string_to_string_matches "{#keys}");
-      assert (of_string_to_string_matches "{#keys*}");
-      assert (of_string_to_string_matches "{.who}");
-      assert (of_string_to_string_matches "{.who,who}");
-      assert (of_string_to_string_matches "{.half,who}");
-      assert (of_string_to_string_matches "www{.dom*}");
-      assert (of_string_to_string_matches "X{.var}");
-      assert (of_string_to_string_matches "X{.empty}");
-      assert (of_string_to_string_matches "X{.undef}");
-      assert (of_string_to_string_matches "X{.var:3}");
-      assert (of_string_to_string_matches "X{.list}");
-      assert (of_string_to_string_matches "X{.list*}");
-      assert (of_string_to_string_matches "X{.keys}");
-      assert (of_string_to_string_matches "X{.keys*}");
-      assert (of_string_to_string_matches "X{.empty_keys}");
-      assert (of_string_to_string_matches "X{.empty_keys*}");
-      assert (of_string_to_string_matches "{/who}");
-      assert (of_string_to_string_matches "{/who,who}");
-      assert (of_string_to_string_matches "{/half,who}");
-      assert (of_string_to_string_matches "{/who,dub}");
-      assert (of_string_to_string_matches "{/var}");
-      assert (of_string_to_string_matches "{/var,empty}");
-      assert (of_string_to_string_matches "{/var,undef}");
-      assert (of_string_to_string_matches "{/var,x}/here");
-      assert (of_string_to_string_matches "{/var:1,var}");
-      assert (of_string_to_string_matches "{/list}");
-      assert (of_string_to_string_matches "{/list*}");
-      assert (of_string_to_string_matches "{/list*,path:4}");
-      assert (of_string_to_string_matches "{/keys}");
-      assert (of_string_to_string_matches "{/keys*}");
-      assert (of_string_to_string_matches "{;who}");
-      assert (of_string_to_string_matches "{;half}");
-      assert (of_string_to_string_matches "{;empty}");
-      assert (of_string_to_string_matches "{;v,empty,who}");
-      assert (of_string_to_string_matches "{;v,bar,who}");
-      assert (of_string_to_string_matches "{;x,y}");
-      assert (of_string_to_string_matches "{;x,y,empty}");
-      assert (of_string_to_string_matches "{;x,y,undef}");
-      assert (of_string_to_string_matches "{;hello:5}");
-      assert (of_string_to_string_matches "{;list}");
-      assert (of_string_to_string_matches "{;list*}");
-      assert (of_string_to_string_matches "{;keys}");
-      assert (of_string_to_string_matches "{;keys*}");
-      assert (of_string_to_string_matches "{?who}");
-      assert (of_string_to_string_matches "{?half}");
-      assert (of_string_to_string_matches "{?x,y}");
-      assert (of_string_to_string_matches "{?x,y,empty}");
-      assert (of_string_to_string_matches "{?x,y,undef}");
-      assert (of_string_to_string_matches "{?var:3}");
-      assert (of_string_to_string_matches "{?list}");
-      assert (of_string_to_string_matches "{?list*}");
-      assert (of_string_to_string_matches "{?keys}");
-      assert (of_string_to_string_matches "{?keys*}");
-      assert (of_string_to_string_matches "{&who}");
-      assert (of_string_to_string_matches "{&half}");
-      assert (of_string_to_string_matches "?fixed=yes{&x}");
-      assert (of_string_to_string_matches "{&x,y,empty}");
-      assert (of_string_to_string_matches "{&x,y,undef}");
-      assert (of_string_to_string_matches "{&var:3}");
-      assert (of_string_to_string_matches "{&list}");
-      assert (of_string_to_string_matches "{&list*}");
-      assert (of_string_to_string_matches "{&keys}");
-      assert (of_string_to_string_matches "{&keys*}"))
+      Oth.Assert.true_ "of_string_to_string_matches \"foo\"" (of_string_to_string_matches "foo");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{count}\""
+        (of_string_to_string_matches "{count}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{count*}\""
+        (of_string_to_string_matches "{count*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/count}\""
+        (of_string_to_string_matches "{/count}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/count*}\""
+        (of_string_to_string_matches "{/count*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;count}\""
+        (of_string_to_string_matches "{;count}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;count*}\""
+        (of_string_to_string_matches "{;count*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?count}\""
+        (of_string_to_string_matches "{?count}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?count*}\""
+        (of_string_to_string_matches "{?count*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{&count*}\""
+        (of_string_to_string_matches "{&count*}");
+      Oth.Assert.true_ "of_string_to_string_matches \"{var}\"" (of_string_to_string_matches "{var}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{hello}\""
+        (of_string_to_string_matches "{hello}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{half}\""
+        (of_string_to_string_matches "{half}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"O{empty}X\""
+        (of_string_to_string_matches "O{empty}X");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"O{undef}X\""
+        (of_string_to_string_matches "O{undef}X");
+      Oth.Assert.true_ "of_string_to_string_matches \"{x,y}\"" (of_string_to_string_matches "{x,y}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{x,hello,y}\""
+        (of_string_to_string_matches "{x,hello,y}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"?{x,empty}\""
+        (of_string_to_string_matches "?{x,empty}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"?{x,undef}\""
+        (of_string_to_string_matches "?{x,undef}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"?{undef,y}\""
+        (of_string_to_string_matches "?{undef,y}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{var:3}\""
+        (of_string_to_string_matches "{var:3}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{var:30}\""
+        (of_string_to_string_matches "{var:30}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{list}\""
+        (of_string_to_string_matches "{list}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{list*}\""
+        (of_string_to_string_matches "{list*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{keys}\""
+        (of_string_to_string_matches "{keys}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{keys*}\""
+        (of_string_to_string_matches "{keys*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+var}\""
+        (of_string_to_string_matches "{+var}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+hello}\""
+        (of_string_to_string_matches "{+hello}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+half}\""
+        (of_string_to_string_matches "{+half}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{base}index\""
+        (of_string_to_string_matches "{base}index");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+base}index\""
+        (of_string_to_string_matches "{+base}index");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"O{+empty}X\""
+        (of_string_to_string_matches "O{+empty}X");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"O{+undef}X\""
+        (of_string_to_string_matches "O{+undef}X");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+path}/here\""
+        (of_string_to_string_matches "{+path}/here");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"here?ref={+path}\""
+        (of_string_to_string_matches "here?ref={+path}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"up{+path}{var}/here\""
+        (of_string_to_string_matches "up{+path}{var}/here");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+x,hello,y}\""
+        (of_string_to_string_matches "{+x,hello,y}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+path,x}/here\""
+        (of_string_to_string_matches "{+path,x}/here");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+path:6}/here\""
+        (of_string_to_string_matches "{+path:6}/here");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+list}\""
+        (of_string_to_string_matches "{+list}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+list*}\""
+        (of_string_to_string_matches "{+list*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+keys}\""
+        (of_string_to_string_matches "{+keys}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{+keys*}\""
+        (of_string_to_string_matches "{+keys*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{#var}\""
+        (of_string_to_string_matches "{#var}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{#hello}\""
+        (of_string_to_string_matches "{#hello}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{#half}\""
+        (of_string_to_string_matches "{#half}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"foo{#empty}\""
+        (of_string_to_string_matches "foo{#empty}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"foo{#undef}\""
+        (of_string_to_string_matches "foo{#undef}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{#x,hello,y}\""
+        (of_string_to_string_matches "{#x,hello,y}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{#path,x}/here\""
+        (of_string_to_string_matches "{#path,x}/here");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{#path:6}/here\""
+        (of_string_to_string_matches "{#path:6}/here");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{#list}\""
+        (of_string_to_string_matches "{#list}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{#list*}\""
+        (of_string_to_string_matches "{#list*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{#keys}\""
+        (of_string_to_string_matches "{#keys}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{#keys*}\""
+        (of_string_to_string_matches "{#keys*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{.who}\""
+        (of_string_to_string_matches "{.who}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{.who,who}\""
+        (of_string_to_string_matches "{.who,who}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{.half,who}\""
+        (of_string_to_string_matches "{.half,who}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"www{.dom*}\""
+        (of_string_to_string_matches "www{.dom*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"X{.var}\""
+        (of_string_to_string_matches "X{.var}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"X{.empty}\""
+        (of_string_to_string_matches "X{.empty}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"X{.undef}\""
+        (of_string_to_string_matches "X{.undef}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"X{.var:3}\""
+        (of_string_to_string_matches "X{.var:3}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"X{.list}\""
+        (of_string_to_string_matches "X{.list}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"X{.list*}\""
+        (of_string_to_string_matches "X{.list*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"X{.keys}\""
+        (of_string_to_string_matches "X{.keys}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"X{.keys*}\""
+        (of_string_to_string_matches "X{.keys*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"X{.empty_keys}\""
+        (of_string_to_string_matches "X{.empty_keys}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"X{.empty_keys*}\""
+        (of_string_to_string_matches "X{.empty_keys*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/who}\""
+        (of_string_to_string_matches "{/who}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/who,who}\""
+        (of_string_to_string_matches "{/who,who}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/half,who}\""
+        (of_string_to_string_matches "{/half,who}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/who,dub}\""
+        (of_string_to_string_matches "{/who,dub}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/var}\""
+        (of_string_to_string_matches "{/var}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/var,empty}\""
+        (of_string_to_string_matches "{/var,empty}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/var,undef}\""
+        (of_string_to_string_matches "{/var,undef}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/var,x}/here\""
+        (of_string_to_string_matches "{/var,x}/here");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/var:1,var}\""
+        (of_string_to_string_matches "{/var:1,var}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/list}\""
+        (of_string_to_string_matches "{/list}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/list*}\""
+        (of_string_to_string_matches "{/list*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/list*,path:4}\""
+        (of_string_to_string_matches "{/list*,path:4}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/keys}\""
+        (of_string_to_string_matches "{/keys}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{/keys*}\""
+        (of_string_to_string_matches "{/keys*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;who}\""
+        (of_string_to_string_matches "{;who}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;half}\""
+        (of_string_to_string_matches "{;half}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;empty}\""
+        (of_string_to_string_matches "{;empty}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;v,empty,who}\""
+        (of_string_to_string_matches "{;v,empty,who}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;v,bar,who}\""
+        (of_string_to_string_matches "{;v,bar,who}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;x,y}\""
+        (of_string_to_string_matches "{;x,y}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;x,y,empty}\""
+        (of_string_to_string_matches "{;x,y,empty}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;x,y,undef}\""
+        (of_string_to_string_matches "{;x,y,undef}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;hello:5}\""
+        (of_string_to_string_matches "{;hello:5}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;list}\""
+        (of_string_to_string_matches "{;list}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;list*}\""
+        (of_string_to_string_matches "{;list*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;keys}\""
+        (of_string_to_string_matches "{;keys}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{;keys*}\""
+        (of_string_to_string_matches "{;keys*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?who}\""
+        (of_string_to_string_matches "{?who}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?half}\""
+        (of_string_to_string_matches "{?half}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?x,y}\""
+        (of_string_to_string_matches "{?x,y}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?x,y,empty}\""
+        (of_string_to_string_matches "{?x,y,empty}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?x,y,undef}\""
+        (of_string_to_string_matches "{?x,y,undef}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?var:3}\""
+        (of_string_to_string_matches "{?var:3}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?list}\""
+        (of_string_to_string_matches "{?list}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?list*}\""
+        (of_string_to_string_matches "{?list*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?keys}\""
+        (of_string_to_string_matches "{?keys}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{?keys*}\""
+        (of_string_to_string_matches "{?keys*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{&who}\""
+        (of_string_to_string_matches "{&who}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{&half}\""
+        (of_string_to_string_matches "{&half}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"?fixed=yes{&x}\""
+        (of_string_to_string_matches "?fixed=yes{&x}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{&x,y,empty}\""
+        (of_string_to_string_matches "{&x,y,empty}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{&x,y,undef}\""
+        (of_string_to_string_matches "{&x,y,undef}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{&var:3}\""
+        (of_string_to_string_matches "{&var:3}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{&list}\""
+        (of_string_to_string_matches "{&list}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{&list*}\""
+        (of_string_to_string_matches "{&list*}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{&keys}\""
+        (of_string_to_string_matches "{&keys}");
+      Oth.Assert.true_
+        "of_string_to_string_matches \"{&keys*}\""
+        (of_string_to_string_matches "{&keys*}"))
 
 let test =
   Oth.parallel
@@ -311,4 +540,4 @@ let test =
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

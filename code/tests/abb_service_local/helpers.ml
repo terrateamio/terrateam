@@ -302,14 +302,17 @@ let () =
   Random.self_init ();
   Oth.run
     ~file:__FILE__
-    (Oth.parallel
-       [
-         call_det;
-         call_exn;
-         call_aborted;
-         caller_abort_closes_reply;
-         make_typed_roundtrip;
-         call_after_close;
-         call_from_unpinned;
-         call_from_unpinned_stress;
-       ])
+    ~setup:(fun () -> Ok ())
+    ~teardown:(fun _ -> ())
+    (fun _ ->
+      Oth.parallel
+        [
+          call_det;
+          call_exn;
+          call_aborted;
+          caller_abort_closes_reply;
+          make_typed_roundtrip;
+          call_after_close;
+          call_from_unpinned;
+          call_from_unpinned_stress;
+        ])

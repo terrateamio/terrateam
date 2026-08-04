@@ -43,37 +43,37 @@ let route_hello =
   Oth.test ~desc:"Route to the hello path" ~name:"Route hello" (fun _ ->
       let uri = Uri.of_string "http://test.com/hello/there" in
       let resp = router uri in
-      assert (resp = "Hello there"))
+      Oth.Assert.Eq.string ~expected:"Hello there" ~actual:resp)
 
 let route_hello_no_host =
   Oth.test ~desc:"Route to the hello path no host" ~name:"Route hello no host" (fun _ ->
       let uri = Uri.of_string "/hello/there" in
       let resp = router uri in
-      assert (resp = "Hello there"))
+      Oth.Assert.Eq.string ~expected:"Hello there" ~actual:resp)
 
 let route_no_must_consume_path =
   Oth.test ~desc:"Must not consume path" ~name:"No Consume Path" (fun _ ->
       let uri = Uri.of_string "http://test.com/hello/there/test" in
       let resp = router ~must_consume_path:false uri in
-      assert (resp = "Hello there"))
+      Oth.Assert.Eq.string ~expected:"Hello there" ~actual:resp)
 
 let route_goodbye =
   Oth.test ~desc:"Route to the goodbye path" ~name:"Route goodbye" (fun _ ->
       let uri = Uri.of_string "http://test.com/goodbye/you" in
       let resp = router uri in
-      assert (resp = "Goodbye you"))
+      Oth.Assert.Eq.string ~expected:"Goodbye you" ~actual:resp)
 
 let route_extra =
   Oth.test ~desc:"Route with extra path" ~name:"Route extra" (fun _ ->
       let uri = Uri.of_string "http://test.com/extra/there/boss/man" in
       let resp = router uri in
-      assert (resp = "Extra there/boss/man"))
+      Oth.Assert.Eq.string ~expected:"Extra there/boss/man" ~actual:resp)
 
 let route_extra_with_encoded_chars =
   Oth.test ~desc:"Route with extra path with encoded chares" ~name:"Route extra encoded" (fun _ ->
       let uri = Uri.of_string "http://test.com/extra/there/boss/m an" in
       let resp = router uri in
-      assert (resp = "Extra there/boss/m an"))
+      Oth.Assert.Eq.string ~expected:"Extra there/boss/m an" ~actual:resp)
 
 let route_extra_no_extra =
   Oth.test
@@ -83,40 +83,40 @@ let route_extra_no_extra =
       let uri = Uri.of_string "http://test.com/extra" in
       try
         ignore (router uri);
-        assert false
-      with Failure msg -> assert (msg = "This is not a valid path."))
+        Oth.Assert.false_ "Route extra no extra: unexpected value"
+      with Failure msg -> Oth.Assert.Eq.string ~expected:"This is not a valid path." ~actual:msg)
 
 let route_extra_just_slash =
   Oth.test ~desc:"Route with extra path but just ends in slash" ~name:"Route extra slash" (fun _ ->
       let uri = Uri.of_string "http://test.com/extra/" in
       let resp = router uri in
-      assert (resp = "Extra "))
+      Oth.Assert.Eq.string ~expected:"Extra " ~actual:resp)
 
 let route_any =
   Oth.test ~desc:"Route any" ~name:"Route any" (fun _ ->
       let uri = Uri.of_string "http://test.com/any/there/boss/man" in
       let resp = any_router uri in
-      assert (resp = "Extra any/there/boss/man"))
+      Oth.Assert.Eq.string ~expected:"Extra any/there/boss/man" ~actual:resp)
 
 let route_any_no_extra =
   Oth.test ~desc:"Route with just host" ~name:"Route any just host" (fun _ ->
       let uri = Uri.of_string "http://test.com" in
       try
         ignore (any_router uri);
-        assert false
-      with Failure msg -> assert (msg = "This is not a valid path."))
+        Oth.Assert.false_ "Route any just host: unexpected value"
+      with Failure msg -> Oth.Assert.Eq.string ~expected:"This is not a valid path." ~actual:msg)
 
 let route_any_just_slash =
   Oth.test ~desc:"Route with any with slash" ~name:"Route any just slash" (fun _ ->
       let uri = Uri.of_string "http://test.com/" in
       let resp = any_router uri in
-      assert (resp = "Extra "))
+      Oth.Assert.Eq.string ~expected:"Extra " ~actual:resp)
 
 let route_homepage =
   Oth.test ~desc:"Route to the homepage path" ~name:"Route homepage" (fun _ ->
       let uri = Uri.of_string "http://test.com" in
       let resp = router uri in
-      assert (resp = "Homepage"))
+      Oth.Assert.Eq.string ~expected:"Homepage" ~actual:resp)
 
 let route_homepage_slash =
   Oth.test
@@ -125,7 +125,7 @@ let route_homepage_slash =
     (fun _ ->
       let uri = Uri.of_string "http://test.com/" in
       let resp = router uri in
-      assert (resp = "Homepage Slash"))
+      Oth.Assert.Eq.string ~expected:"Homepage Slash" ~actual:resp)
 
 let route_homepage_slash_rel =
   Oth.test
@@ -134,19 +134,19 @@ let route_homepage_slash_rel =
     (fun _ ->
       let uri = Uri.of_string "/" in
       let resp = router uri in
-      assert (resp = "Homepage Slash"))
+      Oth.Assert.Eq.string ~expected:"Homepage Slash" ~actual:resp)
 
 let route_query =
   Oth.test ~desc:"Route with query" ~name:"Route query" (fun _ ->
       let uri = Uri.of_string "http://test.com?name=foobar" in
       let resp = router uri in
-      assert (resp = "Query foobar"))
+      Oth.Assert.Eq.string ~expected:"Query foobar" ~actual:resp)
 
 let route_fragment =
   Oth.test ~desc:"Route to fragment" ~name:"Route fragment" (fun _ ->
       let uri = Uri.of_string "http://test.com/hello/there#testing" in
       let resp = router ~must_consume_path:false uri in
-      assert (resp = "testing"))
+      Oth.Assert.Eq.string ~expected:"testing" ~actual:resp)
 
 let match_hello =
   Oth.test ~desc:"Match hello path" ~name:"Match hello" (fun _ ->
@@ -154,14 +154,14 @@ let match_hello =
       match Furi.(match_uri (hello_rt --> handle_hello_name) uri) with
       | Some m ->
           let resp = Furi.Match.apply m in
-          assert (resp = "Hello there")
-      | None -> assert false)
+          Oth.Assert.Eq.string ~expected:"Hello there" ~actual:resp
+      | None -> Oth.Assert.false_ "Match hello: unexpected value")
 
 let match_fail =
   Oth.test ~desc:"Ensure match fails" ~name:"Match fail" (fun _ ->
       let uri = Uri.of_string "http://test.com/goodbye/there" in
       let ret = Furi.(match_uri (hello_rt --> handle_hello_name) uri) in
-      assert (ret = None))
+      Oth.Assert.none ret)
 
 let match_no_consume_path =
   Oth.test ~desc:"Match without consuming entire path" ~name:"Match no consume" (fun _ ->
@@ -169,10 +169,10 @@ let match_no_consume_path =
       match Furi.(match_uri ~must_consume_path:false (hello_rt --> handle_hello_name) uri) with
       | Some m ->
           let resp = Furi.Match.apply m in
-          assert (resp = "Hello there");
-          assert (Furi.Match.consumed_path m = "/hello/there");
-          assert (Furi.Match.remaining_path m = "/bar/baz")
-      | None -> assert false)
+          Oth.Assert.Eq.string ~expected:"Hello there" ~actual:resp;
+          Oth.Assert.Eq.string ~expected:"/hello/there" ~actual:(Furi.Match.consumed_path m);
+          Oth.Assert.Eq.string ~expected:"/bar/baz" ~actual:(Furi.Match.remaining_path m)
+      | None -> Oth.Assert.false_ "Match no consume: unexpected value")
 
 let match_prefix =
   Oth.test ~desc:"Match prefix" ~name:"Match prefix" (fun _ ->
@@ -181,16 +181,16 @@ let match_prefix =
       match Furi.(match_uri (rt --> handle_hello_name) uri) with
       | Some m ->
           let resp = Furi.Match.apply m in
-          assert (resp = "Hello there")
-      | None -> assert false)
+          Oth.Assert.Eq.string ~expected:"Hello there" ~actual:resp
+      | None -> Oth.Assert.false_ "Match prefix: unexpected value")
 
 let match_path_equal =
   Oth.test ~name:"Match path equal" (fun _ ->
       let uri = Uri.of_string "http://test.com/hello/there" in
       let rt = Furi.(root "/hello" /% Path.string) in
       match Furi.(match_uri (rt --> handle_hello_name) uri) with
-      | Some m -> assert (Furi.Match.equal m m)
-      | None -> assert false)
+      | Some m -> Oth.Assert.true_ "Furi.Match.equal m m" (Furi.Match.equal m m)
+      | None -> Oth.Assert.false_ "Match path equal: unexpected value")
 
 let match_path_not_equal =
   Oth.test ~name:"Match path not equal" (fun _ ->
@@ -200,16 +200,17 @@ let match_path_not_equal =
       match
         Furi.(match_uri (rt --> handle_hello_name) uri1, match_uri (rt --> handle_hello_name) uri2)
       with
-      | Some m1, Some m2 -> assert (not (Furi.Match.equal m1 m2))
-      | _ -> assert false)
+      | Some m1, Some m2 ->
+          Oth.Assert.true_ "not (Furi.Match.equal m1 m2)" (not (Furi.Match.equal m1 m2))
+      | _ -> Oth.Assert.false_ "Match path not equal: unexpected value")
 
 let match_query_equal =
   Oth.test ~name:"Match query equal" (fun _ ->
       let uri = Uri.of_string "http://test.com?q=foo" in
       let rt = Furi.(rel /? Query.string "q") in
       match Furi.(match_uri (rt --> fun _ -> ()) uri) with
-      | Some m -> assert (Furi.Match.equal m m)
-      | None -> assert false)
+      | Some m -> Oth.Assert.true_ "Furi.Match.equal m m" (Furi.Match.equal m m)
+      | None -> Oth.Assert.false_ "Match query equal: unexpected value")
 
 let match_query_not_equal =
   Oth.test ~name:"Match query not equal" (fun _ ->
@@ -217,8 +218,9 @@ let match_query_not_equal =
       let uri2 = Uri.of_string "http://test.com?q=bar" in
       let rt = Furi.(rel /? Query.string "q") in
       match Furi.(match_uri (rt --> fun _ -> ()) uri1, match_uri (rt --> fun _ -> ()) uri2) with
-      | Some m1, Some m2 -> assert (not (Furi.Match.equal m1 m2))
-      | _ -> assert false)
+      | Some m1, Some m2 ->
+          Oth.Assert.true_ "not (Furi.Match.equal m1 m2)" (not (Furi.Match.equal m1 m2))
+      | _ -> Oth.Assert.false_ "Match query not equal: unexpected value")
 
 let match_query_equal_but_different =
   Oth.test ~name:"Match query equal but different" (fun _ ->
@@ -226,8 +228,9 @@ let match_query_equal_but_different =
       let uri2 = Uri.of_string "http://test.com?q=foo,bar" in
       let rt = Furi.(rel /? Query.string "q") in
       match Furi.(match_uri (rt --> fun _ -> ()) uri1, match_uri (rt --> fun _ -> ()) uri2) with
-      | Some m1, Some m2 -> assert (not (Furi.Match.equal m1 m2))
-      | _ -> assert false)
+      | Some m1, Some m2 ->
+          Oth.Assert.true_ "not (Furi.Match.equal m1 m2)" (not (Furi.Match.equal m1 m2))
+      | _ -> Oth.Assert.false_ "Match query equal but different: unexpected value")
 
 let match_query_order_does_not_matter =
   Oth.test ~name:"Match query order does not matter" (fun _ ->
@@ -235,8 +238,8 @@ let match_query_order_does_not_matter =
       let uri2 = Uri.of_string "http://test.com?b=bar&a=foo" in
       let rt = Furi.(rel /? Query.string "a" /? Query.string "b") in
       match Furi.(match_uri (rt --> fun _ _ -> ()) uri1, match_uri (rt --> fun _ _ -> ()) uri2) with
-      | Some m1, Some m2 -> assert (Furi.Match.equal m1 m2)
-      | _ -> assert false)
+      | Some m1, Some m2 -> Oth.Assert.true_ "Furi.Match.equal m1 m2" (Furi.Match.equal m1 m2)
+      | _ -> Oth.Assert.false_ "Match query order does not matter: unexpected value")
 
 let match_path_consumption =
   Oth.test ~name:"Match path consumption not equal" (fun _ ->
@@ -244,16 +247,17 @@ let match_path_consumption =
       let rt1 = Furi.(rel / "foo" / "bar") in
       let rt2 = Furi.(rel /% Path.string /% Path.string) in
       match Furi.(match_uri (rt1 --> ()) uri, match_uri (rt2 --> fun _ _ -> ()) uri) with
-      | Some m1, Some m2 -> assert (not (Furi.Match.equal m1 m2))
-      | _ -> assert false)
+      | Some m1, Some m2 ->
+          Oth.Assert.true_ "not (Furi.Match.equal m1 m2)" (not (Furi.Match.equal m1 m2))
+      | _ -> Oth.Assert.false_ "Match path consumption not equal: unexpected value")
 
 let match_fragment_equal =
   Oth.test ~name:"Match fragment equal" (fun _ ->
       let uri = Uri.of_string "http://test.com#foo" in
       let rt = Furi.(rel /$ Fragment.string) in
       match Furi.(match_uri (rt --> fun _ -> ()) uri) with
-      | Some m -> assert (Furi.Match.equal m m)
-      | None -> assert false)
+      | Some m -> Oth.Assert.true_ "Furi.Match.equal m m" (Furi.Match.equal m m)
+      | None -> Oth.Assert.false_ "Match fragment equal: unexpected value")
 
 let match_fragment_not_equal =
   Oth.test ~name:"Match fragment not equal" (fun _ ->
@@ -261,8 +265,9 @@ let match_fragment_not_equal =
       let uri2 = Uri.of_string "http://test.com#bar" in
       let rt = Furi.(rel /$ Fragment.string) in
       match Furi.(match_uri (rt --> fun _ -> ()) uri1, match_uri (rt --> fun _ -> ()) uri2) with
-      | Some m1, Some m2 -> assert (not (Furi.Match.equal m1 m2))
-      | _ -> assert false)
+      | Some m1, Some m2 ->
+          Oth.Assert.true_ "not (Furi.Match.equal m1 m2)" (not (Furi.Match.equal m1 m2))
+      | _ -> Oth.Assert.false_ "Match fragment not equal: unexpected value")
 
 let first_match_slash_rel =
   Oth.test ~desc:"first_match" ~name:"First match homepage slash Rel" (fun _ ->
@@ -280,20 +285,23 @@ let first_match_slash_rel =
             ]
           uri
       with
-      | Some v -> assert (Furi.Match.apply v = handle_homepage_slash)
-      | None -> assert false)
+      | Some v ->
+          Oth.Assert.true_
+            "Furi.Match.apply v = handle_homepage_slash"
+            (Furi.Match.apply v = handle_homepage_slash)
+      | None -> Oth.Assert.false_ "First match homepage slash Rel: unexpected value")
 
 let test_path_const_with_slash =
   Oth.test ~desc:"Test path const with slash" ~name:"Path const slash" (fun _ ->
       let uri =
         Uri.(with_path (of_string "http://test.com") (pct_encode ~component:`Path "with/slash"))
       in
-      assert (router uri = "path_with_slash"))
+      Oth.Assert.Eq.string ~expected:"path_with_slash" ~actual:(router uri))
 
 let test_path_with_space =
   Oth.test ~desc:"Test path var with space" ~name:"Path var space" (fun _ ->
       let uri = Uri.of_string "http://test.com/test/with space" in
-      assert (router uri = "with space"))
+      Oth.Assert.Eq.string ~expected:"with space" ~actual:(router uri))
 
 let test_path_with_slash =
   Oth.test ~desc:"Test path var with slash" ~name:"Path var slash" (fun _ ->
@@ -303,28 +311,28 @@ let test_path_with_slash =
             (of_string "http://test.com")
             ("/test/" ^ pct_encode ~component:`Path "with/slash"))
       in
-      assert (router uri = "with/slash"))
+      Oth.Assert.Eq.string ~expected:"with/slash" ~actual:(router uri))
 
 let test_query_with_space =
   Oth.test ~desc:"Test query var with space" ~name:"Query var space" (fun _ ->
       let uri =
         Uri.add_query_param' (Uri.of_string "http://test.com/test") ("test", "with space")
       in
-      assert (router uri = "with space"))
+      Oth.Assert.Eq.string ~expected:"with space" ~actual:(router uri))
 
 let test_query_with_plus =
   Oth.test ~desc:"Test query var with plus" ~name:"Query var plus" (fun _ ->
       let uri =
         Uri.add_query_param' (Uri.of_string "http://test.com/test") ("test", "with + plus")
       in
-      assert (router uri = "with + plus"))
+      Oth.Assert.Eq.string ~expected:"with + plus" ~actual:(router uri))
 
 let test_query_with_and =
   Oth.test ~desc:"Test query var with &" ~name:"Query var ampersand" (fun _ ->
       let uri =
         Uri.add_query_param' (Uri.of_string "http://test.com/test") ("test", "with & and")
       in
-      assert (router uri = "with & and"))
+      Oth.Assert.Eq.string ~expected:"with & and" ~actual:(router uri))
 
 let test =
   Oth.parallel
@@ -370,4 +378,4 @@ let test =
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

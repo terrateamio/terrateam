@@ -1,5 +1,5 @@
 module Make (Abb : Abb_intf.S) = struct
-  module Oth_abb = Oth_abb.Make (Abb)
+  module Oth_abb = Abb_test_oth.Make (Abb)
   module Fut_comb = Abb_future_combinators.Make (Abb.Future)
 
   (* Marker exception for the loop-stopper regression test below. *)

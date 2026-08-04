@@ -2,7 +2,10 @@ let test1 =
   Oth.test ~name:"Basic 1" (fun _ ->
       let config = "# Core variables\n[core]\n\t; Don't trust file modes\nfilemode = false" in
       match Git_config.of_string config with
-      | Ok c -> assert (Git_config.(value (Key.section "core") "filemode" c = Some [ "false" ]))
+      | Ok c ->
+          Oth.Assert.true_
+            "Git_config.(value (Key.section \"core\") \"filemode\" c = Some [ \"false\" ])"
+            Git_config.(value (Key.section "core") "filemode" c = Some [ "false" ])
       | Error (#Git_config.err as err) -> raise (Failure (Git_config.show_err err)))
 
 let test2 =
@@ -10,11 +13,15 @@ let test2 =
       let config = "[branch \"devel\"]\n\tremote = origin\n\tmerge = refs/heads/devel" in
       match Git_config.of_string config with
       | Ok c ->
-          assert (
-            Git_config.(value (Key.subsection "branch" "devel") "remote" c = Some [ "origin" ]));
-          assert (
+          Oth.Assert.true_
+            "Git_config.(value (Key.subsection \"branch\" \"devel\") \"remote\" c = Some [ \
+             \"origin\" ])"
+            Git_config.(value (Key.subsection "branch" "devel") "remote" c = Some [ "origin" ]);
+          Oth.Assert.true_
+            "Git_config.( value (Key.subsection \"branch\" \"devel\") \"merge\" c = Some [ \
+             \"refs/heads/devel\" ])"
             Git_config.(
-              value (Key.subsection "branch" "devel") "merge" c = Some [ "refs/heads/devel" ]))
+              value (Key.subsection "branch" "devel") "merge" c = Some [ "refs/heads/devel" ])
       | Error (#Git_config.err as err) -> raise (Failure (Git_config.show_err err)))
 
 let test3 =
@@ -27,10 +34,12 @@ let test3 =
       in
       match Git_config.of_string config with
       | Ok c ->
-          assert (
+          Oth.Assert.true_
+            "Git_config.( value (Key.section \"core\") \"gitproxy\" c = Some [ \"\\\"ssh\\\" for \
+             \\\"kernel.org\\\"\"; \"default-proxy\" ])"
             Git_config.(
               value (Key.section "core") "gitproxy" c
-              = Some [ "\"ssh\" for \"kernel.org\""; "default-proxy" ]))
+              = Some [ "\"ssh\" for \"kernel.org\""; "default-proxy" ])
       | Error (#Git_config.err as err) -> raise (Failure (Git_config.show_err err)))
 
 let test4 =
@@ -43,9 +52,11 @@ let test4 =
       in
       match Git_config.of_string config with
       | Ok c ->
-          assert (
+          Oth.Assert.true_
+            "Git_config.( value (Key.section \"include\") \"path\" c = Some [ \
+             \"/path/to/foo.inc\"; \"foo\"; \"~/foo\" ])"
             Git_config.(
-              value (Key.section "include") "path" c = Some [ "/path/to/foo.inc"; "foo"; "~/foo" ]))
+              value (Key.section "include") "path" c = Some [ "/path/to/foo.inc"; "foo"; "~/foo" ])
       | Error (#Git_config.err as err) -> raise (Failure (Git_config.show_err err)))
 
 let test5 =
@@ -60,19 +71,25 @@ let test5 =
       in
       match Git_config.of_string config with
       | Ok c ->
-          assert (Git_config.(value (Key.section "http") "sslVerify" c = Some [ "true" ]));
-          assert (
+          Oth.Assert.true_
+            "Git_config.(value (Key.section \"http\") \"sslVerify\" c = Some [ \"true\" ])"
+            Git_config.(value (Key.section "http") "sslVerify" c = Some [ "true" ]);
+          Oth.Assert.true_
+            "Git_config.( value (Key.subsection \"http\" \"https://weak.example.com\") \
+             \"sslVerify\" c = Some [ \"false\" ])"
             Git_config.(
               value (Key.subsection "http" "https://weak.example.com") "sslVerify" c
-              = Some [ "false" ]));
-          assert (
+              = Some [ "false" ]);
+          Oth.Assert.true_
+            "Git_config.( value (Key.subsection \"http\" \"https://weak.example.com\") \
+             \"cookieFile\" c = Some [ \"/tmp/cookie.txt\" ])"
             Git_config.(
               value (Key.subsection "http" "https://weak.example.com") "cookieFile" c
-              = Some [ "/tmp/cookie.txt" ]))
+              = Some [ "/tmp/cookie.txt" ])
       | Error (#Git_config.err as err) -> raise (Failure (Git_config.show_err err)))
 
 let test = Oth.parallel [ test1; test2; test3; test4; test5 ]
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

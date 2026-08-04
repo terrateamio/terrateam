@@ -3,7 +3,9 @@ let test_to_query =
       let module Ts = Pgsql_io.Typed_sql in
       let query = Ts.(sql /^ "SELECT foo, bar FROM baz WHERE x = $x" /% Var.smallint "x") in
       let s = Ts.to_query query in
-      assert (s = Ok "SELECT foo, bar FROM baz WHERE x = $1"))
+      Oth.Assert.true_
+        "s = Ok \"SELECT foo, bar FROM baz WHERE x = $1\""
+        (s = Ok "SELECT foo, bar FROM baz WHERE x = $1"))
 
 let test_to_query_with_ret =
   Oth.test ~desc:"Test to_query with ret" ~name:"to_query with ret" (fun _ ->
@@ -17,7 +19,9 @@ let test_to_query_with_ret =
           /% Var.smallint "x")
       in
       let s = Ts.to_query query in
-      assert (s = Ok "SELECT foo, bar FROM baz WHERE x = $1"))
+      Oth.Assert.true_
+        "s = Ok \"SELECT foo, bar FROM baz WHERE x = $1\""
+        (s = Ok "SELECT foo, bar FROM baz WHERE x = $1"))
 
 let test_query_concat_strings =
   Oth.test ~desc:"Test query concat just strings" ~name:"/^^ strings" (fun _ ->
@@ -26,7 +30,7 @@ let test_query_concat_strings =
       let q2 = Ts.(sql /^ "world") in
       let q3 = Ts.(q1 /^^ q2) in
       let s = Ts.to_query q3 in
-      assert (s = Ok "hello world"))
+      Oth.Assert.true_ "s = Ok \"hello world\"" (s = Ok "hello world"))
 
 let test_query_concat =
   Oth.test ~desc:"Test query concat" ~name:"/^^" (fun _ ->
@@ -35,49 +39,57 @@ let test_query_concat =
       let q2 = Ts.(sql // Ret.boolean /^ "world" /% Var.text "x") in
       let q3 = Ts.(q1 /^^ q2) in
       let s = Ts.to_query q3 in
-      assert (s = Ok "hello world"))
+      Oth.Assert.true_ "s = Ok \"hello world\"" (s = Ok "hello world"))
 
 let test_to_query_bad_var =
   Oth.test ~desc:"Test to_query bad var" ~name:"to_query bad var" (fun _ ->
       let module Ts = Pgsql_io.Typed_sql in
       let query = Ts.(sql /^ "SELECT foo, bar FROM baz WHERE x = $y" /% Var.smallint "x") in
       let s = Ts.to_query query in
-      assert (s = Error (`Unknown_variable "y")))
+      Oth.Assert.true_ "s = Error (`Unknown_variable \"y\")" (s = Error (`Unknown_variable "y")))
 
 let test_to_query_unclosed_single_quote =
   Oth.test ~desc:"Test to_query bad var" ~name:"to_query bad var" (fun _ ->
       let module Ts = Pgsql_io.Typed_sql in
       let query = Ts.(sql /^ "SELECT foo, bar FROM baz WHERE x = '") in
       let s = Ts.to_query query in
-      assert (s = Error (`Unclosed_quote "SELECT foo, bar FROM baz WHERE x = '")))
+      Oth.Assert.true_
+        "s = Error (`Unclosed_quote \"SELECT foo, bar FROM baz WHERE x = '\")"
+        (s = Error (`Unclosed_quote "SELECT foo, bar FROM baz WHERE x = '")))
 
 let test_to_query_unclosed_double_quote =
   Oth.test ~desc:"Test to_query bad var" ~name:"to_query bad var" (fun _ ->
       let module Ts = Pgsql_io.Typed_sql in
       let query = Ts.(sql /^ "SELECT foo, bar FROM baz WHERE x = \"") in
       let s = Ts.to_query query in
-      assert (s = Error (`Unclosed_quote "SELECT foo, bar FROM baz WHERE x = \"")))
+      Oth.Assert.true_
+        "s = Error (`Unclosed_quote \"SELECT foo, bar FROM baz WHERE x = \\\"\")"
+        (s = Error (`Unclosed_quote "SELECT foo, bar FROM baz WHERE x = \"")))
 
 let test_to_query_closed_single_quote =
   Oth.test ~desc:"Test to_query bad var" ~name:"to_query bad var" (fun _ ->
       let module Ts = Pgsql_io.Typed_sql in
       let query = Ts.(sql /^ "SELECT foo, bar FROM baz WHERE x = ''") in
       let s = Ts.to_query query in
-      assert (s = Ok "SELECT foo, bar FROM baz WHERE x = ''"))
+      Oth.Assert.true_
+        "s = Ok \"SELECT foo, bar FROM baz WHERE x = ''\""
+        (s = Ok "SELECT foo, bar FROM baz WHERE x = ''"))
 
 let test_to_query_closed_double_quote =
   Oth.test ~desc:"Test to_query bad var" ~name:"to_query bad var" (fun _ ->
       let module Ts = Pgsql_io.Typed_sql in
       let query = Ts.(sql /^ "SELECT foo, bar FROM baz WHERE x = \"\"") in
       let s = Ts.to_query query in
-      assert (s = Ok "SELECT foo, bar FROM baz WHERE x = \"\""))
+      Oth.Assert.true_
+        "s = Ok \"SELECT foo, bar FROM baz WHERE x = \\\"\\\"\""
+        (s = Ok "SELECT foo, bar FROM baz WHERE x = \"\""))
 
 let test_to_query_dollar_quoted_string_delim =
   Oth.test ~desc:"Test to_query dollar-quoted string delim" ~name:"to_query dollar quoted" (fun _ ->
       let module Ts = Pgsql_io.Typed_sql in
       let query = Ts.(sql /^ "select $$ foo $$") in
       let s = Ts.to_query query in
-      assert (s = Ok "select $$ foo $$"))
+      Oth.Assert.true_ "s = Ok \"select $$ foo $$\"" (s = Ok "select $$ foo $$"))
 
 let test =
   Oth.parallel
@@ -94,4 +106,4 @@ let test =
       test_to_query_dollar_quoted_string_delim;
     ]
 
-let () = Oth.run ~file:__FILE__ test
+let () = Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

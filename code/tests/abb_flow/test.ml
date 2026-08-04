@@ -34,10 +34,10 @@ let test_success =
       Flow.run () 0 flow
       >>= function
       | `Success n ->
-          assert (n = 1);
+          Oth.Assert.Eq.int ~expected:1 ~actual:n;
           Abb.Future.return ()
-      | `Failure _ -> assert false
-      | `Yield _ -> assert false)
+      | `Failure _ -> Oth.Assert.false_ "Success: unexpected value"
+      | `Yield _ -> Oth.Assert.false_ "Success: unexpected value")
 
 let test_failure =
   Oth_abb.test ~name:"Failure" (fun _ ->
@@ -49,9 +49,9 @@ let test_failure =
       let open Abb.Future.Infix_monad in
       Flow.run () 0 flow
       >>= function
-      | `Success _ -> assert false
+      | `Success _ -> Oth.Assert.false_ "Failure: unexpected value"
       | `Failure _ -> Abb.Future.return ()
-      | `Yield _ -> assert false)
+      | `Yield _ -> Oth.Assert.false_ "Failure: unexpected value")
 
 let test_yield =
   Oth_abb.test ~name:"Yield" (fun _ ->
@@ -70,17 +70,17 @@ let test_yield =
       let open Abb.Future.Infix_monad in
       Flow.run () 0 flow
       >>= function
-      | `Success _ -> assert false
+      | `Success _ -> Oth.Assert.false_ "Yield: unexpected value"
       | `Failure _ -> Abb.Future.return ()
       | `Yield yield -> (
           let resume = Flow.Yield.set_state (Flow.Yield.state yield + 1) yield in
           Flow.resume () resume flow
           >>= function
           | `Success n ->
-              assert (n = 2);
+              Oth.Assert.Eq.int ~expected:2 ~actual:n;
               Abb.Future.return ()
-          | `Failure _ -> assert false
-          | `Yield _ -> assert false))
+          | `Failure _ -> Oth.Assert.false_ "Yield: unexpected value"
+          | `Yield _ -> Oth.Assert.false_ "Yield: unexpected value"))
 
 let test_exit_early =
   Oth_abb.test ~name:"Exit early" (fun _ ->
@@ -113,10 +113,10 @@ let test_exit_early =
       Flow.run () 0 flow
       >>= function
       | `Success n ->
-          assert (n = 1);
+          Oth.Assert.Eq.int ~expected:1 ~actual:n;
           Abb.Future.return ()
-      | `Failure _ -> assert false
-      | `Yield _ -> assert false)
+      | `Failure _ -> Oth.Assert.false_ "Exit early: unexpected value"
+      | `Yield _ -> Oth.Assert.false_ "Exit early: unexpected value")
 
 let test_multistep_flow =
   Oth_abb.test ~name:"Multi-step flow" (fun _ ->
@@ -132,10 +132,10 @@ let test_multistep_flow =
       Flow.run () 0 flow
       >>= function
       | `Success n ->
-          assert (n = 2);
+          Oth.Assert.Eq.int ~expected:2 ~actual:n;
           Abb.Future.return ()
-      | `Failure _ -> assert false
-      | `Yield _ -> assert false)
+      | `Failure _ -> Oth.Assert.false_ "Multi-step flow: unexpected value"
+      | `Yield _ -> Oth.Assert.false_ "Multi-step flow: unexpected value")
 
 let test_yield_with_choice =
   Oth_abb.test ~name:"Yield with choice" (fun _ ->
@@ -168,17 +168,17 @@ let test_yield_with_choice =
       let open Abb.Future.Infix_monad in
       Flow.run () 0 flow
       >>= function
-      | `Success _ -> assert false
+      | `Success _ -> Oth.Assert.false_ "Yield with choice: unexpected value"
       | `Failure _ -> Abb.Future.return ()
       | `Yield yield -> (
           let resume = Flow.Yield.set_state (Flow.Yield.state yield + 1) yield in
           Flow.resume () resume flow
           >>= function
           | `Success n ->
-              assert (n = 2);
+              Oth.Assert.Eq.int ~expected:2 ~actual:n;
               Abb.Future.return ()
-          | `Failure _ -> assert false
-          | `Yield _ -> assert false))
+          | `Failure _ -> Oth.Assert.false_ "Yield with choice: unexpected value"
+          | `Yield _ -> Oth.Assert.false_ "Yield with choice: unexpected value"))
 
 let test_yield_with_choice_and_multiple_resumes =
   Oth_abb.test ~name:"Yield with choice and multiple resumes" (fun _ ->
@@ -211,23 +211,27 @@ let test_yield_with_choice_and_multiple_resumes =
       let open Abb.Future.Infix_monad in
       Flow.run () 0 flow
       >>= function
-      | `Success _ -> assert false
+      | `Success _ -> Oth.Assert.false_ "Yield with choice and multiple resumes: unexpected value"
       | `Failure _ -> Abb.Future.return ()
       | `Yield yield -> (
           let resume = Flow.Yield.set_state (Flow.Yield.state yield + 1) yield in
           Flow.resume () resume flow
           >>= function
-          | `Success _ -> assert false
-          | `Failure _ -> assert false
+          | `Success _ ->
+              Oth.Assert.false_ "Yield with choice and multiple resumes: unexpected value"
+          | `Failure _ ->
+              Oth.Assert.false_ "Yield with choice and multiple resumes: unexpected value"
           | `Yield yield -> (
               let resume = Flow.Yield.set_state (Flow.Yield.state yield + 1) yield in
               Flow.resume () resume flow
               >>= function
               | `Success n ->
-                  assert (n = 3);
+                  Oth.Assert.Eq.int ~expected:3 ~actual:n;
                   Abb.Future.return ()
-              | `Failure _ -> assert false
-              | `Yield _ -> assert false)))
+              | `Failure _ ->
+                  Oth.Assert.false_ "Yield with choice and multiple resumes: unexpected value"
+              | `Yield _ ->
+                  Oth.Assert.false_ "Yield with choice and multiple resumes: unexpected value")))
 
 let test_yield_serialization =
   Oth_abb.test ~name:"Yield serialization" (fun _ ->
@@ -260,7 +264,7 @@ let test_yield_serialization =
       let open Abb.Future.Infix_monad in
       Flow.run () 0 flow
       >>= function
-      | `Success _ -> assert false
+      | `Success _ -> Oth.Assert.false_ "Yield serialization: unexpected value"
       | `Failure _ -> Abb.Future.return ()
       | `Yield yield -> (
           let yield = Flow.Yield.to_string yield in
@@ -269,10 +273,10 @@ let test_yield_serialization =
           Flow.resume () resume flow
           >>= function
           | `Success n ->
-              assert (n = 2);
+              Oth.Assert.Eq.int ~expected:2 ~actual:n;
               Abb.Future.return ()
-          | `Failure _ -> assert false
-          | `Yield _ -> assert false))
+          | `Failure _ -> Oth.Assert.false_ "Yield serialization: unexpected value"
+          | `Yield _ -> Oth.Assert.false_ "Yield serialization: unexpected value"))
 
 let test_exception =
   Oth_abb.test ~name:"Exception" (fun _ ->
@@ -281,10 +285,10 @@ let test_exception =
       let open Abb.Future.Infix_monad in
       Flow.run () 0 flow
       >>= function
-      | `Success _ -> assert false
+      | `Success _ -> Oth.Assert.false_ "Exception: unexpected value"
       | `Failure (`Step_exn_err _) -> Abb.Future.return ()
-      | `Failure (`Step_err _) -> assert false
-      | `Yield _ -> assert false)
+      | `Failure (`Step_err _) -> Oth.Assert.false_ "Exception: unexpected value"
+      | `Yield _ -> Oth.Assert.false_ "Exception: unexpected value")
 
 let test_finally_success =
   Oth_abb.test ~name:"Finally success" (fun _ ->
@@ -318,10 +322,10 @@ let test_finally_success =
       Flow.run () 0 flow
       >>= function
       | `Success _ ->
-          assert (!v = 2);
+          Oth.Assert.Eq.int ~expected:2 ~actual:!v;
           Abb.Future.return ()
-      | `Failure _ -> assert false
-      | `Yield _ -> assert false)
+      | `Failure _ -> Oth.Assert.false_ "Finally success: unexpected value"
+      | `Yield _ -> Oth.Assert.false_ "Finally success: unexpected value")
 
 let test_finally_failure =
   Oth_abb.test ~name:"Finally failure" (fun _ ->
@@ -354,11 +358,11 @@ let test_finally_failure =
       let open Abb.Future.Infix_monad in
       Flow.run () 0 flow
       >>= function
-      | `Success _ -> assert false
+      | `Success _ -> Oth.Assert.false_ "Finally failure: unexpected value"
       | `Failure _ ->
-          assert (!v = 2);
+          Oth.Assert.Eq.int ~expected:2 ~actual:!v;
           Abb.Future.return ()
-      | `Yield _ -> assert false)
+      | `Yield _ -> Oth.Assert.false_ "Finally failure: unexpected value")
 
 let test_finally_yield =
   Oth_abb.test ~name:"Finally yield" (fun _ ->
@@ -401,23 +405,23 @@ let test_finally_yield =
       let open Abb.Future.Infix_monad in
       Flow.run () 0 flow
       >>= function
-      | `Success _ -> assert false
-      | `Failure _ -> assert false
+      | `Success _ -> Oth.Assert.false_ "Finally yield: unexpected value"
+      | `Failure _ -> Oth.Assert.false_ "Finally yield: unexpected value"
       | `Yield resume -> (
-          assert (!v = 2);
+          Oth.Assert.Eq.int ~expected:2 ~actual:!v;
           Flow.resume () resume flow
           >>= function
-          | `Success _ -> assert false
-          | `Failure _ -> assert false
+          | `Success _ -> Oth.Assert.false_ "Finally yield: unexpected value"
+          | `Failure _ -> Oth.Assert.false_ "Finally yield: unexpected value"
           | `Yield resume -> (
-              assert (!v = 3);
+              Oth.Assert.Eq.int ~expected:3 ~actual:!v;
               Flow.resume () resume flow
               >>= function
               | `Success _ ->
-                  assert (!v = 5);
+                  Oth.Assert.Eq.int ~expected:5 ~actual:!v;
                   Abb.Future.return ()
-              | `Failure _ -> assert false
-              | `Yield _ -> assert false)))
+              | `Failure _ -> Oth.Assert.false_ "Finally yield: unexpected value"
+              | `Yield _ -> Oth.Assert.false_ "Finally yield: unexpected value")))
 
 let test_recover_success =
   Oth_abb.test ~name:"Recover success" (fun _ ->
@@ -455,10 +459,10 @@ let test_recover_success =
       Flow.run () 0 flow
       >>= function
       | `Success _ ->
-          assert (!v = 1);
+          Oth.Assert.Eq.int ~expected:1 ~actual:!v;
           Abb.Future.return ()
-      | `Failure _ -> assert false
-      | `Yield _ -> assert false)
+      | `Failure _ -> Oth.Assert.false_ "Recover success: unexpected value"
+      | `Yield _ -> Oth.Assert.false_ "Recover success: unexpected value")
 
 let test_recover_failure =
   Oth_abb.test ~name:"Recover failure" (fun _ ->
@@ -496,10 +500,10 @@ let test_recover_failure =
       Flow.run () 0 flow
       >>= function
       | `Success _ ->
-          assert (!v = 2);
+          Oth.Assert.Eq.int ~expected:2 ~actual:!v;
           Abb.Future.return ()
-      | `Failure _ -> assert false
-      | `Yield _ -> assert false)
+      | `Failure _ -> Oth.Assert.false_ "Recover failure: unexpected value"
+      | `Yield _ -> Oth.Assert.false_ "Recover failure: unexpected value")
 
 let test_recover_yield_success =
   Oth_abb.test ~name:"Finally yield success" (fun _ ->
@@ -546,23 +550,23 @@ let test_recover_yield_success =
       let open Abb.Future.Infix_monad in
       Flow.run () 0 flow
       >>= function
-      | `Success _ -> assert false
-      | `Failure _ -> assert false
+      | `Success _ -> Oth.Assert.false_ "Finally yield success: unexpected value"
+      | `Failure _ -> Oth.Assert.false_ "Finally yield success: unexpected value"
       | `Yield resume -> (
-          assert (!v = 2);
+          Oth.Assert.Eq.int ~expected:2 ~actual:!v;
           Flow.resume () resume flow
           >>= function
-          | `Success _ -> assert false
-          | `Failure _ -> assert false
+          | `Success _ -> Oth.Assert.false_ "Finally yield success: unexpected value"
+          | `Failure _ -> Oth.Assert.false_ "Finally yield success: unexpected value"
           | `Yield resume -> (
-              assert (!v = 3);
+              Oth.Assert.Eq.int ~expected:3 ~actual:!v;
               Flow.resume () resume flow
               >>= function
               | `Success _ ->
-                  assert (!v = 4);
+                  Oth.Assert.Eq.int ~expected:4 ~actual:!v;
                   Abb.Future.return ()
-              | `Failure _ -> assert false
-              | `Yield _ -> assert false)))
+              | `Failure _ -> Oth.Assert.false_ "Finally yield success: unexpected value"
+              | `Yield _ -> Oth.Assert.false_ "Finally yield success: unexpected value")))
 
 let test_recover_yield_failure =
   Oth_abb.test ~name:"Finally yield failure" (fun _ ->
@@ -609,23 +613,23 @@ let test_recover_yield_failure =
       let open Abb.Future.Infix_monad in
       Flow.run () 0 flow
       >>= function
-      | `Success _ -> assert false
-      | `Failure _ -> assert false
+      | `Success _ -> Oth.Assert.false_ "Finally yield failure: unexpected value"
+      | `Failure _ -> Oth.Assert.false_ "Finally yield failure: unexpected value"
       | `Yield resume -> (
-          assert (!v = 2);
+          Oth.Assert.Eq.int ~expected:2 ~actual:!v;
           Flow.resume () resume flow
           >>= function
-          | `Success _ -> assert false
-          | `Failure _ -> assert false
+          | `Success _ -> Oth.Assert.false_ "Finally yield failure: unexpected value"
+          | `Failure _ -> Oth.Assert.false_ "Finally yield failure: unexpected value"
           | `Yield resume -> (
-              assert (!v = 3);
+              Oth.Assert.Eq.int ~expected:3 ~actual:!v;
               Flow.resume () resume flow
               >>= function
               | `Success _ ->
-                  assert (!v = 5);
+                  Oth.Assert.Eq.int ~expected:5 ~actual:!v;
                   Abb.Future.return ()
-              | `Failure _ -> assert false
-              | `Yield _ -> assert false)))
+              | `Failure _ -> Oth.Assert.false_ "Finally yield failure: unexpected value"
+              | `Yield _ -> Oth.Assert.false_ "Finally yield failure: unexpected value")))
 
 let test_recover_failure_yield_success =
   Oth_abb.test ~name:"Finally failure yield success" (fun _ ->
@@ -672,48 +676,51 @@ let test_recover_failure_yield_success =
       let open Abb.Future.Infix_monad in
       Flow.run () 0 flow
       >>= function
-      | `Success _ -> assert false
-      | `Failure _ -> assert false
+      | `Success _ -> Oth.Assert.false_ "Finally failure yield success: unexpected value"
+      | `Failure _ -> Oth.Assert.false_ "Finally failure yield success: unexpected value"
       | `Yield resume -> (
-          assert (!v = 3);
+          Oth.Assert.Eq.int ~expected:3 ~actual:!v;
           Flow.resume () resume flow
           >>= function
-          | `Success _ -> assert false
-          | `Failure _ -> assert false
+          | `Success _ -> Oth.Assert.false_ "Finally failure yield success: unexpected value"
+          | `Failure _ -> Oth.Assert.false_ "Finally failure yield success: unexpected value"
           | `Yield resume -> (
-              assert (!v = 4);
+              Oth.Assert.Eq.int ~expected:4 ~actual:!v;
               Flow.resume () resume flow
               >>= function
               | `Success _ ->
-                  assert (!v = 5);
+                  Oth.Assert.Eq.int ~expected:5 ~actual:!v;
                   Abb.Future.return ()
-              | `Failure _ -> assert false
-              | `Yield _ -> assert false)))
+              | `Failure _ -> Oth.Assert.false_ "Finally failure yield success: unexpected value"
+              | `Yield _ -> Oth.Assert.false_ "Finally failure yield success: unexpected value")))
 
 let test =
   Oth_abb.(
-    to_sync_test
-      (parallel
-         [
-           test_success;
-           test_failure;
-           test_yield;
-           test_exit_early;
-           test_multistep_flow;
-           test_yield_with_choice;
-           test_yield_with_choice_and_multiple_resumes;
-           test_yield_serialization;
-           test_exception;
-           test_finally_success;
-           test_finally_failure;
-           test_finally_yield;
-           test_recover_success;
-           test_recover_failure;
-           test_recover_yield_success;
-           test_recover_yield_failure;
-           test_recover_failure_yield_success;
-         ]))
+    parallel
+      [
+        test_success;
+        test_failure;
+        test_yield;
+        test_exit_early;
+        test_multistep_flow;
+        test_yield_with_choice;
+        test_yield_with_choice_and_multiple_resumes;
+        test_yield_serialization;
+        test_exception;
+        test_finally_success;
+        test_finally_failure;
+        test_finally_yield;
+        test_recover_success;
+        test_recover_failure;
+        test_recover_yield_success;
+        test_recover_yield_failure;
+        test_recover_failure_yield_success;
+      ])
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth_abb.run
+    ~file:__FILE__
+    ~setup:(fun () -> Abb.Future.return (Ok ()))
+    ~teardown:(fun () -> Abb.Future.return ())
+    (fun () -> test)

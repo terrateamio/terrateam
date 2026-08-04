@@ -19,7 +19,7 @@ let wall_diff_prop =
       let diff = Time.Wall.diff t1 t2 in
       let add_t2 = Time.Wall.add t1 diff in
       let diff' = abs_float (Abb_time.Span.to_sec (Time.Wall.diff t2 add_t2)) in
-      assert (diff' <= epsilon_float))
+      Oth.Assert.true_ "diff' <= epsilon_float" (diff' <= epsilon_float))
 
 let mono_diff_prop =
   Oth.test ~desc:"Monotonic diff property" ~name:"Monotonic diff property" (fun _ ->
@@ -31,8 +31,13 @@ let mono_diff_prop =
       let diff = Time.Mono.diff t1 t2 in
       let add_t2 = Time.Mono.add t1 diff in
       let diff' = abs_float (Abb_time.Span.to_sec (Time.Mono.diff t2 add_t2)) in
-      assert (diff' <= epsilon_float))
+      Oth.Assert.true_ "diff' <= epsilon_float" (diff' <= epsilon_float))
 
 let () =
   Random.self_init ();
-  Oth.(run ~file:__FILE__ (parallel [ loop 10 wall_diff_prop; loop 10 mono_diff_prop ]))
+  Oth.(
+    run
+      ~file:__FILE__
+      ~setup:(fun () -> Ok ())
+      ~teardown:(fun _ -> ())
+      (fun _ -> parallel [ loop 10 wall_diff_prop; loop 10 mono_diff_prop ]))

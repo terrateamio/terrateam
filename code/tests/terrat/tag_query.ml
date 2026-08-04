@@ -48,7 +48,9 @@ let test_simple_match =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_simple_no_match =
   Oth.test ~name:"Simple no match" (fun _ ->
@@ -56,7 +58,9 @@ let test_simple_no_match =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
+      Oth.Assert.true_
+        "not (Terrat_tag_query.match_ ~ctx ~tag_set query)"
+        (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
 
 let test_simple_and =
   Oth.test ~name:"Simple and" (fun _ ->
@@ -64,7 +68,9 @@ let test_simple_and =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_dir_glob_at_start =
   Oth.test ~name:"Simple Dir glob at start" (fun _ ->
@@ -72,7 +78,9 @@ let test_dir_glob_at_start =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_dir_glob_inner =
   Oth.test ~name:"Simple Dir glob inner" (fun _ ->
@@ -80,7 +88,9 @@ let test_dir_glob_inner =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_dir_glob_at_end =
   Oth.test ~name:"Simple Dir glob at end" (fun _ ->
@@ -88,7 +98,9 @@ let test_dir_glob_at_end =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_dir_glob_cross_dirs =
   Oth.test ~name:"Simple Dir glob cross dirs" (fun _ ->
@@ -96,7 +108,9 @@ let test_dir_glob_cross_dirs =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_dir_glob_not_match_partial =
   Oth.test ~name:"Simple Dir glob does not match partial" (fun _ ->
@@ -104,7 +118,9 @@ let test_dir_glob_not_match_partial =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
+      Oth.Assert.true_
+        "not (Terrat_tag_query.match_ ~ctx ~tag_set query)"
+        (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
 
 let test_dir_glob_no_match_with_slashes =
   Oth.test ~name:"Simple Dir glob does not match with slashes" (fun _ ->
@@ -112,7 +128,9 @@ let test_dir_glob_no_match_with_slashes =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
+      Oth.Assert.true_
+        "not (Terrat_tag_query.match_ ~ctx ~tag_set query)"
+        (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
 
 let test_bad_glob =
   Oth.test ~name:"Bad glob" (fun _ ->
@@ -120,7 +138,9 @@ let test_bad_glob =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
+      Oth.Assert.true_
+        "not (Terrat_tag_query.match_ ~ctx ~tag_set query)"
+        (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
 
 let test_query_with_extra_spaces =
   Oth.test ~name:"Query with extra spaces" (fun _ ->
@@ -128,7 +148,9 @@ let test_query_with_extra_spaces =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_complex_query_match =
   Oth.test ~name:"Complex query match" (fun _ ->
@@ -136,7 +158,9 @@ let test_complex_query_match =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_complex_query_no_match =
   Oth.test ~name:"Complex query no match" (fun _ ->
@@ -144,7 +168,9 @@ let test_complex_query_no_match =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
+      Oth.Assert.true_
+        "not (Terrat_tag_query.match_ ~ctx ~tag_set query)"
+        (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
 
 let test_empty_query =
   Oth.test ~name:"Empty query" (fun _ ->
@@ -152,7 +178,9 @@ let test_empty_query =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_and =
   Oth.test ~name:"And" (fun _ ->
@@ -160,7 +188,9 @@ let test_and =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_and_precedence_1 =
   Oth.test ~name:"And precedence 1" (fun _ ->
@@ -168,7 +198,9 @@ let test_and_precedence_1 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_and_precedence_2 =
   Oth.test ~name:"And precedence 2" (fun _ ->
@@ -176,7 +208,9 @@ let test_and_precedence_2 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_and_precedence_3 =
   Oth.test ~name:"And precedence 3" (fun _ ->
@@ -184,7 +218,9 @@ let test_and_precedence_3 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
+      Oth.Assert.true_
+        "not (Terrat_tag_query.match_ ~ctx ~tag_set query)"
+        (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
 
 let test_or_1 =
   Oth.test ~name:"Or 1" (fun _ ->
@@ -192,7 +228,9 @@ let test_or_1 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_or_2 =
   Oth.test ~name:"Or 2" (fun _ ->
@@ -200,7 +238,9 @@ let test_or_2 =
       let tag_set = Terrat_tag_set.of_list [ "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_parens_1 =
   Oth.test ~name:"Parens 1" (fun _ ->
@@ -208,7 +248,9 @@ let test_parens_1 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_parens_with_and =
   Oth.test ~name:"Parens with and" (fun _ ->
@@ -216,7 +258,9 @@ let test_parens_with_and =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_parens_with_or =
   Oth.test ~name:"Parens with or" (fun _ ->
@@ -224,7 +268,9 @@ let test_parens_with_or =
       let tag_set = Terrat_tag_set.of_list [ "a"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_parens_2 =
   Oth.test ~name:"Parens 2" (fun _ ->
@@ -232,7 +278,9 @@ let test_parens_2 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_parens_no_match_1 =
   Oth.test ~name:"Parens no match 1" (fun _ ->
@@ -240,7 +288,9 @@ let test_parens_no_match_1 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
+      Oth.Assert.true_
+        "not (Terrat_tag_query.match_ ~ctx ~tag_set query)"
+        (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
 
 let test_not_1 =
   Oth.test ~name:"Not 1" (fun _ ->
@@ -248,7 +298,9 @@ let test_not_1 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
+      Oth.Assert.true_
+        "not (Terrat_tag_query.match_ ~ctx ~tag_set query)"
+        (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
 
 let test_not_2 =
   Oth.test ~name:"Not 2" (fun _ ->
@@ -256,7 +308,9 @@ let test_not_2 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_not_3 =
   Oth.test ~name:"Not 3" (fun _ ->
@@ -264,7 +318,9 @@ let test_not_3 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_not_4 =
   Oth.test ~name:"Not 4" (fun _ ->
@@ -272,7 +328,9 @@ let test_not_4 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_not_5 =
   Oth.test ~name:"Not 5" (fun _ ->
@@ -280,7 +338,9 @@ let test_not_5 =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
+      Oth.Assert.true_
+        "not (Terrat_tag_query.match_ ~ctx ~tag_set query)"
+        (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
 
 let test_not_6 =
   Oth.test ~name:"Not 6" (fun _ ->
@@ -288,7 +348,9 @@ let test_not_6 =
       let tag_set = Terrat_tag_set.of_list [ "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
+      Oth.Assert.true_
+        "not (Terrat_tag_query.match_ ~ctx ~tag_set query)"
+        (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
 
 let test_complex_1 =
   Oth.test ~name:"Complex 1" (fun _ ->
@@ -296,7 +358,9 @@ let test_complex_1 =
       let tag_set = Terrat_tag_set.of_list [ "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_complex_2 =
   Oth.test ~name:"Complex 2" (fun _ ->
@@ -304,113 +368,146 @@ let test_complex_2 =
       let tag_set = Terrat_tag_set.of_list [ "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
+      Oth.Assert.true_
+        "not (Terrat_tag_query.match_ ~ctx ~tag_set query)"
+        (not (Terrat_tag_query.match_ ~ctx ~tag_set query)))
 
 let test_to_string =
   Oth.test ~name:"To string" (fun _ ->
       let s = "a                  b   bar/baz in dir" in
       let query = of_string_exn s in
-      assert (Terrat_tag_query.to_string query = s))
+      Oth.Assert.true_ "Terrat_tag_query.to_string query = s" (Terrat_tag_query.to_string query = s))
 
 let test_parse_failure_1 =
   Oth.test ~name:"Parse failure 1" (fun _ ->
       let query = "()" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.lparen_rparen))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.lparen_rparen)) = Terrat_tag_query.of_string \
+         query"
+        (Error (`Tag_query_error (query, Parse_errors.lparen_rparen))
         = Terrat_tag_query.of_string query))
 
 let test_parse_failure_2 =
   Oth.test ~name:"Parse failure 2" (fun _ ->
       let query = ")" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.rparen)) = Terrat_tag_query.of_string query))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.rparen)) = Terrat_tag_query.of_string query"
+        (Error (`Tag_query_error (query, Parse_errors.rparen)) = Terrat_tag_query.of_string query))
 
 let test_parse_failure_3 =
   Oth.test ~name:"Parse failure 3" (fun _ ->
       let query = "(not)" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.not_rparen)) = Terrat_tag_query.of_string query))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.not_rparen)) = Terrat_tag_query.of_string \
+         query"
+        (Error (`Tag_query_error (query, Parse_errors.not_rparen))
+        = Terrat_tag_query.of_string query))
 
 let test_parse_failure_4 =
   Oth.test ~name:"Parse failure 4" (fun _ ->
       let query = "\"foo" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.premature_end_of_string "foo"))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.premature_end_of_string \"foo\")) = \
+         Terrat_tag_query.of_string query"
+        (Error (`Tag_query_error (query, Parse_errors.premature_end_of_string "foo"))
         = Terrat_tag_query.of_string query))
 
 let test_parse_failure_5 =
   Oth.test ~name:"Parse failure 5" (fun _ ->
       let query = "'foo" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.premature_end_of_string "foo"))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.premature_end_of_string \"foo\")) = \
+         Terrat_tag_query.of_string query"
+        (Error (`Tag_query_error (query, Parse_errors.premature_end_of_string "foo"))
         = Terrat_tag_query.of_string query))
 
 let test_parse_failure_6 =
   Oth.test ~name:"Parse failure 6" (fun _ ->
       let query = "and foo" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.rparen)) = Terrat_tag_query.of_string query))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.rparen)) = Terrat_tag_query.of_string query"
+        (Error (`Tag_query_error (query, Parse_errors.rparen)) = Terrat_tag_query.of_string query))
 
 let test_parse_failure_7 =
   Oth.test ~name:"Parse failure 7" (fun _ ->
       let query = "not)" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.not_rparen)) = Terrat_tag_query.of_string query))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.not_rparen)) = Terrat_tag_query.of_string \
+         query"
+        (Error (`Tag_query_error (query, Parse_errors.not_rparen))
+        = Terrat_tag_query.of_string query))
 
 let test_parse_failure_8 =
   Oth.test ~name:"Parse failure 8" (fun _ ->
       let query = "not ()" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.lparen_rparen))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.lparen_rparen)) = Terrat_tag_query.of_string \
+         query"
+        (Error (`Tag_query_error (query, Parse_errors.lparen_rparen))
         = Terrat_tag_query.of_string query))
 
 let test_parse_failure_9 =
   Oth.test ~name:"Parse failure 9" (fun _ ->
       let query = "(foo" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.lparen_tag_eof))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.lparen_tag_eof)) = \
+         Terrat_tag_query.of_string query"
+        (Error (`Tag_query_error (query, Parse_errors.lparen_tag_eof))
         = Terrat_tag_query.of_string query))
 
 let test_parse_failure_10 =
   Oth.test ~name:"Parse failure 10" (fun _ ->
       let query = "(foo or)" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.tag_or_rparen))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.tag_or_rparen)) = Terrat_tag_query.of_string \
+         query"
+        (Error (`Tag_query_error (query, Parse_errors.tag_or_rparen))
         = Terrat_tag_query.of_string query))
 
 let test_parse_failure_11 =
   Oth.test ~name:"Parse failure 11" (fun _ ->
       let query = "(foo and)" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.tag_and_rparen))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.tag_and_rparen)) = \
+         Terrat_tag_query.of_string query"
+        (Error (`Tag_query_error (query, Parse_errors.tag_and_rparen))
         = Terrat_tag_query.of_string query))
 
 let test_parse_failure_12 =
   Oth.test ~name:"Parse failure 12" (fun _ ->
       let query = "foo and)" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.tag_and_rparen))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.tag_and_rparen)) = \
+         Terrat_tag_query.of_string query"
+        (Error (`Tag_query_error (query, Parse_errors.tag_and_rparen))
         = Terrat_tag_query.of_string query))
 
 let test_parse_failure_13 =
   Oth.test ~name:"Parse failure 13" (fun _ ->
       let query = "foo)" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.tag_rparen)) = Terrat_tag_query.of_string query))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.tag_rparen)) = Terrat_tag_query.of_string \
+         query"
+        (Error (`Tag_query_error (query, Parse_errors.tag_rparen))
+        = Terrat_tag_query.of_string query))
 
 let test_parse_failure_14 =
   Oth.test ~name:"Parse failure 14" (fun _ ->
       let query = "not (foo" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.not_lparen_tag_eof))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.not_lparen_tag_eof)) = \
+         Terrat_tag_query.of_string query"
+        (Error (`Tag_query_error (query, Parse_errors.not_lparen_tag_eof))
         = Terrat_tag_query.of_string query))
 
 let test_parse_failure_15 =
   Oth.test ~name:"Parse failure 15" (fun _ ->
       let query = "foo in bar" in
       print_of_string (Terrat_tag_query.of_string query);
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.in_dir_tag_error "bar"))
+      Oth.Assert.true_
+        "Error (`Tag_query_error (query, Parse_errors.in_dir_tag_error \"bar\")) = \
+         Terrat_tag_query.of_string query"
+        (Error (`Tag_query_error (query, Parse_errors.in_dir_tag_error "bar"))
         = Terrat_tag_query.of_string query))
 
 let test_quote_1 =
@@ -419,7 +516,9 @@ let test_quote_1 =
       let tag_set = Terrat_tag_set.of_list [ "not"; "and"; "or" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_quote_2 =
   Oth.test ~name:"Quote 2" (fun _ ->
@@ -427,7 +526,9 @@ let test_quote_2 =
       let tag_set = Terrat_tag_set.of_list [ "not"; "and"; "or" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_quote_3 =
   Oth.test ~name:"Quote 3" (fun _ ->
@@ -435,7 +536,9 @@ let test_quote_3 =
       let tag_set = Terrat_tag_set.of_list [ "not"; "and"; "or" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_quote_escape_1 =
   Oth.test ~name:"Quote escape 1" (fun _ ->
@@ -443,7 +546,9 @@ let test_quote_escape_1 =
       let tag_set = Terrat_tag_set.of_list [ "foo'bar" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_quote_escape_2 =
   Oth.test ~name:"Quote escape 2" (fun _ ->
@@ -451,7 +556,9 @@ let test_quote_escape_2 =
       let tag_set = Terrat_tag_set.of_list [ "foo\"bar" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test_deprecated_dir_glob =
   Oth.test ~name:"Deprecated dir glob" (fun _ ->
@@ -459,7 +566,9 @@ let test_deprecated_dir_glob =
       let tag_set = Terrat_tag_set.of_list [ "a"; "b"; "c" ] in
       let dirspace = Terrat_change.Dirspace.{ dir = "foo/bar/baz/zoom"; workspace = "default" } in
       let ctx = Terrat_tag_query.Ctx.make ~dirspace () in
-      assert (Terrat_tag_query.match_ ~ctx ~tag_set query))
+      Oth.Assert.true_
+        "Terrat_tag_query.match_ ~ctx ~tag_set query"
+        (Terrat_tag_query.match_ ~ctx ~tag_set query))
 
 let test =
   Oth.parallel
@@ -524,4 +633,4 @@ let test =
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)
