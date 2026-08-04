@@ -1117,7 +1117,9 @@ let test_recursive_dirs_without_tags =
              repo_config)
       in
       let changes = CCList.flatten (Terrat_change_match3.match_diff_list dirs diff) in
-      assert (CCList.length changes = 1);
+      (* Both changed dirs match: aws/prod/us-east-1 (via aws/**/terragrunt.hcl) and
+         aws/prod/secrets-manager/us-east-1 (also via aws/**/secrets-manager/**/...). *)
+      assert (CCList.length changes = 2);
       CCList.iter
         (fun {
                Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ };
