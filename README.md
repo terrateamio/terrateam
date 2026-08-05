@@ -5,7 +5,7 @@
   </picture>
 </p>
 <p align="center">
-  <a href="https://github.com/terrateamio/terrateam/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/terrateamio/terrateam"></a>
+  <a href="https://github.com/stategraph/stategraph/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/stategraph/stategraph"></a>
   <a href="https://terrateam.io/slack"><img alt="Join our Slack" src="https://img.shields.io/badge/slack-join%20chat-blue"></a>
   <a href="https://github.com/terrateamio/mono/releases"><img alt="Latest Release" src="https://img.shields.io/github/v/release/terrateamio/mono?color=%239F50DA"></a>
   <a href="https://ocaml.org"><img alt="OCaml" src="https://img.shields.io/badge/OCaml-EC6813?logo=ocaml&logoColor=fff"></a>
@@ -70,7 +70,7 @@ While others built for simple workflows, we engineered for reality:
 
 ```bash
 # Clone the repository
-git clone https://github.com/terrateamio/terrateam
+git clone https://github.com/stategraph/stategraph
 cd terrateam/docker/terrat
 
 # Run the setup
