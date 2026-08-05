@@ -6,8 +6,10 @@ let push_oprev n =
   Revops.Oprev.make
     (fun () -> state := n :: !state)
     (fun () ->
-      assert (List.hd !state = n);
+      Oth.Assert.true_ "List.hd !state = n" (List.hd !state = n);
       state := List.tl !state)
 
 let () =
-  Revops.run_in_context Revops.(push_oprev 1 +* push_oprev 2) (fun _ -> assert (!state = [ 2; 1 ]))
+  Revops.run_in_context
+    Revops.(push_oprev 1 +* push_oprev 2)
+    (fun _ -> Oth.Assert.true_ "!state = [ 2; 1 ]" (!state = [ 2; 1 ]))

@@ -10,8 +10,6 @@
   containers
   duration
   logs
-  oth
-  oth_abb
   uri
   ppx_deriving)
  (preprocess

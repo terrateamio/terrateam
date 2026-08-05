@@ -45,7 +45,7 @@ module H = struct
     | es ->
         Printf.printf "\n\tQUERY COMMENT_ID INPUT: %s%!\n" (Eh.show_el el1);
         Printf.printf "\n\tQUERY COMMENT_ID LOG: %s%!\n" (Eh.show_commands es);
-        assert false
+        Oth.Assert.false_ "test: unexpected value"
 
   let query_els_for_comment_id t cid =
     match !t with
@@ -56,7 +56,7 @@ module H = struct
     | es ->
         Printf.printf "\n\tQUERY ELS INPUT: %d%!\n" cid;
         Printf.printf "\n\tQUERY ELS FOR COMMENT_ID LOG: %s%!\n" (Eh.show_commands es);
-        assert false
+        Oth.Assert.false_ "test: unexpected value"
 
   let upsert_comment_id t _els cid =
     match !t with
@@ -67,13 +67,13 @@ module H = struct
     | es ->
         Printf.printf "\n\tUPSERT INPUT: %d%!\n" cid;
         Printf.printf "\n\tUPSERT LOG: %s%!\n" (Eh.show_commands es);
-        assert false
+        Oth.Assert.false_ "test: unexpected value"
 
   let delete_comment t cid =
     let es = !t in
     Printf.printf "\n\tDELETE INPUT: %d%!\n" cid;
     Printf.printf "\n\tDELETE LOG: %s%!\n" (Eh.show_commands es);
-    assert false
+    Oth.Assert.false_ "test: unexpected value"
 
   let minimize_comment t cid =
     match !t with
@@ -84,7 +84,7 @@ module H = struct
     | es ->
         Printf.printf "\n\tMINIMIZE INPUT: %d%!\n" cid;
         Printf.printf "\n\tMINIMIZE LOG: %s%!\nCID_INPUT=%d\n%!" (Eh.show_commands es) cid;
-        assert false
+        Oth.Assert.false_ "test: unexpected value"
 
   let post_comment t els =
     match !t with
@@ -96,7 +96,7 @@ module H = struct
         let show = [%show: Eh.el list] in
         Printf.printf "\n\tPOST COMMENT INPUTS: %s%!\n" (show els);
         Printf.printf "\n\tPOST COMMENT LOG: %s%!\n" (Eh.show_commands es);
-        assert false
+        Oth.Assert.false_ "test: unexpected value"
 
   let rendered_length _ els = CCList.fold_left (fun acc el -> acc + el.Eh.rendered_length) 0 els
   let dirspace el = el.Eh.dirspace
@@ -152,7 +152,7 @@ module Make_wrapper = struct
         | [] -> Abb.Future.return (Ok ())
         | es ->
             Printf.printf "\n\tT: %s%!\n" (Eh.show_commands es);
-            assert false)
+            Oth.Assert.false_ "test: unexpected value")
     | Error e -> Abb.Future.return (Error e)
 end
 
@@ -165,7 +165,7 @@ let test_basic =
         Make_wrapper.run t els
         >>= function
         | Ok () -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Basic] Empty elements: unexpected value")
   in
   let simple_post =
     Oth_abb.test ~name:"[Basic] Single post comment flow" (fun () ->
@@ -178,7 +178,7 @@ let test_basic =
         Make_wrapper.run t els
         >>= function
         | Ok _ -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Basic] Single post comment flow: unexpected value")
   in
   Oth_abb.parallel [ simple_post ]
 
@@ -194,9 +194,9 @@ let test_errors =
         let t = ref [ Eh.Post_comment (els, Error `Error) ] in
         Make_wrapper.run t els
         >>= function
-        | Ok _ -> assert false
+        | Ok _ -> Oth.Assert.false_ "[Error] Check error handling: unexpected value"
         | Error `Error -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Error] Check error handling: unexpected value")
   in
   Oth_abb.parallel [ post_comment ]
 
@@ -234,7 +234,7 @@ let test_append_strategy =
         Make_wrapper.run t els
         >>= function
         | Ok () -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Append] Multiple Small #1: unexpected value")
   in
   let multiple_big =
     Oth_abb.test
@@ -258,7 +258,7 @@ let test_append_strategy =
         Make_wrapper.run t els
         >>= function
         | Ok _ -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Append] Multiple Big #1: unexpected value")
   in
   let multiple_mixed =
     Oth_abb.test
@@ -292,7 +292,7 @@ let test_append_strategy =
         Make_wrapper.run t els
         >>= function
         | Ok () -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Append] Mixed #1: unexpected value")
   in
   Oth_abb.parallel [ multiple_small; multiple_big; multiple_mixed ]
 
@@ -333,7 +333,7 @@ let test_delete_strategy =
         Make_wrapper.run t els
         >>= function
         | Ok () -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Delete] Multiple Small #1: unexpected value")
   in
   let multiple_big =
     Oth_abb.test
@@ -366,7 +366,7 @@ let test_delete_strategy =
         Make_wrapper.run t els
         >>= function
         | Ok _ -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Delete] Multiple Big #1: unexpected value")
   in
   let multiple_mixed =
     Oth_abb.test
@@ -404,7 +404,7 @@ let test_delete_strategy =
         Make_wrapper.run t els
         >>= function
         | Ok () -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Delete] Mixed #1: unexpected value")
   in
   Oth_abb.parallel [ multiple_small; multiple_big; multiple_mixed ]
 
@@ -445,7 +445,7 @@ let test_minimize_strategy =
         Make_wrapper.run t els
         >>= function
         | Ok () -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Minimize] Multiple Small #1: unexpected value")
   in
   let multiple_small_with_two_groupings =
     Oth_abb.test
@@ -482,7 +482,7 @@ let test_minimize_strategy =
         Make_wrapper.run t els
         >>= function
         | Ok () -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Minimize] Multiple Small #2: unexpected value")
   in
   let multiple_small_with_old_comment =
     Oth_abb.test
@@ -534,8 +534,8 @@ let test_minimize_strategy =
             Make_wrapper.run t2 els2
             >>= function
             | Ok () -> Abb.Future.return ()
-            | Error _ -> assert false)
-        | Error _ -> assert false)
+            | Error _ -> Oth.Assert.false_ "[Minimize] Multiple Small #3: unexpected value")
+        | Error _ -> Oth.Assert.false_ "[Minimize] Multiple Small #3: unexpected value")
   in
   let multiple_big =
     Oth_abb.test
@@ -568,7 +568,7 @@ let test_minimize_strategy =
         Make_wrapper.run t els
         >>= function
         | Ok _ -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Minimize] Multiple Big #1: unexpected value")
   in
   let multiple_big_with_old_comment =
     Oth_abb.test
@@ -623,8 +623,8 @@ let test_minimize_strategy =
             Make_wrapper.run t2 els2
             >>= function
             | Ok () -> Abb.Future.return ()
-            | Error _ -> assert false)
-        | Error _ -> assert false)
+            | Error _ -> Oth.Assert.false_ "[Minimize] Multiple Big #2: unexpected value")
+        | Error _ -> Oth.Assert.false_ "[Minimize] Multiple Big #2: unexpected value")
   in
   let multiple_mixed =
     Oth_abb.test
@@ -662,7 +662,7 @@ let test_minimize_strategy =
         Make_wrapper.run t els
         >>= function
         | Ok () -> Abb.Future.return ()
-        | Error _ -> assert false)
+        | Error _ -> Oth.Assert.false_ "[Minimize] Mixed #1: unexpected value")
   in
   Oth_abb.parallel
     [
@@ -676,16 +676,15 @@ let test_minimize_strategy =
 
 let test =
   Oth_abb.(
-    to_sync_test
-      (parallel
-         [
-           test_basic;
-           test_errors;
-           test_append_strategy;
-           test_delete_strategy;
-           test_minimize_strategy;
-         ]))
+    parallel
+      [
+        test_basic; test_errors; test_append_strategy; test_delete_strategy; test_minimize_strategy;
+      ])
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth_abb.run
+    ~file:__FILE__
+    ~setup:(fun () -> Abb.Future.return (Ok ()))
+    ~teardown:(fun () -> Abb.Future.return ())
+    (fun () -> test)

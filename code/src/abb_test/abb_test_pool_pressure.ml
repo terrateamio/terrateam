@@ -5,7 +5,7 @@
    runs unpinned task work on the loop domain instead of queueing it
    behind whatever is occupying the pool.  These tests construct
    saturation deliberately by parking [Thread.run] payloads on a held
-   [Mutex], then assert (a) where the work actually ran (using
+   [Mutex], then Oth.Assert.true_ "a" (a) where the work actually ran (using
    [Domain.self ()]) and (b) that it completed.
 
    A separate test, on multi-core machines, asserts that unpinned task

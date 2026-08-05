@@ -33,6 +33,17 @@ let tests =
     ("([fb-c[)E", false);
   ]
 
-let test_pat pat res _ = assert (res = CCOption.is_some (Lua_pattern.of_string pat))
+let test_pat pat res _ =
+  Oth.Assert.true_
+    "res = CCOption.is_some (Lua_pattern.of_string pat)"
+    (res = CCOption.is_some (Lua_pattern.of_string pat))
+
 let create_test (pat, res) = Oth.test ~name:(Printf.sprintf "%s" pat) (test_pat pat res)
-let () = Oth.(run ~file:__FILE__ (serial (List.map ~f:create_test tests)))
+
+let () =
+  Oth.(
+    run
+      ~file:__FILE__
+      ~setup:(fun () -> Ok ())
+      ~teardown:(fun _ -> ())
+      (fun _ -> serial (List.map ~f:create_test tests)))

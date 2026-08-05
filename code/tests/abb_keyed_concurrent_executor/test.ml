@@ -21,11 +21,13 @@ let test_work_runs =
       >>= fun executor ->
       Akce.enqueue executor ~keys:[ "a" ] (record ran)
       >>= fun res ->
-      assert (res = Ok ());
+      Oth.Assert.true_ "res = Ok ()" (res = Ok ());
       Akce.drain_and_destroy executor
       >>= fun () ->
       (* drain_and_destroy returns only once all enqueued work has completed. *)
-      assert (Fut.state (Fut.Promise.future ran) = `Det ());
+      Oth.Assert.true_
+        "Fut.state (Fut.Promise.future ran) = `Det ()"
+        (Fut.state (Fut.Promise.future ran) = `Det ());
       Fut.return ())
 
 let test_non_overlapping_keys =
@@ -37,14 +39,18 @@ let test_non_overlapping_keys =
       >>= fun executor ->
       Akce.enqueue executor ~keys:[ "a" ] (record ran1)
       >>= fun res1 ->
-      assert (res1 = Ok ());
+      Oth.Assert.true_ "res1 = Ok ()" (res1 = Ok ());
       Akce.enqueue executor ~keys:[ "b" ] (record ran2)
       >>= fun res2 ->
-      assert (res2 = Ok ());
+      Oth.Assert.true_ "res2 = Ok ()" (res2 = Ok ());
       Akce.drain_and_destroy executor
       >>= fun () ->
-      assert (Fut.state (Fut.Promise.future ran1) = `Det ());
-      assert (Fut.state (Fut.Promise.future ran2) = `Det ());
+      Oth.Assert.true_
+        "Fut.state (Fut.Promise.future ran1) = `Det ()"
+        (Fut.state (Fut.Promise.future ran1) = `Det ());
+      Oth.Assert.true_
+        "Fut.state (Fut.Promise.future ran2) = `Det ()"
+        (Fut.state (Fut.Promise.future ran2) = `Det ());
       Fut.return ())
 
 let test_overlapping_keys_serialize =
@@ -71,7 +77,9 @@ let test_overlapping_keys_serialize =
       >>= fun _ ->
       Akce.drain_and_destroy executor
       >>= fun () ->
-      assert (List.rev !events = [ "1-start"; "1-end"; "2-start"; "2-end" ]);
+      Oth.Assert.true_
+        "List.rev !events = [ \"1-start\"; \"1-end\"; \"2-start\"; \"2-end\" ]"
+        (List.rev !events = [ "1-start"; "1-end"; "2-start"; "2-end" ]);
       Fut.return ())
 
 let test_drain_waits_for_completion =
@@ -92,8 +100,12 @@ let test_drain_waits_for_completion =
       >>= fun _ ->
       Akce.drain_and_destroy executor
       >>= fun () ->
-      assert (Fut.state (Fut.Promise.future started) = `Det ());
-      assert (Fut.state (Fut.Promise.future finished) = `Det ());
+      Oth.Assert.true_
+        "Fut.state (Fut.Promise.future started) = `Det ()"
+        (Fut.state (Fut.Promise.future started) = `Det ());
+      Oth.Assert.true_
+        "Fut.state (Fut.Promise.future finished) = `Det ()"
+        (Fut.state (Fut.Promise.future finished) = `Det ());
       Fut.return ())
 
 let test_empty_key_list =
@@ -107,14 +119,18 @@ let test_empty_key_list =
       >>= fun executor ->
       Akce.enqueue executor ~keys:[] (record ran1)
       >>= fun res1 ->
-      assert (res1 = Ok ());
+      Oth.Assert.true_ "res1 = Ok ()" (res1 = Ok ());
       Akce.enqueue executor ~keys:[] (record ran2)
       >>= fun res2 ->
-      assert (res2 = Ok ());
+      Oth.Assert.true_ "res2 = Ok ()" (res2 = Ok ());
       Akce.drain_and_destroy executor
       >>= fun () ->
-      assert (Fut.state (Fut.Promise.future ran1) = `Det ());
-      assert (Fut.state (Fut.Promise.future ran2) = `Det ());
+      Oth.Assert.true_
+        "Fut.state (Fut.Promise.future ran1) = `Det ()"
+        (Fut.state (Fut.Promise.future ran1) = `Det ());
+      Oth.Assert.true_
+        "Fut.state (Fut.Promise.future ran2) = `Det ()"
+        (Fut.state (Fut.Promise.future ran2) = `Det ());
       Fut.return ())
 
 let test_enqueue_after_drain_closed =
@@ -126,21 +142,23 @@ let test_enqueue_after_drain_closed =
       >>= fun () ->
       Akce.enqueue executor ~keys:[ "a" ] (fun () -> Fut.return ())
       >>= fun res ->
-      assert (res = Error `Closed);
+      Oth.Assert.true_ "res = Error `Closed" (res = Error `Closed);
       Fut.return ())
 
 let () =
   Random.self_init ();
-  Oth.run
+  Oth_abb.run
     ~file:__FILE__
-    Oth_abb.(
-      to_sync_test
-        (serial
-           [
-             test_work_runs;
-             test_non_overlapping_keys;
-             test_overlapping_keys_serialize;
-             test_drain_waits_for_completion;
-             test_empty_key_list;
-             test_enqueue_after_drain_closed;
-           ]))
+    ~setup:(fun () -> Abb.Future.return (Ok ()))
+    ~teardown:(fun () -> Abb.Future.return ())
+    (fun () ->
+      Oth_abb.(
+        serial
+          [
+            test_work_runs;
+            test_non_overlapping_keys;
+            test_overlapping_keys_serialize;
+            test_drain_waits_for_completion;
+            test_empty_key_list;
+            test_enqueue_after_drain_closed;
+          ]))
