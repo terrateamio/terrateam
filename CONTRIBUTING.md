@@ -3,7 +3,7 @@ First off, thank you for considering contributing to Terrateam! We're excited to
 
 ## How Can You Contribute? 
 ### Reporting Issues 
-If you encounter any bugs or issues while using Terrateam, please report them through our [GitHub Issues](https://github.com/stategraph/stategraph/issues)  page. When reporting an issue, please include as much detail as possible, such as the steps to reproduce the issue, the environment in which it occurred, and any relevant logs or screenshots.
+If you encounter any bugs or issues while using Terrateam, please report them through our [GitHub Issues](https://github.com/terrateamio/terrateam/issues)  page. When reporting an issue, please include as much detail as possible, such as the steps to reproduce the issue, the environment in which it occurred, and any relevant logs or screenshots.
 ### Documentation Improvements 
 
 We welcome improvements to our documentation! Whether it’s fixing a typo, clarifying instructions, or adding new information, your contributions help make Terrateam easier to use for everyone. Please feel free to submit pull requests with documentation updates.
@@ -16,7 +16,7 @@ While we encourage pull requests for bug fixes or new features, please note that
 
 ## Contributing Code 
 ### Getting Started 
-1. **Fork the Repository** : Start by forking the [Terrateam repository](https://github.com/stategraph/stategraph) .
+1. **Fork the Repository** : Start by forking the [Terrateam repository](https://github.com/terrateamio/terrateam) .
  
 2. **Clone Your Fork** : Clone the repository to your local machine.
 

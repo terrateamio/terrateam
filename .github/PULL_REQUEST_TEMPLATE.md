@@ -12,7 +12,7 @@
 
 ## Checklist
 
-- [ ] I have read the [contributing guidelines](https://github.com/stategraph/stategraph/blob/main/CONTRIBUTING.md)
+- [ ] I have read the [contributing guidelines](https://github.com/terrateamio/terrateam/blob/main/CONTRIBUTING.md)
 - [ ] The pull request title follows this format:
       `ISSUE_NUMBER ACTION_TYPE Short description` (e.g., `123 ADD Feature description`)
 - [ ] I have added tests and documentation (if applicable)

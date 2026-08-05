@@ -34,7 +34,7 @@ jobs:
           - arch: amd64
             runs-on: ubuntu-22.04
           - arch: arm64
-            runs-on: ubuntu-22.04-arm
+            runs-on: ubuntu-22.04-arm64
 
     permissions:
       contents: write
