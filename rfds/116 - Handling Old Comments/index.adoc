@@ -20,7 +20,7 @@ In Discussion.
 
 . Document how comments work as of now.
 . Aggregate community suggestions.
-. Describe possible implementations of https://github.com/terrateamio/terrateam/issues/116[terrateamio/terrateam#116].
+. Describe possible implementations of https://github.com/stategraph/stategraph/issues/116[stategraph/stategraph#116].
 . Discuss trade-offs of each alternative.
 
 == Background
@@ -65,7 +65,7 @@ Our only supported VCS as of now.
 
 === GitLab API
 
-Since https://github.com/terrateamio/terrateam/issues/150[#150] got merged, GitLab support is now live.
+Since https://github.com/stategraph/stategraph/issues/150[#150] got merged, GitLab support is now live.
 
 === PostgreSQL
 
@@ -143,7 +143,7 @@ terrateam=> \d work_manifests
 .. Focus on making it per-directory so people can have freedom to apply different commenting rules.
 
 . Codebase
-.. Issue https://github.com/terrateamio/terrateam/issues/561[#561] and PR https://github.com/terrateamio/terrateam/pull/562[#562] aim to add a comment library that implements VCS-agnostic operations.
+.. Issue https://github.com/stategraph/stategraph/issues/561[#561] and PR https://github.com/stategraph/stategraph/pull/562[#562] aim to add a comment library that implements VCS-agnostic operations.
 
 == Proposals
 
