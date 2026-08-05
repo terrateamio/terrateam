@@ -40,7 +40,7 @@ export default defineConfig({
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/terrateamio/terrateam",
+          href: "https://github.com/stategraph/stategraph",
         },
       ],
       customCss: process.env.NO_GRADIENTS
