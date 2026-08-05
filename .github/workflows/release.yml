@@ -58,7 +58,7 @@ jobs:
           - arch: amd64
             runs-on: ubuntu-22.04
           - arch: arm64
-            runs-on: ubuntu-22.04-arm64
+            runs-on: ubuntu-22.04-arm
 
     env:
       VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}

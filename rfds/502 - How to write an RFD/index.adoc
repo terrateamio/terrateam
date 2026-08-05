@@ -54,7 +54,7 @@ and their view of the system.
 == How to write an RFD
 
 . Every RFD must be associated with a ticket in the
-https://github.com/terrateamio/terrateam/issues[Terrateam] repository.
+https://github.com/stategraph/stategraph/issues[Terrateam] repository.
 . Every commit for an RFD must have the ticket ID in the commit such that GitHub
 can track it.
 . An RFD is a subdirectory of the `rfds` directory.

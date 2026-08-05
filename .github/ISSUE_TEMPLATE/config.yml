@@ -7,5 +7,5 @@ contact_links:
     url: https://github.com/orgs/terrateamio/discussions
     about: Use GitHub Discussions for longer conversations, feature ideas, and general questions.
   - name: Report a Security Vulnerability
-    url: https://github.com/terrateamio/terrateam/security/policy
+    url: https://github.com/stategraph/stategraph/security/policy
     about: Please report security issues and vulnerabilities here.
