@@ -71,7 +71,7 @@ jobs:
             runs-on: ubuntu-22.04
             platform: linux/amd64
           - arch: arm64
-            runs-on: ubuntu-22.04-arm
+            runs-on: ubuntu-22.04-arm64
             platform: linux/arm64
 
     steps:
