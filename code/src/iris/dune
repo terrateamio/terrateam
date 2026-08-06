@@ -1,11 +1,24 @@
-; Iris (Svelte/Vite SPA). Vite keeps its own incremental cache in-tree
-; under node_modules/, so we run the build in the real source tree
-; (outside dune's _build/ sandbox) and emit a single build.tag stamp
-; file that dune tracks. The resulting static assets land in
-; code/src/iris/dist/, which the production Docker image consumes.
+; Iris (Svelte/Vite SPA). Vite keeps its own incremental cache in-tree under
+; node_modules/, so we run the build in the real source tree (outside dune's
+; _build/ sandbox) and then copy the static assets into the `ui-export`
+; directory target. It is deliberately NOT named `dist`: Vite already writes an
+; in-tree dist/, and a target sharing that name conflicts with the source
+; directory on any machine that has built before.
+;
+; The export MUST be a real dune target, not just the build.tag stamp. Tracked
+; only by build.tag, a restored _build/ (from the Docker /dune-cache mount, or
+; any dune cache hit) with an up-to-date stamp made the rule look satisfied while
+; code/src/iris/dist/ did not exist -- dist/ is gitignored, so it is never in a
+; clean checkout / Docker build context -- so `dune build @code/src/iris/all`
+; silently skipped Vite and the image's UI COPY found nothing. Making the export
+; a directory target means it travels inside _build/ and survives the cache
+; restore. docker/terrat/Dockerfile documents the same trap; hermes solves it the
+; same way for its Next.js export (ui-export).
 
 (rule
- (target build.tag)
+ (targets
+  build.tag
+  (dir ui-export))
  (deps
   package.json
   package-lock.json
@@ -24,7 +37,10 @@
   (progn
    (bash
     "cd $DUNE_SOURCEROOT/code/src/iris && (test -L api.json || ln -sf ../../../api_schemas/terrat/api.json api.json) && for i in 1 2 3; do npm install && break || { echo \"npm install failed (try $i/3), sleeping 15s...\"; sleep 15; }; done && npm run generate-api-types && npm run build")
-   (bash "touch %{target}"))))
+   ; dune does not pre-create directory targets, so make it before copying in.
+   (bash
+    "rm -rf ui-export && mkdir -p ui-export && cp -R $DUNE_SOURCEROOT/code/src/iris/dist/. ui-export/")
+   (bash "touch build.tag"))))
 
 (alias
  (name all)
