@@ -8,7 +8,7 @@
 
 == Background
 
-Ticket https://github.com/terrateamio/terrateam/issues/978[#978] implements a
+Ticket https://github.com/stategraph/stategraph/issues/978[#978] implements a
 new method to execute plan and apply operations.  The new method is an
 implementation of the
 https://www.microsoft.com/en-us/research/wp-content/uploads/2018/03/build-systems.pdf[Build

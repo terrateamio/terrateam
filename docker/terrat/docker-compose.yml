@@ -84,9 +84,10 @@ services:
       - terrateam
 
   terratunnel:
-    image: ghcr.io/terrateamio/terratunnel:latest
+    image: ghcr.io/stategraph/terratunnel:latest
     command: ["client", "--local-endpoint", "http://server:8080", "--update-github-webhook"]
     environment:
+      TERRATUNNEL_SERVER_URL: "https://tunnel.terrateam.dev"
       TERRATUNNEL_LOCAL_ENDPOINT: "http://server:8080"
       TERRATUNNEL_API_KEY: "${TERRATUNNEL_API_KEY}"
       GITHUB_APP_ID: "${GITHUB_APP_ID}"
