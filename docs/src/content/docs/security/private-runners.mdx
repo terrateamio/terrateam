@@ -15,57 +15,28 @@ Using private runners with Terrateam allows you to:
 - Comply with security or regulatory requirements that mandate running operations on your own infrastructure.
 - Customize the runner environment with specific software, tools, or configurations required by your Terraform workflows.
 
-## Terrateam Self-Hosted Runner
-Terrateam provides a Docker container that simplifies the process of setting up and running a self-hosted runner for Terrateam operations.
+## Running in a Container
+If you prefer to run your self-hosted runner as a container, use GitHub's official
+[runner image](https://github.com/actions/runner/pkgs/container/actions-runner)
+(`ghcr.io/actions/actions-runner`) or
+[Actions Runner Controller](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller)
+on Kubernetes. Register the runner with a label such as `terrateam-self-hosted`
+and point your Terrateam workflow at it:
 
-### Steps
-<Steps>
-1. Add a self-hosted runner to your organization:
+```yaml
+jobs:
+  terrateam:
+    permissions:
+        id-token: write
+        contents: read
+    runs-on: terrateam-self-hosted
+```
 
-   1\. On GitHub.com, navigate to the main page of the organization.
-
-   2\. Under your organization name, click `Settings`. 
-
-   3\. In the left sidebar, click  `Actions`, then click `Runners`.
-
-   4\. Click `New runner`, then click `New self-hosted runner`.
-
-   5\. Select `x86`
-
-   6\. Note the token for the next step
-
-2. Run the docker container however you run containers:
-   ```sh
-    docker run -d \
-      --restart unless-stopped \
-      --name terrateam-self-hosted-runner \
-      --env ORG_NAME=myGithubOrg \
-      --env RUNNER_NAME=terrateam-self-hosted \
-      --env RUNNER_TOKEN=runnerToken \
-      --env RUNNER_WORKDIR=/tmp/runner/work \
-      --env RUNNER_SCOPE=org \
-      --env LABELS=terrateam-self-hosted \
-      --env EPHEMERAL=1 \
-      --security-opt label:disable \
-      --volume /var/run/docker.sock:/var/run/docker.sock \
-      --volume /tmp/runner:/tmp/runner \
-      ghcr.io/terrateamio/self-hosted-runner:latest
-   ```
-   Replace `myGithubOrg` with your GitHub organization name and `runnerToken` with the runner token obtained from the GitHub Actions settings page.
-
-3. Update your Terrateam GitHub Actions workflow file (`.github/workflows/terrateam.yml`) to use the self-hosted runner:
-   ```yaml
-    jobs:
-      terrateam:
-        permissions:
-            id-token: write
-            contents: read
-        runs-on: terrateam-self-hosted
-   ```
-
-</Steps>
-
-The Terrateam self-hosted runner Docker container simplifies the setup process and ensures that your runner has all the necessary dependencies and configurations required by Terrateam.
+:::note
+The previously documented `ghcr.io/terrateamio/self-hosted-runner` image is
+deprecated and no longer updated. Existing tags remain pullable, but migrate to
+GitHub's official runner image or a manually configured runner.
+:::
 
 ## Manual Setup Instructions
 If you prefer to set up the self-hosted runner manually or have specific requirements, you can follow the steps below to configure a self-hosted runner for Terrateam.
