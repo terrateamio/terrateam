@@ -80,12 +80,20 @@ jobs:
         with:
           fetch-tags: true
 
+      - name: Generate terrateamio packages token
+        id: terrateamio-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.TERRATEAMIO_PACKAGES_APP_ID }}
+          private-key: ${{ secrets.TERRATEAMIO_PACKAGES_APP_PRIVATE_KEY }}
+          owner: terrateamio
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: x-access-token
+          password: ${{ steps.terrateamio-token.outputs.token }}
 
       - name: Set base image
         run: |
@@ -100,12 +108,12 @@ jobs:
           target: ${{ matrix.target }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
-          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.target }}:${{ env.VERSION_TAG }}-${{ matrix.arch }}
+          tags: ghcr.io/terrateamio/${{ matrix.target }}:${{ env.VERSION_TAG }}-${{ matrix.arch }}
 
       - name: Extract ttm binary (${{ matrix.arch }})
         if: matrix.target == 'ttm'
         run: |
-          docker create --name ttm-extract ghcr.io/${{ github.repository_owner }}/ttm:${{ env.VERSION_TAG }}-${{ matrix.arch }}
+          docker create --name ttm-extract ghcr.io/terrateamio/ttm:${{ env.VERSION_TAG }}-${{ matrix.arch }}
           docker cp ttm-extract:/usr/local/bin/ttm ./ttm-linux-${{ matrix.arch }}
           docker rm ttm-extract
           chmod +x ./ttm-linux-${{ matrix.arch }}
@@ -136,13 +144,14 @@ jobs:
   create-multi-arch-manifest:
     needs: [set-version-tag, build]
     runs-on: ubuntu-22.04
+    environment: ${{ github.event.inputs.environment || 'production' }}
 
     outputs:
       is_latest_version_tag: ${{ steps.is-latest-version-tag.outputs.is_latest_version_tag }}
 
     env:
       VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
-      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      GITHUB_REPOSITORY_OWNER: terrateamio
       GITHUB_REF: ${{ github.ref }}
       TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
 
@@ -150,12 +159,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Generate terrateamio packages token
+        id: terrateamio-token
+        uses: actions/create-github-app-token@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          app-id: ${{ secrets.TERRATEAMIO_PACKAGES_APP_ID }}
+          private-key: ${{ secrets.TERRATEAMIO_PACKAGES_APP_PRIVATE_KEY }}
+          owner: terrateamio
 
       - name: Set is latest version tag
         id: is-latest-version-tag
@@ -163,6 +173,13 @@ jobs:
           is_latest_version_tag="$(./scripts/is_latest_version_tag)"
           echo "IS_LATEST_VERSION_TAG=${is_latest_version_tag}" >> "${GITHUB_ENV}"
           echo "is_latest_version_tag=${is_latest_version_tag}" >> "${GITHUB_OUTPUT}"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: x-access-token
+          password: ${{ steps.terrateamio-token.outputs.token }}
 
       - name: Create and push multi-arch manifest
         run: |
