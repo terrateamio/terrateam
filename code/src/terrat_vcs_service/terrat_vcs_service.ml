@@ -12,6 +12,7 @@ module type S = sig
       Terrat_config.t ->
       vcs_config ->
       Terrat_storage.t ->
+      ro_storage:Terrat_storage.t ->
       Terrat_vcs_event_evaluator2.Exec.t ->
       (t, [> start_err ]) result Abb.Future.t
 

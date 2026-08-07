@@ -384,16 +384,16 @@ struct
         kv_rt () / "commit" /* Body.decode ~json:Terrat_api_components.Kv_commit.of_yojson ())
   end
 
-  let routes config storage =
+  let routes config storage ~ro_storage =
     Brtl_rtng.Route.
       [
-        (`GET, Rt.kv_get_rt () --> Get.run config storage);
+        (`GET, Rt.kv_get_rt () --> Get.run config ro_storage);
         (`PUT, Rt.kv_set_rt () --> Set.run config storage);
         (`PUT, Rt.kv_cas_rt () --> Cas.run config storage);
         (`DELETE, Rt.kv_delete_rt () --> Delete.run config storage);
-        (`GET, Rt.kv_count_rt () --> Count.run config storage);
-        (`GET, Rt.kv_size_rt () --> Size.run config storage);
-        (`GET, Rt.kv_iter_rt () --> Iter.run config storage);
+        (`GET, Rt.kv_count_rt () --> Count.run config ro_storage);
+        (`GET, Rt.kv_size_rt () --> Size.run config ro_storage);
+        (`GET, Rt.kv_iter_rt () --> Iter.run config ro_storage);
         (`POST, Rt.kv_commit_rt () --> Commit.run config storage);
       ]
 end

@@ -24,5 +24,5 @@ include
     (struct
       type config = Provider.Api.Config.t
 
-      let routes _ _ = []
+      let routes _ _ ~ro_storage:_ = []
     end)
