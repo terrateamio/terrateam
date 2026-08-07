@@ -77,7 +77,7 @@ jobs:
 
     env:
       VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
-      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      IMAGE_REGISTRY_OWNER: ${{ github.repository_owner }}
       GITHUB_REF: ${{ github.ref }}
       TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
 

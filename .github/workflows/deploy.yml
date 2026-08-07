@@ -35,7 +35,7 @@ jobs:
       TERRATEAM_ENVIRONMENT: ${{ inputs.environment }}
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
-      GITHUB_REPOSITORY_OWNER: terrateamio
+      IMAGE_REGISTRY_OWNER: terrateamio
 
     permissions:
       contents: read
