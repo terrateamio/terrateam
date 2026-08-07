@@ -143,7 +143,6 @@ jobs:
 
     env:
       VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
-      IMAGE_REGISTRY_OWNER: terrateamio
       GITHUB_REF: ${{ github.ref }}
       TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
 
