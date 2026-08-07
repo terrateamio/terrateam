@@ -2,6 +2,12 @@ module Api = Terrat_vcs_api_github
 module Scope = Terrat_scope.Scope
 module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
 
+(** [tail_of ~max_bytes s] keeps the last [max_bytes] of [s], resuming at a line boundary and
+    prefixing a marker when anything was dropped. Terraform and provider errors are emitted at the
+    END of a step's output, so the tail is the part worth keeping when a comment has to shrink.
+    Exposed for testing. *)
+val tail_of : max_bytes:int -> string -> string
+
 val dirspace_compare :
   Terrat_dirspace.t * Terrat_api_components.Workflow_step_output.t list ->
   Terrat_dirspace.t * Terrat_api_components.Workflow_step_output.t list ->
@@ -38,6 +44,7 @@ end
 module Publisher_tools : sig
   val create_run_output :
     view:[> `Compact ] ->
+    compacted_dirspaces:Terrat_dirspace.t list ->
     summary:bool ->
     pull_number:int option ->
     dirspace_run_urls:(Terrat_dirspace.t * string) list ->

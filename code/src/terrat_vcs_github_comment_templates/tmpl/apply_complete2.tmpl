@@ -99,7 +99,7 @@ Running plans **FAILED**.  See **Terrateam Apply Output**.
 
 **Details**: {{ h.details }}
       {%- endif %}
-      {%- if not compact_view %}
+      {%- if h.show_output %}
 {% if h.raw %}
 {{ h.text }}
 {% else %}
@@ -133,7 +133,7 @@ No output shown due to comment size.
 
 **Details**: {{ h.details }}
       {%- endif %}
-      {%- if not compact_view %}
+      {%- if h.show_output %}
 {% if h.raw %}
 {{ h.text }}
 {% else %}
@@ -187,7 +187,7 @@ No output shown due to comment size.
 
 **Details**: {{ s.details }}
     {%- endif %}
-    {%- if not compact_view %}
+    {%- if s.show_output %}
 
 ```
 {{ s.text }}
