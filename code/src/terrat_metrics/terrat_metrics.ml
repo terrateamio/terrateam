@@ -9,7 +9,5 @@ let errors_total =
 
 let apply_total =
   let help = "Number of apply operations initiated" in
-  let family =
-    Prmths.Counter.v_labels ~label_names:[ "force" ] ~help ~namespace "apply_total"
-  in
+  let family = Prmths.Counter.v_labels ~label_names:[ "force" ] ~help ~namespace "apply_total" in
   fun ~force -> Prmths.Counter.labels family [ force ]

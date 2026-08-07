@@ -3839,10 +3839,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let run_op_work_manifest_iter_create op ctx state =
       let module Wm = Terrat_work_manifest3 in
       (match op with
-      | `Apply_force ->
-        Prmths.Counter.inc_one (Terrat_metrics.apply_total ~force:"true")
+      | `Apply_force -> Prmths.Counter.inc_one (Terrat_metrics.apply_total ~force:"true")
       | `Apply | `Apply_autoapprove | `Stack_auto_apply ->
-        Prmths.Counter.inc_one (Terrat_metrics.apply_total ~force:"false")
+          Prmths.Counter.inc_one (Terrat_metrics.apply_total ~force:"false")
       | `Plan -> ());
       let open Abbs_future_combinators.Infix_result_monad in
       Abbs_future_combinators.Infix_result_app.(
