@@ -21,6 +21,8 @@ jobs:
   set-version-tag:
     runs-on: ubuntu-22.04
     environment: ${{ github.event.inputs.environment || 'production' }}
+    permissions:
+      contents: write
 
     outputs:
       version_tag: ${{ steps.set-version-tag.outputs.version_tag }}
@@ -170,6 +172,8 @@ jobs:
     needs: [set-version-tag, create-multi-arch-manifest]
     runs-on: ubuntu-22.04
     environment: ${{ github.event.inputs.environment || 'production' }}
+    permissions:
+      contents: write
 
     env:
       VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
