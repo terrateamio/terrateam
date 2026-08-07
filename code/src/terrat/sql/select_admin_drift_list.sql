@@ -8,6 +8,7 @@ github_drifts as (
         gwm.repo_name as name,
         gwm.state as state,
         gwm.run_type as runu_type,
+        coalesce(gwm.branch, '') as branch,
         to_char(gwm.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
         to_char(gwm.completed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as completed_at,
         (latest_unlocks.repository is null or gwm.created_at < latest_unlocks.unlocked_at) as unlocked
@@ -26,6 +27,7 @@ gitlab_drifts as (
         gwm.repo_name as name,
         gwm.state as state,
         gwm.run_type as runu_type,
+        coalesce(gwm.branch, '') as branch,
         to_char(gwm.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
         to_char(gwm.completed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as completed_at,
         (latest_unlocks.repository is null or gwm.created_at < latest_unlocks.unlocked_at) as unlocked

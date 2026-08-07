@@ -2,4 +2,4 @@ delete from drift_schedules
 using gitlab_repositories_map as grm
 where grm.core_id = drift_schedules.repo
       and grm.repository_id = $repo_id
-      and not (name = any($names))
+      and not ((name, branch) in (select * from unnest($names, $branches)))

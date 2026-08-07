@@ -1,5 +1,5 @@
 insert into drift_schedules as gds
-  (schedule, reconcile, tag_query, updated_at, name, window_start, window_end, repo)
+  (schedule, reconcile, tag_query, updated_at, name, window_start, window_end, branch, repo)
 select
         $schedule,
         $reconcile,
@@ -8,6 +8,7 @@ select
         $name,
         $window_start,
         $window_end,
+        $branch,
         grm.core_id
 from gitlab_repositories_map as grm
 where grm.repository_id = $repo

@@ -6,6 +6,7 @@ module Drifts = struct
       module Results = struct
         module Items = struct
           type t = {
+            branch : string;
             completed_at : string option; [@default None]
             created_at : string;
             id : string;

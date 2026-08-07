@@ -27,6 +27,9 @@ module Drift = struct
           (* run_type *)
           Ret.u Ret.text Terrat_work_manifest3.Step.of_string
           //
+          (* branch *)
+          Ret.text
+          //
           (* created_at *)
           Ret.text
           //
@@ -38,9 +41,10 @@ module Drift = struct
           /^ read [%blob "sql/select_admin_drift_list.sql"])
     end
 
-    let make_drift id owner name state run_type created_at completed_at unlocked =
+    let make_drift id owner name state run_type branch created_at completed_at unlocked =
       let open Terrat_api_admin.Drifts.Responses.OK.Results.Items in
       {
+        branch;
         id = Uuidm.to_string id;
         owner;
         name;

@@ -1464,6 +1464,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         results: {
+                            branch: string;
                             completed_at?: string;
                             created_at: string;
                             id: string;

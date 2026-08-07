@@ -401,7 +401,13 @@ module type S = sig
     val query_missing_drift_scheduled_runs :
       request_id:string ->
       t ->
-      ( (string * Api.Account.t * Api.Repo.t * bool * Terrat_tag_query.t * (string * string) option)
+      ( (string
+        * Api.Account.t
+        * Api.Repo.t
+        * string option
+        * bool
+        * Terrat_tag_query.t
+        * (string * string) option)
         list,
         [> `Error ] )
       result

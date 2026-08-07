@@ -6,6 +6,7 @@
 module V1 = Terrat_base_repo_config_v1
 module Repo = Terrat_repo_config
 module Sg_schema = Terrat_repo_config.Engine_stategraph
+module Drift_schedule = Terrat_repo_config.Drift_schedule
 
 let pp_engine = function
   | V1.Engine.Stategraph _ -> "Stategraph"
@@ -65,12 +66,81 @@ let test_to_version_1_round_trip =
           | _ -> failwith "Round-trip to Version_1 did not produce Engine_stategraph")
       | Error _ -> failwith "of_version_1_json failed in round-trip setup")
 
+let test_drift_schedule_branch_of_version_1_json =
+  Oth.test ~name:"of_version_1_json: drift schedule branch is parsed" (fun _ ->
+      let json =
+        `Assoc
+          [
+            ( "drift",
+              `Assoc
+                [
+                  ("enabled", `Bool true);
+                  ( "schedules",
+                    `Assoc
+                      [
+                        ( "staging",
+                          `Assoc
+                            [
+                              ("branch", `String "release/staging");
+                              ("tag_query", `String "dir:staging");
+                              ("schedule", `String "daily");
+                            ] );
+                      ] );
+                ] );
+          ]
+      in
+      match V1.of_version_1_json json with
+      | Ok cfg -> (
+          match Sln_map.String.find_opt "staging" (V1.drift cfg).V1.Drift.schedules with
+          | Some { V1.Drift.Schedule.branch = Some "release/staging"; _ } -> ()
+          | Some _ -> failwith "Expected drift schedule branch to be Some release/staging"
+          | None -> failwith "Expected staging drift schedule")
+      | Error _ -> failwith "of_version_1_json failed on drift schedule branch")
+
+let test_drift_schedule_branch_to_version_1 =
+  Oth.test ~name:"to_version_1: drift schedule branch round-trips" (fun _ ->
+      let json =
+        `Assoc
+          [
+            ( "drift",
+              `Assoc
+                [
+                  ("enabled", `Bool true);
+                  ( "schedules",
+                    `Assoc
+                      [
+                        ( "staging",
+                          `Assoc
+                            [
+                              ("branch", `String "release/staging");
+                              ("tag_query", `String "dir:staging");
+                              ("schedule", `String "daily");
+                            ] );
+                      ] );
+                ] );
+          ]
+      in
+      match V1.of_version_1_json json with
+      | Ok cfg -> (
+          match (V1.to_version_1 cfg).Repo.Version_1.drift with
+          | Some
+              (Repo.Version_1.Drift.Drift_2
+                 { Repo.Drift_2.schedules = { Repo.Drift_2.Schedules.additional; _ }; _ }) -> (
+              match Sln_map.String.find_opt "staging" additional with
+              | Some { Drift_schedule.branch = Some "release/staging"; _ } -> ()
+              | Some _ -> failwith "Expected generated drift schedule branch to round-trip"
+              | None -> failwith "Expected staging drift schedule in generated config")
+          | _ -> failwith "Expected Drift_2 in generated config")
+      | Error _ -> failwith "of_version_1_json failed in drift branch round-trip setup")
+
 let test =
   Oth.parallel
     [
       test_of_version_1_json_minimal;
       test_of_version_1_json_with_version;
       test_to_version_1_round_trip;
+      test_drift_schedule_branch_of_version_1_json;
+      test_drift_schedule_branch_to_version_1;
     ]
 
 let () =

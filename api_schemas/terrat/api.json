@@ -2528,6 +2528,9 @@
                       "items": {
                         "additionalProperties": false,
                         "properties": {
+                          "branch": {
+                            "type": "string"
+                          },
                           "completed_at": {
                             "type": "string"
                           },
@@ -2554,6 +2557,7 @@
                           }
                         },
                         "required": [
+                          "branch",
                           "created_at",
                           "id",
                           "name",

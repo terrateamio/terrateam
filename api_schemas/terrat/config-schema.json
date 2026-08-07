@@ -458,6 +458,10 @@
     "drift-schedule": {
       "additionalProperties": false,
       "properties": {
+        "branch": {
+          "minLength": 1,
+          "type": "string"
+        },
         "reconcile": {
           "default": false,
           "type": "boolean"

@@ -609,6 +609,7 @@ export class ValidatedApiClient {
 
   // Admin drift operations
   async getAdminDrifts(): Promise<{ results: Array<{
+    branch: string;
     id: string;
     name: string;
     owner: string;
@@ -626,6 +627,7 @@ export class ValidatedApiClient {
     }
 
     return response as { results: Array<{
+      branch: string;
       id: string;
       name: string;
       owner: string;

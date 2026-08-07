@@ -504,6 +504,7 @@ module Drift : sig
       schedule : Sched.t;
       reconcile : bool; [@default false]
       window : Window.t option;
+      branch : string option;
     }
     [@@deriving make, show, yojson, eq]
   end

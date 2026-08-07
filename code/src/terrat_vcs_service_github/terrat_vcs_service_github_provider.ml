@@ -275,9 +275,6 @@ module Db = struct
         //
         (* branch *)
         Ret.text
-        //
-        (* reconcile *)
-        Ret.boolean
         /^ select_drift_work_manifests_batch_query
         /% Var.(str_array (uuid "ids")))
 
@@ -404,14 +401,16 @@ module Db = struct
         /% Var.(option (ud (text "tag_query") Terrat_tag_query.to_string))
         /% Var.text "name"
         /% Var.(option (timetz "window_start"))
-        /% Var.(option (timetz "window_end")))
+        /% Var.(option (timetz "window_end"))
+        /% Var.text "branch")
 
     let delete_drift_schedules =
       Pgsql_io.Typed_sql.(
         sql
         /^ read [%blob "sql/delete_drift_schedules.sql"]
         /% Var.bigint "repo_id"
-        /% Var.(str_array (text "names")))
+        /% Var.(str_array (text "names"))
+        /% Var.(str_array (text "branches")))
 
     let select_installation_account_status_query = read [%blob "sql/select_account_status.sql"]
 
@@ -688,6 +687,9 @@ module Db = struct
         (* name *)
         Ret.text
         //
+        (* branch *)
+        Ret.(option text)
+        //
         (* reconcile *)
         Ret.boolean
         //
@@ -950,7 +952,7 @@ module Db = struct
                   Pgsql_io.Prepared_stmt.fetch
                     db
                     (Sql.select_drift_work_manifests_batch ())
-                    ~f:(fun id branch _reconcile -> (id, branch))
+                    ~f:(fun id branch -> (id, branch))
                     drift_ids)
               >>= fun rows -> Abb.Future.return (Ok (index_rows_by_id rows))
         in
@@ -1569,21 +1571,30 @@ module Db = struct
     (if enabled then
        Metrics.Psql_query_time.time (Metrics.psql_query_time "upsert_drift_schedule") (fun () ->
            let open Abbs_future_combinators.Infix_result_monad in
-           let names = Iter.to_list @@ Sln_map.String.keys schedules in
+           let schedules = Sln_map.String.to_list schedules in
+           let names, branches =
+             CCList.split
+             @@ CCList.map
+                  (fun (name, { D.Schedule.branch; _ }) ->
+                    (name, CCOption.get_or ~default:"" branch))
+                  schedules
+           in
            Pgsql_io.Prepared_stmt.execute
              db
              Sql.delete_drift_schedules
              (CCInt64.of_int @@ Api.Repo.id repo)
              names
+             branches
            >>= fun () ->
            Abbs_future_combinators.List_result.iter
-             ~f:(fun (name, { D.Schedule.reconcile; schedule; tag_query; window }) ->
+             ~f:(fun (name, { D.Schedule.reconcile; schedule; tag_query; window; branch }) ->
                let window_start, window_end =
                  CCOption.map_or
                    ~default:(None, None)
                    (fun { D.Window.start; end_ } -> (Some start, Some end_))
                    window
                in
+               let branch = CCOption.get_or ~default:"" branch in
                Pgsql_io.Prepared_stmt.execute
                  db
                  Sql.upsert_drift_schedule
@@ -1593,13 +1604,15 @@ module Db = struct
                  (Some tag_query)
                  name
                  window_start
-                 window_end)
-             (Sln_map.String.to_list schedules))
+                 window_end
+                 branch)
+             schedules)
      else
        Pgsql_io.Prepared_stmt.execute
          db
          Sql.delete_drift_schedules
          (CCInt64.of_int @@ Api.Repo.id repo)
+         []
          [])
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
@@ -2071,6 +2084,7 @@ module Db = struct
               repository_id
               owner
               name
+              branch
               reconcile
               tag_query
               window_start
@@ -2079,6 +2093,7 @@ module Db = struct
             ( drift_name,
               Api.Account.make @@ CCInt64.to_int installation_id,
               Api.Repo.make ~id:(CCInt64.to_int repository_id) ~owner ~name (),
+              branch,
               reconcile,
               CCOption.get_or ~default:Terrat_tag_query.any tag_query,
               CCOption.map2
