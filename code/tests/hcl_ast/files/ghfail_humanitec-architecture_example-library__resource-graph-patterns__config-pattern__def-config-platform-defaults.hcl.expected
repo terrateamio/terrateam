@@ -1,0 +1,127 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ],
+        [ "Lit", "config-pattern-example-config-platform-defaults" ]
+      ],
+      "body": [
+        [ "Attribute", "driver_type", [ "String", "humanitec/template" ] ],
+        [
+          "Attribute",
+          "id",
+          [ "String", "config-pattern-example-config-platform-defaults" ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "config-pattern-example-config-platform-defaults" ]
+        ],
+        [ "Attribute", "type", [ "String", "config" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "templates" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "init" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\ndefaults:\n  # These are values defined by the platform team to be used by the terraform module\n  prefix: \"\"\n  region: eu-central-1\n  name: {{ \"$${context.res.id}\" | splitList \".\" | last }}-$${context.app.id}-$${context.org.id}\n  tags:\n    example: config-pattern-example\n    env: $${context.env.id}\n"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "outputs" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\n{{- $overrides := .driver.values.overrides }}\n# Loop through all the default keys - this way we don't introduce additional keys from\n# the developer overrides.\n{{- range $key, $val := .init.defaults }}\n\n  # Don't allow overrides of some keys\n  {{- if (list \"region\" \"tags\") | has $key }}\n\n{{ $key }}: {{ $val | toRawJson }}\n\n  {{- else }}\n\n{{ $key }}: {{ $overrides | dig $key $val | toRawJson }}\n\n  {{- end}}\n\n{{- end }}\n\n# Generate some additional keys\nbucket_name: {{ $overrides.prefix | default .init.defaults.prefix }}{{ $overrides.name | default .init.defaults.name }}\n"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "overrides" ],
+                            [
+                              "String",
+                              "${resources['config.developer-overrides'].values}"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition_criteria" ],
+        [
+          "Lit", "config-pattern-example-config-platform-defaults_criteria_0"
+        ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "resource" ],
+                      [ "A_string", "humanitec_resource_definition" ]
+                    ]
+                  ],
+                  [
+                    "A_string",
+                    "config-pattern-example-config-platform-defaults"
+                  ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "app_id", [ "String", "example-config-pattern" ] ]
+      ]
+    }
+  ]
+]

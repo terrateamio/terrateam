@@ -1,0 +1,31 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Fun_call",
+      [
+        "upper",
+        [
+          [
+            "Fun_call",
+            [
+              "trim",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "lower",
+                    [
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]

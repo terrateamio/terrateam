@@ -1,0 +1,483 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "credentials" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [ [ "Bare", "apic_username" ], [ "String", "admin" ] ],
+              [ [ "Bare", "apic_password" ], [ "String", "password" ] ],
+              [ [ "Bare", "apic_url" ], [ "String", "https://apic-url" ] ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aci_tenant" ], [ "Lit", "common_tenant" ] ],
+      "body": [ [ "Attribute", "name", [ "String", "common" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aci_vrf" ], [ "Lit", "common_vrf" ] ],
+      "body": [
+        [
+          "Attribute",
+          "tenant_dn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aci_tenant" ] ]
+                  ],
+                  [ "A_string", "common_tenant" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "default" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aci_l3_outside" ], [ "Lit", "shared_l3_out" ] ],
+      "body": [
+        [
+          "Attribute",
+          "tenant_dn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aci_tenant" ] ]
+                  ],
+                  [ "A_string", "common_tenant" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "internet" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tenant" ] ],
+      "body": [ [ "Attribute", "default", [ "String", "demo" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vrf" ] ],
+      "body": [ [ "Attribute", "default", [ "String", "demo.vrf1" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "bds" ] ],
+      "body": [
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "192.168.100.0_24" ],
+                [
+                  "Object",
+                  [ [ [ "Bare", "ip" ], [ "String", "192.168.100.1/24" ] ] ]
+                ]
+              ],
+              [
+                [ "Quoted", "192.168.101.0_24" ],
+                [
+                  "Object",
+                  [ [ [ "Bare", "ip" ], [ "String", "192.168.101.1/24" ] ] ]
+                ]
+              ],
+              [
+                [ "Quoted", "192.168.102.0_24" ],
+                [
+                  "Object",
+                  [ [ [ "Bare", "ip" ], [ "String", "192.168.102.1/24" ] ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ap" ] ],
+      "body": [ [ "Attribute", "default", [ "String", "vlans" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "epgs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "vlan100" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [ "String", "epg for 192.168.100.0_24" ]
+                    ],
+                    [ [ "Bare", "ap" ], [ "String", "vlans" ] ],
+                    [ [ "Bare", "bd" ], [ "String", "192.168.100.0_24" ] ],
+                    [ [ "Bare", "domain" ], [ "String", "phys" ] ],
+                    [ [ "Bare", "domain_type" ], [ "String", "phys" ] ],
+                    [ [ "Bare", "external_access" ], [ "Bool", true ] ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "vlan101" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [ "String", "epg for 192.168.101.0_24" ]
+                    ],
+                    [ [ "Bare", "ap" ], [ "String", "vlans" ] ],
+                    [ [ "Bare", "bd" ], [ "String", "192.168.101.0_24" ] ],
+                    [ [ "Bare", "domain" ], [ "String", "phys" ] ],
+                    [ [ "Bare", "domain_type" ], [ "String", "phys" ] ],
+                    [ [ "Bare", "external_access" ], [ "Bool", false ] ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "vlan102" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [ "String", "epg for 192.168.102.0_24" ]
+                    ],
+                    [ [ "Bare", "ap" ], [ "String", "vlans" ] ],
+                    [ [ "Bare", "bd" ], [ "String", "192.168.102.0_24" ] ],
+                    [ [ "Bare", "domain" ], [ "String", "phys" ] ],
+                    [ [ "Bare", "domain_type" ], [ "String", "phys" ] ],
+                    [ [ "Bare", "external_access" ], [ "Bool", false ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "filters" ] ],
+      "body": [
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "tcp_src_any_to_dst_3306" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "destination_from_port" ],
+                      [ "String", "3306" ]
+                    ],
+                    [
+                      [ "Bare", "destination_to_port" ], [ "String", "3306" ]
+                    ],
+                    [ [ "Bare", "protocol" ], [ "String", "tcp" ] ],
+                    [ [ "Bare", "ether_type" ], [ "String", "ipv4" ] ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "tcp_src_any_to_dst_8080" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "destination_from_port" ],
+                      [ "String", "8080" ]
+                    ],
+                    [
+                      [ "Bare", "destination_to_port" ], [ "String", "8080" ]
+                    ],
+                    [ [ "Bare", "protocol" ], [ "String", "tcp" ] ],
+                    [ [ "Bare", "ether_type" ], [ "String", "ipv4" ] ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "tcp_src_any_to_dst_6379" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "destination_from_port" ],
+                      [ "String", "6379" ]
+                    ],
+                    [
+                      [ "Bare", "destination_to_port" ], [ "String", "6379" ]
+                    ],
+                    [ [ "Bare", "protocol" ], [ "String", "tcp" ] ],
+                    [ [ "Bare", "ether_type" ], [ "String", "ipv4" ] ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "icmp_src_any_to_dst_0" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "destination_from_port" ], [ "String", "0" ]
+                    ],
+                    [ [ "Bare", "destination_to_port" ], [ "String", "0" ] ],
+                    [ [ "Bare", "protocol" ], [ "String", "icmp" ] ],
+                    [ [ "Bare", "ether_type" ], [ "String", "ipv4" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "contracts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "web_app" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "subject" ], [ "String", "subject1" ] ],
+                    [
+                      [ "Bare", "filter" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "tcp_src_any_to_dst_8080" ],
+                          [ "String", "icmp_src_any_to_dst_0" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "cache" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "subject" ], [ "String", "subject1" ] ],
+                    [
+                      [ "Bare", "filter" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "tcp_src_any_to_dst_6379" ],
+                          [ "String", "icmp_src_any_to_dst_0" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "sql" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "subject" ], [ "String", "subject1" ] ],
+                    [
+                      [ "Bare", "filter" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "tcp_src_any_to_dst_3306" ],
+                          [ "String", "icmp_src_any_to_dst_0" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "contract_to_epgs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "web_app" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "consumer" ], [ "String", "" ] ],
+                    [ [ "Bare", "provider" ], [ "String", "vlan100" ] ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "sql" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "consumer" ], [ "String", "vlan100" ] ],
+                    [ [ "Bare", "provider" ], [ "String", "vlan101" ] ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "cache" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "consumer" ], [ "String", "vlan101" ] ],
+                    [ [ "Bare", "provider" ], [ "String", "vlan102" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "static_paths" ] ],
+      "body": [
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "vlan100_to_leaf_101_1_12" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "epg" ], [ "String", "vlan100" ] ],
+                    [ [ "Bare", "encap" ], [ "String", "100" ] ],
+                    [ [ "Bare", "iftype" ], [ "String", "switchport" ] ],
+                    [ [ "Bare", "ifmode" ], [ "String", "regular" ] ],
+                    [ [ "Bare", "pod" ], [ "String", "1" ] ],
+                    [ [ "Bare", "leaf" ], [ "String", "101" ] ],
+                    [ [ "Bare", "if" ], [ "String", "1/12" ] ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "vlan101_to_leafs_101_102_test_vpc" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "epg" ], [ "String", "vlan101" ] ],
+                    [ [ "Bare", "encap" ], [ "String", "101" ] ],
+                    [ [ "Bare", "iftype" ], [ "String", "vpc" ] ],
+                    [ [ "Bare", "ifmode" ], [ "String", "regular" ] ],
+                    [ [ "Bare", "pod" ], [ "String", "1" ] ],
+                    [ [ "Bare", "leaf" ], [ "String", "101-102" ] ],
+                    [ [ "Bare", "if" ], [ "String", "test_vpc" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

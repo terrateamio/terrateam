@@ -1,0 +1,331 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_route53_zone" ], [ "Lit", "main" ] ],
+      "body": [
+        [
+          "Attribute",
+          "zone_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "aws_route53_zone_id" ] ]
+          ]
+        ],
+        [ "Attribute", "private_zone", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "wildcarded_dns_names",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "dns_name", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "dns_names" ] ]
+              ],
+              "output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [ "Id", "dns_name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "aws_route53_zone" ]
+                                ]
+                              ],
+                              [ "A_string", "main" ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [ "Id", "dns_name" ],
+                  "else_": [
+                    "Fun_call",
+                    [
+                      "replace",
+                      [
+                        [ "Id", "dns_name" ],
+                        [ "String", "/^[a-zA-Z0-9-]+\\./" ],
+                        [ "String", "*." ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_acm_certificate" ], [ "Lit", "main" ] ],
+      "body": [
+        [
+          "Attribute",
+          "domain_name",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "wildcarded_dns_names" ] ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subject_alternative_names",
+          [
+            "Fun_call",
+            [
+              "slice",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "wildcarded_dns_names" ]
+                  ]
+                ],
+                [ "Int", 1 ],
+                [
+                  "Fun_call",
+                  [
+                    "length",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "wildcarded_dns_names" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "validation_method", [ "String", "DNS" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [ "Attribute", "create_before_destroy", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route53_record" ], [ "Lit", "main" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "dvo", [] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_acm_certificate" ], [ "A_string", "main" ]
+                    ]
+                  ],
+                  [ "A_string", "domain_validation_options" ]
+                ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "dvo" ], [ "A_string", "domain_name" ] ]
+              ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "dvo" ],
+                        [ "A_string", "resource_record_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "record" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "dvo" ],
+                        [ "A_string", "resource_record_value" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "type" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "dvo" ],
+                        [ "A_string", "resource_record_type" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [ "Attribute", "allow_overwrite", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "records",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "record" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "ttl", [ "Int", 60 ] ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "zone_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_route53_zone" ] ]
+                  ],
+                  [ "A_string", "main" ]
+                ]
+              ],
+              [ "A_string", "zone_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_acm_certificate_validation" ], [ "Lit", "main" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "certificate_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_acm_certificate" ], [ "A_string", "main" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "validation_record_fqdns",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "record", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "aws_route53_record" ], [ "A_string", "main" ] ]
+              ],
+              "output": [
+                "Attr", [ [ "Id", "record" ], [ "A_string", "fqdn" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

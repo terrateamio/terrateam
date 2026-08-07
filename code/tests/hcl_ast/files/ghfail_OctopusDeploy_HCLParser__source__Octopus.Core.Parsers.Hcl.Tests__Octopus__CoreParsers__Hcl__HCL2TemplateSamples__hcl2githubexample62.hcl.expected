@@ -1,0 +1,83 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "aws-vpn-docker-ec2" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "terraform-aws-modules/ec2-instance/aws" ]
+        ],
+        [ "Attribute", "version", [ "String", "~> 2.0" ] ],
+        [
+          "Attribute",
+          "ami",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "instance_ami" ] ] ]
+        ],
+        [ "Attribute", "instance_count", [ "Int", 1 ] ],
+        [ "Attribute", "name", [ "String", "AWS VPN - Docker" ] ],
+        [
+          "Attribute",
+          "instance_type",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "ec2-instance-type" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "key-name" ] ] ]
+        ],
+        [ "Attribute", "monitoring", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ],
+                      [ "A_string", "aws-vpn-docker-security-group" ]
+                    ]
+                  ],
+                  [ "A_string", "this_security_group_id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ],
+                      [ "A_string", "aws-vpn-docker-vpc" ]
+                    ]
+                  ],
+                  [ "A_string", "private_subnets" ]
+                ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [ "Attribute", "disable_api_termination", [ "Bool", false ] ]
+      ]
+    }
+  ]
+]

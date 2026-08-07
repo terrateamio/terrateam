@@ -1,0 +1,36 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route" ], [ "Lit", "vpc_peering_connection_id" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "route_table_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "route_table_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "destination_cidr_block",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "vpc_peering_dest_cidr_block" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_peering_connection_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "vpc_peering_connection_id" ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

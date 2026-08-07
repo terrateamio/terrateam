@@ -1,0 +1,28 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "aws",
+                [
+                  "Object",
+                  [ [ [ "Bare", "source" ], [ "String", "hashicorp/aws" ] ] ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,9-10: Missing newline after block definition; A block definition must end with a newline.

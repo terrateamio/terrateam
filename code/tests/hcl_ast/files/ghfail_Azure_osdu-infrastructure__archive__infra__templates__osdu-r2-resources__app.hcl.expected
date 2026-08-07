@@ -1,0 +1,748 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "app_rg" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "app_rg_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "region" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "aad_reply_uris",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "config", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "module" ],
+                            [ "A_string", "authn_app_service" ]
+                          ]
+                        ],
+                        [ "A_string", "app_service_config_data" ]
+                      ]
+                    ],
+                    "output": [
+                      "Tuple",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "format",
+                            [
+                              [ "String", "https://%s" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ],
+                                  [ "A_string", "app_fqdn" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "format",
+                            [
+                              [
+                                "String",
+                                "https://%s/.auth/login/aad/callback"
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ],
+                                  [ "A_string", "app_fqdn" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "format",
+                            [
+                              [ "String", "https://%s" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ],
+                                  [ "A_string", "slot_fqdn" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "format",
+                            [
+                              [
+                                "String",
+                                "https://%s/.auth/login/aad/callback"
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ],
+                                  [ "A_string", "slot_fqdn" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "app_insights" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/app-insights" ]
+        ],
+        [
+          "Attribute",
+          "service_plan_resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "app_rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "appinsights_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "ai_name" ] ] ]
+        ],
+        [ "Attribute", "appinsights_application_type", [ "String", "Web" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "service_plan" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/service-plan" ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "app_rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_plan_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "sp_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "scaling_rules",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "scaling_rules" ] ] ]
+        ],
+        [
+          "Attribute",
+          "service_plan_size",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "service_plan_size" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_plan_tier",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "service_plan_tier" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "authn_app_service" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/app-service" ]
+        ],
+        [
+          "Attribute",
+          "service_plan_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "service_plan" ] ]
+              ],
+              [ "A_string", "service_plan_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_service_name_prefix",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "auth_svc_name_prefix" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_service_settings",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "app_service_settings" ] ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "app_service_global_config" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_plan_resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "app_rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_insights_instrumentation_key",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "app_insights" ] ]
+              ],
+              [ "A_string", "app_insights_instrumentation_key" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vault_uri",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "keyvault" ] ] ],
+              [ "A_string", "keyvault_uri" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_service_config",
+          [
+            "For_object",
+            {
+              "identifiers": [ "target", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "app_services" ] ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "target" ], [ "A_string", "app_name" ] ]
+              ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "image" ],
+                    [
+                      "Attr", [ [ "Id", "target" ], [ "A_string", "image" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "app_command_line" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "target" ],
+                        [ "A_string", "app_command_line" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "linux_fx_version" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "target" ],
+                        [ "A_string", "linux_fx_version" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "app_settings" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "target" ], [ "A_string", "app_settings" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "ad_application" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/ad-application" ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "ad_app_name" ] ] ]
+        ],
+        [ "Attribute", "oauth2_allow_implicit_flow", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "reply_urls",
+          [
+            "Tuple",
+            [
+              [ "String", "http://localhost:8080" ],
+              [ "String", "http://localhost:8080/auth/callback" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_permissions",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "String", "Microsoft Graph" ] ],
+                  [
+                    [ "Bare", "oauth2_permissions" ],
+                    [ "Tuple", [ [ "String", "User.Read" ] ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "service_bus" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/service-bus" ]
+        ],
+        [
+          "Attribute",
+          "namespace_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "sb_namespace" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "app_rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sku",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "sb_sku" ] ] ]
+        ],
+        [
+          "Attribute",
+          "topics",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "sb_topics" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "container_registry" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/container-registry" ]
+        ],
+        [
+          "Attribute",
+          "container_registry_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "acr_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "app_rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "container_registry_sku",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "container_registry_sku" ] ]
+          ]
+        ],
+        [
+          "Attribute", "container_registry_admin_enabled", [ "Bool", false ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "function_app" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/function-app" ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "functionapp_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "app_rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_account_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "function_storage" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_plan_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "service_plan" ] ]
+              ],
+              [ "A_string", "app_service_plan_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "instrumentation_key",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "app_insights" ] ]
+              ],
+              [ "A_string", "app_insights_instrumentation_key" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_registry_server_url",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "container_registry" ] ]
+              ],
+              [ "A_string", "container_registry_login_server" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_registry_server_username",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "app_setting_kv_format" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "output_secret_map" ]
+                      ]
+                    ],
+                    [ "A_string", "app-dev-sp-username" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_registry_server_password",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "app_setting_kv_format" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "output_secret_map" ]
+                      ]
+                    ],
+                    [ "A_string", "app-dev-sp-password" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "function_app_config",
+          [
+            "For_object",
+            {
+              "identifiers": [ "target", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "function_apps" ] ]
+              ],
+              "key_output": [
+                "Attr",
+                [ [ "Id", "target" ], [ "A_string", "function_name" ] ]
+              ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "app_settings" ],
+                    [
+                      "Fun_call",
+                      [
+                        "merge",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "function_app_global_config" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "target" ],
+                              [ "A_string", "app_settings" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "image" ],
+                    [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [ "Id", "target" ],
+                          [ "String", "image" ],
+                          [ "String", "" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

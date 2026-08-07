@@ -1,0 +1,1786 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "management_group_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The management group scope at which the initiative will be defined. Defaults to current Subscription if omitted. Changing this forces a new resource to be created. Note: if you are using azurerm_management_group to assign a value to management_group_id, be sure to use name or group_id attribute, but not id."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "initiative_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Policy initiative name. Changing this forces a new resource to be created"
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Lte",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "initiative_name" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 64 ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Initiative names have a maximum 64 character limit."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "initiative_display_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Policy initiative display name" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Lte",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "initiative_display_name" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 128 ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Initiative display names have a maximum 128 character limit."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "initiative_description" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Policy initiative description" ]
+        ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Lte",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "initiative_description" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 512 ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Initiative descriptions have a maximum 512 character limit."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "initiative_category" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The category of the initiative" ]
+        ],
+        [ "Attribute", "default", [ "String", "General" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "initiative_version" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The version for this initiative, defaults to 1.0.0" ]
+        ],
+        [ "Attribute", "default", [ "String", "1.0.0" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "member_definitions" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "any" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Policy Definition resource nodes that will be members of this initiative"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "initiative_metadata" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "any" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The metadata for the policy initiative. This is a JSON object representing additional metadata that should be stored with the policy initiative. Omitting this will default to merge var.initiative_category and var.initiative_version"
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "merge_effects" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should the module merge all member definition effects? Defaults to true"
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "merge_parameters" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should the module merge all member definition parameters? Defaults to true"
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "duplicate_members" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Does the Initiative contain duplicate member definitions? Defaults to false"
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "camel_case_references" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should definition references be converted to Camel Case for readability? Defaults to false"
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "use_display_name_for_references" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should definition references take policy display_name in favour of policy_name? Defaults to false"
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "member_properties",
+          [
+            "For_object",
+            {
+              "identifiers": [ "idx", [ "d" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "member_definitions" ] ]
+              ],
+              "key_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "duplicate_members" ]
+                        ]
+                      ],
+                      [ "Bool", false ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr", [ [ "Id", "d" ], [ "A_string", "name" ] ]
+                  ],
+                  "else_": [
+                    "Template",
+                    [
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [ "Id", "idx" ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "_" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr", [ [ "Id", "d" ], [ "A_string", "name" ] ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "id" ],
+                    [ "Attr", [ [ "Id", "d" ], [ "A_string", "id" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "mode" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr", [ [ "Id", "d" ], [ "A_string", "mode" ] ]
+                          ],
+                          [ "String", "" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "reference" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "duplicate_members" ]
+                              ]
+                            ],
+                            [ "Bool", false ]
+                          ]
+                        ],
+                        "then_": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "use_display_name_for_references"
+                                    ]
+                                  ]
+                                ],
+                                [ "Bool", false ]
+                              ]
+                            ],
+                            "then_": [
+                              "Attr",
+                              [ [ "Id", "d" ], [ "A_string", "name" ] ]
+                            ],
+                            "else_": [
+                              "Attr",
+                              [
+                                [ "Id", "d" ], [ "A_string", "display_name" ]
+                              ]
+                            ]
+                          }
+                        ],
+                        "else_": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "use_display_name_for_references"
+                                    ]
+                                  ]
+                                ],
+                                [ "Bool", false ]
+                              ]
+                            ],
+                            "then_": [
+                              "Template",
+                              [
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [ "Id", "idx" ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", "_" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "d" ], [ "A_string", "name" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ],
+                            "else_": [
+                              "Template",
+                              [
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [ "Id", "idx" ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", "_" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "d" ],
+                                        [ "A_string", "display_name" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "parameters" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "jsondecode",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "d" ],
+                                    [ "A_string", "parameters" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "category" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "jsondecode",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "d" ],
+                                        [ "A_string", "metadata" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "category" ]
+                            ]
+                          ],
+                          [ "String", "" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "version" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "jsondecode",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "d" ],
+                                        [ "A_string", "metadata" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "version" ]
+                            ]
+                          ],
+                          [ "String", "1.*.*" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "non_compliance_message" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "jsondecode",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "d" ],
+                                        [ "A_string", "metadata" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "non_compliance_message" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "d" ], [ "A_string", "description" ] ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "d" ], [ "A_string", "display_name" ] ]
+                          ],
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "Flagged by Policy: " ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [ [ "Id", "d" ], [ "A_string", "name" ] ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "role_definition_ids" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "jsondecode",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "d" ],
+                                                [ "A_string", "policy_rule" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "then" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "details" ]
+                                ]
+                              ],
+                              [ "A_string", "roleDefinitionIds" ]
+                            ]
+                          ],
+                          [ "Tuple", [] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_definition_reference",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "member_properties" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "policy_definition_id" ],
+                    [ "Attr", [ [ "Id", "v" ], [ "A_string", "id" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "reference_id" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "camel_case_references" ]
+                              ]
+                            ],
+                            [ "Bool", false ]
+                          ]
+                        ],
+                        "then_": [
+                          "Attr",
+                          [ [ "Id", "v" ], [ "A_string", "reference" ] ]
+                        ],
+                        "else_": [
+                          "Fun_call",
+                          [
+                            "replace",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "title",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "replace",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "v" ],
+                                              [ "A_string", "reference" ]
+                                            ]
+                                          ],
+                                          [ "String", "/-|_|\\s/" ],
+                                          [ "String", " " ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "/\\s/" ],
+                              [ "String", "" ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "version" ],
+                    [ "Attr", [ [ "Id", "v" ], [ "A_string", "version" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "parameter_values" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Gt",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "parameters" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "then_": [
+                          "Fun_call",
+                          [
+                            "jsonencode",
+                            [
+                              [
+                                "For_object",
+                                {
+                                  "identifiers": [ "i", [] ],
+                                  "input": [
+                                    "Fun_call",
+                                    [
+                                      "keys",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [ "A_string", "parameters" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "key_output": [ "Id", "i" ],
+                                  "value_output": [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "value" ],
+                                        [
+                                          "Cond",
+                                          {
+                                            "if_": [
+                                              "Log_and",
+                                              [
+                                                [
+                                                  "Equal",
+                                                  [
+                                                    [ "Id", "i" ],
+                                                    [ "String", "effect" ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Equal",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "merge_effects"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Bool", false ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "then_": [
+                                              "Template",
+                                              [
+                                                [
+                                                  "Literal", "[parameters('"
+                                                ],
+                                                [
+                                                  "Interpolation",
+                                                  {
+                                                    "expr": [ "Id", "i" ],
+                                                    "strip_before": false,
+                                                    "strip_after": false
+                                                  }
+                                                ],
+                                                [ "Literal", "_" ],
+                                                [
+                                                  "Interpolation",
+                                                  {
+                                                    "expr": [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "v" ],
+                                                        [
+                                                          "A_string",
+                                                          "reference"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    "strip_before": false,
+                                                    "strip_after": false
+                                                  }
+                                                ],
+                                                [ "Literal", "')]" ]
+                                              ]
+                                            ],
+                                            "else_": [
+                                              "Cond",
+                                              {
+                                                "if_": [
+                                                  "Equal",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "merge_parameters"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Bool", false ]
+                                                  ]
+                                                ],
+                                                "then_": [
+                                                  "Template",
+                                                  [
+                                                    [
+                                                      "Literal",
+                                                      "[parameters('"
+                                                    ],
+                                                    [
+                                                      "Interpolation",
+                                                      {
+                                                        "expr": [ "Id", "i" ],
+                                                        "strip_before": false,
+                                                        "strip_after": false
+                                                      }
+                                                    ],
+                                                    [ "Literal", "_" ],
+                                                    [
+                                                      "Interpolation",
+                                                      {
+                                                        "expr": [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "v" ],
+                                                            [
+                                                              "A_string",
+                                                              "reference"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "strip_before": false,
+                                                        "strip_after": false
+                                                      }
+                                                    ],
+                                                    [ "Literal", "')]" ]
+                                                  ]
+                                                ],
+                                                "else_": [
+                                                  "Template",
+                                                  [
+                                                    [
+                                                      "Literal",
+                                                      "[parameters('"
+                                                    ],
+                                                    [
+                                                      "Interpolation",
+                                                      {
+                                                        "expr": [ "Id", "i" ],
+                                                        "strip_before": false,
+                                                        "strip_after": false
+                                                      }
+                                                    ],
+                                                    [ "Literal", "')]" ]
+                                                  ]
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "cond": null
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        "else_": [ "Null" ]
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Ellipsis",
+                  [
+                    "Fun_call",
+                    [
+                      "values",
+                      [
+                        [
+                          "For_object",
+                          {
+                            "identifiers": [ "definition", [ "properties" ] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "member_properties" ]
+                              ]
+                            ],
+                            "key_output": [ "Id", "definition" ],
+                            "value_output": [
+                              "For_object",
+                              {
+                                "identifiers": [
+                                  "parameter_name", [ "parameter_value" ]
+                                ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "properties" ],
+                                    [ "A_string", "parameters" ]
+                                  ]
+                                ],
+                                "key_output": [
+                                  "Cond",
+                                  {
+                                    "if_": [
+                                      "Log_or",
+                                      [
+                                        [
+                                          "Equal",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "merge_parameters"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Bool", false ]
+                                          ]
+                                        ],
+                                        [
+                                          "Log_and",
+                                          [
+                                            [
+                                              "Equal",
+                                              [
+                                                [ "Id", "parameter_name" ],
+                                                [ "String", "effect" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string",
+                                                      "merge_effects"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Bool", false ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "then_": [
+                                      "Template",
+                                      [
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Id", "parameter_name"
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [ "Literal", "_" ],
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "properties" ],
+                                                [ "A_string", "reference" ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ]
+                                      ]
+                                    ],
+                                    "else_": [ "Id", "parameter_name" ]
+                                  }
+                                ],
+                                "value_output": [
+                                  "For_object",
+                                  {
+                                    "identifiers": [ "k", [ "v" ] ],
+                                    "input": [ "Id", "parameter_value" ],
+                                    "key_output": [ "Id", "k" ],
+                                    "value_output": [
+                                      "Cond",
+                                      {
+                                        "if_": [
+                                          "Log_or",
+                                          [
+                                            [
+                                              "Log_and",
+                                              [
+                                                [
+                                                  "Equal",
+                                                  [
+                                                    [ "Id", "k" ],
+                                                    [ "String", "metadata" ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Equal",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "merge_parameters"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Bool", false ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Log_and",
+                                              [
+                                                [
+                                                  "Equal",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "merge_effects"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Bool", false ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Equal",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "try",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "v" ],
+                                                              [
+                                                                "A_string",
+                                                                "displayName"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [ "String", "" ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "String", "Effect" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "then_": [
+                                          "Fun_call",
+                                          [
+                                            "merge",
+                                            [
+                                              [ "Id", "v" ],
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "displayName" ],
+                                                    [
+                                                      "Template",
+                                                      [
+                                                        [
+                                                          "Interpolation",
+                                                          {
+                                                            "expr": [
+                                                              "Attr",
+                                                              [
+                                                                [ "Id", "v" ],
+                                                                [
+                                                                  "A_string",
+                                                                  "displayName"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            "strip_before": false,
+                                                            "strip_after": false
+                                                          }
+                                                        ],
+                                                        [
+                                                          "Literal",
+                                                          " For Policy: "
+                                                        ],
+                                                        [
+                                                          "Interpolation",
+                                                          {
+                                                            "expr": [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "properties"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "reference"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            "strip_before": false,
+                                                            "strip_after": false
+                                                          }
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "else_": [ "Id", "v" ]
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "replace_trigger",
+          [
+            "Fun_call",
+            [
+              "md5",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "parameters" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "all_role_definition_ids",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "distinct",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "v", [] ],
+                          "input": [
+                            "Fun_call",
+                            [
+                              "flatten",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "values",
+                                    [
+                                      [
+                                        "For_object",
+                                        {
+                                          "identifiers": [ "k", [ "v" ] ],
+                                          "input": [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "member_properties"
+                                              ]
+                                            ]
+                                          ],
+                                          "key_output": [ "Id", "k" ],
+                                          "value_output": [
+                                            "Attr",
+                                            [
+                                              [ "Id", "v" ],
+                                              [
+                                                "A_string",
+                                                "role_definition_ids"
+                                              ]
+                                            ]
+                                          ],
+                                          "cond": null
+                                        }
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call", [ "lower", [ [ "Id", "v" ] ] ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ],
+                [ "Tuple", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [ "Null" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "initiative_metadata" ] ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "merge",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "category" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "initiative_category" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "version" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "initiative_version" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "non_compliance_messages",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "null" ],
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "Flagged by Initiative: " ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "initiative_name" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "k", [ "v" ] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "member_properties" ]
+                      ]
+                    ],
+                    "key_output": [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "camel_case_references" ]
+                              ]
+                            ],
+                            [ "Bool", false ]
+                          ]
+                        ],
+                        "then_": [
+                          "Attr",
+                          [ [ "Id", "v" ], [ "A_string", "reference" ] ]
+                        ],
+                        "else_": [
+                          "Fun_call",
+                          [
+                            "replace",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "title",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "replace",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "v" ],
+                                              [ "A_string", "reference" ]
+                                            ]
+                                          ],
+                                          [ "String", "/-|_|\\s/" ],
+                                          [ "String", " " ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "/\\s/" ],
+                              [ "String", "" ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    "value_output": [
+                      "Attr",
+                      [
+                        [ "Id", "v" ],
+                        [ "A_string", "non_compliance_message" ]
+                      ]
+                    ],
+                    "cond": [
+                      "Log_and",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "contains",
+                            [
+                              [
+                                "Tuple",
+                                [
+                                  [ "String", "All" ],
+                                  [ "String", "Indexed" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [ [ "Id", "v" ], [ "A_string", "mode" ] ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "duplicate_members" ]
+                              ]
+                            ],
+                            [ "Bool", false ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "initiative_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ], [ "A_string", "management_group_id" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "management_group_id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    "/providers/Microsoft.Authorization/policySetDefinitions/"
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "initiative_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "azurerm_subscription" ]
+                                ]
+                              ],
+                              [ "A_string", "current" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    "/providers/Microsoft.Authorization/policySetDefinitions/"
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "initiative_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

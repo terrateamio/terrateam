@@ -1,0 +1,107 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "instance_tags",
+          [
+            "For_object",
+            {
+              "identifiers": [ "idx", [ "name" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "instance_names" ] ]
+              ],
+              "key_output": [ "Id", "name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "default_tags" ] ]
+                    ],
+                    [
+                      "Object",
+                      [
+                        [ [ "Bare", "Name" ], [ "Id", "name" ] ],
+                        [ [ "Bare", "Index" ], [ "Id", "idx" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_instances",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "name", [ "tags" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "instance_tags" ] ]
+              ],
+              "output": [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "Id", "name" ] ],
+                  [ [ "Bare", "tags" ], [ "Id", "tags" ] ]
+                ]
+              ],
+              "cond": [
+                "Fun_call",
+                [
+                  "lookup",
+                  [
+                    [ "Id", "tags" ],
+                    [ "String", "enabled" ],
+                    [ "Bool", true ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "instance_count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "enabled_instances" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "has_instances",
+          [
+            "Gt",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "instance_count" ] ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

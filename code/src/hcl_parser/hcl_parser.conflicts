@@ -1,0 +1,138 @@
+
+** Conflict (shift/reduce) in state 51.
+** Token involved: NEWLINE
+** This state is reached from expr_only after reading:
+
+list(NEWLINE) LPAREN list(NEWLINE) expr_paren PLUS list(NEWLINE) conditional_paren
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+expr_only 
+list(NEWLINE) expr list(NEWLINE) EOF 
+              expr_term 
+              LPAREN list(NEWLINE) expr_paren RPAREN 
+                                   (?)
+
+** In state 51, looking ahead at NEWLINE, reducing production
+** list(NEWLINE) ->
+** is permitted because of the following sub-derivation:
+
+operation_paren list(NEWLINE) // lookahead token appears because list(NEWLINE) can begin with NEWLINE
+binary_op_paren // lookahead token is inherited
+expr_paren PLUS list(NEWLINE) expr_paren // lookahead token is inherited
+                              conditional_paren list(NEWLINE) // lookahead token is inherited
+                                                . 
+
+** In state 51, looking ahead at NEWLINE, shifting is permitted
+** because of the following sub-derivation:
+
+operation_paren list(NEWLINE) 
+binary_op_paren 
+expr_paren PLUS list(NEWLINE) expr_paren 
+                              conditional_paren list(NEWLINE) 
+                                                . NEWLINE list(NEWLINE) 
+
+** Conflict (shift/reduce) in state 34.
+** Token involved: NEWLINE
+** This state is reached from expr_only after reading:
+
+list(NEWLINE) LPAREN list(NEWLINE) expr_paren PLUS list(NEWLINE) expr_term_paren
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+expr_only 
+list(NEWLINE) expr list(NEWLINE) EOF 
+              expr_term 
+              LPAREN list(NEWLINE) expr_paren RPAREN 
+                                   (?)
+
+** In state 34, looking ahead at NEWLINE, reducing production
+** list(NEWLINE) ->
+** is permitted because of the following sub-derivation:
+
+operation_paren list(NEWLINE) // lookahead token appears because list(NEWLINE) can begin with NEWLINE
+binary_op_paren // lookahead token is inherited
+expr_paren PLUS list(NEWLINE) expr_paren // lookahead token is inherited
+                              expr_term_paren list(NEWLINE) // lookahead token is inherited
+                                              . 
+
+** In state 34, looking ahead at NEWLINE, shifting is permitted
+** because of the following sub-derivation:
+
+operation_paren list(NEWLINE) 
+binary_op_paren 
+expr_paren PLUS list(NEWLINE) expr_paren 
+                              expr_term_paren list(NEWLINE) 
+                                              . NEWLINE list(NEWLINE) 
+
+** Conflict (shift/reduce) in state 31.
+** Token involved: NEWLINE
+** This state is reached from expr_only after reading:
+
+list(NEWLINE) LPAREN list(NEWLINE) expr_paren PLUS list(NEWLINE) operation_paren
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+expr_only 
+list(NEWLINE) expr list(NEWLINE) EOF 
+              expr_term 
+              LPAREN list(NEWLINE) expr_paren RPAREN 
+                                   (?)
+
+** In state 31, looking ahead at NEWLINE, reducing production
+** list(NEWLINE) ->
+** is permitted because of the following sub-derivation:
+
+operation_paren list(NEWLINE) // lookahead token appears because list(NEWLINE) can begin with NEWLINE
+binary_op_paren // lookahead token is inherited
+expr_paren PLUS list(NEWLINE) expr_paren // lookahead token is inherited
+                              operation_paren list(NEWLINE) // lookahead token is inherited
+                                              . 
+
+** In state 31, looking ahead at NEWLINE, shifting is permitted
+** because of the following sub-derivation:
+
+operation_paren list(NEWLINE) 
+binary_op_paren 
+expr_paren PLUS list(NEWLINE) expr_paren 
+                              operation_paren list(NEWLINE) 
+                                              . NEWLINE list(NEWLINE) 
+
+** Conflict (shift/reduce) in state 1.
+** Token involved: NEWLINE
+** This state is reached from expr_only after reading:
+
+list(NEWLINE) LPAREN list(NEWLINE) expr_paren PLUS list(NEWLINE) operation_paren NEWLINE
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+expr_only 
+list(NEWLINE) expr list(NEWLINE) EOF 
+              expr_term 
+              LPAREN list(NEWLINE) expr_paren RPAREN 
+                                   (?)
+
+** In state 1, looking ahead at NEWLINE, reducing production
+** list(NEWLINE) ->
+** is permitted because of the following sub-derivation:
+
+operation_paren list(NEWLINE) // lookahead token appears because list(NEWLINE) can begin with NEWLINE
+binary_op_paren // lookahead token is inherited
+expr_paren PLUS list(NEWLINE) expr_paren // lookahead token is inherited
+                              operation_paren list(NEWLINE) // lookahead token is inherited
+                                              NEWLINE list(NEWLINE) // lookahead token is inherited
+                                                      . 
+
+** In state 1, looking ahead at NEWLINE, shifting is permitted
+** because of the following sub-derivation:
+
+operation_paren list(NEWLINE) 
+binary_op_paren 
+expr_paren PLUS list(NEWLINE) expr_paren 
+                              operation_paren list(NEWLINE) 
+                                              NEWLINE list(NEWLINE) 
+                                                      . NEWLINE list(NEWLINE) 

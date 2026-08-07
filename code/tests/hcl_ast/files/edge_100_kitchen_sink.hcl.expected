@@ -1,0 +1,192 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "simple",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ]
+        ],
+        [
+          "Attribute",
+          "computed",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "enabled" ] ]
+              ],
+              "then_": [ "String", "yes" ],
+              "else_": [ "String", "no" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "list",
+          [
+            "Tuple",
+            [
+              [ "Int", 1 ], [ "String", "two" ], [ "Bool", true ], [ "Null" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "map",
+          [
+            "Object",
+            [
+              [ [ "Bare", "a" ], [ "Int", 1 ] ],
+              [ [ "Bare", "b" ], [ "String", "two" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "access",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "config" ] ]
+                      ],
+                      [ "A_string", "servers" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "hostname" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "splat",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "instances" ] ]
+                  ],
+                  [ "Splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "funcall",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", "," ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tmpl",
+          [
+            "Template",
+            [
+              [ "Literal", "prefix-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-suffix" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_list",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "x", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "items" ] ]
+              ],
+              "output": [ "Fun_call", [ "upper", [ [ "Id", "x" ] ] ] ],
+              "cond": [ "Not_equal", [ [ "Id", "x" ], [ "String", "" ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "for_map",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "map" ] ] ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "math",
+          [
+            "Mult",
+            [ [ "Add", [ [ "Int", 1 ], [ "Int", 2 ] ] ], [ "Int", 3 ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "logic",
+          [ "Log_and", [ [ "Bool", true ], [ "Not", [ "Bool", false ] ] ] ]
+        ],
+        [ "Attribute", "compare", [ "Lte", [ [ "Int", 1 ], [ "Int", 2 ] ] ] ],
+        [
+          "Attribute",
+          "nested",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Object", [ [ [ "Bare", "a" ], [ "Int", 1 ] ] ] ],
+                [ "Object", [ [ [ "Bare", "b" ], [ "Int", 2 ] ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "heredoc",
+          [ "Heredoc", [ "EOT", "\nhello\nworld\n" ] ]
+        ]
+      ]
+    }
+  ]
+]

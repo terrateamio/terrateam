@@ -1,0 +1,618 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "null_resource" ], [ "Lit", "ingress-node" ] ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "inline",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [ "Literal", "sshpass -p\"" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ingress_bastion_password" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [
+                          "Literal",
+                          "\" -- sudo -i set-wireguard-peer delete \""
+                        ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "egress_bastion_host" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\"" ]
+                      ]
+                    ],
+                    [
+                      "Template",
+                      [
+                        [ "Literal", "sshpass -p\"" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ingress_bastion_password" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [
+                          "Literal",
+                          "\" -- sudo -i set-wireguard-peer add \""
+                        ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "egress_bastion_host" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\" \"" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "egress_bastion_admin" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\" \"" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "egress_bastion_password" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\" nat" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [ "Attribute", "when", [ "String", "destroy" ] ],
+              [
+                "Attribute",
+                "inline",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [ "Literal", "sshpass -p\"" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ingress_bastion_password" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [
+                          "Literal",
+                          "\" -- sudo -i set-wireguard-peer delete \""
+                        ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "egress_bastion_host" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\"" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "triggers",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "ingress_bastion_id" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "ingress_bastion_id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "connection",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "ssh" ] ],
+              [
+                "Attribute",
+                "user",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "ingress_bastion_admin" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "private_key",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "ingress_bastion_sshkey" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "host",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "ingress_bastion_host" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [ "Tuple", [ [ "String", "aws_route.ingress-egress-admin" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "null_resource" ], [ "Lit", "egress-node" ] ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "inline",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [ "Literal", "sshpass -p\"" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "egress_bastion_password" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [
+                          "Literal",
+                          "\" -- sudo -i set-wireguard-peer delete \""
+                        ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ingress_bastion_host" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\"" ]
+                      ]
+                    ],
+                    [
+                      "Template",
+                      [
+                        [ "Literal", "sshpass -p\"" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "egress_bastion_password" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [
+                          "Literal",
+                          "\" -- sudo -i set-wireguard-peer add \""
+                        ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ingress_bastion_host" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\" \"" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ingress_bastion_admin" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\" \"" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ingress_bastion_password" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\"" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [ "Attribute", "when", [ "String", "destroy" ] ],
+              [
+                "Attribute",
+                "inline",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [ "Literal", "sshpass -p\"" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "egress_bastion_password" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [
+                          "Literal",
+                          "\" -- sudo -i set-wireguard-peer delete \""
+                        ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ingress_bastion_host" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\"" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "triggers",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "egress_bastion_id" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "egress_bastion_id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "connection",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "ssh" ] ],
+              [
+                "Attribute",
+                "user",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "egress_bastion_admin" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "private_key",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "egress_bastion_sshkey" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "host",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "egress_bastion_host" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [ "Tuple", [ [ "String", "aws_route.egress-ingress-admin" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

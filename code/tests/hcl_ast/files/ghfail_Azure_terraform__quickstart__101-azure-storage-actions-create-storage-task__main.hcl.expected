@@ -1,0 +1,270 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_client_config" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_pet" ], [ "Lit", "rg_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "prefix",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "resource_group_name_prefix" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "rg" ] ],
+      "body": [
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "resource_group_location" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "random_pet" ], [ "A_string", "rg_name" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "random_string" ], [ "Lit", "storage_task_name" ]
+      ],
+      "body": [
+        [ "Attribute", "length", [ "Int", 8 ] ],
+        [ "Attribute", "lower", [ "Bool", true ] ],
+        [ "Attribute", "numeric", [ "Bool", false ] ],
+        [ "Attribute", "special", [ "Bool", false ] ],
+        [ "Attribute", "upper", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "time_offset" ], [ "Lit", "locked_until_date" ] ],
+      "body": [
+        [
+          "Attribute",
+          "offset_days",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "offset_days" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azapi_resource" ], [ "Lit", "my_terraform_task" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "String", "Microsoft.StorageActions/storageTasks@2023-01-01" ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "random_string" ],
+                  [ "A_string", "storage_task_name" ]
+                ]
+              ],
+              [ "A_string", "result" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parent_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "rg" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "rg" ] ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "identity",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "SystemAssigned" ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "body",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "properties" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "action" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "if" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "condition" ],
+                                  [ "String", "[[endsWith(Name, '.docx')]]" ]
+                                ],
+                                [
+                                  [ "Bare", "operations" ],
+                                  [
+                                    "Tuple",
+                                    [
+                                      [
+                                        "Object",
+                                        [
+                                          [
+                                            [ "Bare", "name" ],
+                                            [
+                                              "String",
+                                              "SetBlobImmutabilityPolicy"
+                                            ]
+                                          ],
+                                          [
+                                            [ "Bare", "onFailure" ],
+                                            [ "String", "break" ]
+                                          ],
+                                          [
+                                            [ "Bare", "onSuccess" ],
+                                            [ "String", "continue" ]
+                                          ],
+                                          [
+                                            [ "Bare", "parameters" ],
+                                            [
+                                              "Object",
+                                              [
+                                                [
+                                                  [ "Bare", "untilDate" ],
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Id",
+                                                            "time_offset"
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "locked_until_date"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string", "rfc3339"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  [ "Bare", "mode" ],
+                                                  [ "String", "locked" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "storage_task_description" ]
+                        ]
+                      ]
+                    ],
+                    [ [ "Bare", "enabled" ], [ "Bool", true ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

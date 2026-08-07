@@ -1,0 +1,1317 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "mssql_servers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [ "Attr", [ [ "Id", "module" ], [ "A_string", "mssql_servers" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "mssql_servers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/databases/mssql_server" ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "keyvault_access_policies" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "keyvault_access_policies_azuread_apps" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "database" ] ] ],
+              [ "A_string", "mssql_servers" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "global_settings",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "client_config",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "client_config" ] ] ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "storage_accounts",
+          [
+            "Attr",
+            [ [ "Id", "module" ], [ "A_string", "storage_accounts" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "azuread_groups",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "combined_objects_azuread_groups" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vnets",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "combined_objects_networking" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_endpoints",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "private_endpoints" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "combined_objects_private_dns" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_groups",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "combined_objects_resource_groups" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "base_tags",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+              ],
+              [ "A_string", "inherit_tags" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group",
+          [
+            "Idx",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "combined_objects_resource_groups" ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group" ]
+                              ]
+                            ],
+                            [ "A_string", "lz_key" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "client_config" ]
+                              ]
+                            ],
+                            [ "A_string", "landingzone_key" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "resource_group_key" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group" ]
+                          ]
+                        ],
+                        [ "A_string", "key" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_or",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "can",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group" ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "can",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group_name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group" ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "resource_group_name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "global_settings" ]
+                          ]
+                        ],
+                        [ "A_string", "regions" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "region" ]
+                      ]
+                    ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "keyvault_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "administrator_login_password" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "administrator_login_password" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "combined_objects_keyvaults" ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "keyvault" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "keyvault" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "keyvault_key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "remote_objects",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "keyvault_keys" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_keyvault_keys" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "azurerm_storage_account" ], [ "Lit", "mssql_auditing" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "database" ] ]
+                  ],
+                  [ "A_string", "mssql_servers" ]
+                ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [ "Id", "value" ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "value" ],
+                            [ "A_string", "extended_auditing_policy" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ], [ "A_string", "storage_accounts" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "extended_auditing_policy" ]
+                            ]
+                          ],
+                          [ "A_string", "storage_account" ]
+                        ]
+                      ],
+                      [ "A_string", "key" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ], [ "A_string", "storage_accounts" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "extended_auditing_policy" ]
+                            ]
+                          ],
+                          [ "A_string", "storage_account" ]
+                        ]
+                      ],
+                      [ "A_string", "key" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "resource_group_name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_mssql_server_extended_auditing_policy" ],
+        [ "Lit", "mssql" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_role_assignment" ], [ "A_string", "for" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "database" ] ]
+                  ],
+                  [ "A_string", "mssql_servers" ]
+                ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [ "Id", "value" ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "value" ],
+                            [ "A_string", "extended_auditing_policy" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "log_monitoring_enabled",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "extended_auditing_policy" ]
+                      ]
+                    ],
+                    [ "A_string", "log_monitoring_enabled" ]
+                  ]
+                ],
+                [ "Bool", false ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "server_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "mssql_servers" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_endpoint",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "azurerm_storage_account" ]
+                        ]
+                      ],
+                      [ "A_string", "mssql_auditing" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "primary_blob_endpoint" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_account_access_key",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "azurerm_storage_account" ]
+                        ]
+                      ],
+                      [ "A_string", "mssql_auditing" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "primary_access_key" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_account_access_key_is_secondary",
+          [ "Bool", false ]
+        ],
+        [
+          "Attribute",
+          "retention_in_days",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "extended_auditing_policy" ]
+                      ]
+                    ],
+                    [ "A_string", "retention_in_days" ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "mssql_failover_groups" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/databases/mssql_server/failover_group" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "database" ] ] ],
+              [ "A_string", "mssql_failover_groups" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "global_settings",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "client_config",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "client_config" ] ] ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_or",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "can",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group" ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "can",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group_name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group" ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "resource_group_name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string",
+                                "combined_objects_resource_groups"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "resource_group" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "resource_group" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "primary_server_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "combined_objects_mssql_servers" ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "primary_server" ]
+                                  ]
+                                ],
+                                [ "A_string", "lz_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "client_config" ]
+                                  ]
+                                ],
+                                [ "A_string", "landingzone_key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "primary_server" ]
+                        ]
+                      ],
+                      [ "A_string", "sql_server_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secondary_server_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "combined_objects_mssql_servers" ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "secondary_server" ]
+                                  ]
+                                ],
+                                [ "A_string", "lz_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "client_config" ]
+                                  ]
+                                ],
+                                [ "A_string", "landingzone_key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "secondary_server" ]
+                        ]
+                      ],
+                      [ "A_string", "sql_server_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databases",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "combined_objects_mssql_databases" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

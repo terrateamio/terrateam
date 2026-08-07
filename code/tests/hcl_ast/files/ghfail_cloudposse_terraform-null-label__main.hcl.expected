@@ -1,0 +1,2406 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "defaults",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "label_order" ],
+                [
+                  "Tuple",
+                  [
+                    [ "String", "namespace" ],
+                    [ "String", "environment" ],
+                    [ "String", "stage" ],
+                    [ "String", "name" ],
+                    [ "String", "attributes" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "regex_replace_chars" ],
+                [ "String", "/[^-a-zA-Z0-9]/" ]
+              ],
+              [ [ "Bare", "delimiter" ], [ "String", "-" ] ],
+              [ [ "Bare", "replacement" ], [ "String", "" ] ],
+              [ [ "Bare", "id_length_limit" ], [ "Int", 0 ] ],
+              [ [ "Bare", "id_hash_length" ], [ "Int", 5 ] ],
+              [ [ "Bare", "label_key_case" ], [ "String", "title" ] ],
+              [ [ "Bare", "label_value_case" ], [ "String", "lower" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default_labels_as_tags",
+          [
+            "Fun_call",
+            [
+              "keys",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "tags_context" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "context_labels_as_tags_is_unset",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                          ],
+                          [ "A_string", "labels_as_tags" ]
+                        ]
+                      ],
+                      [ "String", "unset" ]
+                    ]
+                  ]
+                ],
+                [ "Bool", true ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "replacement",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "defaults" ] ] ],
+              [ "A_string", "replacement" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "id_hash_length",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "defaults" ] ] ],
+              [ "A_string", "id_hash_length" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "input",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "enabled" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "enabled" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                        ],
+                        [ "A_string", "enabled" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "enabled" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "namespace" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "namespace" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                        ],
+                        [ "A_string", "namespace" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "namespace" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "tenant" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "tenant" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                          ],
+                          [ "String", "tenant" ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "tenant" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "environment" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                        ],
+                        [ "A_string", "environment" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "stage" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "stage" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                        ],
+                        [ "A_string", "stage" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "stage" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "name" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "delimiter" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "delimiter" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                        ],
+                        [ "A_string", "delimiter" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "delimiter" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "attributes" ],
+                [
+                  "Fun_call",
+                  [
+                    "compact",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "distinct",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "concat",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "coalesce",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "context" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "attributes" ]
+                                          ]
+                                        ],
+                                        [ "Tuple", [] ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "coalesce",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [ "A_string", "attributes" ]
+                                          ]
+                                        ],
+                                        [ "Tuple", [] ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "tags" ],
+                [
+                  "Fun_call",
+                  [
+                    "merge",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                          ],
+                          [ "A_string", "tags" ]
+                        ]
+                      ],
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "additional_tag_map" ],
+                [
+                  "Fun_call",
+                  [
+                    "merge",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                          ],
+                          [ "A_string", "additional_tag_map" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "additional_tag_map" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "label_order" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "label_order" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                        ],
+                        [ "A_string", "label_order" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "label_order" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "regex_replace_chars" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "regex_replace_chars" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                        ],
+                        [ "A_string", "regex_replace_chars" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "regex_replace_chars" ]
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "id_length_limit" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "id_length_limit" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                        ],
+                        [ "A_string", "id_length_limit" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "id_length_limit" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "label_key_case" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "label_key_case" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                          ],
+                          [ "String", "label_key_case" ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "label_key_case" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "label_value_case" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "label_value_case" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                          ],
+                          [ "String", "label_value_case" ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "label_value_case" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "descriptor_formats" ],
+                [
+                  "Fun_call",
+                  [
+                    "merge",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                            ],
+                            [ "String", "descriptor_formats" ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "descriptor_formats" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "labels_as_tags" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "context_labels_as_tags_is_unset" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "labels_as_tags" ] ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                        ],
+                        [ "A_string", "labels_as_tags" ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "input" ] ] ],
+              [ "A_string", "enabled" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "regex_replace_chars",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "local" ], [ "A_string", "input" ] ]
+                    ],
+                    [ "A_string", "regex_replace_chars" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "defaults" ] ]
+                    ],
+                    [ "A_string", "regex_replace_chars" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "string_label_names",
+          [
+            "Tuple",
+            [
+              [ "String", "namespace" ],
+              [ "String", "tenant" ],
+              [ "String", "environment" ],
+              [ "String", "stage" ],
+              [ "String", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "normalized_labels",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "string_label_names" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "input" ] ]
+                          ],
+                          [ "Id", "k" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [ "String", "" ],
+                  "else_": [
+                    "Fun_call",
+                    [
+                      "replace",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "local" ], [ "A_string", "input" ] ]
+                            ],
+                            [ "Id", "k" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "regex_replace_chars" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "replacement" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "normalized_attributes",
+          [
+            "Fun_call",
+            [
+              "compact",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "distinct",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "v", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ], [ "A_string", "input" ]
+                                ]
+                              ],
+                              [ "A_string", "attributes" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "replace",
+                              [
+                                [ "Id", "v" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "regex_replace_chars" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "replacement" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "formatted_labels",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "string_label_names" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "label_value_case" ]
+                        ]
+                      ],
+                      [ "String", "none" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "normalized_labels" ]
+                        ]
+                      ],
+                      [ "Id", "k" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Equal",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "label_value_case" ]
+                            ]
+                          ],
+                          [ "String", "title" ]
+                        ]
+                      ],
+                      "then_": [
+                        "Fun_call",
+                        [
+                          "title",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "lower",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "normalized_labels" ]
+                                        ]
+                                      ],
+                                      [ "Id", "k" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "else_": [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "label_value_case" ]
+                                ]
+                              ],
+                              [ "String", "upper" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Fun_call",
+                            [
+                              "upper",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "normalized_labels" ]
+                                      ]
+                                    ],
+                                    [ "Id", "k" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "else_": [
+                            "Fun_call",
+                            [
+                              "lower",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "normalized_labels" ]
+                                      ]
+                                    ],
+                                    [ "Id", "k" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "attributes",
+          [
+            "Fun_call",
+            [
+              "compact",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "distinct",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "v", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "normalized_attributes" ]
+                            ]
+                          ],
+                          "output": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "label_value_case" ]
+                                    ]
+                                  ],
+                                  [ "String", "none" ]
+                                ]
+                              ],
+                              "then_": [ "Id", "v" ],
+                              "else_": [
+                                "Cond",
+                                {
+                                  "if_": [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "label_value_case" ]
+                                        ]
+                                      ],
+                                      [ "String", "title" ]
+                                    ]
+                                  ],
+                                  "then_": [
+                                    "Fun_call",
+                                    [
+                                      "title",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [ "lower", [ [ "Id", "v" ] ] ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "else_": [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "label_value_case"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "String", "upper" ]
+                                        ]
+                                      ],
+                                      "then_": [
+                                        "Fun_call",
+                                        [ "upper", [ [ "Id", "v" ] ] ]
+                                      ],
+                                      "else_": [
+                                        "Fun_call",
+                                        [ "lower", [ [ "Id", "v" ] ] ]
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "formatted_labels" ] ]
+              ],
+              [ "String", "namespace" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tenant",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "formatted_labels" ] ]
+              ],
+              [ "String", "tenant" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "environment",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "formatted_labels" ] ]
+              ],
+              [ "String", "environment" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stage",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "formatted_labels" ] ]
+              ],
+              [ "String", "stage" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "formatted_labels" ] ]
+              ],
+              [ "String", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "delimiter",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "input" ] ]
+                      ],
+                      [ "A_string", "delimiter" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "defaults" ] ]
+                  ],
+                  [ "A_string", "delimiter" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "local" ], [ "A_string", "input" ] ] ],
+                  [ "A_string", "delimiter" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "label_order",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "input" ] ]
+                      ],
+                      [ "A_string", "label_order" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "defaults" ] ]
+                  ],
+                  [ "A_string", "label_order" ]
+                ]
+              ],
+              "else_": [
+                "Fun_call",
+                [
+                  "coalescelist",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "input" ] ]
+                        ],
+                        [ "A_string", "label_order" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "defaults" ] ]
+                        ],
+                        [ "A_string", "label_order" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "id_length_limit",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "input" ] ]
+                      ],
+                      [ "A_string", "id_length_limit" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "defaults" ] ]
+                  ],
+                  [ "A_string", "id_length_limit" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "local" ], [ "A_string", "input" ] ] ],
+                  [ "A_string", "id_length_limit" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "label_key_case",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "input" ] ]
+                      ],
+                      [ "A_string", "label_key_case" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "defaults" ] ]
+                  ],
+                  [ "A_string", "label_key_case" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "local" ], [ "A_string", "input" ] ] ],
+                  [ "A_string", "label_key_case" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "label_value_case",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "input" ] ]
+                      ],
+                      [ "A_string", "label_value_case" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "defaults" ] ]
+                  ],
+                  [ "A_string", "label_value_case" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "local" ], [ "A_string", "input" ] ] ],
+                  [ "A_string", "label_value_case" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "labels_as_tags",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "contains",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "input" ] ]
+                        ],
+                        [ "A_string", "labels_as_tags" ]
+                      ]
+                    ],
+                    [ "String", "default" ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "local" ], [ "A_string", "default_labels_as_tags" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "local" ], [ "A_string", "input" ] ] ],
+                  [ "A_string", "labels_as_tags" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "descriptor_formats",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "input" ] ] ],
+              [ "A_string", "descriptor_formats" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "additional_tag_map",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "context" ] ]
+                    ],
+                    [ "A_string", "additional_tag_map" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "additional_tag_map" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "generated_tags" ] ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "local" ], [ "A_string", "input" ] ]
+                    ],
+                    [ "A_string", "tags" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags_as_list_of_maps",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "key", [] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "keys",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "tags" ] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "output": [
+                      "Fun_call",
+                      [
+                        "merge",
+                        [
+                          [
+                            "Object",
+                            [
+                              [ [ "Bare", "key" ], [ "Id", "key" ] ],
+                              [
+                                [ "Bare", "value" ],
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "tags" ]
+                                      ]
+                                    ],
+                                    [ "Id", "key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "additional_tag_map" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags_context",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "namespace" ],
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "namespace" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "tenant" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tenant" ] ] ]
+              ],
+              [
+                [ "Bare", "environment" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "environment" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "stage" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "stage" ] ] ]
+              ],
+              [
+                [ "Bare", "name" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "id" ] ] ]
+              ],
+              [
+                [ "Bare", "attributes" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "id_context" ] ]
+                    ],
+                    [ "A_string", "attributes" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "generated_tags",
+          [
+            "For_object",
+            {
+              "identifiers": [ "l", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "setintersection",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "keys",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "tags_context" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "labels_as_tags" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "label_key_case" ]
+                        ]
+                      ],
+                      [ "String", "upper" ]
+                    ]
+                  ],
+                  "then_": [ "Fun_call", [ "upper", [ [ "Id", "l" ] ] ] ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Equal",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "label_key_case" ]
+                            ]
+                          ],
+                          [ "String", "lower" ]
+                        ]
+                      ],
+                      "then_": [ "Fun_call", [ "lower", [ [ "Id", "l" ] ] ] ],
+                      "else_": [
+                        "Fun_call",
+                        [
+                          "title",
+                          [ [ "Fun_call", [ "lower", [ [ "Id", "l" ] ] ] ] ]
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "value_output": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "tags_context" ] ]
+                  ],
+                  [ "Id", "l" ]
+                ]
+              ],
+              "cond": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "tags_context" ]
+                              ]
+                            ],
+                            [ "Id", "l" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "id_context",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "namespace" ],
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "namespace" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "tenant" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tenant" ] ] ]
+              ],
+              [
+                [ "Bare", "environment" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "environment" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "stage" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "stage" ] ] ]
+              ],
+              [
+                [ "Bare", "name" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "name" ] ] ]
+              ],
+              [
+                [ "Bare", "attributes" ],
+                [
+                  "Fun_call",
+                  [
+                    "join",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "delimiter" ] ]
+                      ],
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "attributes" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "l", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "label_order" ] ]
+              ],
+              "output": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "id_context" ] ]
+                  ],
+                  [ "Id", "l" ]
+                ]
+              ],
+              "cond": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "id_context" ]
+                              ]
+                            ],
+                            [ "Id", "l" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "id_full",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "delimiter" ] ]
+                ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "labels" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "delimiter_length",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "delimiter" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "id_truncated_length_limit",
+          [
+            "Subtract",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "id_length_limit" ] ]
+              ],
+              [
+                "Add",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "id_hash_length" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "delimiter_length" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "id_truncated",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Lte",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "id_truncated_length_limit" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "String", "" ],
+              "else_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Fun_call",
+                        [
+                          "trimsuffix",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "substr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "id_full" ]
+                                    ]
+                                  ],
+                                  [ "Int", 0 ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string",
+                                        "id_truncated_length_limit"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "delimiter" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "delimiter" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "id_hash_plus",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "md5",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "id_full" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "qrstuvwxyz" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "id_hash_case",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "label_value_case" ] ]
+                  ],
+                  [ "String", "title" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "title",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "id_hash_plus" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "label_value_case" ]
+                        ]
+                      ],
+                      [ "String", "upper" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "upper",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "id_hash_plus" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Equal",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "label_value_case" ]
+                            ]
+                          ],
+                          [ "String", "lower" ]
+                        ]
+                      ],
+                      "then_": [
+                        "Fun_call",
+                        [
+                          "lower",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "id_hash_plus" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "else_": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "id_hash_plus" ] ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "id_hash",
+          [
+            "Fun_call",
+            [
+              "replace",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "id_hash_case" ] ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "regex_replace_chars" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "replacement" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "id_short",
+          [
+            "Fun_call",
+            [
+              "substr",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "id_truncated" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "id_hash" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [ "Int", 0 ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "id_length_limit" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "id_length_limit" ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ], [ "A_string", "id_full" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "id_length_limit" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "id_short" ] ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "id_full" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "output_context",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "enabled" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "enabled" ] ] ]
+              ],
+              [
+                [ "Bare", "namespace" ],
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "namespace" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "tenant" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tenant" ] ] ]
+              ],
+              [
+                [ "Bare", "environment" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "environment" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "stage" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "stage" ] ] ]
+              ],
+              [
+                [ "Bare", "name" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "name" ] ] ]
+              ],
+              [
+                [ "Bare", "delimiter" ],
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "delimiter" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "attributes" ],
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "attributes" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "tags" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+              ],
+              [
+                [ "Bare", "additional_tag_map" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "additional_tag_map" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "label_order" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "label_order" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "regex_replace_chars" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "regex_replace_chars" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "id_length_limit" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "id_length_limit" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "label_key_case" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "label_key_case" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "label_value_case" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "label_value_case" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "labels_as_tags" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "labels_as_tags" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "descriptor_formats" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "descriptor_formats" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,1535 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "terragrunt_modules",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "x", [] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "fileset",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "foundation_dir" ]
+                            ]
+                          ],
+                          [ "String", "**/terragrunt.hcl" ]
+                        ]
+                      ]
+                    ],
+                    "output": [
+                      "Fun_call",
+                      [
+                        "trimsuffix",
+                        [ [ "Id", "x" ], [ "String", "/terragrunt.hcl" ] ]
+                      ]
+                    ],
+                    "cond": [
+                      "Log_and",
+                      [
+                        [
+                          "Not",
+                          [
+                            "Fun_call",
+                            [
+                              "strcontains",
+                              [
+                                [ "Id", "x" ],
+                                [ "String", ".terragrunt-cache" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Not",
+                          [
+                            "Fun_call",
+                            [
+                              "strcontains",
+                              [ [ "Id", "x" ], [ "String", "/tenants/" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "terragrunt_to_kit_modules",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "terragrunt_modules" ] ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "startswith",
+                      [ [ "Id", "key" ], [ "String", "platforms/" ] ]
+                    ]
+                  ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "trimprefix",
+                      [ [ "Id", "key" ], [ "String", "platforms/" ] ]
+                    ]
+                  ],
+                  "else_": [
+                    "Template",
+                    [
+                      [ "Literal", "foundation/" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [ "Id", "key" ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "platform_modules_azure",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "x", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "terragrunt_modules" ]
+                      ]
+                    ],
+                    "output": [ "Id", "x" ],
+                    "cond": [
+                      "Fun_call",
+                      [
+                        "startswith",
+                        [ [ "Id", "x" ], [ "String", "platforms/azure" ] ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "terraform_remote_state" ], [ "Lit", "docs_azure" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "platform_modules_azure" ] ]
+          ]
+        ],
+        [ "Attribute", "backend", [ "String", "azurerm" ] ],
+        [
+          "Attribute",
+          "config",
+          [
+            "Object",
+            [
+              [ [ "Bare", "use_azuread_auth" ], [ "Bool", true ] ],
+              [
+                [ "Bare", "tenant_id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "platforms" ] ]
+                        ],
+                        [ "A_string", "azure" ]
+                      ]
+                    ],
+                    [ "A_string", "aad_tenant_id" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "subscription_id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "platforms" ] ]
+                        ],
+                        [ "A_string", "azure" ]
+                      ]
+                    ],
+                    [ "A_string", "subscription_id" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "resource_group_name" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "platforms" ]
+                              ]
+                            ],
+                            [ "A_string", "azure" ]
+                          ]
+                        ],
+                        [ "A_string", "tfstateconfig" ]
+                      ]
+                    ],
+                    [ "A_string", "resource_group_name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "storage_account_name" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "platforms" ]
+                              ]
+                            ],
+                            [ "A_string", "azure" ]
+                          ]
+                        ],
+                        [ "A_string", "tfstateconfig" ]
+                      ]
+                    ],
+                    [ "A_string", "storage_account_name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "container_name" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "platforms" ]
+                              ]
+                            ],
+                            [ "A_string", "azure" ]
+                          ]
+                        ],
+                        [ "A_string", "tfstateconfig" ]
+                      ]
+                    ],
+                    [ "A_string", "container_name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "key" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "trimprefix",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ],
+                              [ "String", "platforms/azure/" ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", ".tfstate" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "kit_dir",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "repo_dir" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/kit" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "compliance_dir",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "repo_dir" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/compliance" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "platform_readmes",
+          [
+            "Fun_call",
+            [
+              "fileset",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "foundation_dir" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/platforms" ]
+                  ]
+                ],
+                [ "String", "*/README.md" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kit_readmes",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "x", [] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "fileset",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "kit_dir" ] ]
+                          ],
+                          [ "String", "**/README.md" ]
+                        ]
+                      ]
+                    ],
+                    "output": [ "Id", "x" ],
+                    "cond": [
+                      "Log_and",
+                      [
+                        [
+                          "Not",
+                          [
+                            "Fun_call",
+                            [
+                              "strcontains",
+                              [ [ "Id", "x" ], [ "String", ".terraform" ] ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Not",
+                          [
+                            "Fun_call",
+                            [
+                              "strcontains",
+                              [
+                                [ "Id", "x" ],
+                                [ "String", ".terragrunt-cache" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parsed_kit_modules",
+          [
+            "For_object",
+            {
+              "identifiers": [ "x", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "kit_readmes" ] ]
+              ],
+              "key_output": [
+                "Fun_call",
+                [
+                  "trimsuffix", [ [ "Id", "x" ], [ "String", "/README.md" ] ]
+                ]
+              ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "yamldecode",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "regex",
+                                  [
+                                    [
+                                      "String",
+                                      "^---([\\s\\S]*)\\n---\\n[\\s\\S]*$"
+                                    ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "file",
+                                        [
+                                          [
+                                            "Template",
+                                            [
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string", "kit_dir"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ],
+                                              [ "Literal", "/" ],
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [ "Id", "x" ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Null" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "compliance_readmes",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "x", [] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "fileset",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "compliance_dir" ]
+                            ]
+                          ],
+                          [ "String", "**/*.md" ]
+                        ]
+                      ]
+                    ],
+                    "output": [ "Id", "x" ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parsed_compliance_controls",
+          [
+            "For_object",
+            {
+              "identifiers": [ "x", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "compliance_readmes" ] ]
+              ],
+              "key_output": [
+                "Fun_call",
+                [ "trimsuffix", [ [ "Id", "x" ], [ "String", ".md" ] ] ]
+              ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "yamldecode",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "regex",
+                                  [
+                                    [
+                                      "String",
+                                      "^---([\\s\\S]*)\\n---\\n[\\s\\S]*$"
+                                    ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "file",
+                                        [
+                                          [
+                                            "Template",
+                                            [
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "compliance_dir"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ],
+                                              [ "Literal", "/" ],
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [ "Id", "x" ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Null" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "kit_modules",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "parsed_kit_modules" ] ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [ "Id", "value" ],
+              "cond": [ "Not_equal", [ [ "Id", "value" ], [ "Null" ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "kit_module_compliance_md",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "kit_modules" ] ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "join",
+                  [
+                    [ "String", "\n" ],
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "s", [] ],
+                              "input": [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "value" ],
+                                        [ "A_string", "compliance" ]
+                                      ]
+                                    ],
+                                    [ "Tuple", [] ]
+                                  ]
+                                ]
+                              ],
+                              "output": [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Template",
+                                      [
+                                        [ "Literal", "- [" ],
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Idx",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "local" ],
+                                                        [
+                                                          "A_string",
+                                                          "parsed_compliance_controls"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "s" ],
+                                                        [
+                                                          "A_string",
+                                                          "control"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "name" ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [ "Literal", "](/compliance/" ],
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "s" ],
+                                                [ "A_string", "control" ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [ "Literal", ".md): " ],
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Fun_call",
+                                              [
+                                                "trimspace",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "s" ],
+                                                      [
+                                                        "A_string",
+                                                        "statement"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Template",
+                                      [
+                                        [
+                                          "Literal",
+                                          "<!-- error locating compliance control "
+                                        ],
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "s" ],
+                                                [ "A_string", "control" ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [ "Literal", " -->" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "null_resource" ], [ "Lit", "copy_template" ] ],
+      "body": [
+        [
+          "Attribute",
+          "triggers",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "output_dir" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "output_dir" ] ] ]
+              ],
+              [
+                [ "Bare", "template_dir_files" ],
+                [
+                  "Fun_call",
+                  [
+                    "join",
+                    [
+                      [ "String", " " ],
+                      [
+                        "Fun_call",
+                        [
+                          "fileset",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "template_dir" ]
+                              ]
+                            ],
+                            [ "String", "**/*" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [ "Attribute", "when", [ "Id", "create" ] ],
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template",
+                  [
+                    [ "Literal", "mkdir -p " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "output_dir" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " && cp -a -R -L " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "template_dir" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/* " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "output_dir" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [ "Attribute", "when", [ "Id", "destroy" ] ],
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template",
+                  [
+                    [ "Literal", "cd " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "self" ], [ "A_string", "triggers" ]
+                              ]
+                            ],
+                            [ "A_string", "output_dir" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " && rm -f " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "self" ], [ "A_string", "triggers" ]
+                              ]
+                            ],
+                            [ "A_string", "template_dir_files" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "null_resource" ], [ "Lit", "copy_compliance" ] ],
+      "body": [
+        [
+          "Attribute",
+          "triggers",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "output_dir" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "output_dir" ] ] ]
+              ],
+              [
+                [ "Bare", "template_dir_files" ],
+                [
+                  "Fun_call",
+                  [
+                    "join",
+                    [
+                      [ "String", " " ],
+                      [
+                        "Fun_call",
+                        [
+                          "fileset",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "compliance_dir" ]
+                              ]
+                            ],
+                            [ "String", "**/*" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [ "Attribute", "when", [ "Id", "create" ] ],
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template",
+                  [
+                    [ "Literal", "mkdir -p " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "output_dir" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/docs/compliance && cp -a -R -L " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "compliance_dir" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/* " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "output_dir" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/docs/compliance" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [ "Attribute", "when", [ "Id", "destroy" ] ],
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template",
+                  [
+                    [ "Literal", "cd " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "self" ], [ "A_string", "triggers" ]
+                              ]
+                            ],
+                            [ "A_string", "output_dir" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/docs/compliance && rm -f " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "self" ], [ "A_string", "triggers" ]
+                              ]
+                            ],
+                            [ "A_string", "template_dir_files" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "local_file" ], [ "Lit", "module_docs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "null_resource" ], [ "A_string", "copy_template" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "terragrunt_modules" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "output_dir" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/docs/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".md" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", "\n\n" ],
+                [
+                  "Fun_call",
+                  [
+                    "compact",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "data" ],
+                                                    [
+                                                      "A_string",
+                                                      "terraform_remote_state"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "docs_azure" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "each" ],
+                                                [ "A_string", "key" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "outputs" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "documentation_md" ]
+                                  ]
+                                ],
+                                [
+                                  "String",
+                                  "*no `docmentation_md` output provided*"
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "String", "## Compliance Statements" ],
+                          [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "kit_module_compliance_md"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "terragrunt_to_kit_modules"
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "each" ],
+                                                  [ "A_string", "key" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "String",
+                                  "*no compliance statements provided*"
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "local_file" ], [ "Lit", "platform_readmes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "null_resource" ], [ "A_string", "copy_template" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "platform_readmes" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "output_dir" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/docs/platforms/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "foundation_dir" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/platforms/" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

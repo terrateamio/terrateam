@@ -1,0 +1,66 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Object",
+      [
+        [ [ "Bare", "v1" ], [ "Int", 1 ] ],
+        [ [ "Computed", [ "Id", "v2" ] ], [ "Int", 2 ] ],
+        [ [ "Quoted", "v3" ], [ "Int", 3 ] ],
+        [
+          [
+            "Computed", [ "Attr", [ [ "Id", "v4" ], [ "A_string", "foo" ] ] ]
+          ],
+          [ "Int", 4 ]
+        ],
+        [ [ "Quoted", "v5.foo" ], [ "Int", 5 ] ],
+        [
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "literal" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "foo" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ],
+          [ "Int", 6 ]
+        ],
+        [
+          [ "Expr", [ "Add", [ [ "Int", 3 ], [ "Int", 4 ] ] ] ], [ "Int", 7 ]
+        ],
+        [
+          [ "Computed", [ "Add", [ [ "Int", 3 ], [ "Int", 4 ] ] ] ],
+          [ "Int", 8 ]
+        ],
+        [
+          [ "Computed", [ "Add", [ [ "Int", 3 ], [ "Int", 4 ] ] ] ],
+          [ "Int", 9 ]
+        ],
+        [
+          [ "Expr", [ "Attr", [ [ "Id", "v5" ], [ "A_string", "foo" ] ] ] ],
+          [ "Int", 10 ]
+        ],
+        [ [ "Quoted", "foo${bar}" ], [ "Int", 11 ] ]
+      ]
+    ]
+  ]
+]

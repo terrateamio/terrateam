@@ -1,0 +1,535 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_key_vault" ], [ "Lit", "vault" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "keyvault_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "resource_group_name" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_client_config" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_key_vault_certificate" ],
+        [ "Lit", "kv_cert_import" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "key_vault_cert_import_filepath" ]
+                    ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [ "Int", 0 ],
+              "else_": [ "Int", 1 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "key_vault_cert_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key_vault_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "azurerm_key_vault" ] ]
+                  ],
+                  [ "A_string", "vault" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "certificate",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "contents",
+                [
+                  "Fun_call",
+                  [
+                    "filebase64",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "key_vault_cert_import_filepath" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "password", [ "String", "" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "certificate_policy",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "issuer_parameters",
+                  "labels": [],
+                  "body": [ [ "Attribute", "name", [ "String", "Self" ] ] ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "key_properties",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "exportable", [ "Bool", true ] ],
+                    [ "Attribute", "key_size", [ "Int", 2048 ] ],
+                    [ "Attribute", "key_type", [ "String", "RSA" ] ],
+                    [ "Attribute", "reuse_key", [ "Bool", false ] ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "secret_properties",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "content_type",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "key_vault_content_type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_key_vault_certificate" ],
+        [ "Lit", "kv_cert_self_assign" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "key_vault_cert_import_filepath" ]
+                    ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "key_vault_cert_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key_vault_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "azurerm_key_vault" ] ]
+                  ],
+                  [ "A_string", "vault" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "certificate_policy",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "issuer_parameters",
+                  "labels": [],
+                  "body": [ [ "Attribute", "name", [ "String", "Self" ] ] ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "key_properties",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "exportable", [ "Bool", true ] ],
+                    [ "Attribute", "key_size", [ "Int", 2048 ] ],
+                    [ "Attribute", "key_type", [ "String", "RSA" ] ],
+                    [ "Attribute", "reuse_key", [ "Bool", true ] ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "lifetime_action",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "action",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "action_type",
+                            [ "String", "AutoRenew" ]
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "trigger",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "days_before_expiry",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string",
+                                  "key_vault_cert_days_before_expiry"
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "secret_properties",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "content_type",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "key_vault_content_type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "x509_certificate_properties",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "extended_key_usage",
+                      [ "Tuple", [ [ "String", "1.3.6.1.5.5.7.3.1" ] ] ]
+                    ],
+                    [
+                      "Attribute",
+                      "key_usage",
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "cRLSign" ],
+                          [ "String", "dataEncipherment" ],
+                          [ "String", "digitalSignature" ],
+                          [ "String", "keyAgreement" ],
+                          [ "String", "keyCertSign" ],
+                          [ "String", "keyEncipherment" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "subject_alternative_names",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "dns_names",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "key_vault_cert_alt_names" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Attribute",
+                      "subject",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "CN=" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "key_vault_cert_subject" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "validity_in_months",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "key_vault_cert_validity_months" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "external" ], [ "Lit", "public_cert" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_key_vault_certificate" ],
+                  [ "A_string", "kv_cert_self_assign" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_key_vault_certificate" ],
+                  [ "A_string", "kv_cert_import" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "program",
+          [
+            "Tuple",
+            [
+              [ "String", "az" ],
+              [ "String", "keyvault" ],
+              [ "String", "certificate" ],
+              [ "String", "show" ],
+              [ "String", "--name" ],
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "key_vault_cert_name" ] ]
+              ],
+              [ "String", "--vault-name" ],
+              [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "keyvault_name" ] ]
+              ],
+              [ "String", "-o" ],
+              [ "String", "json" ],
+              [ "String", "--query" ],
+              [ "String", "{cer:cer}" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "external" ], [ "Lit", "private_pfx" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_key_vault_certificate" ],
+                  [ "A_string", "kv_cert_self_assign" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_key_vault_certificate" ],
+                  [ "A_string", "kv_cert_import" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "program",
+          [
+            "Tuple",
+            [
+              [ "String", "az" ],
+              [ "String", "keyvault" ],
+              [ "String", "secret" ],
+              [ "String", "show" ],
+              [ "String", "--name" ],
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "key_vault_cert_name" ] ]
+              ],
+              [ "String", "--vault-name" ],
+              [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "keyvault_name" ] ]
+              ],
+              [ "String", "-o" ],
+              [ "String", "json" ],
+              [ "String", "--query" ],
+              [ "String", "{value:value}" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

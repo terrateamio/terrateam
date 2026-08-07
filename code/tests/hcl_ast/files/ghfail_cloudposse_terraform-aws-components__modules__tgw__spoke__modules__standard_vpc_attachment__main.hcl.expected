@@ -1,0 +1,1830 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "vpcs",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "tgw_config" ] ] ],
+              [ "A_string", "vpcs" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "eks",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "tgw_config" ] ] ],
+              [ "A_string", "eks" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "own_account_vpc_key",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "owning_account" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "own_vpc_component_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "own_vpc",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "local" ], [ "A_string", "vpcs" ] ] ],
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "own_account_vpc_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "outputs" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "is_network_hub",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "module" ], [ "A_string", "this" ] ]
+                      ],
+                      [ "A_string", "stage" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "network_account_stage_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [ "Bool", true ],
+              "else_": [ "Bool", false ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "connected_vpc_component_keys",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "c", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "connections" ] ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "vpc", [] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "c" ],
+                            [ "A_string", "vpc_component_names" ]
+                          ]
+                        ],
+                        "output": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Gt",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "length",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "c" ],
+                                              [ "A_string", "account" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "environment" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            "then_": [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Gt",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "length",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "c" ],
+                                                  [ "A_string", "account" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "tenant" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "tenant" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "environment" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "stage" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "vpc" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ],
+                                "else_": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "environment" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "stage" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "vpc" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ],
+                            "else_": [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Gt",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "length",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "c" ],
+                                                  [ "A_string", "account" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "tenant" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "tenant" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "module" ],
+                                                [ "A_string", "this" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "environment" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "stage" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "vpc" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ],
+                                "else_": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "module" ],
+                                                [ "A_string", "this" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "environment" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "stage" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "vpc" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          }
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "connected_eks_component_keys",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "c", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "connections" ] ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "eks", [] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "c" ],
+                            [ "A_string", "eks_component_names" ]
+                          ]
+                        ],
+                        "output": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Gt",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "length",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "c" ],
+                                              [ "A_string", "account" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "environment" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            "then_": [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Gt",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "length",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "c" ],
+                                                  [ "A_string", "account" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "tenant" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "tenant" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "environment" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "stage" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "eks" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ],
+                                "else_": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "environment" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "stage" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "eks" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ],
+                            "else_": [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Gt",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "length",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "c" ],
+                                                  [ "A_string", "account" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "tenant" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "tenant" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "module" ],
+                                                [ "A_string", "this" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "environment" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "stage" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "eks" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ],
+                                "else_": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "module" ],
+                                                [ "A_string", "this" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "environment" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "c" ],
+                                                [ "A_string", "account" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "stage" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "eks" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          }
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "allowed_vpcs",
+          [
+            "For_object",
+            {
+              "identifiers": [ "vpc_key", [ "vpc_remote_state" ] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "vpcs" ] ]
+              ],
+              "key_output": [ "Id", "vpc_key" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "cidr" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "vpc_remote_state" ],
+                            [ "A_string", "outputs" ]
+                          ]
+                        ],
+                        [ "A_string", "vpc_cidr" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "cross_region" ],
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "vpc_remote_state" ],
+                                [ "A_string", "outputs" ]
+                              ]
+                            ],
+                            [ "A_string", "environment" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "module" ], [ "A_string", "this" ] ]
+                            ],
+                            [ "A_string", "environment" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "environment" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "vpc_remote_state" ],
+                            [ "A_string", "outputs" ]
+                          ]
+                        ],
+                        [ "A_string", "environment" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Log_and",
+                [
+                  [
+                    "Not_equal",
+                    [
+                      [ "Id", "vpc_key" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "own_account_vpc_key" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "contains",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "connected_vpc_component_keys" ]
+                          ]
+                        ],
+                        [ "Id", "vpc_key" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "allowed_eks",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Ellipsis",
+                  [
+                    "For_tuple",
+                    {
+                      "identifiers": [ "own_eks_component", [] ],
+                      "input": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "own_eks_component_names" ]
+                        ]
+                      ],
+                      "output": [
+                        "For_object",
+                        {
+                          "identifiers": [
+                            "eks_key", [ "eks_remote_state" ]
+                          ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "eks" ] ]
+                          ],
+                          "key_output": [ "Id", "eks_key" ],
+                          "value_output": [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "sg_id" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [ "A_string", "eks" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Template",
+                                              [
+                                                [
+                                                  "Interpolation",
+                                                  {
+                                                    "expr": [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "owning_account"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    "strip_before": false,
+                                                    "strip_after": false
+                                                  }
+                                                ],
+                                                [ "Literal", "-" ],
+                                                [
+                                                  "Interpolation",
+                                                  {
+                                                    "expr": [
+                                                      "Id",
+                                                      "own_eks_component"
+                                                    ],
+                                                    "strip_before": false,
+                                                    "strip_after": false
+                                                  }
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "outputs" ]
+                                      ]
+                                    ],
+                                    [
+                                      "A_string",
+                                      "eks_cluster_managed_security_group_id"
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Bare", "cidr" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "eks_remote_state" ],
+                                        [ "A_string", "outputs" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "vpc_cidr" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "connected_eks_component_keys"
+                                    ]
+                                  ]
+                                ],
+                                [ "Id", "eks_key" ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ],
+                      "cond": null
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cross_region_vpcs",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "vpc_key", [ "vpc" ] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "allowed_vpcs" ] ]
+                    ],
+                    "output": [
+                      "Tuple",
+                      [
+                        [
+                          "Object",
+                          [
+                            [ [ "Bare", "vpc_key" ], [ "Id", "vpc_key" ] ],
+                            [
+                              [ "Bare", "cidr" ],
+                              [
+                                "Attr",
+                                [ [ "Id", "vpc" ], [ "A_string", "cidr" ] ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "environment" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "vpc" ],
+                                  [ "A_string", "environment" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": [
+                      "Attr",
+                      [ [ "Id", "vpc" ], [ "A_string", "cross_region" ] ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cross_region_vpc_route_table_ids",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "vpc_key", [ "vpc" ] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "allowed_vpcs" ] ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [
+                          "route_table_key", [ "route_table_id" ]
+                        ],
+                        "input": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ], [ "A_string", "own_vpc" ]
+                              ]
+                            ],
+                            [ "A_string", "private_route_table_ids" ]
+                          ]
+                        ],
+                        "output": [
+                          "Tuple",
+                          [
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "vpc_key" ], [ "Id", "vpc_key" ]
+                                ],
+                                [
+                                  [ "Bare", "rt_key" ],
+                                  [ "Id", "route_table_key" ]
+                                ],
+                                [
+                                  [ "Bare", "cidr" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vpc" ], [ "A_string", "cidr" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "route_table_id" ],
+                                  [ "Id", "route_table_id" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    "cond": [
+                      "Attr",
+                      [ [ "Id", "vpc" ], [ "A_string", "cross_region" ] ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "standard_vpc_attachment" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "cloudposse/transit-gateway/aws" ]
+        ],
+        [ "Attribute", "version", [ "String", "0.11.0" ] ],
+        [
+          "Attribute",
+          "existing_transit_gateway_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "tgw_config" ] ] ],
+              [ "A_string", "existing_transit_gateway_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "existing_transit_gateway_route_table_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "tgw_config" ] ] ],
+              [ "A_string", "existing_transit_gateway_route_table_id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "route_keys_enabled", [ "Bool", true ] ],
+        [ "Attribute", "create_transit_gateway", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "create_transit_gateway_route_table",
+          [ "Bool", false ]
+        ],
+        [
+          "Attribute",
+          "create_transit_gateway_vpc_attachment",
+          [ "Bool", true ]
+        ],
+        [
+          "Attribute",
+          "create_transit_gateway_route_table_association_and_propagation",
+          [ "Bool", false ]
+        ],
+        [
+          "Attribute",
+          "config",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "owning_account" ] ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "vpc_id" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "own_vpc" ] ]
+                          ],
+                          [ "A_string", "vpc_id" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_cidr" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "own_vpc" ] ]
+                          ],
+                          [ "A_string", "vpc_cidr" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "subnet_ids" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "own_vpc" ] ]
+                          ],
+                          [ "A_string", "private_subnet_ids" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "subnet_route_table_ids" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "own_vpc" ] ]
+                          ],
+                          [ "A_string", "private_route_table_ids" ]
+                        ]
+                      ]
+                    ],
+                    [ [ "Bare", "route_to" ], [ "Null" ] ],
+                    [
+                      [ "Bare", "static_routes" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "static_routes" ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "transit_gateway_vpc_attachment_id" ],
+                      [ "Null" ]
+                    ],
+                    [
+                      [ "Bare", "route_to_cidr_blocks" ],
+                      [
+                        "Fun_call",
+                        [
+                          "concat",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "vpc", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "allowed_vpcs" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Attr",
+                                  [ [ "Id", "vpc" ], [ "A_string", "cidr" ] ]
+                                ],
+                                "cond": [
+                                  "Not",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vpc" ],
+                                      [ "A_string", "cross_region" ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "static_tgw_routes" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "context",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "this" ] ] ],
+              [ "A_string", "context" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ec2_transit_gateway_route" ],
+        [ "Lit", "peering_connection" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "is_network_hub" ] ]
+              ],
+              "then_": [
+                "For_object",
+                {
+                  "identifiers": [ "vpc", [] ],
+                  "input": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "cross_region_vpcs" ]
+                    ]
+                  ],
+                  "key_output": [
+                    "Attr", [ [ "Id", "vpc" ], [ "A_string", "cidr" ] ]
+                  ],
+                  "value_output": [ "Id", "vpc" ],
+                  "cond": null
+                }
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "transit_gateway_attachment_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "peered_region" ] ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "tgw_connector_config" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "own_vpc" ]
+                                ]
+                              ],
+                              [ "A_string", "environment" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "outputs" ]
+                    ]
+                  ],
+                  [
+                    "A_string",
+                    "aws_ec2_transit_gateway_peering_attachment_id"
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "tgw_connector_config" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "environment" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "outputs" ]
+                    ]
+                  ],
+                  [
+                    "A_string",
+                    "aws_ec2_transit_gateway_peering_attachment_id"
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [ "Attribute", "blackhole", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "destination_cidr_block",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "cidr" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "transit_gateway_route_table_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "tgw_config" ] ] ],
+              [ "A_string", "existing_transit_gateway_route_table_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route" ], [ "Lit", "peering_connection" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "vpc_rt", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "cross_region_vpc_route_table_ids" ]
+                ]
+              ],
+              "key_output": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "vpc_rt" ],
+                          [ "A_string", "route_table_id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", ":" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "vpc_rt" ], [ "A_string", "cidr" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "value_output": [ "Id", "vpc_rt" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "transit_gateway_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "tgw_config" ] ] ],
+              [ "A_string", "existing_transit_gateway_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "route_table_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_cidr_block",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "cidr" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "ingress_cidr_blocks" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "expose_eks_sg" ] ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "allowed_eks" ] ]
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [ "Literal", "Allow inbound traffic from " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "from_port", [ "Int", 0 ] ],
+        [ "Attribute", "to_port", [ "Int", 65535 ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "cidr" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "sg_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,341 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "private" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "priv_az_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Fun_call",
+            [
+              "cidrsubnet",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ]
+                    ],
+                    [ "A_string", "cidr_block" ]
+                  ]
+                ],
+                [ "Int", 8 ],
+                [
+                  "Add",
+                  [
+                    [
+                      "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "az_count" ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "aws_availability_zones" ]
+                        ]
+                      ],
+                      [ "A_string", "azs" ]
+                    ]
+                  ],
+                  [ "A_string", "names" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "terraform" ],
+                            [ "A_string", "workspace" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-priv-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route_table" ], [ "Lit", "private" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "priv_az_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "route",
+            "labels": [],
+            "body": [
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [
+                "Attribute",
+                "nat_gateway_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_nat_gateway" ],
+                            [ "A_string", "nat" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "terraform" ],
+                            [ "A_string", "workspace" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-priv-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ], [ "Lit", "private" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "priv_az_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_subnet" ], [ "A_string", "private" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_route_table" ], [ "A_string", "private" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

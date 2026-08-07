@@ -1,0 +1,910 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "subnet_types",
+          [
+            "Tuple",
+            [
+              [ "String", "instance" ],
+              [ "String", "public" ],
+              [ "String", "private" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "instance_subnets" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/vpc/subnets/instance" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [ "Literal", "The " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "'s vpc's instance subnets" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "StringList" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", "," ],
+                [
+                  "Fun_call",
+                  [
+                    "slice",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "concat",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "aws_subnet" ],
+                                        [ "A_string", "private" ]
+                                      ]
+                                    ],
+                                    [ "A_splat" ]
+                                  ]
+                                ],
+                                [ "A_string", "id" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "aws_subnet" ],
+                                        [ "A_string", "public" ]
+                                      ]
+                                    ],
+                                    [ "A_splat" ]
+                                  ]
+                                ],
+                                [ "A_string", "id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "create_private" ]
+                            ]
+                          ],
+                          "then_": [ "Int", 0 ],
+                          "else_": [
+                            "Fun_call",
+                            [
+                              "length",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "aws_subnet" ],
+                                            [ "A_string", "private" ]
+                                          ]
+                                        ],
+                                        [ "A_splat" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "id" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ],
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "create_private" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Fun_call",
+                            [
+                              "length",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "aws_subnet" ],
+                                            [ "A_string", "private" ]
+                                          ]
+                                        ],
+                                        [ "A_splat" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "id" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "else_": [
+                            "Add",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "aws_subnet" ],
+                                                [ "A_string", "private" ]
+                                              ]
+                                            ],
+                                            [ "A_splat" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "id" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "aws_subnet" ],
+                                                [ "A_string", "public" ]
+                                              ]
+                                            ],
+                                            [ "A_splat" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "id" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "public_subnets" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/vpc/subnets/public" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [ "Literal", "The " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "'s vpc's public subnets" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "StringList" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", "," ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_subnet" ], [ "A_string", "public" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "private_subnets" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "create_private" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/vpc/subnets/private" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [ "Literal", "The " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "'s vpc's private subnets" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "StringList" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", "," ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_subnet" ], [ "A_string", "private" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "using_private" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/vpc/using_private_subnets" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Whether the VPC has been configured to use private subnets"
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "String" ] ],
+        [
+          "Attribute",
+          "value",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "create_private" ] ] ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_ssm_parameter" ], [ "Lit", "num_azs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/vpc/num_azs" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "How many AZs VPC has been configured to use" ]
+        ],
+        [ "Attribute", "type", [ "String", "String" ] ],
+        [
+          "Attribute",
+          "value",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "az_count" ] ] ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_ssm_parameter" ], [ "Lit", "cidr_block" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/vpc/cidr_block" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [ "Literal", "The " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "'s vpc's cidr block" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "String" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "cidr_block" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_ssm_parameter" ], [ "Lit", "id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/vpc/id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [ "Literal", "The " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "'s vpc's id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "String" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

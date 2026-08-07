@@ -1,0 +1,5283 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "advanced_mf",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "options" ] ] ],
+              [ "A_string", "advanced_machine_features" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "attached_disks",
+          [
+            "For_object",
+            {
+              "identifiers": [ "disk", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "attached_disks" ] ]
+              ],
+              "key_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr", [ [ "Id", "disk" ], [ "A_string", "name" ] ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr", [ [ "Id", "disk" ], [ "A_string", "name" ] ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [ [ "Id", "disk" ], [ "A_string", "device_name" ] ]
+                  ]
+                }
+              ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [ "Id", "disk" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "options" ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "disk" ],
+                                      [ "A_string", "options" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "attached_disk_defaults" ]
+                                ]
+                              ],
+                              "else_": [
+                                "Attr",
+                                [
+                                  [ "Id", "disk" ], [ "A_string", "options" ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "attached_disks_regional",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "attached_disks" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "v" ], [ "A_string", "options" ] ]
+                            ],
+                            [ "A_string", "replica_zone" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "attached_disks_zonal",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "attached_disks" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "v" ], [ "A_string", "options" ] ]
+                            ],
+                            [ "A_string", "replica_zone" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "on_host_maintenance",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_or",
+                [
+                  [
+                    "Log_or",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                          ],
+                          [ "A_string", "spot" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "confidential_compute" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "local" ], [ "A_string", "gpu" ] ] ]
+                ]
+              ],
+              "then_": [ "String", "TERMINATE" ],
+              "else_": [ "String", "MIGRATE" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", "-" ],
+                [
+                  "Fun_call",
+                  [
+                    "slice",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "split",
+                          [
+                            [ "String", "-" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "zone" ] ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ],
+                      [ "Int", 2 ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "gpu",
+          [
+            "Not_equal",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "gpu" ] ] ],
+              [ "Null" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_account",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "service_account" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "email" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "service_account" ]
+                              ]
+                            ],
+                            [ "A_string", "auto_create" ]
+                          ]
+                        ],
+                        "then_": [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "google_service_account" ],
+                                    [ "A_string", "service_account" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "email" ]
+                          ]
+                        ],
+                        "else_": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "service_account" ]
+                              ]
+                            ],
+                            [ "A_string", "email" ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "scopes" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Not_equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "service_account" ]
+                                  ]
+                                ],
+                                [ "A_string", "scopes" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "service_account" ]
+                              ]
+                            ],
+                            [ "A_string", "scopes" ]
+                          ]
+                        ],
+                        "else_": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Log_and",
+                              [
+                                [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [ "A_string", "service_account" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "email" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                [
+                                  "Not",
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "service_account" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "auto_create" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "then_": [
+                              "Tuple",
+                              [
+                                [
+                                  "String",
+                                  "https://www.googleapis.com/auth/devstorage.read_only"
+                                ],
+                                [
+                                  "String",
+                                  "https://www.googleapis.com/auth/logging.write"
+                                ],
+                                [
+                                  "String",
+                                  "https://www.googleapis.com/auth/monitoring.write"
+                                ]
+                              ]
+                            ],
+                            "else_": [
+                              "Tuple",
+                              [
+                                [
+                                  "String",
+                                  "https://www.googleapis.com/auth/cloud-platform"
+                                ],
+                                [
+                                  "String",
+                                  "https://www.googleapis.com/auth/userinfo.email"
+                                ]
+                              ]
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "tags_combined",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "tag_bindings" ] ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "tag_bindings_firewall" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "tag_bindings" ]
+                            ]
+                          ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "tag_bindings_firewall" ]
+                            ]
+                          ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "termination_action",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_or",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                      ],
+                      [ "A_string", "spot" ]
+                    ]
+                  ],
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                          ],
+                          [ "A_string", "max_run_duration" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "coalesce",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                        ],
+                        [ "A_string", "termination_action" ]
+                      ]
+                    ],
+                    [ "String", "STOP" ]
+                  ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "google_compute_disk" ], [ "Lit", "boot" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Not",
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "create_template" ] ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                      ],
+                      [ "A_string", "use_independent_disk" ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "zone",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "zone" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-boot" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                  ],
+                  [ "A_string", "initialize_params" ]
+                ]
+              ],
+              [ "A_string", "type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "size",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                  ],
+                  [ "A_string", "initialize_params" ]
+                ]
+              ],
+              [ "A_string", "size" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "image",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                  ],
+                  [ "A_string", "initialize_params" ]
+                ]
+              ],
+              [ "A_string", "image" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "labels" ] ] ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "disk_name" ], [ "String", "boot" ] ],
+                    [
+                      [ "Bare", "disk_type" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "boot_disk" ]
+                                ]
+                              ],
+                              [ "A_string", "initialize_params" ]
+                            ]
+                          ],
+                          [ "A_string", "type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "disk_encryption_key" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "raw_key",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                          ],
+                          [ "A_string", "disk_encryption_key_raw" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "kms_key_self_link",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                          ],
+                          [ "A_string", "kms_key_self_link" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "google_compute_disk" ], [ "Lit", "disks" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "create_template" ] ]
+              ],
+              "then_": [ "Object", [] ],
+              "else_": [
+                "For_object",
+                {
+                  "identifiers": [ "k", [ "v" ] ],
+                  "input": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "attached_disks_zonal" ]
+                    ]
+                  ],
+                  "key_output": [ "Id", "k" ],
+                  "value_output": [ "Id", "v" ],
+                  "cond": [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "v" ], [ "A_string", "source_type" ] ]
+                      ],
+                      [ "String", "attach" ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "zone",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "zone" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "options" ]
+                ]
+              ],
+              [ "A_string", "type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "size",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "size" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "image",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "source_type" ]
+                    ]
+                  ],
+                  [ "String", "image" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "source" ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "snapshot",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "source_type" ]
+                    ]
+                  ],
+                  [ "String", "snapshot" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "source" ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "labels" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "disk_name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "disk_type" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "options" ]
+                            ]
+                          ],
+                          [ "A_string", "type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "disk_encryption_key" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "raw_key",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                          ],
+                          [ "A_string", "disk_encryption_key_raw" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "kms_key_self_link",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                          ],
+                          [ "A_string", "kms_key_self_link" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_region_disk" ], [ "Lit", "disks" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "Id", "google-beta" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "create_template" ] ]
+              ],
+              "then_": [ "Object", [] ],
+              "else_": [
+                "For_object",
+                {
+                  "identifiers": [ "k", [ "v" ] ],
+                  "input": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "attached_disks_regional" ]
+                    ]
+                  ],
+                  "key_output": [ "Id", "k" ],
+                  "value_output": [ "Id", "v" ],
+                  "cond": [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "v" ], [ "A_string", "source_type" ] ]
+                      ],
+                      [ "String", "attach" ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "replica_zones",
+          [
+            "Tuple",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "zone" ] ] ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "options" ]
+                    ]
+                  ],
+                  [ "A_string", "replica_zone" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "options" ]
+                ]
+              ],
+              [ "A_string", "type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "size",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "size" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "snapshot",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "source_type" ]
+                    ]
+                  ],
+                  [ "String", "snapshot" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "source" ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "labels" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "disk_name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "disk_type" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "options" ]
+                            ]
+                          ],
+                          [ "A_string", "type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "disk_encryption_key" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "raw_key",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                          ],
+                          [ "A_string", "disk_encryption_key_raw" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "kms_key_name",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                          ],
+                          [ "A_string", "kms_key_self_link" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_instance" ], [ "Lit", "default" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "Id", "google-beta" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "create_template" ] ]
+              ],
+              "then_": [ "Int", 0 ],
+              "else_": [ "Int", 1 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "zone",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "zone" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "hostname",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "hostname" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "description" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "machine_type",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "instance_type" ] ] ]
+        ],
+        [
+          "Attribute",
+          "min_cpu_platform",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "min_cpu_platform" ] ] ]
+        ],
+        [
+          "Attribute",
+          "can_ip_forward",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "can_ip_forward" ] ] ]
+        ],
+        [
+          "Attribute",
+          "allow_stopping_for_update",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "options" ] ] ],
+              [ "A_string", "allow_stopping_for_update" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "deletion_protection",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "options" ] ] ],
+              [ "A_string", "deletion_protection" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_display",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "enable_display" ] ] ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "labels" ] ] ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "metadata" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_policies",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "ischedule_attach" ] ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "advanced_machine_features" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "advanced_mf" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "enable_nested_virtualization",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "advanced_mf" ]
+                            ]
+                          ],
+                          [ "A_string", "enable_nested_virtualization" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "enable_uefi_networking",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "advanced_mf" ]
+                            ]
+                          ],
+                          [ "A_string", "enable_uefi_networking" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "performance_monitoring_unit",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "advanced_mf" ]
+                            ]
+                          ],
+                          [ "A_string", "performance_monitoring_unit" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "threads_per_core",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "advanced_mf" ]
+                            ]
+                          ],
+                          [ "A_string", "threads_per_core" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "turbo_mode",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "advanced_mf" ]
+                                ]
+                              ],
+                              [ "A_string", "enable_turbo_mode" ]
+                            ]
+                          ],
+                          "then_": [ "String", "ALL_CORE_MAX" ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "visible_core_count",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "advanced_mf" ]
+                            ]
+                          ],
+                          [ "A_string", "visible_core_count" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "attached_disk" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "attached_disks_zonal" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "config" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "device_name",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "device_name" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "device_name" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "name" ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "mode",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "options" ]
+                            ]
+                          ],
+                          [ "A_string", "mode" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "source",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "source_type" ]
+                                ]
+                              ],
+                              [ "String", "attach" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "source" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "google_compute_disk" ],
+                                      [ "A_string", "disks" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "name" ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "attached_disk" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "attached_disks_regional" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "config" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "device_name",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "device_name" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "device_name" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "name" ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "mode",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "options" ]
+                            ]
+                          ],
+                          [ "A_string", "mode" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "source",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "source_type" ]
+                                ]
+                              ],
+                              [ "String", "attach" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "source" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "google_compute_region_disk" ],
+                                      [ "A_string", "disks" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "id" ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "boot_disk",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "auto_delete",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                        ],
+                        [ "A_string", "use_independent_disk" ]
+                      ]
+                    ],
+                    "then_": [ "Bool", false ],
+                    "else_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                        ],
+                        [ "A_string", "auto_delete" ]
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "source",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                        ],
+                        [ "A_string", "use_independent_disk" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "google_compute_disk" ],
+                                [ "A_string", "boot" ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                        ],
+                        [ "A_string", "source" ]
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "disk_encryption_key_raw",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                        ],
+                        [ "A_string", "disk_encryption_key_raw" ]
+                      ]
+                    ],
+                    "else_": [ "Null" ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "kms_key_self_link",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "encryption" ] ]
+                        ],
+                        [ "A_string", "kms_key_self_link" ]
+                      ]
+                    ],
+                    "else_": [ "Null" ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "initialize_params" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Log_or",
+                            [
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "boot_disk" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "initialize_params" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "boot_disk" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "use_independent_disk" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [] ],
+                          "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "image",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "boot_disk" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "initialize_params" ]
+                                  ]
+                                ],
+                                [ "A_string", "image" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "size",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "boot_disk" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "initialize_params" ]
+                                  ]
+                                ],
+                                [ "A_string", "size" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "type",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "boot_disk" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "initialize_params" ]
+                                  ]
+                                ],
+                                [ "A_string", "type" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "resource_manager_tags",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "tag_bindings" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "confidential_instance_config" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "confidential_compute" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "enable_confidential_compute",
+                      [ "Bool", true ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "network_interface" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "network_interfaces" ] ]
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "config" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "network",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "network" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "subnetwork",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "subnetwork" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "network_ip",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "config" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "addresses" ]
+                                  ]
+                                ],
+                                [ "A_string", "internal" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "nic_type",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "nic_type" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "stack_type",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "stack_type" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "access_config" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "config" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "nat" ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                                "else_": [ "Tuple", [] ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "nat_ip",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "config" ],
+                                                    [ "A_string", "value" ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "addresses" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "external" ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "alias_ip_range" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "config" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "alias_ips" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute", "iterator", [ "Id", "config_alias" ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "subnetwork_range_name",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config_alias" ],
+                                      [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "ip_cidr_range",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config_alias" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "network_interface" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "network_attached_interfaces" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "network_attachment",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "network_interface" ],
+                          [ "A_string", "value" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "scheduling",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "automatic_restart",
+                [
+                  "Not",
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                      ],
+                      [ "A_string", "spot" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "instance_termination_action",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "termination_action" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "on_host_maintenance",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "on_host_maintenance" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "preemptible",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                    ],
+                    [ "A_string", "spot" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "provisioning_model",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                        ],
+                        [ "A_string", "spot" ]
+                      ]
+                    ],
+                    "then_": [ "String", "SPOT" ],
+                    "else_": [ "String", "STANDARD" ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "max_run_duration" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "options" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "max_run_duration" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [] ],
+                          "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "nanos",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "options" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "max_run_duration" ]
+                                  ]
+                                ],
+                                [ "A_string", "nanos" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "seconds",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "options" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "max_run_duration" ]
+                                  ]
+                                ],
+                                [ "A_string", "seconds" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "node_affinities" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                          ],
+                          [ "A_string", "node_affinities" ]
+                        ]
+                      ]
+                    ],
+                    [ "Attribute", "iterator", [ "Id", "affinity" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "key",
+                            [
+                              "Attr",
+                              [ [ "Id", "affinity" ], [ "A_string", "key" ] ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "operator",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "affinity" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "in" ]
+                                  ]
+                                ],
+                                "then_": [ "String", "IN" ],
+                                "else_": [ "String", "NOT_IN" ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "values",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "affinity" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "values" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "scratch_disk" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "i", [] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "range",
+                        [
+                          [ "Int", 0 ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "scratch_disks" ]
+                                ]
+                              ],
+                              [ "A_string", "count" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "output": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "scratch_disks" ]
+                          ]
+                        ],
+                        [ "A_string", "interface" ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "config" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "interface",
+                      [
+                        "Attr",
+                        [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "service_account" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "service_account" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [] ],
+                    "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "email",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "service_account" ]
+                            ]
+                          ],
+                          [ "A_string", "email" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "scopes",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "service_account" ]
+                            ]
+                          ],
+                          [ "A_string", "scopes" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "shielded_instance_config" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "shielded_config" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "shielded_config" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "config" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "enable_secure_boot",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "enable_secure_boot" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "enable_vtpm",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "enable_vtpm" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "enable_integrity_monitoring",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "enable_integrity_monitoring" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "params" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "tags_combined" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [] ],
+                    "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "resource_manager_tags",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "tags_combined" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "guest_accelerator" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr", [ [ "Id", "local" ], [ "A_string", "gpu" ] ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "gpu" ] ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "type",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "guest_accelerator" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "type" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "count",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "guest_accelerator" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "count" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_instance_iam_binding" ],
+        [ "Lit", "default" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "iam" ] ] ]
+        ],
+        [
+          "Attribute",
+          "zone",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "zone" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instance_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+        ],
+        [
+          "Attribute",
+          "members",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_compute_instance" ],
+                  [ "A_string", "default" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_instance_template" ], [ "Lit", "default" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "Id", "google-beta" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "create_template" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name_prefix",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "description" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "machine_type",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "instance_type" ] ] ]
+        ],
+        [
+          "Attribute",
+          "min_cpu_platform",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "min_cpu_platform" ] ] ]
+        ],
+        [
+          "Attribute",
+          "can_ip_forward",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "can_ip_forward" ] ] ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "metadata" ] ] ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "labels" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_manager_tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags_combined" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "advanced_machine_features" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "advanced_mf" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "enable_nested_virtualization",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "advanced_mf" ]
+                            ]
+                          ],
+                          [ "A_string", "enable_nested_virtualization" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "enable_uefi_networking",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "advanced_mf" ]
+                            ]
+                          ],
+                          [ "A_string", "enable_uefi_networking" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "performance_monitoring_unit",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "advanced_mf" ]
+                            ]
+                          ],
+                          [ "A_string", "performance_monitoring_unit" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "threads_per_core",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "advanced_mf" ]
+                            ]
+                          ],
+                          [ "A_string", "threads_per_core" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "turbo_mode",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "advanced_mf" ]
+                                ]
+                              ],
+                              [ "A_string", "enable_turbo_mode" ]
+                            ]
+                          ],
+                          "then_": [ "String", "ALL_CORE_MAX" ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "visible_core_count",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "advanced_mf" ]
+                            ]
+                          ],
+                          [ "A_string", "visible_core_count" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "disk",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "auto_delete",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                    ],
+                    [ "A_string", "auto_delete" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "boot", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "disk_size_gb",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                        ],
+                        [ "A_string", "initialize_params" ]
+                      ]
+                    ],
+                    [ "A_string", "size" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "disk_type",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                        ],
+                        [ "A_string", "initialize_params" ]
+                      ]
+                    ],
+                    [ "A_string", "type" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resource_manager_tags",
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "tag_bindings" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "source_image",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "boot_disk" ] ]
+                        ],
+                        [ "A_string", "initialize_params" ]
+                      ]
+                    ],
+                    [ "A_string", "image" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "disk_encryption_key" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "encryption" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                          "else_": [ "Tuple", [] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "kms_key_self_link",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "encryption" ]
+                                  ]
+                                ],
+                                [ "A_string", "kms_key_self_link" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "confidential_instance_config" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "confidential_compute" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "enable_confidential_compute",
+                      [ "Bool", true ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "guest_accelerator" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr", [ [ "Id", "local" ], [ "A_string", "gpu" ] ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "gpu" ] ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "type",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "guest_accelerator" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "type" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "count",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "guest_accelerator" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "count" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "disk" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "attached_disks" ] ]
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "config" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "auto_delete",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "options" ]
+                            ]
+                          ],
+                          [ "A_string", "auto_delete" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "device_name",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "device_name" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "device_name" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "name" ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "disk_type",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "source_type" ]
+                                ]
+                              ],
+                              [ "String", "attach" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "options" ]
+                                ]
+                              ],
+                              [ "A_string", "type" ]
+                            ]
+                          ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "disk_size_gb",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "source_type" ]
+                                ]
+                              ],
+                              [ "String", "attach" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "size" ]
+                            ]
+                          ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "mode",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "options" ]
+                            ]
+                          ],
+                          [ "A_string", "mode" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "source_image",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "source_type" ]
+                                ]
+                              ],
+                              [ "String", "image" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "source" ]
+                            ]
+                          ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "source",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "source_type" ]
+                                ]
+                              ],
+                              [ "String", "attach" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "source" ]
+                            ]
+                          ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "disk_name",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "source_type" ]
+                                ]
+                              ],
+                              [ "String", "attach" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "config" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "name" ]
+                            ]
+                          ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resource_manager_tags",
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "tag_bindings" ] ]
+                      ]
+                    ],
+                    [ "Attribute", "type", [ "String", "PERSISTENT" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "disk_encryption_key" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Not_equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "encryption" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                                "else_": [ "Tuple", [] ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "kms_key_self_link",
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "encryption" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "kms_key_self_link" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "network_interface" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "network_interfaces" ] ]
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "config" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "network",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "network" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "subnetwork",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "subnetwork" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "network_ip",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "config" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "addresses" ]
+                                  ]
+                                ],
+                                [ "A_string", "internal" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "nic_type",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "nic_type" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "stack_type",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "stack_type" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "access_config" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "config" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "nat" ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                                "else_": [ "Tuple", [] ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "nat_ip",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "config" ],
+                                                    [ "A_string", "value" ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "addresses" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "external" ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "alias_ip_range" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "config" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "alias_ips" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute", "iterator", [ "Id", "config_alias" ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "subnetwork_range_name",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config_alias" ],
+                                      [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "ip_cidr_range",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config_alias" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "network_interface" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "network_attached_interfaces" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "network_attachment",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "network_interface" ],
+                          [ "A_string", "value" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "scheduling",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "automatic_restart",
+                [
+                  "Not",
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                      ],
+                      [ "A_string", "spot" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "instance_termination_action",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "termination_action" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "on_host_maintenance",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "on_host_maintenance" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "preemptible",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                    ],
+                    [ "A_string", "spot" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "provisioning_model",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                        ],
+                        [ "A_string", "spot" ]
+                      ]
+                    ],
+                    "then_": [ "String", "SPOT" ],
+                    "else_": [ "String", "STANDARD" ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "max_run_duration" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "options" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "max_run_duration" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [] ],
+                          "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "nanos",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "options" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "max_run_duration" ]
+                                  ]
+                                ],
+                                [ "A_string", "nanos" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "seconds",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "options" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "max_run_duration" ]
+                                  ]
+                                ],
+                                [ "A_string", "seconds" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "node_affinities" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "options" ] ]
+                          ],
+                          [ "A_string", "node_affinities" ]
+                        ]
+                      ]
+                    ],
+                    [ "Attribute", "iterator", [ "Id", "affinity" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "key",
+                            [
+                              "Attr",
+                              [ [ "Id", "affinity" ], [ "A_string", "key" ] ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "operator",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "affinity" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "in" ]
+                                  ]
+                                ],
+                                "then_": [ "String", "IN" ],
+                                "else_": [ "String", "NOT_IN" ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "values",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "affinity" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "values" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "service_account" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "service_account" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [] ],
+                    "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "email",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "service_account" ]
+                            ]
+                          ],
+                          [ "A_string", "email" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "scopes",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "service_account" ]
+                            ]
+                          ],
+                          [ "A_string", "scopes" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "shielded_instance_config" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "shielded_config" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "shielded_config" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "config" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "enable_secure_boot",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "enable_secure_boot" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "enable_vtpm",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "enable_vtpm" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "enable_integrity_monitoring",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "enable_integrity_monitoring" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [ "Attribute", "create_before_destroy", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_instance_group" ], [ "Lit", "unmanaged" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "group" ] ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  [
+                    "Not",
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "create_template" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "network",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "network_interfaces" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "network_interfaces" ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [ "A_string", "network" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "zone",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "zone" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "description" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instances",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "google_compute_instance" ],
+                          [ "A_string", "default" ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [ "A_string", "self_link" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "named_port" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "group" ] ]
+                            ],
+                            [ "A_string", "named_ports" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "group" ] ]
+                        ],
+                        [ "A_string", "named_ports" ]
+                      ]
+                    ],
+                    "else_": [ "Object", [] ]
+                  }
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "config" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "name",
+                      [
+                        "Attr", [ [ "Id", "config" ], [ "A_string", "key" ] ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "port",
+                      [
+                        "Attr",
+                        [ [ "Id", "config" ], [ "A_string", "value" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_service_account" ], [ "Lit", "service_account" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "service_account" ]
+                              ]
+                            ],
+                            [ "A_string", "auto_create" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Bool", true ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "account_id",
+          [
+            "Template",
+            [
+              [ "Literal", "tf-vm-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "Template",
+            [
+              [ "Literal", "Terraform VM " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "." ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

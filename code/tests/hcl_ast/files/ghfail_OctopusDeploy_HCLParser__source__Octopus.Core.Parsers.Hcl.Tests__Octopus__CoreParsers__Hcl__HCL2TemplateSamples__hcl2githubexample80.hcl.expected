@@ -1,0 +1,86 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "instance_name" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "Name of instance" ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "region_name" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "Name of region" ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "us-east-1" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ami" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "Name of ami" ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "ami-0cc96feef8c6bbff3" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "placement_group" ] ],
+      "body": [
+        [
+          "Attribute", "description", [ "String", "Name of placement group" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "instance_type" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "type of instance" ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "t2.micro" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vpc_id" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "vpc_id" ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "instance_count" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "number of instances" ] ],
+        [ "Attribute", "type", [ "Id", "number" ] ]
+      ]
+    }
+  ]
+]

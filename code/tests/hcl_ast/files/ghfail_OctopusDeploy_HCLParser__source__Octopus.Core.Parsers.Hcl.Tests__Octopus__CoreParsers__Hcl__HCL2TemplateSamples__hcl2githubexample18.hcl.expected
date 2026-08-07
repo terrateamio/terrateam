@@ -1,0 +1,1083 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "server_database_url" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "server-database-url" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "server_database_url" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "server_database_url" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Template",
+            [
+              [ "Literal", "postgres://" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "rds_server_db_user" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ":" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "rds_server_db_password" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "@" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_rds_cluster" ],
+                          [ "A_string", "covidportal_server" ]
+                        ]
+                      ],
+                      [ "A_string", "endpoint" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ":5432/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "rds_server_db_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "api_authorization" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "api_authorization" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "api_authorization" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "api_authorization" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "ecs_secret_api_authorization" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ], [ "Lit", "api_endpoint" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "api_endpoint" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "api_endpoint" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "api_endpoint" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "ecs_secret_api_endpoint" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "default_from_email" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "default_from_email" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "default_from_email" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "default_from_email" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "ecs_secret_default_from_email" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "invitation_email_template_id_en" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "invitation_email_template_id_en" ]
+        ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "invitation_email_template_id_en" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "invitation_email_template_id_en" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "ecs_secret_invitation_email_template_id_en" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "invitation_email_template_id_fr" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "invitation_email_template_id_fr" ]
+        ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "invitation_email_template_id_fr" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "invitation_email_template_id_fr" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "ecs_secret_invitation_email_template_id_fr" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "password_reset_email_template_id_en" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "password_reset_email_template_id_en" ]
+        ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "password_reset_email_template_id_en" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "password_reset_email_template_id_en" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [
+                "A_string", "ecs_secret_password_reset_email_template_id_en"
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "password_reset_email_template_id_fr" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "password_reset_email_template_id_fr" ]
+        ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "password_reset_email_template_id_fr" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "password_reset_email_template_id_fr" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [
+                "A_string", "ecs_secret_password_reset_email_template_id_fr"
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ], [ "Lit", "django_admins" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "django_admins" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "django_admins" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "django_admins" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "ecs_secret_django_admins" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "django_secret_key" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "django_secret_key" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "django_secret_key" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "django_secret_key" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "ecs_secret_django_secret_key" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ], [ "Lit", "email_host" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "email_host" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "email_host" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "email_host" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "ecs_secret_email_host" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ], [ "Lit", "email_host_user" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "email_host_use" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "email_host_user" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "email_host_user" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "ecs_secret_email_host_user" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "email_host_password" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "email_host_password" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "email_host_password" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "email_host_password" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "ecs_secret_email_host_password" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "freshdesk_api_endpoint" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "freshdesk_api_endpoint" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "freshdesk_api_endpoint" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "freshdesk_api_endpoint" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "ecs_secret_freshdesk_api_endpoint" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "freshdesk_api_key" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "freshdesk_api_key" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "freshdesk_api_key" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "freshdesk_api_key" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "ecs_secret_freshdesk_api_key" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "freshdesk_product_id" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "freshdesk_product_id" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "freshdesk_product_id" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "freshdesk_product_id" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "ecs_secret_freshdesk_product_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "new_relic_license_key" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "new_relic_license_key" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "new_relic_license_key" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "new_relic_license_key" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "ecs_secret_new_relic_license_key" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ], [ "Lit", "notify_api_key" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "notify_api_key" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "notify_api_key" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "notify_api_key" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "ecs_secret_notify_api_key" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret" ],
+        [ "Lit", "notify_template_id" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "notify_template_id" ] ],
+        [ "Attribute", "recovery_window_in_days", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_secretsmanager_secret_version" ],
+        [ "Lit", "notify_template_id" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "secret_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_secretsmanager_secret" ],
+                  [ "A_string", "notify_template_id" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_string",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "ecs_secret_notify_template_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

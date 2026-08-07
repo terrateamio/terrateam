@@ -1,0 +1,1715 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slo_service_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "default",
+          [ "String", "placeholder-name-add-your-own-name" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "detector_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "SLO detector" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_detector" ], [ "Lit", "slo_downtime_minutes" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "slo_service_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "detector_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "SLx detector based on successful traffic" ]
+        ],
+        [ "Attribute", "max_delay", [ "Int", 30 ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Tuple", [ [ "String", "SLO" ], [ "String", "dev" ] ] ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [
+                  "Literal",
+                  "\nfilter_ = filter('sf_environment', '*') and filter('sf_service', '"
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "slo_service_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "') and filter('sf_kind', 'SERVER', 'CONSUMER') and (not filter('sf_dimensionalized', '*')) and (not filter('sf_serviceMesh', '*'))\nA = data('spans.count', filter=filter_ and filter('sf_error', 'false'), rollup='rate').sum().publish(label='Success', enable=False)\nB = data('spans.count', filter=filter_, rollup='rate').sum().publish(label='All Traffic', enable=False)\nC = combine(100*((A if A is not None else 0)/B)).publish(label='Success Rate %')\n        \nconstant = const(30)\n\n### Force detector to retrigger ever minute when in a breaching state.\n### This gives us \"downtime mintues\"\ndetect(when(C < 99, duration(\"30s\")), off=when(constant < 100, duration(\"20s\")), mode='split').publish('Success Ratio Detector')\n"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "description",
+                [ "String", "Successful traffic < 99 (downtime minutes)" ]
+              ],
+              [ "Attribute", "severity", [ "String", "Warning" ] ],
+              [
+                "Attribute",
+                "detect_label",
+                [ "String", "Success Ratio Detector" ]
+              ],
+              [ "Attribute", "notifications", [ "Tuple", [] ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_dashboard_group" ],
+        [ "Lit", "slo_dashboard_group" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "SLO / SLx Dashboards" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "SLO / SLx Level Dashboards" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ],
+        [ "Lit", "SLO-SLx-Investigation_0" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Downtime minutes over 31 day cycle" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "minimum_resolution", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "Downtime Minutes (SLO)" ] ],
+        [
+          "Attribute",
+          "on_chart_legend_dimension",
+          [ "String", "plot_label" ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [ "Literal", "\nA = alerts(detector_name='" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "slo_service_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "detector_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "').count().publish(label='A', enable=False)\nalert_stream = (A).sum().fill(0).publish(label=\"alert_stream\")\n        \ndowntime = (alert_stream).sum(cycle='month', cycle_start='1d', partial_values=True).fill().publish(label=\"Downtime Minutes\")\n"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", true ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", true ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "event_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "slo_service_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "detector_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Downtime Minutes" ]
+              ],
+              [ "Attribute", "label", [ "String", "Downtime Minutes" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "alert_stream" ] ],
+              [ "Attribute", "label", [ "String", "alert_stream" ] ],
+              [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "SLO-SLx-Investigation_1" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "99.99% , 99.5% , and 99% availability in minutes (1month)"
+          ]
+        ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [
+          "Attribute", "name", [ "String", "Downtime Minutes (SLO) 1month" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [ "Literal", "\nA = alerts(detector_name='" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "slo_service_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "detector_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "').count().publish(label='A', enable=False)\nalert_stream = (A).sum().fill(0).publish(label=\"alert_stream\", enable=False)\n        \n        \ndowntime = (alert_stream).sum(cycle='month', cycle_start='1d', partial_values=True).fill().publish(label=\"Downtime Minutes\")\n        \n## Break points on the radial above are 99.99% , 99.5% , and 99% availability in minutes\n"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Radial" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 44 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 220 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 438 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "yellow" ] ],
+              [ "Attribute", "gt", [ "Int", 44 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 220 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "Downtime Minutes" ]
+              ],
+              [ "Attribute", "label", [ "String", "Downtime Minutes" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "alert_stream" ] ],
+              [ "Attribute", "label", [ "String", "alert_stream" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ],
+        [ "Lit", "SLO-SLx-Investigation_2" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Downtime Minutes Budget over 31 day cycle" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "minimum_resolution", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "Downtime Budget (SLO)" ] ],
+        [
+          "Attribute",
+          "on_chart_legend_dimension",
+          [ "String", "plot_label" ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [ "Literal", "\nA = alerts(detector_name='" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "slo_service_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "detector_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "').count().publish(label='A', enable=False)\nalert_stream = (A).sum().fill(0).publish(label=\"alert_stream\")\n        \ndowntime = (alert_stream).sum(cycle='month', cycle_start='1d', partial_values=True).fill().publish(label=\"Downtime Minutes\", enable=False)\n        \n## 99% uptime is roughly 438 minutes\nbudgeted_minutes = const(438)\n        \nTotal = (budgeted_minutes - downtime).fill().publish(label=\"Available Budget\")\n"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", true ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", true ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "event_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "slo_service_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "detector_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Available Budget" ]
+              ],
+              [ "Attribute", "label", [ "String", "Available Budget" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Downtime Minutes" ]
+              ],
+              [ "Attribute", "label", [ "String", "Downtime Minutes" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "alert_stream" ] ],
+              [ "Attribute", "label", [ "String", "alert_stream" ] ],
+              [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "SLO-SLx-Investigation_3" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Downtime Budget Remaining (1month)" ]
+        ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Downtime Budget Remaining (SLO) 1month" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [ "Literal", "\nA = alerts(detector_name='" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "slo_service_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "detector_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "').count().publish(label='A', enable=False)\nalert_stream = (A).sum().fill(0).publish(label=\"alert_stream\", enable=False)\n        \ndowntime = (alert_stream).sum(cycle='month', cycle_start='1d', partial_values=True).fill().publish(label=\"Downtime Minutes\", enable=False)\n                \n## 99% uptime is roughly 438 minutes\nbudgeted_minutes = const(438)\n                \nTotal = (budgeted_minutes - downtime).fill().publish(label=\"Available Budget\")\n\n"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Linear" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "gt", [ "Int", 395 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 438 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 219 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "yellow" ] ],
+              [ "Attribute", "gt", [ "Int", 219 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 395 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "Available Budget" ]
+              ],
+              [ "Attribute", "label", [ "String", "Available Budget" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "Downtime Minutes" ]
+              ],
+              [ "Attribute", "label", [ "String", "Downtime Minutes" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "alert_stream" ] ],
+              [ "Attribute", "label", [ "String", "alert_stream" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ],
+        [ "Lit", "SLO-SLx-Investigation_4" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Weekly Downtime minutes over 7 day cycle" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "minimum_resolution", [ "Int", 0 ] ],
+        [
+          "Attribute", "name", [ "String", "Weekly Downtime Minutes (SLO)" ]
+        ],
+        [
+          "Attribute",
+          "on_chart_legend_dimension",
+          [ "String", "plot_label" ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [ "Literal", "\nA = alerts(detector_name='" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "slo_service_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "detector_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "').count().publish(label='A', enable=False)\nalert_stream = (A).sum().fill(0).publish(label=\"alert_stream\")\n        \ndowntime = (alert_stream).sum(cycle='week', cycle_start='Monday', partial_values=True).fill().publish(label=\"Downtime Minutes\")\n"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", true ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", true ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "event_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "slo_service_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "detector_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "brown" ] ],
+              [ "Attribute", "display_name", [ "String", "alert_stream" ] ],
+              [ "Attribute", "label", [ "String", "alert_stream" ] ],
+              [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "iris" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Downtime Minutes" ]
+              ],
+              [ "Attribute", "label", [ "String", "Downtime Minutes" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "SLO-SLx-Investigation_5" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "99.99% , 99.5% , and 99% availability in minutes (1week)"
+          ]
+        ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Weekly Downtime Minutes (SLO) 1week" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [ "Literal", "\nA = alerts(detector_name='" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "slo_service_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "detector_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "').count().publish(label='A', enable=False)\nalert_stream = (A).sum().fill(0).publish(label=\"alert_stream\", enable=False)\n        \ndowntime = (alert_stream).sum(cycle='week', cycle_start='Monday', partial_values=True).fill().publish(label=\"Downtime Minutes\")\n        \n## Break points on the radial above are 99.99% , 99.5% , and 99% availability in minutes\n"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Radial" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 22 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 55 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 101 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "yellow" ] ],
+              [ "Attribute", "gt", [ "Int", 22 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 55 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "Downtime Minutes" ]
+              ],
+              [ "Attribute", "label", [ "String", "Downtime Minutes" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "alert_stream" ] ],
+              [ "Attribute", "label", [ "String", "alert_stream" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ],
+        [ "Lit", "SLO-SLx-Investigation_6" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Downtime Minutes Budget over 7 day cycle" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "minimum_resolution", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "Weekly Downtime Budget (SLO)" ] ],
+        [
+          "Attribute",
+          "on_chart_legend_dimension",
+          [ "String", "plot_label" ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [ "Literal", "\nA = alerts(detector_name='" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "slo_service_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "detector_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "').count().publish(label='A', enable=False)\nalert_stream = (A).sum().fill(0).publish(label=\"alert_stream\")\n        \ndowntime = (alert_stream).sum(cycle='week', cycle_start='Monday', partial_values=True).fill().publish(label=\"Downtime Minutes\", enable=False)\n        \n## 99% uptime is roughly 101 minutes\nbudgeted_minutes = const(101)\n        \nTotal = (budgeted_minutes - downtime).fill().publish(label=\"Available Budget\")\n"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", true ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", true ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "event_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "slo_service_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "detector_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Downtime Minutes" ]
+              ],
+              [ "Attribute", "label", [ "String", "Downtime Minutes" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "brown" ] ],
+              [ "Attribute", "display_name", [ "String", "alert_stream" ] ],
+              [ "Attribute", "label", [ "String", "alert_stream" ] ],
+              [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "navy" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Available Budget" ]
+              ],
+              [ "Attribute", "label", [ "String", "Available Budget" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "SLO-SLx-Investigation_7" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Downtime Budget Remaining (1week)" ]
+        ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Weekly Downtime Budget Remaining (SLO) 1week" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [ "Literal", "\nA = alerts(detector_name='" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "slo_service_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "detector_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "').count().publish(label='A', enable=False)\nalert_stream = (A).sum().fill(0).publish(label=\"alert_stream\", enable=False)\n        \ndowntime = (alert_stream).sum(cycle='week', cycle_start='Monday', partial_values=True).fill().publish(label=\"Downtime Minutes\", enable=False)\n        \n## 99% uptime is roughly 101 minutes\nbudgeted_minutes = const(101)\n        \nTotal = (budgeted_minutes - downtime).fill().publish(label=\"Available Budget\")\n"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Linear" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "gt", [ "Int", 55 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 101 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "yellow" ] ],
+              [ "Attribute", "gt", [ "Int", 22 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 55 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 22 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "Available Budget" ]
+              ],
+              [ "Attribute", "label", [ "String", "Available Budget" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "Downtime Minutes" ]
+              ],
+              [ "Attribute", "label", [ "String", "Downtime Minutes" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "alert_stream" ] ],
+              [ "Attribute", "label", [ "String", "alert_stream" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_dashboard" ], [ "Lit", "SLO-SLx-Investigation" ]
+      ],
+      "body": [
+        [ "Attribute", "charts_resolution", [ "String", "default" ] ],
+        [
+          "Attribute",
+          "dashboard_group",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "signalfx_dashboard_group" ],
+                  [ "A_string", "slo_dashboard_group" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "description", [ "String", "Default dashboard." ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "slo_service_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " SLO/SLx Investigation Dashboard" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "time_range", [ "String", "-31d" ] ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "SLO-SLx-Investigation_0" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 9 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "SLO-SLx-Investigation_2" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 9 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "SLO-SLx-Investigation_1" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 9 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "SLO-SLx-Investigation_3" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 9 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "SLO-SLx-Investigation_6" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 6 ] ],
+              [ "Attribute", "width", [ "Int", 9 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "SLO-SLx-Investigation_4" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 9 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "SLO-SLx-Investigation_7" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 9 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 6 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "SLO-SLx-Investigation_5" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 9 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

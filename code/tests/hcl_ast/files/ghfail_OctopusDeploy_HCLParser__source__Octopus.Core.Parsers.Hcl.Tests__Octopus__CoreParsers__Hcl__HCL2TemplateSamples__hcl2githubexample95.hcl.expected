@@ -1,0 +1,242 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_availability_zones" ], [ "Lit", "azs" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "az_count",
+          [
+            "Fun_call",
+            [
+              "min",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "length",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "aws_availability_zones" ]
+                                ]
+                              ],
+                              [ "A_string", "azs" ]
+                            ]
+                          ],
+                          [ "A_string", "names" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "az_limit" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "priv_az_count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "create_private" ] ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "az_count" ] ]
+              ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "nat_az_count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "create_private" ] ]
+                  ],
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "create_nat" ] ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "az_count" ] ]
+              ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "vpc" ] ],
+      "body": [
+        [ "Attribute", "cidr_block", [ "String", "10.0.0.0/16" ] ],
+        [ "Attribute", "enable_dns_hostnames", [ "Bool", true ] ],
+        [ "Attribute", "enable_dns_support", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "terraform" ],
+                            [ "A_string", "workspace" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-vpc" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_internet_gateway" ], [ "Lit", "ig" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "terraform" ],
+                            [ "A_string", "workspace" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-scanning-cluster" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

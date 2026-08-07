@@ -1,0 +1,299 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ],
+        [ "Lit", "azure_blob_account" ]
+      ],
+      "body": [
+        [ "Attribute", "driver_type", [ "String", "humanitec/terraform" ] ],
+        [ "Attribute", "id", [ "String", "azure-blob-account-basic" ] ],
+        [ "Attribute", "name", [ "String", "azure-blob-account-basic" ] ],
+        [ "Attribute", "type", [ "String", "azure-blob-account" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "secrets_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "runner" ],
+                            [
+                              "Fun_call",
+                              [
+                                "jsonencode",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "credentials" ],
+                                        [
+                                          "String",
+                                          "${resources['k8s-cluster.runner'].outputs.credentials}"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "source" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "ssh_key" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "ssh_key" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "append_logs_to_error" ],
+                            [ "Bool", true ]
+                          ],
+                          [
+                            [ "Bare", "runner_mode" ],
+                            [ "String", "custom-kubernetes" ]
+                          ],
+                          [
+                            [ "Bare", "runner" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "cluster_type" ],
+                                  [ "String", "aks" ]
+                                ],
+                                [
+                                  [ "Bare", "cluster" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "region" ],
+                                        [
+                                          "String",
+                                          "${resources['k8s-cluster.runner'].outputs.region}"
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "name" ],
+                                        [
+                                          "String",
+                                          "${resources['k8s-cluster.runner'].outputs.name}"
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "loadbalancer" ],
+                                        [
+                                          "String",
+                                          "${resources['k8s-cluster.runner'].outputs.loadbalancer}"
+                                        ]
+                                      ],
+                                      [
+                                        [
+                                          "Bare", "loadbalancer_hosted_zone"
+                                        ],
+                                        [
+                                          "String",
+                                          "${resources['k8s-cluster.runner'].outputs.loadbalancer_hosted_zone}"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "service_account" ],
+                                  [ "String", "humanitec-tf-runner-sa" ]
+                                ],
+                                [
+                                  [ "Bare", "namespace" ],
+                                  [ "String", "humanitec-tf-runner" ]
+                                ],
+                                [
+                                  [ "Bare", "runner_pod_template" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "EOT",
+                                      "\nmetadata:\n  labels:\n    azure.workload.identity/use: \"true\"\n"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "source" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "path" ],
+                                  [
+                                    "String",
+                                    "modules/azure-blob-account/basic"
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "rev" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "resource_packs_azure_rev"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "url" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "resource_packs_azure_url"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "variables" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "res_id" ],
+                                  [ "String", "${context.res.id}" ]
+                                ],
+                                [
+                                  [ "Bare", "app_id" ],
+                                  [ "String", "${context.app.id}" ]
+                                ],
+                                [
+                                  [ "Bare", "env_id" ],
+                                  [ "String", "${context.env.id}" ]
+                                ],
+                                [
+                                  [ "Bare", "subscription_id" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "subscription_id" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "resource_group_name" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "resource_group_name" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "name" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ], [ "A_string", "name" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "prefix" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "prefix" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "account_tier" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "account_tier" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "account_replication_type" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "account_replication_type"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

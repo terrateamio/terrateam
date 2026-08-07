@@ -1,0 +1,139 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_flow_log" ], [ "Lit", "vpc_flow_logs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "iam_role_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "vpc_flow_logs" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "log_destination",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_group" ],
+                  [ "A_string", "vpc_flow_logs" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "traffic_type", [ "String", "ALL" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_group" ], [ "Lit", "vpc_flow_logs" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "vpc_flow_logs" ] ],
+        [
+          "Attribute",
+          "kms_key_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_kms_key" ], [ "A_string", "cw" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "retention_in_days", [ "Int", 30 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_iam_role" ], [ "Lit", "vpc_flow_logs" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "vpc_flow_logs" ] ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"\",\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n        \"Service\": \"vpc-flow-logs.amazonaws.com\"\n      },\n      \"Action\": \"sts:AssumeRole\"\n    }\n  ]\n}\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy" ], [ "Lit", "vpc_flow_logs" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "vpc_flow_logs" ] ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "vpc_flow_logs" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Action\": [\n        \"logs:CreateLogGroup\",\n        \"logs:CreateLogStream\",\n        \"logs:PutLogEvents\",\n        \"logs:DescribeLogGroups\",\n        \"logs:DescribeLogStreams\"\n      ],\n      \"Effect\": \"Allow\",\n      \"Resource\": \"*\"\n    }\n  ]\n}\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

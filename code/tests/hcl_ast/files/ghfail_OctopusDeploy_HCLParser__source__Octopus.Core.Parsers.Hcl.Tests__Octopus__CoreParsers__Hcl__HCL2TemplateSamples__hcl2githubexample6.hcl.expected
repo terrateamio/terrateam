@@ -1,0 +1,1216 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_ecs_cluster" ], [ "Lit", "covidportal" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "ecs_name" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "setting",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "containerInsights" ] ],
+              [ "Attribute", "value", [ "String", "enabled" ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "portal_repo",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_ecr_repository" ],
+                  [ "A_string", "repository" ]
+                ]
+              ],
+              [ "A_string", "repository_url" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "template_file" ], [ "Lit", "covidportal_task" ] ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Fun_call",
+            [
+              "file", [ [ "String", "task-definitions/covid-portal.json" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vars",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "image" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "portal_repo" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "awslogs-group" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_cloudwatch_log_group" ],
+                        [ "A_string", "covidportal" ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "awslogs-region" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+              ],
+              [
+                [ "Bare", "awslogs-stream-prefix" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "ecs-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "ecs_covid_portal_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "database_url" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "server_database_url" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "metric_provider" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "metric_provider" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "tracer_provider" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "tracer_provider" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "api_authorization" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "api_authorization" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "api_endpoint" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "api_endpoint" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "default_from_email" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "default_from_email" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "invitation_email_template_id_en" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "invitation_email_template_id_en" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "invitation_email_template_id_fr" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "invitation_email_template_id_fr" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "password_reset_email_template_id_en" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "password_reset_email_template_id_en" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "password_reset_email_template_id_fr" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "password_reset_email_template_id_fr" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "django_admins" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "django_admins" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "django_secret_key" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "django_secret_key" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "email_host" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "email_host" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "email_host_user" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "email_host_user" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "email_host_password" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "email_host_password" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "email_port" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "email_port" ] ] ]
+              ],
+              [
+                [ "Bare", "email_use_tls" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "email_use_tls" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "freshdesk_api_endpoint" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "freshdesk_api_endpoint" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "freshdesk_api_key" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "freshdesk_api_key" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "freshdesk_product_id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "freshdesk_product_id" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "new_relic_license_key" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "new_relic_license_key" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "django_env" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "django_env" ] ] ]
+              ],
+              [
+                [ "Bare", "django_allowed_hosts" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "django_allowed_hosts" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "django_email_backend" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "email_backend" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "new_relic_app_name" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "new_relic_app_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "dual_urls" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "dual_urls" ] ] ]
+              ],
+              [
+                [ "Bare", "notify_api_key" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "notify_api_key" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "notify_template_id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_secretsmanager_secret_version" ],
+                        [ "A_string", "notify_template_id" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ecs_task_definition" ], [ "Lit", "covidportal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "family",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "ecs_covid_portal_name" ] ]
+          ]
+        ],
+        [ "Attribute", "cpu", [ "Int", 2048 ] ],
+        [ "Attribute", "memory", [ "String", "4096" ] ],
+        [ "Attribute", "network_mode", [ "String", "awsvpc" ] ],
+        [
+          "Attribute",
+          "requires_compatibilities",
+          [ "Tuple", [ [ "String", "FARGATE" ] ] ]
+        ],
+        [
+          "Attribute",
+          "execution_role_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "task_role_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "container_definitions",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "template_file" ] ]
+                  ],
+                  [ "A_string", "covidportal_task" ]
+                ]
+              ],
+              [ "A_string", "rendered" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_ecs_service" ], [ "Lit", "covidportal" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_lb_listener" ],
+                  [ "A_string", "covidportal_https" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_lb_listener" ],
+                  [ "A_string", "covidportal_http" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "ecs_covid_portal_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_ecs_cluster" ], [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "task_definition",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_ecs_task_definition" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "launch_type", [ "String", "FARGATE" ] ],
+        [ "Attribute", "platform_version", [ "String", "1.4.0" ] ],
+        [ "Attribute", "propagate_tags", [ "String", "SERVICE" ] ],
+        [ "Attribute", "desired_count", [ "Int", 2 ] ],
+        [ "Attribute", "deployment_minimum_healthy_percent", [ "Int", 50 ] ],
+        [ "Attribute", "deployment_maximum_percent", [ "Int", 200 ] ],
+        [ "Attribute", "health_check_grace_period_seconds", [ "Int", 60 ] ],
+        [
+          "Block",
+          {
+            "type_": "deployment_controller",
+            "labels": [],
+            "body": [ [ "Attribute", "type", [ "String", "CODE_DEPLOY" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "network_configuration",
+            "labels": [],
+            "body": [
+              [ "Attribute", "assign_public_ip", [ "Bool", false ] ],
+              [
+                "Attribute",
+                "subnets",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_subnet" ],
+                            [ "A_string", "covidportal_private" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "security_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_security_group" ],
+                            [ "A_string", "covidportal" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_security_group" ],
+                            [ "A_string", "covidportal_egress" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "load_balancer",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "target_group_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_lb_target_group" ],
+                        [ "A_string", "covidportal" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "container_name",
+                [ "String", "covid-portal_staging" ]
+              ],
+              [ "Attribute", "container_port", [ "Int", 8000 ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [
+                  "Tuple",
+                  [
+                    [ "Id", "desired_count" ],
+                    [ "Id", "task_definition" ],
+                    [ "Id", "load_balancer" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_appautoscaling_target" ], [ "Lit", "portal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "portal_autoscale_enabled" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "service_namespace", [ "String", "ecs" ] ],
+        [
+          "Attribute",
+          "resource_id",
+          [
+            "Template",
+            [
+              [ "Literal", "service/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_ecs_service" ],
+                          [ "A_string", "covidportal" ]
+                        ]
+                      ],
+                      [ "A_string", "cluster" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_ecs_service" ],
+                          [ "A_string", "covidportal" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "scalable_dimension",
+          [ "String", "ecs:service:DesiredCount" ]
+        ],
+        [
+          "Attribute",
+          "min_capacity",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "min_capacity" ] ] ]
+        ],
+        [
+          "Attribute",
+          "max_capacity",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "max_capacity" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_appautoscaling_policy" ], [ "Lit", "portal_cpu" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "portal_autoscale_enabled" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "portal_cpu" ] ],
+        [ "Attribute", "policy_type", [ "String", "TargetTrackingScaling" ] ],
+        [ "Attribute", "service_namespace", [ "String", "ecs" ] ],
+        [
+          "Attribute",
+          "resource_id",
+          [
+            "Template",
+            [
+              [ "Literal", "service/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_ecs_service" ],
+                          [ "A_string", "covidportal" ]
+                        ]
+                      ],
+                      [ "A_string", "cluster" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_ecs_service" ],
+                          [ "A_string", "covidportal" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "scalable_dimension",
+          [ "String", "ecs:service:DesiredCount" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "target_tracking_scaling_policy_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "scale_in_cooldown",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "scale_in_cooldown" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "scale_out_cooldown",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "scale_out_cooldown" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "predefined_metric_specification",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "predefined_metric_type",
+                      [ "String", "ECSServiceAverageCPUUtilization" ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Attribute",
+                "target_value",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "cpu_scale_metric" ] ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_appautoscaling_policy" ], [ "Lit", "portal_memory" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "portal_autoscale_enabled" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "portal_memory" ] ],
+        [ "Attribute", "policy_type", [ "String", "TargetTrackingScaling" ] ],
+        [ "Attribute", "service_namespace", [ "String", "ecs" ] ],
+        [
+          "Attribute",
+          "resource_id",
+          [
+            "Template",
+            [
+              [ "Literal", "service/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_ecs_service" ],
+                          [ "A_string", "covidportal" ]
+                        ]
+                      ],
+                      [ "A_string", "cluster" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_ecs_service" ],
+                          [ "A_string", "covidportal" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "scalable_dimension",
+          [ "String", "ecs:service:DesiredCount" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "target_tracking_scaling_policy_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "scale_in_cooldown",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "scale_in_cooldown" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "scale_out_cooldown",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "scale_out_cooldown" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "predefined_metric_specification",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "predefined_metric_type",
+                      [ "String", "ECSServiceAverageMemoryUtilization" ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Attribute",
+                "target_value",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "memory_scale_metric" ] ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

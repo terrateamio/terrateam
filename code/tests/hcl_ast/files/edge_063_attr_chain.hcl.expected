@@ -1,0 +1,25 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Attr",
+      [
+        [
+          "Attr",
+          [
+            [
+              "Attr",
+              [
+                [ "Attr", [ [ "Id", "a" ], [ "A_string", "b" ] ] ],
+                [ "A_string", "c" ]
+              ]
+            ],
+            [ "A_string", "d" ]
+          ]
+        ],
+        [ "A_string", "e" ]
+      ]
+    ]
+  ]
+]

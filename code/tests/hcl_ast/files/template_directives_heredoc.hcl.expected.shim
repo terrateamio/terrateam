@@ -1,0 +1,70 @@
+[
+  [
+    "Attribute",
+    "report",
+    [
+      "Template_heredoc",
+      [
+        "EOT",
+        [
+          [ "Literal", "\n" ],
+          [
+            "If_directive",
+            {
+              "cond": [ "Id", "enabled" ],
+              "then_": [
+                [ "Literal", "service: " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [ "Id", "name" ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ]
+              ],
+              "else_": null,
+              "strip_before": false,
+              "strip_after": true
+            }
+          ],
+          [ "Literal", "\nusers:\n" ],
+          [
+            "For_directive",
+            {
+              "vars": [ "u", null ],
+              "input": [ "Id", "users" ],
+              "body": [
+                [ "Literal", "  - " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "u" ], [ "A_string", "name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " (" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "u" ], [ "A_string", "role" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", ")\n" ]
+              ],
+              "strip_before": false,
+              "strip_after": true
+            }
+          ]
+        ]
+      ]
+    ]
+  ]
+]

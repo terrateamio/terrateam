@@ -1,14 +1,9 @@
-; test.ml opens fixtures at $SRC_DIR/files at runtime.
-; (source_tree files) stages the fixture subtree into the test's
-; build dir, and (setenv SRC_DIR . ...) points the test at it —
-; together they let the OCaml find its fixtures under files/
-; without knowing about dune's _build/ layout.
-
 (test
  (name test)
- (libraries containers hcl_ast oth)
+ (libraries containers hcl_ast oth qcheck sln)
  (deps
-  (source_tree files))
+  (source_tree files)
+  ../hcl_native_shim/sg_hcl_shim)
  (action
   (setenv
    SRC_DIR

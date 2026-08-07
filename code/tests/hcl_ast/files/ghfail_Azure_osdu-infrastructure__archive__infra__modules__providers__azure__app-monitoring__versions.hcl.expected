@@ -1,0 +1,12 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [ "Attribute", "required_version", [ "String", ">= 0.12" ] ]
+      ]
+    }
+  ]
+]

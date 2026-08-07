@@ -1,0 +1,78 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ],
+        [ "Lit", "servicemonitor-workload" ]
+      ],
+      "body": [
+        [ "Attribute", "driver_type", [ "String", "humanitec/template" ] ],
+        [ "Attribute", "id", [ "String", "servicemonitor-workload" ] ],
+        [ "Attribute", "name", [ "String", "servicemonitor-workload" ] ],
+        [ "Attribute", "type", [ "String", "workload" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "namespace" ],
+                            [
+                              "String",
+                              "${resources['k8s-namespace#k8s-namespace'].outputs.namespace}"
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "templates" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "init" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\nworkload: {{ .resource.id }}\n{{- if gt (.resource.spec | dig \"service\" \"ports\" (list) | len) 0 }}\nservicePort: {{ get (.resource.spec.service.ports | values | first ) \"service_port\" }}\n{{- else }}\nservicePort: 8080\n{{- end }}\n"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "manifests" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\n{{- if .resource.spec.service }}\nservice-monitor.yaml:\n  location: namespace\n  data:\n    apiVersion: monitoring.coreos.com/v1\n    kind: ServiceMonitor\n    metadata:\n      name: {{ .init.workload }}-svc-monitor\n    spec:\n      endpoints:\n      - interval: 30s\n        targetPort: {{ .init.servicePort }}\n        path: /metrics\n      namespaceSelector:\n        matchNames:\n        - {{ .driver.values.namespace }}\n      selector:\n        matchLabels:\n          humanitec.io/workload: {{ .init.workload }}\n{{- end }}\n"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,309 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "azurerm" ] ],
+      "body": [
+        [ "Block", { "type_": "features", "labels": [], "body": [] } ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_resource_group" ], [ "Lit", "tfexample" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "my-terraform-rg" ] ],
+        [ "Attribute", "location", [ "String", "West Europe" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network" ], [ "Lit", "tfexample" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "my-terraform-vnet" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "tfexample" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "tfexample" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_space",
+          [ "Tuple", [ [ "String", "10.0.0.0/16" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_subnet" ], [ "Lit", "tfexample" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "my-terraform-subnet" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "tfexample" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "tfexample" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [ "Tuple", [ [ "String", "10.0.2.0/24" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_interface" ], [ "Lit", "tfexample" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "my-terraform-nic" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "tfexample" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "tfexample" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ip_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [ "String", "my-terraform-nic-ip-config" ]
+              ],
+              [
+                "Attribute",
+                "subnet_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "azurerm_subnet" ],
+                        [ "A_string", "tfexample" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "private_ip_address_allocation",
+                [ "String", "Dynamic" ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_linux_virtual_machine" ], [ "Lit", "tfexample" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "my-terraform-vm" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "tfexample" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "tfexample" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_interface_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_network_interface" ],
+                      [ "A_string", "tfexample" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "size", [ "String", "Standard_DS1_v2" ] ],
+        [ "Attribute", "computer_name", [ "String", "myvm" ] ],
+        [ "Attribute", "admin_username", [ "String", "azureuser" ] ],
+        [ "Attribute", "admin_password", [ "String", "Password1234!" ] ],
+        [ "Attribute", "disable_password_authentication", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "source_image_reference",
+            "labels": [],
+            "body": [
+              [ "Attribute", "publisher", [ "String", "Canonical" ] ],
+              [ "Attribute", "offer", [ "String", "UbuntuServer" ] ],
+              [ "Attribute", "sku", [ "String", "18.04-LTS" ] ],
+              [ "Attribute", "version", [ "String", "latest" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "os_disk",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "my-terraform-os-disk" ] ],
+              [
+                "Attribute",
+                "storage_account_type",
+                [ "String", "Standard_LRS" ]
+              ],
+              [ "Attribute", "caching", [ "String", "ReadWrite" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

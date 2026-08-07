@@ -1,0 +1,1192 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "gar_uri",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "gar_repo_location" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-docker.pkg.dev/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "gar_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "image_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cloudbuild_sa",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "cloudbuild_sa" ] ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "google_service_account" ],
+                            [ "A_string", "cb_sa" ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cloudbuild_sa_email",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "split",
+                    [
+                      [ "String", "/" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "cloudbuild_sa" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "Subtract",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "split",
+                              [
+                                [ "String", "/" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "cloudbuild_sa" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 1 ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tf_version_parts",
+          [
+            "Fun_call",
+            [
+              "split",
+              [
+                [ "String", "." ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "terraform_version" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tf_full_version",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "terraform_version" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tf_minor_version",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "tf_version_parts" ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "tf_version_parts" ]
+                        ]
+                      ],
+                      [ "Int", 1 ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tf_major_version",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "tf_version_parts" ] ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "log_bucket_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "bucket_name" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "bucket_name" ] ]
+              ],
+              "else_": [
+                "Template",
+                [
+                  [ "Literal", "tf-cloudbuilder-build-logs-" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "project_id" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "tags_subst",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "_TERRAFORM_FULL_VERSION" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "tf_full_version" ] ]
+                ]
+              ],
+              [
+                [ "Quoted", "_TERRAFORM_MINOR_VERSION" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "tf_minor_version" ] ]
+                ]
+              ],
+              [
+                [ "Quoted", "_TERRAFORM_MAJOR_VERSION" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "tf_major_version" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "img_tags_subst",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "tag", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "keys",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "tags_subst" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "output": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "gar_uri" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", ":v${" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [ "Id", "tag" ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "}" ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "is_source_repo",
+          [
+            "Log_and",
+            [
+              [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ], [ "A_string", "dockerfile_repo_type" ]
+                    ]
+                  ],
+                  [ "String", "CLOUD_SOURCE_REPOSITORIES" ]
+                ]
+              ],
+              [
+                "Not",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "use_cloudbuildv2_repository" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source_repo_url_split",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "is_source_repo" ] ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "split",
+                  [
+                    [ "String", "/" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "dockerfile_repo_uri" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Tuple", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "source_repo_project",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "is_source_repo" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "source_repo_url_split" ]
+                    ]
+                  ],
+                  [ "Int", 4 ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "source_repo_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "is_source_repo" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "source_repo_url_split" ]
+                    ]
+                  ],
+                  [ "Int", 6 ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_cloudbuild_trigger" ], [ "Lit", "build_trigger" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "trigger_location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "trigger_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Builds a Terraform runner image. Managed by Terraform."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "source_to_build" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "use_cloudbuildv2_repository" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "Int", 1 ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "repository",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "dockerfile_repo_uri" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "ref",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "dockerfile_repo_ref" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "repo_type",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "dockerfile_repo_type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "source_to_build" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "use_cloudbuildv2_repository" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [] ],
+                    "else_": [ "Tuple", [ [ "Int", 1 ] ] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "uri",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "dockerfile_repo_uri" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "ref",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "dockerfile_repo_ref" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "repo_type",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "dockerfile_repo_type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "build",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "timeout",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "build_timeout" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "step",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "name",
+                      [ "String", "gcr.io/cloud-builders/docker" ]
+                    ],
+                    [
+                      "Attribute",
+                      "args",
+                      [
+                        "Fun_call",
+                        [
+                          "concat",
+                          [
+                            [ "Tuple", [ [ "String", "build" ] ] ],
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "img_tag", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "img_tags_subst" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Template",
+                                  [
+                                    [ "Literal", "--tag=" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "img_tag" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "String",
+                                  "--build-arg=TERRAFORM_VERSION=${_TERRAFORM_FULL_VERSION}"
+                                ],
+                                [ "String", "." ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "dir",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "dockerfile_repo_dir" ]
+                                ]
+                              ],
+                              [ "String", "" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "dockerfile_repo_dir" ]
+                            ]
+                          ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "step",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "name",
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "gar_uri" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", ":v${_TERRAFORM_FULL_VERSION}" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "args",
+                      [ "Tuple", [ [ "String", "version" ] ] ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Attribute",
+                "images",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "img_tags_subst" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "logs_bucket",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "module" ], [ "A_string", "bucket" ] ]
+                        ],
+                        [ "A_string", "bucket" ]
+                      ]
+                    ],
+                    [ "A_string", "url" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "options" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "enable_worker_pool" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Tuple", [ [ "String", "worker_pool" ] ]
+                          ],
+                          "else_": [ "Tuple", [] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "worker_pool",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "worker_pool_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "substitutions",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags_subst" ] ] ]
+        ],
+        [
+          "Attribute",
+          "service_account",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "cloudbuild_sa" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [ [ "Id", "source_to_build" ], [ "Int", 0 ] ]
+                        ],
+                        [ "A_string", "repo_type" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_artifact_registry_repository_iam_member" ],
+                  [ "A_string", "push_images" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "google_project_iam_member" ],
+                  [ "A_string", "logs_writer" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "google_service_account" ], [ "Lit", "cb_sa" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cloudbuild_sa" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [ "Attribute", "account_id", [ "String", "tf-cb-builder-sa" ] ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "String",
+            "SA for Terraform builder build trigger. Managed by Terraform."
+          ]
+        ],
+        [ "Attribute", "create_ignore_already_exists", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_project_iam_member" ], [ "Lit", "logs_writer" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [ "Attribute", "role", [ "String", "roles/logging.logWriter" ] ],
+        [
+          "Attribute",
+          "member",
+          [
+            "Template",
+            [
+              [ "Literal", "serviceAccount:" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "cloudbuild_sa_email" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "bucket" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [
+            "String",
+            "terraform-google-modules/cloud-storage/google//modules/simple_bucket"
+          ]
+        ],
+        [ "Attribute", "version", [ "String", "~> 9.0" ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "log_bucket_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "gar_repo_location" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "force_destroy",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "cb_logs_bucket_force_destroy" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_storage_bucket_iam_member" ], [ "Lit", "member" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "module" ], [ "A_string", "bucket" ] ]
+                  ],
+                  [ "A_string", "bucket" ]
+                ]
+              ],
+              [ "A_string", "self_link" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "role", [ "String", "roles/storage.admin" ] ],
+        [
+          "Attribute",
+          "member",
+          [
+            "Template",
+            [
+              [ "Literal", "serviceAccount:" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "cloudbuild_sa_email" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_sourcerepo_repository_iam_member" ],
+        [ "Lit", "member" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "is_source_repo" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "source_repo_project" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "repository",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "source_repo_name" ] ]
+          ]
+        ],
+        [ "Attribute", "role", [ "String", "roles/viewer" ] ],
+        [
+          "Attribute",
+          "member",
+          [
+            "Template",
+            [
+              [ "Literal", "serviceAccount:" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "cloudbuild_sa_email" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

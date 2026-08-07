@@ -1,0 +1,1498 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "folder_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    The ID of the Yandex Cloud Folder that the resources belongs to.\n\n    Allows to create bucket in different folder.\n    It will try to create bucket using IAM-token in provider config, not using access_key.\n    If omitted, folder_id specified in provider config and access_key is used.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [
+          "Attribute", "description", [ "String", "OpenSearch cluster name" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "description" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "OpenSearch cluster description" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "labels" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Object for setting tags (or labels) for bucket.\n    For more information see https://cloud.yandex.com/en/docs/storage/concepts/tags.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "environment" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The deployment environment of the OpenSearch cluster. PRESTABLE is for testing and development, PRODUCTION is for production workloads with higher availability and performance guarantees."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "PRESTABLE" ],
+                          [ "String", "PRODUCTION" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Available values are \"PRESTABLE\", \"PRODUCTION\" (case sensitive)."
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "default", [ "String", "PRODUCTION" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "service_account_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The ID of the service account that will be used by the OpenSearch cluster for accessing other Yandex Cloud resources. If not specified, a default service account will be used."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "deletion_protection" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enables deletion protection for the OpenSearch cluster. When enabled, prevents accidental deletion of the cluster and its data."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "network_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "ID of the network, to which the OpenSearch cluster belongs."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "security_group_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A set of ids of security groups assigned to hosts of the cluster."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "opensearch_version" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The version of OpenSearch to deploy. If not specified, the latest available version will be used."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "generate_admin_password" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "If true, a random admin password will be generated for the OpenSearch cluster. If false, the admin_password variable must be provided."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "admin_password" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The password for the admin user of the OpenSearch cluster. Only used if generate_admin_password is false. Must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "generate_admin_password" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "admin_password" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Gte",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "length",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "admin_password"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Int", 8 ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z\\d]).{8,}$"
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string", "admin_password"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Bool", false ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "If generate_admin_password is false you must provide admin_password with at least 8 characters, including uppercase, lowercase, digit, and special character."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "opensearch_plugins" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "A set of requested OpenSearch plugins." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "opensearch_nodes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    A map that contains information about OpenSearch cluster nodes.\n    Configuration attributes:\n      resources        - (Required) Resources allocated to hosts of this OpenSearch node group.\n      hosts_count      - (Required) Number of hosts in this node group. Must be at least 1.\n      zones_ids        - (Required) A set of availability zones where hosts of node group may be allocated.\n      subnet_ids       - (Optional) A set of the subnets, to which the hosts belongs. The subnets must be a part of the network to which the cluster belongs.\n      assign_public_ip - (Optional) Sets whether the hosts should get a public IP address on creation.\n      roles            - (Optional) A set of OpenSearch roles assigned to hosts.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "resources" ],
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "resource_preset_id" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "disk_size" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "disk_type_id" ],
+                                        [ "Id", "string" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "hosts_count" ], [ "Id", "number" ] ],
+                          [
+                            [ "Bare", "zones_ids" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [
+                                    "Tuple",
+                                    [
+                                      [ "String", "ru-central1-a" ],
+                                      [ "String", "ru-central1-b" ],
+                                      [ "String", "ru-central1-d" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "subnet_ids" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "assign_public_ip" ], [ "Id", "bool" ]
+                          ],
+                          [
+                            [ "Bare", "roles" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "group_name", [ "group" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "opensearch_nodes" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Log_and",
+                                            [
+                                              [
+                                                "Log_and",
+                                                [
+                                                  [
+                                                    "Gte",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "group" ],
+                                                          [
+                                                            "A_string",
+                                                            "hosts_count"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Int", 1 ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Lte",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "group" ],
+                                                          [
+                                                            "A_string",
+                                                            "hosts_count"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Int", 10 ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "can",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "tonumber",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Id",
+                                                                    "group"
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "resources"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "disk_size"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Gte",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "tonumber",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "group" ],
+                                                            [
+                                                              "A_string",
+                                                              "resources"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "disk_size"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Int", 10737418240 ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "contains",
+                                          [
+                                            [
+                                              "Tuple",
+                                              [
+                                                [ "String", "network-hdd" ],
+                                                [ "String", "network-ssd" ],
+                                                [ "String", "local-ssd" ],
+                                                [
+                                                  "String",
+                                                  "network-ssd-nonreplicated"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "group" ],
+                                                    [
+                                                      "A_string", "resources"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string", "disk_type_id"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "alltrue",
+                                      [
+                                        [
+                                          "For_tuple",
+                                          {
+                                            "identifiers": [ "zone", [] ],
+                                            "input": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "group" ],
+                                                [ "A_string", "zones_ids" ]
+                                              ]
+                                            ],
+                                            "output": [
+                                              "Fun_call",
+                                              [
+                                                "contains",
+                                                [
+                                                  [
+                                                    "Tuple",
+                                                    [
+                                                      [
+                                                        "String",
+                                                        "ru-central1-a"
+                                                      ],
+                                                      [
+                                                        "String",
+                                                        "ru-central1-b"
+                                                      ],
+                                                      [
+                                                        "String",
+                                                        "ru-central1-d"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Id", "zone" ]
+                                                ]
+                                              ]
+                                            ],
+                                            "cond": null
+                                          }
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Log_or",
+                                [
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "group" ],
+                                          [ "A_string", "roles" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "alltrue",
+                                      [
+                                        [
+                                          "For_tuple",
+                                          {
+                                            "identifiers": [ "role", [] ],
+                                            "input": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "group" ],
+                                                [ "A_string", "roles" ]
+                                              ]
+                                            ],
+                                            "output": [
+                                              "Fun_call",
+                                              [
+                                                "contains",
+                                                [
+                                                  [
+                                                    "Tuple",
+                                                    [
+                                                      [ "String", "data" ],
+                                                      [ "String", "manager" ],
+                                                      [ "String", "ingest" ],
+                                                      [
+                                                        "String",
+                                                        "coordinator"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Id", "role" ]
+                                                ]
+                                              ]
+                                            ],
+                                            "cond": null
+                                          }
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nInvalid OpenSearch node configuration:\n- hosts_count must be between 1 and 10\n- disk_size must be at least 10GB (10737418240 bytes)\n- disk_type_id must be one of: network-hdd, network-ssd, local-ssd, network-ssd-nonreplicated\n- zones_ids must contain valid Yandex Cloud availability zones: ru-central1-a, ru-central1-b, ru-central1-d\n- roles must be one of: data, manager, ingest, coordinator\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "dashboard_nodes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    A map that contains information about OpenSearch dashboard nodes.\n    Configuration attributes:\n      resources        - (Required) Resources allocated to hosts of this OpenSearch node group.\n      hosts_count      - (Required) Number of hosts in this node group. Must be at least 1.\n      zones_ids        - (Required) A set of availability zones where hosts of node group may be allocated.\n      subnet_ids       - (Optional) A set of the subnets, to which the hosts belongs. The subnets must be a part of the network to which the cluster belongs.\n      assign_public_ip - (Optional) Sets whether the hosts should get a public IP address on creation.\n      roles            - (Optional) A set of OpenSearch roles assigned to hosts.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "resources" ],
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "resource_preset_id" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "disk_size" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "disk_type_id" ],
+                                        [ "Id", "string" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "hosts_count" ], [ "Id", "number" ] ],
+                          [
+                            [ "Bare", "zones_ids" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [
+                                    "Tuple",
+                                    [
+                                      [ "String", "ru-central1-a" ],
+                                      [ "String", "ru-central1-b" ],
+                                      [ "String", "ru-central1-d" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "subnet_ids" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "assign_public_ip" ], [ "Id", "bool" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "group_name", [ "group" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "dashboard_nodes" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Log_and",
+                                            [
+                                              [
+                                                "Gte",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "group" ],
+                                                      [
+                                                        "A_string",
+                                                        "hosts_count"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Int", 1 ]
+                                                ]
+                                              ],
+                                              [
+                                                "Lte",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "group" ],
+                                                      [
+                                                        "A_string",
+                                                        "hosts_count"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Int", 5 ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "can",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "tonumber",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id", "group"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "resources"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "disk_size"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Gte",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "tonumber",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "group" ],
+                                                        [
+                                                          "A_string",
+                                                          "resources"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string", "disk_size"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Int", 10737418240 ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "contains",
+                                      [
+                                        [
+                                          "Tuple",
+                                          [
+                                            [ "String", "network-hdd" ],
+                                            [ "String", "network-ssd" ],
+                                            [ "String", "local-ssd" ],
+                                            [
+                                              "String",
+                                              "network-ssd-nonreplicated"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "group" ],
+                                                [ "A_string", "resources" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "disk_type_id" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "alltrue",
+                                  [
+                                    [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "zone", [] ],
+                                        "input": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "group" ],
+                                            [ "A_string", "zones_ids" ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Fun_call",
+                                          [
+                                            "contains",
+                                            [
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [
+                                                    "String", "ru-central1-a"
+                                                  ],
+                                                  [
+                                                    "String", "ru-central1-b"
+                                                  ],
+                                                  [
+                                                    "String", "ru-central1-d"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "zone" ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nInvalid Dashboard node configuration:\n- hosts_count must be between 1 and 5\n- disk_size must be at least 10GB (10737418240 bytes)\n- disk_type_id must be one of: network-hdd, network-ssd, local-ssd, network-ssd-nonreplicated\n- zones_ids must contain valid Yandex Cloud availability zones: ru-central1-a, ru-central1-b, ru-central1-d\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "disk_encryption_key_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "ID of the KMS key for cluster disk encryption. If not specified, encryption will be disabled."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "maintenance_window_type" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The type of maintenance window for the OpenSearch cluster. ANYTIME allows maintenance at any time, WEEKLY requires specifying a specific day and hour."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [ [ "String", "ANYTIME" ], [ "String", "WEEKLY" ] ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "maintenance_window_type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Available values are \"ANYTIME\", \"WEEKLY\" (case sensitive)."
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "default", [ "String", "ANYTIME" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "maintenance_window_hour" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The hour of day in UTC time zone (0-24) for the weekly maintenance window. Only used when maintenance_window_type is WEEKLY."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "maintenance_window_hour" ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "maintenance_window_hour" ]
+                          ]
+                        ],
+                        [ "Int", 24 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The variable must be a number between 0 and 24 (inclusive)."
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "maintenance_window_day" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The day of the week for the weekly maintenance window. Only used when maintenance_window_type is WEEKLY."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "MON" ],
+                          [ "String", "TUE" ],
+                          [ "String", "WED" ],
+                          [ "String", "THU" ],
+                          [ "String", "FRI" ],
+                          [ "String", "SAT" ],
+                          [ "String", "SUN" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "maintenance_window_day" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Available values are \"MON\", \"TUE\", \"WED\", \"THU\", \"FRI\", \"SAT\", \"SUN\" (case sensitive)."
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "timeouts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Timeout settings for cluster operations" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "create" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "update" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "delete" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ]
+]

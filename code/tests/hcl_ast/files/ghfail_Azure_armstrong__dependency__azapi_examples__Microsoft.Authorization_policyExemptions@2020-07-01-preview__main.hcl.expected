@@ -1,0 +1,529 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "azapi",
+                [
+                  "Object",
+                  [ [ [ "Bare", "source" ], [ "String", "Azure/azapi" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "azurerm",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "source" ], [ "String", "hashicorp/azurerm" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "azurerm" ] ],
+      "body": [
+        [ "Block", { "type_": "features", "labels": [], "body": [] } ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "azapi" ] ],
+      "body": [
+        [ "Attribute", "skip_provider_registration", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "resource_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "acctest0001" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "location" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "eastus" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_client_config" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azapi_resource" ], [ "Lit", "subscription" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "String", "Microsoft.Resources/subscriptions@2021-01-01" ]
+        ],
+        [
+          "Attribute",
+          "resource_id",
+          [
+            "Template",
+            [
+              [ "Literal", "/subscriptions/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "azurerm_client_config" ]
+                            ]
+                          ],
+                          [ "A_string", "current" ]
+                        ]
+                      ],
+                      [ "A_string", "subscription_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "response_export_values",
+          [ "Tuple", [ [ "String", "*" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azapi_resource" ], [ "Lit", "policyDefinition" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "String", "Microsoft.Authorization/policyDefinitions@2021-06-01"
+          ]
+        ],
+        [
+          "Attribute",
+          "parent_id",
+          [
+            "Template",
+            [
+              [ "Literal", "/subscriptions/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "azurerm_client_config" ]
+                            ]
+                          ],
+                          [ "A_string", "current" ]
+                        ]
+                      ],
+                      [ "A_string", "subscription_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "body",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "properties" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "description" ], [ "String", "" ] ],
+                    [
+                      [ "Bare", "displayName" ],
+                      [ "String", "my-policy-definition" ]
+                    ],
+                    [ [ "Bare", "mode" ], [ "String", "All" ] ],
+                    [
+                      [ "Bare", "parameters" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "allowedLocations" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "metadata" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "description" ],
+                                        [
+                                          "String",
+                                          "The list of allowed locations for resources."
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "displayName" ],
+                                        [ "String", "Allowed locations" ]
+                                      ],
+                                      [
+                                        [ "Bare", "strongType" ],
+                                        [ "String", "location" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ [ "Bare", "type" ], [ "String", "Array" ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "policyRule" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "if" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "not" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "field" ],
+                                        [ "String", "location" ]
+                                      ],
+                                      [
+                                        [ "Bare", "in" ],
+                                        [
+                                          "String",
+                                          "[parameters('allowedLocations')]"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "then" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "effect" ], [ "String", "audit" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ [ "Bare", "policyType" ], [ "String", "Custom" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "schema_validation_enabled", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "response_export_values",
+          [ "Tuple", [ [ "String", "*" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azapi_resource" ], [ "Lit", "policyAssignment" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "String", "Microsoft.Authorization/policyAssignments@2022-06-01"
+          ]
+        ],
+        [
+          "Attribute",
+          "parent_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "azapi_resource" ] ]
+                  ],
+                  [ "A_string", "subscription" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_name" ] ] ]
+        ],
+        [ "Attribute", "location", [ "String", "westeurope" ] ],
+        [
+          "Block",
+          {
+            "type_": "identity",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "SystemAssigned" ] ],
+              [ "Attribute", "identity_ids", [ "Tuple", [] ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "body",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "properties" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "displayName" ], [ "String", "" ] ],
+                    [
+                      [ "Bare", "enforcementMode" ], [ "String", "Default" ]
+                    ],
+                    [
+                      [ "Bare", "policyDefinitionId" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "azapi_resource" ],
+                              [ "A_string", "policyDefinition" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "scope" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "azapi_resource" ]
+                                ]
+                              ],
+                              [ "A_string", "subscription" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "schema_validation_enabled", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "response_export_values",
+          [ "Tuple", [ [ "String", "*" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azapi_resource" ], [ "Lit", "policyExemption" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "String",
+            "Microsoft.Authorization/policyExemptions@2020-07-01-preview"
+          ]
+        ],
+        [
+          "Attribute",
+          "parent_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "azapi_resource" ] ]
+                  ],
+                  [ "A_string", "subscription" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "body",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "properties" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "exemptionCategory" ],
+                      [ "String", "Mitigated" ]
+                    ],
+                    [
+                      [ "Bare", "policyAssignmentId" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "azapi_resource" ],
+                              [ "A_string", "policyAssignment" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "policyDefinitionReferenceIds" ],
+                      [ "Tuple", [] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "schema_validation_enabled", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "response_export_values",
+          [ "Tuple", [ [ "String", "*" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

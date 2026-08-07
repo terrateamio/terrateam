@@ -1,0 +1,1556 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "cloudflare_api_token_permission_groups" ], [ "Lit", "all" ]
+      ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "cloudflare_api_token" ],
+        [ "Lit", "terraform_cloudflare_account" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "terraform_cloudflare_account" ] ],
+        [
+          "Block",
+          {
+            "type_": "policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "permission_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Pages Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "zone" ]
+                          ]
+                        ],
+                        [ "String", "DNS Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "zone" ]
+                          ]
+                        ],
+                        [ "String", "Zone Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "zone" ]
+                          ]
+                        ],
+                        [ "String", "Zone Settings Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "zone" ]
+                          ]
+                        ],
+                        [ "String", "Dynamic URL Redirects Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Notifications Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Notifications Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Workers Scripts Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Workers Scripts Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Workers KV Storage Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Workers KV Storage Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "zone" ]
+                          ]
+                        ],
+                        [ "String", "Workers Routes Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "zone" ]
+                          ]
+                        ],
+                        [ "String", "Workers Routes Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Queues Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Queues Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Account Settings Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Account Settings Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "D1 Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "D1 Write" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "com.cloudflare.api.account.*" ],
+                      [ "String", "*" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "terraform_key_cloudflare_account" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "cloudflare_api_token" ],
+                  [ "A_string", "terraform_cloudflare_account" ]
+                ]
+              ],
+              [ "A_string", "value" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "cloudflare_api_token" ],
+        [ "Lit", "terraform_cloudflare_docs" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "terraform_cloudflare_docs" ] ],
+        [
+          "Block",
+          {
+            "type_": "policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "permission_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Pages Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "zone" ]
+                          ]
+                        ],
+                        [ "String", "DNS Write" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "com.cloudflare.api.account.*" ],
+                      [ "String", "*" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "terraform_key_cloudflare_docs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "cloudflare_api_token" ],
+                  [ "A_string", "terraform_cloudflare_account" ]
+                ]
+              ],
+              [ "A_string", "value" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "cloudflare_api_token" ],
+        [ "Lit", "terraform_cloudflare_pages_upload" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "terraform_cloudflare_pages_upload" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "permission_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Pages Write" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "com.cloudflare.api.account.*" ],
+                      [ "String", "*" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "terraform_key_cloudflare_pages_upload" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "cloudflare_api_token" ],
+                  [ "A_string", "terraform_cloudflare_account" ]
+                ]
+              ],
+              [ "A_string", "value" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "cloudflare_api_token" ],
+        [ "Lit", "mich_cloudflare_r2_token" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "mich_r2_token" ] ],
+        [
+          "Block",
+          {
+            "type_": "policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "permission_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Write" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "com.cloudflare.api.account.*" ],
+                      [ "String", "*" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "permission_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "r2" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Bucket Item Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "r2" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Bucket Item Write" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "com.cloudflare.edge.r2.bucket.*" ],
+                      [ "String", "*" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "condition",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "request_ip",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "in",
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "mich_cidrs" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "mich_cloudflare_r2_token_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "cloudflare_api_token" ],
+                  [ "A_string", "mich_cloudflare_r2_token" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "mich_cloudflare_r2_token_value" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "cloudflare_api_token" ],
+                  [ "A_string", "mich_cloudflare_r2_token" ]
+                ]
+              ],
+              [ "A_string", "value" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "cloudflare_api_token" ], [ "Lit", "tiles_r2_kv_token" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "tiles_r2_kv_token" ] ],
+        [
+          "Block",
+          {
+            "type_": "policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "permission_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Write" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Workers KV Storage Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "account" ]
+                          ]
+                        ],
+                        [ "String", "Workers KV Storage Write" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "com.cloudflare.api.account.*" ],
+                      [ "String", "*" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "permission_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "r2" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Bucket Item Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "r2" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Bucket Item Write" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "com.cloudflare.edge.r2.bucket.*" ],
+                      [ "String", "*" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "tiles_r2_kv_token_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "cloudflare_api_token" ],
+                  [ "A_string", "tiles_r2_kv_token" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "tiles_r2_kv_token_value" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "cloudflare_api_token" ],
+                  [ "A_string", "tiles_r2_kv_token" ]
+                ]
+              ],
+              [ "A_string", "value" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "cloudflare_api_token" ],
+        [ "Lit", "static_bucket_api_token" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "r2_token_static_bucket" ] ],
+        [
+          "Block",
+          {
+            "type_": "policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "permission_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "r2" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Bucket Item Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "r2" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Bucket Item Write" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Object",
+                  [
+                    [
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "com.cloudflare.edge.r2.bucket." ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "cloudflare_account_id" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "_default_static" ]
+                        ]
+                      ],
+                      [ "String", "*" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

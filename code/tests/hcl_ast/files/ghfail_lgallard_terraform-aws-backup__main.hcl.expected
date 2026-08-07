@@ -1,0 +1,3947 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "vault_name_has_restricted_words",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "vault_name" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "regex",
+                        [
+                          [
+                            "String", "(?i)(test|temp|delete|remove|default)"
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "vault_name" ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Bool", false ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "vault_name_validation_failed",
+          [
+            "Log_and",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "vault_name_has_restricted_words" ]
+                ]
+              ],
+              [
+                "Not",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "vault_name_validation_bypass" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "should_create_vault",
+          [
+            "Log_and",
+            [
+              [
+                "Log_and",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "enabled" ] ] ],
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "vault_name" ] ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Not",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "vault_name_validation_failed" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "should_create_standard_vault",
+          [
+            "Log_and",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "should_create_vault" ] ]
+              ],
+              [
+                "Equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "vault_type" ] ]
+                  ],
+                  [ "String", "standard" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "should_create_airgapped_vault",
+          [
+            "Log_and",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "should_create_vault" ] ]
+              ],
+              [
+                "Equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "vault_type" ] ]
+                  ],
+                  [ "String", "logically_air_gapped" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "should_create_lock",
+          [
+            "Log_and",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "should_create_standard_vault" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "locked" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "should_create_legacy_plan",
+          [
+            "Log_and",
+            [
+              [
+                "Log_and",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "enabled" ] ] ],
+                  [
+                    "Equal",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "plans" ] ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "rules" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vault_lock_requirements_met",
+          [
+            "Log_and",
+            [
+              [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "min_retention_days" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "max_retention_days" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "retention_days_valid",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "vault_lock_requirements_met" ]
+                ]
+              ],
+              "then_": [
+                "Lte",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "min_retention_days" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "max_retention_days" ] ]
+                  ]
+                ]
+              ],
+              "else_": [ "Bool", true ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "check_retention_days",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "locked" ] ]
+              ],
+              "then_": [
+                "Log_and",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "vault_lock_requirements_met" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "retention_days_valid" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Bool", true ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "airgapped_vault_requirements_met",
+          [
+            "Log_or",
+            [
+              [
+                "Not_equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "vault_type" ] ]
+                  ],
+                  [ "String", "logically_air_gapped" ]
+                ]
+              ],
+              [
+                "Log_and",
+                [
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "min_retention_days" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "max_retention_days" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "retention_days_cross_valid",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "min_retention_days" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "max_retention_days" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Lte",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "min_retention_days" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "max_retention_days" ] ]
+                  ]
+                ]
+              ],
+              "else_": [ "Bool", true ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "vault_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "should_create_standard_vault" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_backup_vault" ],
+                                [ "A_string", "ab_vault" ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ],
+                    [ "Null" ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "should_create_airgapped_vault" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Id",
+                                      "aws_backup_logically_air_gapped_vault"
+                                    ],
+                                    [ "A_string", "ab_airgapped_vault" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  "else_": [ "Null" ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "should_create_vault_policy",
+          [
+            "Log_and",
+            [
+              [
+                "Log_and",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "enabled" ] ] ],
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "vault_policy" ] ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "should_create_vault" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "rule",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "rule_name" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Tuple", [] ],
+              "else_": [
+                "Tuple",
+                [
+                  [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "name" ],
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "rule_name" ] ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "target_vault_name" ],
+                        [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Not_equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "vault_name" ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ],
+                            "then_": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "vault_name" ]
+                              ]
+                            ],
+                            "else_": [ "String", "Default" ]
+                          }
+                        ]
+                      ],
+                      [
+                        [ "Bare", "schedule" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "rule_schedule" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "schedule_expression_timezone" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [
+                              "A_string", "rule_schedule_expression_timezone"
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "start_window" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "rule_start_window" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "completion_window" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "rule_completion_window" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "lifecycle" ],
+                        [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "rule_lifecycle_cold_storage_after"
+                                    ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ],
+                            "then_": [ "Object", [] ],
+                            "else_": [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "cold_storage_after" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "rule_lifecycle_cold_storage_after"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "delete_after" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "rule_lifecycle_delete_after"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [
+                                    "Bare",
+                                    "opt_in_to_archive_for_supported_resources"
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "rule_lifecycle_opt_in_to_archive"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          }
+                        ]
+                      ],
+                      [
+                        [ "Bare", "enable_continuous_backup" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "rule_enable_continuous_backup" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "recovery_point_tags" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "rule_recovery_point_tags" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "rules",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "rule" ] ] ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "rules" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "selection_resources",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "selection_resources" ]
+                      ]
+                    ],
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "selection", [] ],
+                        "input": [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "tolist",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "selections" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Tuple", [] ]
+                            ]
+                          ]
+                        ],
+                        "output": [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "selection" ],
+                                  [ "A_string", "resources" ]
+                                ]
+                              ],
+                              [ "Tuple", [] ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "k", [ "selection" ] ],
+                        "input": [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "tomap",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "selections" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Object", [] ]
+                            ]
+                          ]
+                        ],
+                        "output": [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "selection" ],
+                                  [ "A_string", "resources" ]
+                                ]
+                              ],
+                              [ "Tuple", [] ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "selection", [] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "backup_selections" ]
+                          ]
+                        ],
+                        "output": [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "selection" ],
+                                  [ "A_string", "resources" ]
+                                ]
+                              ],
+                              [ "Tuple", [] ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "plan", [] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "plans" ] ]
+                        ],
+                        "output": [
+                          "Fun_call",
+                          [
+                            "flatten",
+                            [
+                              [
+                                "For_tuple",
+                                {
+                                  "identifiers": [ "selection", [] ],
+                                  "input": [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "plan" ],
+                                            [ "A_string", "selections" ]
+                                          ]
+                                        ],
+                                        [ "Tuple", [] ]
+                                      ]
+                                    ]
+                                  ],
+                                  "output": [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "selection" ],
+                                            [ "A_string", "resources" ]
+                                          ]
+                                        ],
+                                        [ "Tuple", [] ]
+                                      ]
+                                    ]
+                                  ],
+                                  "cond": null
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "plans_map",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "plans" ] ] ]
+        ],
+        [
+          "Attribute",
+          "lifecycle_validations",
+          [
+            "Fun_call",
+            [
+              "alltrue",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "rule", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "local" ], [ "A_string", "rules" ] ]
+                    ],
+                    "output": [
+                      "Log_and",
+                      [
+                        [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "length",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "try",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "rule" ],
+                                                [ "A_string", "lifecycle" ]
+                                              ]
+                                            ],
+                                            [ "Object", [] ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            "then_": [ "Bool", true ],
+                            "else_": [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Log_or",
+                                  [
+                                    [
+                                      "Equal",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "try",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [
+                                                        "A_string",
+                                                        "lifecycle"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "cold_storage_after"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Equal",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "try",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [
+                                                        "A_string",
+                                                        "lifecycle"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "delete_after"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "then_": [ "Bool", true ],
+                                "else_": [
+                                  "Lte",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "coalesce",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "rule" ],
+                                                  [ "A_string", "lifecycle" ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "cold_storage_after"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Int", 0 ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "coalesce",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "rule" ],
+                                                  [ "A_string", "lifecycle" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "delete_after" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "default_lifecycle_delete_after_days"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          }
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "alltrue",
+                            [
+                              [
+                                "For_tuple",
+                                {
+                                  "identifiers": [ "copy_action", [] ],
+                                  "input": [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rule" ],
+                                            [ "A_string", "copy_actions" ]
+                                          ]
+                                        ],
+                                        [ "Tuple", [] ]
+                                      ]
+                                    ]
+                                  ],
+                                  "output": [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "length",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "try",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Id",
+                                                            "copy_action"
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "lifecycle"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Object", [] ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Int", 0 ]
+                                        ]
+                                      ],
+                                      "then_": [ "Bool", true ],
+                                      "else_": [
+                                        "Cond",
+                                        {
+                                          "if_": [
+                                            "Log_or",
+                                            [
+                                              [
+                                                "Equal",
+                                                [
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "try",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "copy_action"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "lifecycle"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "cold_storage_after"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Null" ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Equal",
+                                                [
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "try",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "copy_action"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "lifecycle"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "delete_after"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Null" ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          "then_": [ "Bool", true ],
+                                          "else_": [
+                                            "Lte",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "coalesce",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "copy_action"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "lifecycle"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "cold_storage_after"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Int", 0 ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "coalesce",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "copy_action"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "lifecycle"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "delete_after"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "default_lifecycle_delete_after_days"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "cond": null
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "null_resource" ], [ "Lit", "vault_name_validation" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "vault_name_validation_failed" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template_heredoc",
+                  [
+                    "EOF",
+                    [
+                      [
+                        "Literal",
+                        "\necho \"ERROR: Vault name validation failed!\"\necho \"The vault name '"
+                      ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "vault_name" ] ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [
+                        "Literal",
+                        "' contains restricted words (test, temp, delete, remove, default).\"\necho \"These words are not recommended for security reasons.\"\necho \"\"\necho \"Solutions:\"\necho \"1. Change the vault name to avoid these words\"\necho \"2. For existing vaults, set: vault_name_validation_bypass = true\"\necho \"\"\nexit 1\n"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [ "Attribute", "create_before_destroy", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_backup_vault" ], [ "Lit", "ab_vault" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "should_create_standard_vault" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vault_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "kms_key_arn",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "vault_kms_key_arn" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "force_destroy",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "vault_force_destroy" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_backup_logically_air_gapped_vault" ],
+        [ "Lit", "ab_airgapped_vault" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "should_create_airgapped_vault" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vault_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "min_retention_days",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "min_retention_days" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "max_retention_days",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "max_retention_days" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_backup_vault_lock_configuration" ],
+        [ "Lit", "ab_vault_lock_configuration" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "should_create_lock" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "backup_vault_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_backup_vault" ],
+                      [ "A_string", "ab_vault" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "min_retention_days",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "min_retention_days" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "max_retention_days",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "max_retention_days" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "changeable_for_days",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "changeable_for_days" ] ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "check_retention_days" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "String",
+                        "When vault locking is enabled (locked = true), min_retention_days and max_retention_days must be provided and min_retention_days must be less than or equal to max_retention_days."
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_backup_vault_policy" ], [ "Lit", "ab_vault_policy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "should_create_vault_policy" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "backup_vault_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "vault_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vault_policy" ] ] ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_backup_vault" ], [ "A_string", "ab_vault" ] ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_backup_logically_air_gapped_vault" ],
+                  [ "A_string", "ab_airgapped_vault" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_backup_plan" ], [ "Lit", "ab_plan" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "should_create_legacy_plan" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "plan_name" ] ] ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "aws-backup-plan-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Not_equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "vault_name" ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ],
+                            "then_": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "vault_name" ]
+                              ]
+                            ],
+                            "else_": [ "String", "default" ]
+                          }
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "rule" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "rules" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "rule_name",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "target_vault_name",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rule" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "target_vault_name" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "target_vault_name" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "vault_name" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "vault_name" ]
+                                ]
+                              ],
+                              "else_": [ "String", "Default" ]
+                            }
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "schedule",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "schedule" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "schedule_expression_timezone",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [
+                                  "A_string", "schedule_expression_timezone"
+                                ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "start_window",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "start_window" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "completion_window",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "completion_window" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "enable_continuous_backup",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "enable_continuous_backup" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "recovery_point_tags",
+                      [
+                        "Fun_call",
+                        [
+                          "coalesce",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "recovery_point_tags" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "tags" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "lifecycle" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "length",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "rule" ],
+                                                        [
+                                                          "A_string", "value"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string", "lifecycle"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Object", [] ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [] ],
+                                "else_": [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rule" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "lifecycle" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "cold_storage_after",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "lifecycle" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "cold_storage_after"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "default_lifecycle_cold_storage_after_days"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "delete_after",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "lifecycle" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "delete_after" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "default_lifecycle_delete_after_days"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "opt_in_to_archive_for_supported_resources",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "lifecycle" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "opt_in_to_archive_for_supported_resources"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "copy_action" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "copy_actions" ]
+                                    ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "destination_vault_arn",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "copy_action" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "destination_vault_arn"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "dynamic",
+                                    "labels": [ [ "Lit", "lifecycle" ] ],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "for_each",
+                                        [
+                                          "Cond",
+                                          {
+                                            "if_": [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "length",
+                                                    [
+                                                      [
+                                                        "Fun_call",
+                                                        [
+                                                          "try",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Attr",
+                                                                  [
+                                                                    [
+                                                                    "Id",
+                                                                    "copy_action"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "value"
+                                                                    ]
+                                                                  ]
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "lifecycle"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [ "Object", [] ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Int", 0 ]
+                                              ]
+                                            ],
+                                            "then_": [ "Tuple", [] ],
+                                            "else_": [
+                                              "Tuple",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Id", "copy_action"
+                                                        ],
+                                                        [
+                                                          "A_string", "value"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string", "lifecycle"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          }
+                                        ]
+                                      ],
+                                      [
+                                        "Block",
+                                        {
+                                          "type_": "content",
+                                          "labels": [],
+                                          "body": [
+                                            [
+                                              "Attribute",
+                                              "cold_storage_after",
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "try",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "lifecycle"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "cold_storage_after"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "default_lifecycle_cold_storage_after_days"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attribute",
+                                              "delete_after",
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "try",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "lifecycle"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "delete_after"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "default_lifecycle_delete_after_days"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attribute",
+                                              "opt_in_to_archive_for_supported_resources",
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "try",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "lifecycle"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "opt_in_to_archive_for_supported_resources"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        }
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "advanced_backup_setting" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "windows_vss_backup" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "Int", 1 ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "backup_options",
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "WindowsVSS" ], [ "String", "enabled" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Attribute", "resource_type", [ "String", "EC2" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_backup_vault" ], [ "A_string", "ab_vault" ] ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_backup_logically_air_gapped_vault" ],
+                  [ "A_string", "ab_airgapped_vault" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Log_or",
+                        [
+                          [
+                            "Not",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "windows_vss_backup" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Log_and",
+                            [
+                              [
+                                "Gt",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "length",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "selection_resources"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Int", 0 ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [ "String", "(?i).*ec2.*" ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "join",
+                                              [
+                                                [ "String", "," ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "selection_resources"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "String",
+                        "Windows VSS backup is enabled but no EC2 instances are selected for backup. Either disable windows_vss_backup or include EC2 instances in your backup selection."
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "airgapped_vault_requirements_met" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "String",
+                        "When vault_type is 'logically_air_gapped', both min_retention_days and max_retention_days must be specified."
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "retention_days_cross_valid" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "String",
+                        "The min_retention_days must be less than or equal to max_retention_days."
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "lifecycle_validations" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "String",
+                        "In one or more rules, cold_storage_after must be less than or equal to delete_after."
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_backup_global_settings" ],
+        [ "Lit", "ab_global_settings" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "enabled" ] ] ],
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "enable_global_settings" ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "global_settings",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "global_settings" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "enable_global_settings" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Gt",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "global_settings" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          "else_": [ "Bool", true ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "String",
+                        "When enable_global_settings is true, global_settings map cannot be empty. At minimum, specify isCrossAccountBackupEnabled."
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_backup_plan" ], [ "Lit", "ab_plans" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "enabled" ] ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "plans_map" ] ]
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "name" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "rule" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "rules" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "rule_name",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "target_vault_name",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rule" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "target_vault_name" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "target_vault_name" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "vault_name" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "vault_name" ]
+                                ]
+                              ],
+                              "else_": [ "String", "Default" ]
+                            }
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "schedule",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "schedule" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "schedule_expression_timezone",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [
+                                  "A_string", "schedule_expression_timezone"
+                                ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "start_window",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "start_window" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "completion_window",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "completion_window" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "enable_continuous_backup",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "enable_continuous_backup" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "recovery_point_tags",
+                      [
+                        "Fun_call",
+                        [
+                          "coalesce",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "recovery_point_tags" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "tags" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "lifecycle" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "length",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "rule" ],
+                                                        [
+                                                          "A_string", "value"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string", "lifecycle"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Object", [] ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [] ],
+                                "else_": [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rule" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "lifecycle" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "cold_storage_after",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "lifecycle" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "cold_storage_after"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "default_lifecycle_cold_storage_after_days"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "delete_after",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "lifecycle" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "delete_after" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "default_lifecycle_delete_after_days"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "opt_in_to_archive_for_supported_resources",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "lifecycle" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "opt_in_to_archive_for_supported_resources"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "copy_action" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "copy_actions" ]
+                                    ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "destination_vault_arn",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "copy_action" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "destination_vault_arn"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "dynamic",
+                                    "labels": [ [ "Lit", "lifecycle" ] ],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "for_each",
+                                        [
+                                          "Cond",
+                                          {
+                                            "if_": [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "length",
+                                                    [
+                                                      [
+                                                        "Fun_call",
+                                                        [
+                                                          "try",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Attr",
+                                                                  [
+                                                                    [
+                                                                    "Id",
+                                                                    "copy_action"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "value"
+                                                                    ]
+                                                                  ]
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "lifecycle"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [ "Object", [] ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Int", 0 ]
+                                              ]
+                                            ],
+                                            "then_": [ "Tuple", [] ],
+                                            "else_": [
+                                              "Tuple",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Id", "copy_action"
+                                                        ],
+                                                        [
+                                                          "A_string", "value"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string", "lifecycle"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          }
+                                        ]
+                                      ],
+                                      [
+                                        "Block",
+                                        {
+                                          "type_": "content",
+                                          "labels": [],
+                                          "body": [
+                                            [
+                                              "Attribute",
+                                              "cold_storage_after",
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "try",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "lifecycle"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "cold_storage_after"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "default_lifecycle_cold_storage_after_days"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attribute",
+                                              "delete_after",
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "try",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "lifecycle"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "delete_after"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "default_lifecycle_delete_after_days"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attribute",
+                                              "opt_in_to_archive_for_supported_resources",
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "try",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "lifecycle"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "opt_in_to_archive_for_supported_resources"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        }
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "advanced_backup_setting" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "windows_vss_backup" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "Int", 1 ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "backup_options",
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "WindowsVSS" ], [ "String", "enabled" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Attribute", "resource_type", [ "String", "EC2" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_backup_vault" ], [ "A_string", "ab_vault" ] ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_backup_logically_air_gapped_vault" ],
+                  [ "A_string", "ab_airgapped_vault" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Log_or",
+                        [
+                          [
+                            "Not",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "windows_vss_backup" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Log_and",
+                            [
+                              [
+                                "Gt",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "length",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "selection_resources"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Int", 0 ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [ "String", "(?i).*ec2.*" ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "join",
+                                              [
+                                                [ "String", "," ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "selection_resources"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "String",
+                        "Windows VSS backup is enabled but no EC2 instances are selected for backup. Either disable windows_vss_backup or include EC2 instances in your backup selection."
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -12,7 +12,7 @@
   ],
   [
     "Attribute",
-    "foo",
+    "foo2",
     [
       "Idx",
       [
@@ -41,7 +41,7 @@
   ],
   [
     "Attribute",
-    "foo",
+    "foo3",
     [
       "Attr",
       [ [ "Attr", [ [ "Id", "a" ], [ "A_int", 0 ] ] ], [ "A_string", "b" ] ]

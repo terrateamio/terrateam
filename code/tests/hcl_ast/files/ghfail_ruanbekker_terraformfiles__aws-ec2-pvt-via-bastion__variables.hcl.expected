@@ -1,0 +1,88 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "region" ] ],
+      "body": [ [ "Attribute", "default", [ "String", "eu-west-1" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ssh_user" ] ],
+      "body": [ [ "Attribute", "default", [ "String", "ubuntu" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ssh_private_key" ] ],
+      "body": [
+        [ "Attribute", "default", [ "String", "~/.ssh/my_key.pem" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "instance_name" ] ],
+      "body": [ [ "Attribute", "default", [ "String", "my-instance" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [ [ "Bare", "name" ], [ "String", "my-instance" ] ],
+              [ [ "Bare", "true" ], [ "String", "Enabled" ] ],
+              [ [ "Bare", "false" ], [ "String", "Disabled" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "bastion" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [ [ "Bare", "host" ], [ "String", "my-jumphost.domain.com" ] ],
+              [ [ "Bare", "user" ], [ "String", "ubuntu" ] ],
+              [ [ "Bare", "private_key" ], [ "String", "~/.ssh/id_rsa" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

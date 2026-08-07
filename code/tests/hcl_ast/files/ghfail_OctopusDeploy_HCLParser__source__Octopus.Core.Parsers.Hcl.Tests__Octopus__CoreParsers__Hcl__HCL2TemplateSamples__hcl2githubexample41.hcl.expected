@@ -1,0 +1,455 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [
+        [ "Attribute", "alias", [ "String", "egress" ] ],
+        [
+          "Attribute",
+          "region",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "egress_region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "egress-vpc" ] ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.egress" ] ],
+        [
+          "Attribute",
+          "id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "egress_vpc_id" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_subnet_ids" ], [ "Lit", "egress-admin" ] ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.egress" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ]
+                          ],
+                          [ "A_string", "egress-vpc" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "tag:Name" ] ],
+              [
+                "Attribute",
+                "values",
+                [ "Tuple", [ [ "String", "*admin subnet*" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "egress-admin" ] ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.egress" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "aws_subnet_ids" ]
+                                  ]
+                                ],
+                                [ "A_string", "egress-admin" ]
+                              ]
+                            ],
+                            [ "A_string", "ids" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "element",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "flatten",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "data" ],
+                                          [ "A_string", "aws_subnet_ids" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "egress-admin" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "ids" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_route_tables" ], [ "Lit", "egress-admin" ] ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.egress" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ]
+                          ],
+                          [ "A_string", "egress-vpc" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "tag:Name" ] ],
+              [
+                "Attribute",
+                "values",
+                [ "Tuple", [ [ "String", "*admin route table*" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_network_interface" ], [ "Lit", "egress-bastion-nic" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.egress" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "aws_subnet_ids" ]
+                                  ]
+                                ],
+                                [ "A_string", "egress-admin" ]
+                              ]
+                            ],
+                            [ "A_string", "ids" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "attachment.instance-id" ] ],
+              [
+                "Attribute",
+                "values",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "egress_bastion_id" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "subnet-id" ] ],
+              [
+                "Attribute",
+                "values",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Fun_call",
+                              [
+                                "element",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "flatten",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "data" ],
+                                                    [
+                                                      "A_string",
+                                                      "aws_subnet_ids"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string", "egress-admin"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "ids" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

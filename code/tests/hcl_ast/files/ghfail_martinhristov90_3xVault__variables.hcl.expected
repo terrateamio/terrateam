@@ -1,0 +1,390 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "clusters" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "region" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "vpc_cidr" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "vault_version" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "vault_ec2_type" ], [ "Id", "string" ]
+                          ],
+                          [
+                            [ "Bare", "use_private_image" ], [ "Id", "bool" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Defines all Vault clusters, map of custom objects" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "version", [] ],
+                          "input": [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "cluster", [] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ], [ "A_string", "clusters" ]
+                                ]
+                              ],
+                              "output": [
+                                "Attr",
+                                [
+                                  [ "Id", "cluster" ],
+                                  [ "A_string", "vault_version" ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [
+                                        "String",
+                                        "^([0-9]\\.[0-9]{1,2}?\\.[0-9]{1,2}?\\+ent\\-[0-9])$"
+                                      ],
+                                      [ "Id", "version" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "Please, enter correct version of Vault" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "vault_ec2_type", [] ],
+                          "input": [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "cluster", [] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ], [ "A_string", "clusters" ]
+                                ]
+                              ],
+                              "output": [
+                                "Attr",
+                                [
+                                  [ "Id", "cluster" ],
+                                  [ "A_string", "vault_ec2_type" ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "contains",
+                                    [
+                                      [
+                                        "Tuple",
+                                        [
+                                          [ "String", "small" ],
+                                          [ "String", "large" ]
+                                        ]
+                                      ],
+                                      [ "Id", "vault_ec2_type" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Please, pick either small or large for vault_ec2_type"
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "cidr", [] ],
+                          "input": [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "cluster", [] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ], [ "A_string", "clusters" ]
+                                ]
+                              ],
+                              "output": [
+                                "Attr",
+                                [
+                                  [ "Id", "cluster" ],
+                                  [ "A_string", "vpc_cidr" ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "cidrhost",
+                                        [ [ "Id", "cidr" ], [ "Int", 0 ] ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "cidrhost",
+                                            [
+                                              [ "Id", "cidr" ], [ "Int", 0 ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "split",
+                                          [
+                                            [ "String", "/" ],
+                                            [ "Id", "cidr" ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "Please, enter a correct CIDR" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "region", [] ],
+                          "input": [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "cluster", [] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ], [ "A_string", "clusters" ]
+                                ]
+                              ],
+                              "output": [
+                                "Attr",
+                                [
+                                  [ "Id", "cluster" ],
+                                  [ "A_string", "region" ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [
+                                        "String",
+                                        "^((af|ap|ca|eu|me|sa|us)-(central|north|(north(?:east|west))|south|south(?:east|west)|east|west)\\-\\d)$"
+                                      ],
+                                      [ "Id", "region" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "Please, enter correct AWS region" ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

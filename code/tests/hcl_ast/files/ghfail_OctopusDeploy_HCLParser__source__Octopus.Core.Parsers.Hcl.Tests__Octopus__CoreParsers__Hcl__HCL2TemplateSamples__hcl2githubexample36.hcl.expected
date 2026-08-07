@@ -1,0 +1,385 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route53_record" ], [ "Lit", "apiserver" ] ],
+      "body": [
+        [
+          "Attribute",
+          "zone_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "dns_zone_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [ "String", "%s.%s." ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "dns_zone" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "A" ] ],
+        [
+          "Block",
+          {
+            "type_": "alias",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "nlb" ] ] ],
+                    [ "A_string", "dns_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "zone_id",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "nlb" ] ] ],
+                    [ "A_string", "zone_id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "evaluate_target_health", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_lb" ], [ "Lit", "nlb" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-nlb" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "load_balancer_type", [ "String", "network" ] ],
+        [ "Attribute", "internal", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "subnets",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_subnet" ], [ "A_string", "public" ] ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "enable_cross_zone_load_balancing", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_listener" ], [ "Lit", "apiserver-https" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "load_balancer_arn",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "nlb" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "protocol", [ "String", "TCP" ] ],
+        [ "Attribute", "port", [ "String", "6443" ] ],
+        [
+          "Block",
+          {
+            "type_": "default_action",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "forward" ] ],
+              [
+                "Attribute",
+                "target_group_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_lb_target_group" ],
+                        [ "A_string", "controllers" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_lb_listener" ], [ "Lit", "ingress-http" ] ],
+      "body": [
+        [
+          "Attribute",
+          "load_balancer_arn",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "nlb" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "protocol", [ "String", "TCP" ] ],
+        [ "Attribute", "port", [ "Int", 80 ] ],
+        [
+          "Block",
+          {
+            "type_": "default_action",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "forward" ] ],
+              [
+                "Attribute",
+                "target_group_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "module" ], [ "A_string", "workers" ] ]
+                    ],
+                    [ "A_string", "target_group_http" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_lb_listener" ], [ "Lit", "ingress-https" ] ],
+      "body": [
+        [
+          "Attribute",
+          "load_balancer_arn",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "nlb" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "protocol", [ "String", "TCP" ] ],
+        [ "Attribute", "port", [ "Int", 443 ] ],
+        [
+          "Block",
+          {
+            "type_": "default_action",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "forward" ] ],
+              [
+                "Attribute",
+                "target_group_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "module" ], [ "A_string", "workers" ] ]
+                    ],
+                    [ "A_string", "target_group_https" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_target_group" ], [ "Lit", "controllers" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-controllers" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "network" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "target_type", [ "String", "instance" ] ],
+        [ "Attribute", "protocol", [ "String", "TCP" ] ],
+        [ "Attribute", "port", [ "Int", 6443 ] ],
+        [
+          "Block",
+          {
+            "type_": "health_check",
+            "labels": [],
+            "body": [
+              [ "Attribute", "protocol", [ "String", "TCP" ] ],
+              [ "Attribute", "port", [ "Int", 6443 ] ],
+              [ "Attribute", "healthy_threshold", [ "Int", 3 ] ],
+              [ "Attribute", "unhealthy_threshold", [ "Int", 3 ] ],
+              [ "Attribute", "interval", [ "Int", 10 ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_target_group_attachment" ], [ "Lit", "controllers" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "controller_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "target_group_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_lb_target_group" ],
+                  [ "A_string", "controllers" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "target_id",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_instance" ],
+                          [ "A_string", "controllers" ]
+                        ]
+                      ],
+                      [ "A_splat" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [ "Attribute", "port", [ "Int", 6443 ] ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,1244 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "container",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "container" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": [
+                "Not",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "image" ],
+                          [ "String", "container_name" ],
+                          [ "String", "command" ]
+                        ]
+                      ],
+                      [ "Id", "k" ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "environment",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "DOMAIN" ],
+                      [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "domain" ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "LETSENCRYPT_EMAIL" ],
+                      [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "email" ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "LETSENCRYPT_SERVER" ],
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "letsencrypt_staging" ]
+                            ]
+                          ],
+                          "then_": [
+                            "String",
+                            "https://acme-staging-v02.api.letsencrypt.org/directory"
+                          ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ],
+                    [
+                      [ "Bare", "IMAGE_NAME" ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "split",
+                                    [
+                                      [ "String", ":" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [ "A_string", "container" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "image" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "IMAGE_TAG" ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "split",
+                                    [
+                                      [ "String", ":" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [ "A_string", "container" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "image" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 1 ]
+                              ]
+                            ],
+                            [ "String", "latest" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "CONTAINER_NAME" ],
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "container" ]
+                              ]
+                            ],
+                            [ "String", "container_name" ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "CONTAINER_COMMAND" ],
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "container" ]
+                              ]
+                            ],
+                            [ "String", "command" ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "CONTAINER_PORT" ],
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "container" ]
+                              ]
+                            ],
+                            [ "String", "port" ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ [ "Bare", "DOCKER_NETWORK" ], [ "String", "web" ] ],
+                    [ [ "Bare", "DOCKER_LOG_DRIVER" ], [ "Null" ] ],
+                    [
+                      [ "Bare", "COMPOSE_DOCKER_IMAGE" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "docker_compose_image" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "COMPOSE_DOCKER_TAG" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "docker_compose_tag" ]
+                        ]
+                      ]
+                    ],
+                    [ [ "Bare", "TRAEFIK_ENABLED" ], [ "Null" ] ],
+                    [ [ "Bare", "TRAEFIK_IMAGE_TAG" ], [ "Null" ] ],
+                    [ [ "Bare", "TRAEFIK_LOG_LEVEL" ], [ "Null" ] ],
+                    [ [ "Bare", "TRAEFIK_API_DASHBOARD" ], [ "Null" ] ],
+                    [ [ "Bare", "TRAEFIK_PASSWD_FILE" ], [ "Null" ] ],
+                    [ [ "Bare", "TRAEFIK_EXPOSED_BY_DEFAULT" ], [ "Null" ] ],
+                    [ [ "Bare", "TRAEFIK_OPS_PORT" ], [ "Null" ] ],
+                    [
+                      [ "Bare", "WEBHOOK_URL_PREFIX" ],
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "enable_webhook" ]
+                            ]
+                          ],
+                          "then_": [ "String", "hooks" ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ],
+                    [
+                      [ "Bare", "WEBHOOK_HTTP_METHOD" ],
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "enable_webhook" ]
+                            ]
+                          ],
+                          "then_": [ "String", "PATCH" ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "env" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "template_dir",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/templates" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "file_regex",
+          [
+            "String",
+            "(?P<filename>docker-compose(?:\\.(?P<name>.*?))?\\.ya?ml)"
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_compose_template_yaml",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "template_dir" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/docker-compose.default.yaml" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_compose_template",
+          [
+            "Fun_call",
+            [
+              "yamldecode",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "docker_compose_template_yaml" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_compose",
+          [
+            "Object",
+            [
+              [ [ "Bare", "version" ], [ "String", "3.3" ] ],
+              [
+                [ "Bare", "services" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "app" ],
+                      [
+                        "Fun_call",
+                        [
+                          "merge",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string",
+                                          "docker_compose_template"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "services" ]
+                                  ]
+                                ],
+                                [ "A_string", "app" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "container" ]
+                              ]
+                            ],
+                            [
+                              "For_object",
+                              {
+                                "identifiers": [ "key", [ "val" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "docker_compose_template"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "services" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "app" ]
+                                  ]
+                                ],
+                                "key_output": [ "Id", "key" ],
+                                "value_output": [
+                                  "Cond",
+                                  {
+                                    "if_": [
+                                      "Log_and",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "can",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "tolist",
+                                                  [ [ "Id", "val" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "contains",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "keys",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "local" ],
+                                                        [
+                                                          "A_string",
+                                                          "container"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "key" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "then_": [
+                                      "Fun_call",
+                                      [
+                                        "try",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "setunion",
+                                              [
+                                                [ "Id", "val" ],
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "lookup",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "container"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Id", "key" ],
+                                                      [ "Tuple", [] ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Id", "val" ]
+                                        ]
+                                      ]
+                                    ],
+                                    "else_": [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [ "A_string", "container" ]
+                                            ]
+                                          ],
+                                          [ "Id", "key" ],
+                                          [ "Id", "val" ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "networks" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "default" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "external" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "name" ],
+                                  [ "String", "${DOCKER_NETWORK}" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_compose_yaml",
+          [
+            "Fun_call",
+            [
+              "yamlencode",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "docker_compose" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "files",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Object",
+                      [
+                        [ [ "Bare", "filename" ], [ "String", ".env" ] ],
+                        [
+                          [ "Bare", "content" ],
+                          [
+                            "Fun_call",
+                            [
+                              "base64encode",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "join",
+                                    [
+                                      [ "String", "\n" ],
+                                      [
+                                        "For_tuple",
+                                        {
+                                          "identifiers": [ "k", [ "v" ] ],
+                                          "input": [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [ "A_string", "environment" ]
+                                            ]
+                                          ],
+                                          "output": [
+                                            "Template",
+                                            [
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [ "Id", "k" ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ],
+                                              [ "Literal", "=" ],
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [ "Id", "v" ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ]
+                                            ]
+                                          ],
+                                          "cond": [
+                                            "Not_equal",
+                                            [ [ "Id", "v" ], [ "Null" ] ]
+                                          ]
+                                        }
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "filename" ],
+                          [ "String", "docker-compose.traefik.yaml" ]
+                        ],
+                        [
+                          [ "Bare", "content" ],
+                          [
+                            "Fun_call",
+                            [
+                              "filebase64",
+                              [
+                                [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "template_dir" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [
+                                      "Literal",
+                                      "/docker-compose.traefik.yaml"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "enable_webhook" ] ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "filename" ],
+                              [ "String", "docker-compose.webhook.yaml" ]
+                            ],
+                            [
+                              [ "Bare", "content" ],
+                              [
+                                "Fun_call",
+                                [
+                                  "filebase64",
+                                  [
+                                    [
+                                      "Template",
+                                      [
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "template_dir"
+                                                ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [
+                                          "Literal",
+                                          "/docker-compose.webhook.yaml"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "filename" ],
+                              [ "String", ".webhook/hooks.json" ]
+                            ],
+                            [
+                              [ "Bare", "content" ],
+                              [
+                                "Fun_call",
+                                [
+                                  "filebase64",
+                                  [
+                                    [
+                                      "Template",
+                                      [
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "template_dir"
+                                                ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [ "Literal", "/webook/hooks.json" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "filename" ],
+                              [ "String", ".webhook/update-env.sh" ]
+                            ],
+                            [
+                              [ "Bare", "content" ],
+                              [
+                                "Fun_call",
+                                [
+                                  "filebase64",
+                                  [
+                                    [
+                                      "Template",
+                                      [
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "template_dir"
+                                                ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [
+                                          "Literal", "/webook/update-env.sh"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "coalescelist",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "f", [] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "files" ] ]
+                          ],
+                          "output": [ "Id", "f" ],
+                          "cond": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "file_regex" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "f" ],
+                                          [ "A_string", "filename" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "filename" ],
+                                [ "String", "docker-compose.yaml" ]
+                              ],
+                              [
+                                [ "Bare", "content" ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "base64encode",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [
+                                            "A_string", "docker_compose_yaml"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "f", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "files" ] ]
+                    ],
+                    "output": [ "Id", "f" ],
+                    "cond": [
+                      "Not",
+                      [
+                        "Fun_call",
+                        [
+                          "can",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regex",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "file_regex" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "f" ],
+                                      [ "A_string", "filename" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_compose_files",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "f", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "files" ] ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "regex",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ], [ "A_string", "file_regex" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "f" ], [ "A_string", "filename" ] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Id", "f" ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "regex",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ], [ "A_string", "file_regex" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "f" ], [ "A_string", "filename" ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "cloudinit_config" ], [ "Lit", "config" ] ],
+      "body": [
+        [ "Attribute", "gzip", [ "Bool", false ] ],
+        [ "Attribute", "base64_encode", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "part",
+            "labels": [],
+            "body": [
+              [ "Attribute", "filename", [ "String", "cloud-init.yaml" ] ],
+              [
+                "Attribute",
+                "merge_type",
+                [
+                  "String",
+                  "list(append)+dict(no_replace,recurse_list)+str()"
+                ]
+              ],
+              [
+                "Attribute",
+                "content_type",
+                [ "String", "text/cloud-config" ]
+              ],
+              [
+                "Attribute",
+                "content",
+                [
+                  "Fun_call",
+                  [
+                    "templatefile",
+                    [
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "template_dir" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/cloud-config.yaml" ]
+                        ]
+                      ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "files" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "local" ], [ "A_string", "files" ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "docker_compose_files" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "docker_compose_files" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "part" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "cloudinit_part" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "merge_type",
+                      [
+                        "String",
+                        "list(append)+dict(no_replace,recurse_list)+str()"
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "content_type",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "part" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "content_type" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "content",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "part" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "content" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

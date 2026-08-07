@@ -1,0 +1,2446 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "key_vault_private_endpoints",
+          [
+            "For_object",
+            {
+              "identifiers": [ "pe_name", [ "pe" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "private_endpoints" ]
+                          ]
+                        ],
+                        [ "A_string", "key_vaults" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "pe_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "pe" ], [ "A_string", "name" ] ]
+                          ],
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "deployment_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "-" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "pe" ],
+                                      [ "A_string", "key_vault_name" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "-kv-pe" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "resource_group_name" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "pe" ], [ "A_string", "resource_group_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "location" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "locations" ] ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "key_vaults" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "pe" ],
+                                    [ "A_string", "key_vault_name" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "location_name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnet_resource_id" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "network_resource_ids"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "network_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "subnets" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "pe" ], [ "A_string", "subnet_name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "resource_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_connection_resource_id" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "module" ],
+                                [ "A_string", "key_vaults" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "pe" ],
+                                [ "A_string", "key_vault_name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "resource_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_service_connection_name" ],
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "key_vault_private_endpoint_names"
+                                    ]
+                                  ]
+                                ],
+                                [ "Id", "pe_name" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "-psc" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subresource_names" ],
+                    [ "Tuple", [ [ "String", "vault" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "network_interface_name" ],
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "deployment_prefix" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "-" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "pe" ],
+                                [ "A_string", "key_vault_name" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "-kv-nic" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "lock" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "private_endpoint_locks" ]
+                          ]
+                        ],
+                        [ "Id", "pe_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "lock" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Gt",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "For_tuple",
+                                    {
+                                      "identifiers": [ "group", [] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "pe" ],
+                                          [ "A_string", "lock_groups" ]
+                                        ]
+                                      ],
+                                      "output": [ "Id", "group" ],
+                                      "cond": [
+                                        "Fun_call",
+                                        [
+                                          "contains",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "keys",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "locked_groups"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "group" ]
+                                          ]
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "then_": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Fun_call",
+                              [
+                                "anytrue",
+                                [
+                                  [
+                                    "For_tuple",
+                                    {
+                                      "identifiers": [ "group", [] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "pe" ],
+                                          [ "A_string", "lock_groups" ]
+                                        ]
+                                      ],
+                                      "output": [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "contains",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "keys",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "locked_groups"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Id", "group" ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "locked_groups"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Id", "group" ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string", "read_only"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Bool", false ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "cond": null
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "then_": [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "kind" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "lock_modes" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "read_only" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "else_": [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "kind" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "lock_modes" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "no_delete" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          }
+                        ],
+                        "else_": [ "Null" ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "ip_configurations" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Not_equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "pe" ], [ "A_string", "private_ip" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "primary" ],
+                              [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "name" ],
+                                    [ "String", "primary" ]
+                                  ],
+                                  [
+                                    [ "Bare", "private_ip_address" ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "private_ip" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    [ "Bare", "subresource_name" ],
+                                    [ "String", "vault" ]
+                                  ],
+                                  [
+                                    [ "Bare", "member_name" ],
+                                    [ "String", "default" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "else_": [ "Object", [] ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_dns_zone_group_name" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "pe" ],
+                                  [ "A_string", "dns_zone_group" ]
+                                ]
+                              ],
+                              [ "A_string", "name" ]
+                            ]
+                          ],
+                          [ "String", "default" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_dns_zone_names" ],
+                    [
+                      "Fun_call",
+                      [
+                        "concat",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "compact",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "pe" ],
+                                            [ "A_string", "dns_zone_group" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string", "private_dns_zone_name"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "dns_zone_group" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "private_dns_zone_names" ]
+                                  ]
+                                ],
+                                [ "Tuple", [] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "tags" ],
+                    [
+                      "Fun_call",
+                      [
+                        "merge",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "tags" ] ]
+                          ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "include_label_tags" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "keyvault_label" ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "key_vault_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "else_": [ "Object", [] ]
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "key_vault_private_endpoints_with_dns",
+          [
+            "For_object",
+            {
+              "identifiers": [ "pe_name", [ "pe" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "private_endpoints" ]
+                          ]
+                        ],
+                        [ "A_string", "key_vaults" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "pe_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "key_vault_private_endpoints" ]
+                          ]
+                        ],
+                        [ "Id", "pe_name" ]
+                      ]
+                    ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "private_dns_zone_resource_ids" ],
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "compact",
+                                    [
+                                      [
+                                        "Tuple",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "pe" ],
+                                                  [
+                                                    "A_string",
+                                                    "dns_zone_group"
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "private_dns_zone_id"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "tolist",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "try",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "pe" ],
+                                                    [
+                                                      "A_string",
+                                                      "dns_zone_group"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string",
+                                                  "private_dns_zone_ids"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Tuple", [] ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "tolist",
+                                    [
+                                      [
+                                        "For_tuple",
+                                        {
+                                          "identifiers": [ "zone_name", [] ],
+                                          "input": [
+                                            "Fun_call",
+                                            [
+                                              "concat",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "compact",
+                                                    [
+                                                      [
+                                                        "Tuple",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Id",
+                                                                    "pe"
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "dns_zone_group"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "private_dns_zone_name"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "try",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "pe" ],
+                                                              [
+                                                                "A_string",
+                                                                "dns_zone_group"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "private_dns_zone_names"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Tuple", [] ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          "output": [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Idx",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Id",
+                                                        "azurerm_private_dns_zone"
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "private_dns_zones"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Id", "zone_name" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "id" ]
+                                            ]
+                                          ],
+                                          "cond": null
+                                        }
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "pe" ], [ "A_string", "dns_zone_group" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "blob_container_private_endpoints",
+          [
+            "For_object",
+            {
+              "identifiers": [ "pe_name", [ "pe" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "private_endpoints" ]
+                          ]
+                        ],
+                        [ "A_string", "blob_containers" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "pe_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [
+                              "A_string",
+                              "blob_container_private_endpoint_names"
+                            ]
+                          ]
+                        ],
+                        [ "Id", "pe_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "resource_group_name" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "pe" ], [ "A_string", "resource_group_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "location" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "locations" ] ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "storage_accounts" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [ "A_string", "blob_containers" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "pe" ],
+                                            [ "A_string", "container_name" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "storage_account_name" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "location_name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnet_resource_id" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "network_resource_ids"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "network_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "subnets" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "pe" ], [ "A_string", "subnet_name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "resource_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_connection_resource_id" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "module" ],
+                                [ "A_string", "storage_accounts" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "blob_containers" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "container_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "storage_account_name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "resource_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_service_connection_name" ],
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "blob_container_private_endpoint_names"
+                                    ]
+                                  ]
+                                ],
+                                [ "Id", "pe_name" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "-psc" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "network_interface_name" ],
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "blob_container_private_endpoint_names"
+                                    ]
+                                  ]
+                                ],
+                                [ "Id", "pe_name" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "-nic" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subresource_names" ],
+                    [ "Tuple", [ [ "String", "blob" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "lock" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "private_endpoint_locks" ]
+                          ]
+                        ],
+                        [ "Id", "pe_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "ip_configurations" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Not_equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "pe" ],
+                                      [ "A_string", "private_ip" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "primary" ],
+                              [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "name" ],
+                                    [ "String", "primary" ]
+                                  ],
+                                  [
+                                    [ "Bare", "private_ip_address" ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "private_ip" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    [ "Bare", "subresource_name" ],
+                                    [ "String", "blob" ]
+                                  ],
+                                  [
+                                    [ "Bare", "member_name" ],
+                                    [ "String", "default" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "else_": [ "Object", [] ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_dns_zone_group_name" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "pe" ],
+                                  [ "A_string", "dns_zone_group" ]
+                                ]
+                              ],
+                              [ "A_string", "name" ]
+                            ]
+                          ],
+                          [ "String", "default" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_dns_zone_names" ],
+                    [
+                      "Fun_call",
+                      [
+                        "concat",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "compact",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "pe" ],
+                                            [ "A_string", "dns_zone_group" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string", "private_dns_zone_name"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "dns_zone_group" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "private_dns_zone_names" ]
+                                  ]
+                                ],
+                                [ "Tuple", [] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "tags" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [
+                              "A_string",
+                              "blob_container_private_endpoint_tags"
+                            ]
+                          ]
+                        ],
+                        [ "Id", "pe_name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "blob_container_private_endpoints_with_dns",
+          [
+            "For_object",
+            {
+              "identifiers": [ "pe_name", [ "pe" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "private_endpoints" ]
+                          ]
+                        ],
+                        [ "A_string", "blob_containers" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "pe_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [
+                              "A_string", "blob_container_private_endpoints"
+                            ]
+                          ]
+                        ],
+                        [ "Id", "pe_name" ]
+                      ]
+                    ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "private_dns_zone_resource_ids" ],
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "compact",
+                                    [
+                                      [
+                                        "Tuple",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "pe" ],
+                                                  [
+                                                    "A_string",
+                                                    "dns_zone_group"
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "private_dns_zone_id"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "tolist",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "try",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "pe" ],
+                                                    [
+                                                      "A_string",
+                                                      "dns_zone_group"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string",
+                                                  "private_dns_zone_ids"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Tuple", [] ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "tolist",
+                                    [
+                                      [
+                                        "For_tuple",
+                                        {
+                                          "identifiers": [ "zone_name", [] ],
+                                          "input": [
+                                            "Fun_call",
+                                            [
+                                              "concat",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "compact",
+                                                    [
+                                                      [
+                                                        "Tuple",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Id",
+                                                                    "pe"
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "dns_zone_group"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "private_dns_zone_name"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "try",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "pe" ],
+                                                              [
+                                                                "A_string",
+                                                                "dns_zone_group"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "private_dns_zone_names"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Tuple", [] ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          "output": [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Idx",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Id",
+                                                        "azurerm_private_dns_zone"
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "private_dns_zones"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Id", "zone_name" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "id" ]
+                                            ]
+                                          ],
+                                          "cond": null
+                                        }
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "pe" ], [ "A_string", "dns_zone_group" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "file_share_private_endpoints",
+          [
+            "For_object",
+            {
+              "identifiers": [ "pe_name", [ "pe" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "private_endpoints" ]
+                          ]
+                        ],
+                        [ "A_string", "file_shares" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "pe_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [
+                              "A_string", "file_share_private_endpoint_names"
+                            ]
+                          ]
+                        ],
+                        [ "Id", "pe_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "resource_group_name" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "pe" ], [ "A_string", "resource_group_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "location" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "locations" ] ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "storage_accounts" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [ "A_string", "file_shares" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "pe" ],
+                                            [ "A_string", "share_name" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "storage_account_name" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "location_name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnet_resource_id" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "network_resource_ids"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "network_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "subnets" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "pe" ], [ "A_string", "subnet_name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "resource_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_connection_resource_id" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "module" ],
+                                [ "A_string", "storage_accounts" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "file_shares" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "share_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "storage_account_name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "resource_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_service_connection_name" ],
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "file_share_private_endpoint_names"
+                                    ]
+                                  ]
+                                ],
+                                [ "Id", "pe_name" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "-psc" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "network_interface_name" ],
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "file_share_private_endpoint_names"
+                                    ]
+                                  ]
+                                ],
+                                [ "Id", "pe_name" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "-nic" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subresource_names" ],
+                    [ "Tuple", [ [ "String", "file" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "lock" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "private_endpoint_locks" ]
+                          ]
+                        ],
+                        [ "Id", "pe_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "ip_configurations" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Not_equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "pe" ],
+                                      [ "A_string", "private_ip" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "primary" ],
+                              [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "name" ],
+                                    [ "String", "primary" ]
+                                  ],
+                                  [
+                                    [ "Bare", "private_ip_address" ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "private_ip" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    [ "Bare", "subresource_name" ],
+                                    [ "String", "file" ]
+                                  ],
+                                  [
+                                    [ "Bare", "member_name" ],
+                                    [ "String", "default" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "else_": [ "Object", [] ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_dns_zone_group_name" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "pe" ],
+                                  [ "A_string", "dns_zone_group" ]
+                                ]
+                              ],
+                              [ "A_string", "name" ]
+                            ]
+                          ],
+                          [ "String", "default" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_dns_zone_names" ],
+                    [
+                      "Fun_call",
+                      [
+                        "concat",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "compact",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "pe" ],
+                                            [ "A_string", "dns_zone_group" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string", "private_dns_zone_name"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pe" ],
+                                        [ "A_string", "dns_zone_group" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "private_dns_zone_names" ]
+                                  ]
+                                ],
+                                [ "Tuple", [] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "tags" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [
+                              "A_string", "file_share_private_endpoint_tags"
+                            ]
+                          ]
+                        ],
+                        [ "Id", "pe_name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "file_share_private_endpoints_with_dns",
+          [
+            "For_object",
+            {
+              "identifiers": [ "pe_name", [ "pe" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "private_endpoints" ]
+                          ]
+                        ],
+                        [ "A_string", "file_shares" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "pe_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "file_share_private_endpoints" ]
+                          ]
+                        ],
+                        [ "Id", "pe_name" ]
+                      ]
+                    ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "private_dns_zone_resource_ids" ],
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "compact",
+                                    [
+                                      [
+                                        "Tuple",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "pe" ],
+                                                  [
+                                                    "A_string",
+                                                    "dns_zone_group"
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "private_dns_zone_id"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "tolist",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "try",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "pe" ],
+                                                    [
+                                                      "A_string",
+                                                      "dns_zone_group"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string",
+                                                  "private_dns_zone_ids"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Tuple", [] ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "tolist",
+                                    [
+                                      [
+                                        "For_tuple",
+                                        {
+                                          "identifiers": [ "zone_name", [] ],
+                                          "input": [
+                                            "Fun_call",
+                                            [
+                                              "concat",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "compact",
+                                                    [
+                                                      [
+                                                        "Tuple",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Id",
+                                                                    "pe"
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "dns_zone_group"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "private_dns_zone_name"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "try",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "pe" ],
+                                                              [
+                                                                "A_string",
+                                                                "dns_zone_group"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "private_dns_zone_names"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Tuple", [] ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          "output": [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Idx",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Id",
+                                                        "azurerm_private_dns_zone"
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "private_dns_zones"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Id", "zone_name" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "id" ]
+                                            ]
+                                          ],
+                                          "cond": null
+                                        }
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "pe" ], [ "A_string", "dns_zone_group" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "all_private_endpoints",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "key_vault_private_endpoints_with_dns" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string", "blob_container_private_endpoints_with_dns"
+                    ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "file_share_private_endpoints_with_dns" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

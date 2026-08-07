@@ -1,0 +1,17 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Fun_call",
+      [
+        "coalesce",
+        [
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "b" ] ] ],
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "c" ] ] ]
+        ]
+      ]
+    ]
+  ]
+]

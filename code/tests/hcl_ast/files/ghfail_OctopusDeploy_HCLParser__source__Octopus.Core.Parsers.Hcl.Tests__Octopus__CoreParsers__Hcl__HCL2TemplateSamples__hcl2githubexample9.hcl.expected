@@ -1,0 +1,71 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_caller_identity" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_kms_key" ], [ "Lit", "cw" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "CloudWatch Log Group Key" ]
+        ],
+        [ "Attribute", "enable_key_rotation", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [
+                  "Literal",
+                  "\n{\n  \"Version\" : \"2012-10-17\",\n  \"Id\" : \"key-default-1\",\n  \"Statement\" : [ {\n      \"Sid\" : \"Enable IAM User Permissions\",\n      \"Effect\" : \"Allow\",\n      \"Principal\" : {\n        \"AWS\" : \"arn:aws:iam::"
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_caller_identity" ]
+                              ]
+                            ],
+                            [ "A_string", "current" ]
+                          ]
+                        ],
+                        [ "A_string", "account_id" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  ":root\"\n      },\n      \"Action\" : \"kms:*\",\n      \"Resource\" : \"*\"\n    },\n    {\n      \"Effect\": \"Allow\",\n      \"Principal\": { \"Service\": \"logs.ca-central-1.amazonaws.com\" },\n      \"Action\": [\n        \"kms:Encrypt*\",\n        \"kms:Decrypt*\",\n        \"kms:ReEncrypt*\",\n        \"kms:GenerateDataKey*\",\n        \"kms:Describe*\"\n      ],\n      \"Resource\": \"*\"\n    },\n    {\n      \"Sid\": \"Allow_CloudWatch_for_CMK\",\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n          \"Service\":[\n              \"cloudwatch.amazonaws.com\"\n          ]\n      },\n      \"Action\": [\n          \"kms:Decrypt\",\"kms:GenerateDataKey\"\n      ],\n      \"Resource\": \"*\"\n    },\n    {\n      \"Sid\": \"CloudwatchEvents\",\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n        \"Service\": \"events.amazonaws.com\"\n    },\n      \"Action\": [\n        \"kms:Encrypt*\",\n        \"kms:Decrypt*\",\n        \"kms:ReEncrypt*\",\n        \"kms:GenerateDataKey*\",\n        \"kms:Describe*\"\n        ],\n        \"Resource\": \"*\"\n    }\n  ]\n}\n"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

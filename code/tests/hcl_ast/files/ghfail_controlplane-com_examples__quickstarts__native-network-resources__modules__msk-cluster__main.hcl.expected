@@ -1,0 +1,948 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "vpc" ] ],
+      "body": [
+        [
+          "Attribute",
+          "cidr_block",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-cidr" ] ] ]
+        ],
+        [ "Attribute", "enable_dns_hostnames", [ "Bool", true ] ],
+        [ "Attribute", "enable_dns_support", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-vpc" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_availability_zones" ], [ "Lit", "availability-zones" ]
+      ],
+      "body": [ [ "Attribute", "state", [ "String", "available" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "subnet-0" ] ],
+      "body": [
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "aws_availability_zones" ]
+                        ]
+                      ],
+                      [ "A_string", "availability-zones" ]
+                    ]
+                  ],
+                  [ "A_string", "names" ]
+                ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "subnet-cidr-list" ] ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-sn-0" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "subnet-1" ] ],
+      "body": [
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "aws_availability_zones" ]
+                        ]
+                      ],
+                      [ "A_string", "availability-zones" ]
+                    ]
+                  ],
+                  [ "A_string", "names" ]
+                ]
+              ],
+              [ "Int", 1 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "subnet-cidr-list" ] ]
+              ],
+              [ "Int", 1 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-sn-1" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "subnet-2" ] ],
+      "body": [
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "aws_availability_zones" ]
+                        ]
+                      ],
+                      [ "A_string", "availability-zones" ]
+                    ]
+                  ],
+                  [ "A_string", "names" ]
+                ]
+              ],
+              [ "Int", 2 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "subnet-cidr-list" ] ]
+              ],
+              [ "Int", 2 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-sn-2" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ], [ "Lit", "security-group" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-sg" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cluster-tags" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 9090 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "to_port", [ "Int", 9100 ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-cidr" ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "egress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 65535 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_kms_key" ], [ "Lit", "security-key" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " security key" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_group" ],
+        [ "Lit", "cloudwatch-log-group" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-log-group" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_msk_cluster" ], [ "Lit", "msk-cluster" ] ],
+      "body": [
+        [
+          "Attribute",
+          "cluster_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ] ]
+        ],
+        [ "Attribute", "kafka_version", [ "String", "2.8.1" ] ],
+        [
+          "Attribute",
+          "number_of_broker_nodes",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "broker-count" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "broker_node_group_info",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "client_subnets",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_subnet" ],
+                            [ "A_string", "subnet-0" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_subnet" ],
+                            [ "A_string", "subnet-1" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_subnet" ],
+                            [ "A_string", "subnet-2" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "ebs_volume_size",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "broker-storage-capacity" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "instance_type",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "broker-instance-type" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "security_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_security_group" ],
+                            [ "A_string", "security-group" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "encryption_info",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "encryption_at_rest_kms_key_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_kms_key" ],
+                        [ "A_string", "security-key" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "open_monitoring",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "prometheus",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "jmx_exporter",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "enabled_in_broker",
+                            [ "Bool", true ]
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "node_exporter",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "enabled_in_broker",
+                            [ "Bool", true ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "logging_info",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "broker_logs",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "cloudwatch_logs",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "enabled", [ "Bool", true ] ],
+                          [
+                            "Attribute",
+                            "log_group",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "aws_cloudwatch_log_group" ],
+                                    [ "A_string", "cloudwatch-log-group" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cluster-tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "vpc-id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The id of the VPC containing the MSK cluster" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "subnet-ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "A list of the subnet ids for the MSK cluster" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_subnet" ], [ "A_string", "subnet-0" ] ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_subnet" ], [ "A_string", "subnet-1" ] ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_subnet" ], [ "A_string", "subnet-2" ] ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "security-group-id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The id of the security group created for the MSK cluster"
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "security-group" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "bootstrap-brokers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_msk_cluster" ], [ "A_string", "msk-cluster" ]
+                ]
+              ],
+              [ "A_string", "bootstrap_brokers_tls" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A comma-delimited list of DNS names that can be used to connect to the cluster"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "cluster-arn" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_msk_cluster" ], [ "A_string", "msk-cluster" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The arn of the MSK cluster" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "cluster-name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_msk_cluster" ], [ "A_string", "msk-cluster" ]
+                ]
+              ],
+              [ "A_string", "cluster_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the MSK cluster" ]
+        ]
+      ]
+    }
+  ]
+]

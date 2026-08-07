@@ -1,0 +1,1358 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "rds" ] ],
+        [ "Attribute", "description", [ "String", "RDS instance name" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_enabled" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "false" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Set to false to prevent the module from creating any resources"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_admin_user" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute", "description", [ "String", "RDS DB admin user name" ]
+        ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_admin_password" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "RDS DB password for the admin user" ]
+        ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_db_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "description", [ "String", "RDS DB database name" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_instance_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "db.t2.micro" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "EC2 instance type for RDS DB" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_engine" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "mysql" ] ],
+        [ "Attribute", "description", [ "String", "RDS DB engine" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_engine_version" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "5.6" ] ],
+        [ "Attribute", "description", [ "String", "RDS DB engine version" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "3306" ] ],
+        [ "Attribute", "description", [ "String", "RDS DB port" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_db_parameter_group" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "mysql5.6" ] ],
+        [ "Attribute", "description", [ "String", "RDS DB engine version" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_snapshot" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Set to a snapshot ID to restore from snapshot" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_parameter_group_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Existing parameter group name to use" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_multi_az" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "false" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Run instances in multiple az" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_storage_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "gp2" ] ],
+        [ "Attribute", "description", [ "String", "Storage type" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_storage_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "20" ] ],
+        [ "Attribute", "description", [ "String", "Storage size" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_storage_encrypted" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Set true to encrypt storage" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_auto_minor_version_upgrade" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "false" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Allow automated minor version upgrade (e.g. from Postgres 9.5.3 to Postgres 9.5.4)"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_allow_major_version_upgrade" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "false" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Allow major version upgrade" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_apply_immediately" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Specifies whether any database modifications are applied immediately, or during the next maintenance window"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_skip_final_snapshot" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "false" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "If true (default), no snapshot will be made before deleting DB"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_backup_retention_period" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "7" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Backup retention period in days. Must be > 0 to enable backups"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rds_backup_window" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "22:00-03:00" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "When AWS can perform DB snapshots, can't overlap with maintenance window"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_pet" ], [ "Lit", "rds_db_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "separator", [ "String", "_" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_string" ], [ "Lit", "rds_admin_user" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "length", [ "Int", 8 ] ],
+        [ "Attribute", "special", [ "Bool", false ] ],
+        [ "Attribute", "number", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "random_string" ], [ "Lit", "rds_admin_password" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "length", [ "Int", 16 ] ],
+        [ "Attribute", "special", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "rds_enabled",
+          [
+            "Equal",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "rds_enabled" ] ] ],
+              [ "String", "true" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "rds_admin_user",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "rds_admin_user" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "rds_admin_user" ] ]
+              ],
+              "else_": [
+                "Fun_call",
+                [
+                  "join",
+                  [
+                    [ "String", "" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "random_string" ],
+                                [ "A_string", "rds_admin_user" ]
+                              ]
+                            ],
+                            [ "A_splat" ]
+                          ]
+                        ],
+                        [ "A_string", "result" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "rds_admin_password",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "rds_admin_password" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "rds_admin_password" ] ]
+              ],
+              "else_": [
+                "Fun_call",
+                [
+                  "join",
+                  [
+                    [ "String", "" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "random_string" ],
+                                [ "A_string", "rds_admin_password" ]
+                              ]
+                            ],
+                            [ "A_splat" ]
+                          ]
+                        ],
+                        [ "A_string", "result" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "rds_db_name",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", "" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "random_pet" ],
+                            [ "A_string", "rds_db_name" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "rds" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [
+            "String",
+            "git::https://github.com/cloudposse/terraform-aws-rds.git?ref=tags/0.4.4"
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rds_enabled" ] ] ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "namespace" ] ] ]
+        ],
+        [
+          "Attribute",
+          "stage",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "stage" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rds_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "dns_zone_id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "zone_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "host_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rds_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "module" ],
+                              [ "A_string", "kops_metadata" ]
+                            ]
+                          ],
+                          [ "A_string", "nodes_security_group_id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "database_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "rds_db_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "database_user",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "rds_admin_user" ] ] ]
+        ],
+        [
+          "Attribute",
+          "database_password",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "rds_admin_password" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "database_port",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rds_port" ] ] ]
+        ],
+        [
+          "Attribute",
+          "multi_az",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rds_multi_az" ] ] ]
+        ],
+        [
+          "Attribute",
+          "storage_type",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rds_storage_type" ] ] ]
+        ],
+        [
+          "Attribute",
+          "allocated_storage",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rds_storage_size" ] ] ]
+        ],
+        [
+          "Attribute",
+          "storage_encrypted",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "rds_storage_encrypted" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "engine",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rds_engine" ] ] ]
+        ],
+        [
+          "Attribute",
+          "engine_version",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "rds_engine_version" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "instance_class",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "rds_instance_type" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "db_parameter_group",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "rds_db_parameter_group" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameter_group_name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "rds_parameter_group_name" ] ]
+          ]
+        ],
+        [ "Attribute", "publicly_accessible", [ "String", "false" ] ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "module" ], [ "A_string", "subnets" ] ]
+                          ],
+                          [ "A_string", "private_subnet_ids" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "vpc_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "snapshot_identifier",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rds_snapshot" ] ] ]
+        ],
+        [
+          "Attribute",
+          "auto_minor_version_upgrade",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "rds_auto_minor_version_upgrade" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "allow_major_version_upgrade",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "rds_allow_major_version_upgrade" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "apply_immediately",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "rds_apply_immediately" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "skip_final_snapshot",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "rds_skip_final_snapshot" ] ]
+          ]
+        ],
+        [ "Attribute", "copy_tags_to_snapshot", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "backup_retention_period",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "rds_backup_retention_period" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "backup_window",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "rds_backup_window" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_ssm_parameter" ], [ "Lit", "rds_db_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "chamber_parameter_name" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "chamber_service" ] ]
+                ],
+                [ "String", "rds_db_name" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "rds_db_name" ] ] ]
+        ],
+        [ "Attribute", "description", [ "String", "RDS Database Name" ] ],
+        [ "Attribute", "type", [ "String", "String" ] ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "rds_admin_username" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "chamber_parameter_name" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "chamber_service" ] ]
+                ],
+                [ "String", "rds_admin_username" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "rds_admin_user" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "RDS Username for the admin DB user" ]
+        ],
+        [ "Attribute", "type", [ "String", "String" ] ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "rds_admin_password" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "chamber_parameter_name" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "chamber_service" ] ]
+                ],
+                [ "String", "rds_admin_password" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "rds_admin_password" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "RDS Password for the admin DB user" ]
+        ],
+        [ "Attribute", "type", [ "String", "String" ] ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_ssm_parameter" ], [ "Lit", "rds_hostname" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "chamber_parameter_name" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "chamber_service" ] ]
+                ],
+                [ "String", "rds_hostname" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "rds" ] ] ],
+              [ "A_string", "hostname" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "description", [ "String", "RDS hostname" ] ],
+        [ "Attribute", "type", [ "String", "String" ] ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_ssm_parameter" ], [ "Lit", "rds_port" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "chamber_parameter_name" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "chamber_service" ] ]
+                ],
+                [ "String", "rds_port" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rds_port" ] ] ]
+        ],
+        [ "Attribute", "description", [ "String", "RDS port" ] ],
+        [ "Attribute", "type", [ "String", "String" ] ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "rds_instance_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "rds" ] ] ],
+              [ "A_string", "instance_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute", "description", [ "String", "RDS ID of the instance" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "rds_instance_address" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "rds" ] ] ],
+              [ "A_string", "instance_address" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "RDS address of the instance" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "rds_instance_endpoint" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "rds" ] ] ],
+              [ "A_string", "instance_endpoint" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "RDS DNS Endpoint of the instance" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "rds_port" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "rds_port" ] ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "null" ] ]
+              ]
+            }
+          ]
+        ],
+        [ "Attribute", "description", [ "String", "RDS port" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "rds_db_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_db_name" ] ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "null" ] ]
+              ]
+            }
+          ]
+        ],
+        [ "Attribute", "description", [ "String", "RDS db name" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "rds_admin_user" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "rds_admin_user" ] ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "null" ] ]
+              ]
+            }
+          ]
+        ],
+        [ "Attribute", "description", [ "String", "RDS admin user name" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "rds_admin_password" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "rds_enabled" ] ]
+              ],
+              "then_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "rds_admin_password" ] ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "null" ] ]
+              ]
+            }
+          ]
+        ],
+        [ "Attribute", "description", [ "String", "RDS admin password" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "rds_hostname" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "rds" ] ] ],
+              [ "A_string", "hostname" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "RDS host name of the instance" ]
+        ]
+      ]
+    }
+  ]
+]

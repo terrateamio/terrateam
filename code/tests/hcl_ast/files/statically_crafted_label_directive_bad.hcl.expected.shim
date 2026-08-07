@@ -1,0 +1,1 @@
+hcl parse: <stdin>:3,20-22: Invalid string literal; Template sequences are not allowed in this string. To include a literal "%", double it (as "%%") to escape it., and 1 other diagnostic(s)

@@ -1,0 +1,10 @@
+(library
+ (name hcl_native)
+ (libraries hcl_parser_value unix yojson)
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving_yojson)))
+
+; hcl_native calls the Go shim at runtime via a relative path
+; (../hcl_native_shim/sg_hcl_shim). Any executable or test that invokes
+; hcl_native.ensure_shim must declare (deps ../hcl_native_shim/sg_hcl_shim).
+; The top-level @stategraph alias pulls both in.

@@ -1,0 +1,93 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ], [ "Lit", "aks-agent" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "driver_type",
+          [ "String", "humanitec/k8s-cluster-aks" ]
+        ],
+        [ "Attribute", "id", [ "String", "aks-agent" ] ],
+        [ "Attribute", "name", [ "String", "aks-agent" ] ],
+        [ "Attribute", "type", [ "String", "k8s-cluster" ] ],
+        [ "Attribute", "driver_account", [ "String", "azure-temporary" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "loadbalancer" ],
+                            [ "String", "20.10.10.10" ]
+                          ],
+                          [ [ "Quoted", "name" ], [ "String", "demo-123" ] ],
+                          [
+                            [ "Quoted", "resource_group" ],
+                            [ "String", "my-resources" ]
+                          ],
+                          [
+                            [ "Quoted", "subscription_id" ],
+                            [
+                              "String",
+                              "12345678-aaaa-bbbb-cccc-0987654321ba"
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "server_app_id" ],
+                            [
+                              "String",
+                              "6dae42f8-4368-4678-94ff-3960e28e3630"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "secrets_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "agent_url" ],
+                            [
+                              "String",
+                              "${resources['agent#agent'].outputs.url}"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

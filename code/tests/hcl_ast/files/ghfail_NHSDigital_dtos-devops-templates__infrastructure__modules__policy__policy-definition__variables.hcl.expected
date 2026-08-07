@@ -1,0 +1,315 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute", "description", [ "String", "Policy definition name." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "display_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Display name for the policy." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "description" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Description of the policy." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "mode" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "All" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Determines which resource types are evaluated for a policy definition"
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "All" ],
+                          [ "String", "Indexed" ],
+                          [ "String", "Microsoft.ContainerService.Data" ],
+                          [ "String", "Microsoft.CustomerLockbox.Data" ],
+                          [ "String", "Microsoft.DataCatalog.Data" ],
+                          [ "String", "Microsoft.KeyVault.Data" ],
+                          [ "String", "Microsoft.Kubernetes.Data" ],
+                          [
+                            "String",
+                            "Microsoft.MachineLearningServices.Data"
+                          ],
+                          [ "String", "Microsoft.Network.Data" ],
+                          [ "String", "Microsoft.Synapse.Data" ]
+                        ]
+                      ],
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "mode" ] ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Mode must be one of: (Resource Provider Modes) All, Indexed. (Resource Provider Modes) Microsoft.ContainerService.Data, Microsoft.CustomerLockbox.Data, Microsoft.DataCatalog.Data, Microsoft.KeyVault.Data, Microsoft.Kubernetes.Data, Microsoft.MachineLearningServices.Data, Microsoft.Network.Data and Microsoft.Synapse.Data"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "metadata" ] ],
+      "body": [
+        [
+          "Attribute", "type", [ "Fun_call", [ "map", [ [ "Id", "any" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Metadata for the policy." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "parameters" ] ],
+      "body": [
+        [
+          "Attribute", "type", [ "Fun_call", [ "map", [ [ "Id", "any" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "description", [ "String", "Policy parameters." ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "policy_rule" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "if" ], [ "Id", "any" ] ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Fun_call",
+                        [
+                          "object",
+                          [
+                            [
+                              "Object",
+                              [
+                                [ [ "Bare", "effect" ], [ "Id", "string" ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "deny" ],
+                          [ "String", "audit" ],
+                          [ "String", "modify" ],
+                          [ "String", "denyAction" ],
+                          [ "String", "append" ],
+                          [ "String", "auditIfNotExists" ],
+                          [ "String", "deployIfNotExists" ],
+                          [ "String", "disabled" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "policy_rule" ]
+                                ]
+                              ],
+                              [ "A_string", "then" ]
+                            ]
+                          ],
+                          [ "A_string", "effect" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "PolicyEffect must be one of: append, audit, auditIfNotExists, deny, denyAction, deployIfNotExists, disabled, modify"
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOT",
+              "\nAzure Policy Rule object. Must follow Microsoft schema:\n{\n  \"if\": {\n    <condition> | <logical operator> | nested conditions\n  },\n  \"then\": {\n    \"effect\": \"deny | audit | modify | denyAction | append | auditIfNotExists | deployIfNotExists | disabled\"\n  }\n}\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "policy_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "Custom" ] ],
+        [ "Attribute", "description", [ "String", "Type of policy." ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "BuiltIn" ],
+                          [ "String", "Custom" ],
+                          [ "String", "NotSpecified" ],
+                          [ "String", "Static" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "policy_type" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "PolicyType must be one of: BuiltIn, Custom, NotSpecified, Static"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

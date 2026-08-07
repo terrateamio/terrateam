@@ -1,0 +1,325 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "blue" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../single-stack" ] ],
+        [ "Attribute", "color", [ "String", "blue" ] ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "max_size",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "blue_max_size" ] ] ]
+        ],
+        [
+          "Attribute",
+          "min_size",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "blue_min_size" ] ] ]
+        ],
+        [
+          "Attribute",
+          "desired_capacity",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "blue_desired_capacity" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ami",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "blue_ami" ] ] ]
+        ],
+        [
+          "Attribute",
+          "user_data",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "blue_user_data" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instance_type",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "blue_instance_type" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "disk_volume_size",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "blue_disk_volume_size" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "disk_volume_type",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "blue_disk_volume_type" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "spot_price",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "spot_price" ] ] ]
+        ],
+        [
+          "Attribute",
+          "loadbalancers",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "loadbalancers" ] ] ]
+        ],
+        [
+          "Attribute",
+          "key_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "key_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "security_groups",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "security_groups" ] ] ]
+        ],
+        [
+          "Attribute",
+          "iam_instance_profile",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "iam_instance_profile" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "associate_public_ip_address",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "associate_public_ip_address" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnets",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "subnets" ] ] ]
+        ],
+        [
+          "Attribute",
+          "health_check_grace_period",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "health_check_grace_period" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "termination_policies",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "termination_policies" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "target_group_arns",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "target_group_arns" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "health_check_type",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "health_check_type" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "wait_for_capacity_timeout",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "wait_for_capacity_timeout" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "initial_lifecycle_hooks",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "initial_lifecycle_hooks" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "green" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../single-stack" ] ],
+        [ "Attribute", "color", [ "String", "green" ] ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "max_size",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "green_max_size" ] ] ]
+        ],
+        [
+          "Attribute",
+          "min_size",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "green_min_size" ] ] ]
+        ],
+        [
+          "Attribute",
+          "desired_capacity",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "green_desired_capacity" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ami",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "green_ami" ] ] ]
+        ],
+        [
+          "Attribute",
+          "user_data",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "green_user_data" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instance_type",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "green_instance_type" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "disk_volume_size",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "green_disk_volume_size" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "disk_volume_type",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "green_disk_volume_type" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "spot_price",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "spot_price" ] ] ]
+        ],
+        [
+          "Attribute",
+          "loadbalancers",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "loadbalancers" ] ] ]
+        ],
+        [
+          "Attribute",
+          "key_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "key_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "security_groups",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "security_groups" ] ] ]
+        ],
+        [
+          "Attribute",
+          "iam_instance_profile",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "iam_instance_profile" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "associate_public_ip_address",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "associate_public_ip_address" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnets",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "subnets" ] ] ]
+        ],
+        [
+          "Attribute",
+          "health_check_grace_period",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "health_check_grace_period" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "termination_policies",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "termination_policies" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "target_group_arns",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "target_group_arns" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "health_check_type",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "health_check_type" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "wait_for_capacity_timeout",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "wait_for_capacity_timeout" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "initial_lifecycle_hooks",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "initial_lifecycle_hooks" ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

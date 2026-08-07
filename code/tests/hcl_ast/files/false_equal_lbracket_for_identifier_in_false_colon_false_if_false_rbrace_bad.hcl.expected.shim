@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,36-37: Invalid 'for' expression; Extra characters after the end of the 'for' expression.

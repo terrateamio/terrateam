@@ -1,0 +1,438 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "cloudflare_api_token_permission_groups" ], [ "Lit", "all" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "provider",
+          [ "Attr", [ [ "Id", "cloudflare" ], [ "A_string", "api_keys" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "cloudflare_r2_bucket" ], [ "Lit", "bucket" ] ],
+      "body": [
+        [
+          "Attribute",
+          "account_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "cloudflare_account_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "bucket_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "cloudflare_api_token" ], [ "Lit", "bucket_api_token" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "r2_token_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "bucket_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "provider",
+          [ "Attr", [ [ "Id", "cloudflare" ], [ "A_string", "api_keys" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "permission_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "r2" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Bucket Item Read" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [
+                                      "A_string",
+                                      "cloudflare_api_token_permission_groups"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "all" ]
+                              ]
+                            ],
+                            [ "A_string", "r2" ]
+                          ]
+                        ],
+                        [ "String", "Workers R2 Storage Bucket Item Write" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Object",
+                  [
+                    [
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "com.cloudflare.edge.r2.bucket." ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "cloudflare_account_id" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "_default_" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "bucket_name" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ],
+                      [ "String", "*" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "condition" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Gt",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "allowed_cidrs" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "Int", 1 ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "request_ip",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "in",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "allowed_cidrs" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "onepassword_item" ], [ "Lit", "bucket_credentials" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vault",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "onepassword_vault_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "title",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "item_name" ] ] ]
+        ],
+        [ "Attribute", "category", [ "String", "secure_note" ] ],
+        [
+          "Block",
+          {
+            "type_": "section",
+            "labels": [],
+            "body": [
+              [ "Attribute", "label", [ "String", "Cloudflare R2 Bucket" ] ],
+              [
+                "Block",
+                {
+                  "type_": "field",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "label", [ "String", "bucket_name" ] ],
+                    [ "Attribute", "type", [ "String", "STRING" ] ],
+                    [
+                      "Attribute",
+                      "value",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "cloudflare_r2_bucket" ],
+                              [ "A_string", "bucket" ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "field",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "label", [ "String", "endpoint" ] ],
+                    [ "Attribute", "type", [ "String", "STRING" ] ],
+                    [
+                      "Attribute",
+                      "value",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "https://" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "cloudflare_account_id" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", ".r2.cloudflarestorage.com" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "field",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "label", [ "String", "access_key_id" ] ],
+                    [ "Attribute", "type", [ "String", "CONCEALED" ] ],
+                    [
+                      "Attribute",
+                      "value",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "cloudflare_api_token" ],
+                              [ "A_string", "bucket_api_token" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "field",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute", "label", [ "String", "secret_access_key" ]
+                    ],
+                    [ "Attribute", "type", [ "String", "CONCEALED" ] ],
+                    [
+                      "Attribute",
+                      "value",
+                      [
+                        "Fun_call",
+                        [
+                          "sha256",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "cloudflare_api_token" ],
+                                    [ "A_string", "bucket_api_token" ]
+                                  ]
+                                ],
+                                [ "A_string", "value" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

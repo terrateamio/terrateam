@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,13-16: Unbalanced parentheses; Expected a closing parenthesis to terminate the expression.

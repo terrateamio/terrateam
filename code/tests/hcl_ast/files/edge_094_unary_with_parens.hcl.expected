@@ -1,0 +1,13 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "a", [ "Not", [ "Not", [ "Bool", true ] ] ] ],
+        [ "Attribute", "b", [ "Minus", [ "Minus", [ "Int", 1 ] ] ] ]
+      ]
+    }
+  ]
+]

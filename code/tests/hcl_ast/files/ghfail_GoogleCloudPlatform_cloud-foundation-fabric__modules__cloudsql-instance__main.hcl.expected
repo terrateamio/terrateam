@@ -1,0 +1,3534 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "ctx",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "context" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "kk", [ "vv" ] ],
+                  "input": [ "Id", "v" ],
+                  "key_output": [
+                    "Template",
+                    [
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "ctx_p" ] ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [ "Id", "k" ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", ":" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [ "Id", "kk" ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ],
+                  "value_output": [ "Id", "vv" ],
+                  "cond": null
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [ "Attribute", "ctx_p", [ "String", "$" ] ],
+        [
+          "Attribute",
+          "encryption_key_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ], [ "A_string", "encryption_key_name" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Fun_call",
+                [
+                  "lookup",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "ctx" ] ]
+                        ],
+                        [ "A_string", "kms_keys" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "encryption_key_name" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "encryption_key_name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "has_replicas",
+          [
+            "Gt",
+            [
+              [
+                "Fun_call",
+                [
+                  "length",
+                  [
+                    [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "replicas" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "is_mysql",
+          [
+            "Fun_call",
+            [
+              "can",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "regex",
+                    [
+                      [ "String", "^MYSQL" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "database_version" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "is_postgres",
+          [
+            "Fun_call",
+            [
+              "can",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "regex",
+                    [
+                      [ "String", "^POSTGRES" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "database_version" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "is_regional",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "availability_type" ] ]
+                  ],
+                  [ "String", "REGIONAL" ]
+                ]
+              ],
+              "then_": [ "Bool", true ],
+              "else_": [ "Bool", false ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "psa_private_network",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "network_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "connectivity" ]
+                                  ]
+                                ],
+                                [ "A_string", "psa_config" ]
+                              ]
+                            ],
+                            [ "A_string", "private_network" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Fun_call",
+                [
+                  "lookup",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "ctx" ] ]
+                        ],
+                        [ "A_string", "networks" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_config" ]
+                                  ]
+                                ],
+                                [ "A_string", "connectivity" ]
+                              ]
+                            ],
+                            [ "A_string", "psa_config" ]
+                          ]
+                        ],
+                        [ "A_string", "private_network" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_config" ]
+                                  ]
+                                ],
+                                [ "A_string", "connectivity" ]
+                              ]
+                            ],
+                            [ "A_string", "psa_config" ]
+                          ]
+                        ],
+                        [ "A_string", "private_network" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "prefix",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ] ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "String", "" ],
+              "else_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "-" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project_id",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "ctx" ] ] ],
+                    [ "A_string", "project_ids" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "ctx" ] ] ],
+                    [ "A_string", "locations" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "users",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "users" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "is_mysql" ] ]
+                  ],
+                  "then_": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "name" ],
+                        [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [ [ "Id", "v" ], [ "A_string", "type" ] ]
+                                ],
+                                [ "String", "BUILT_IN" ]
+                              ]
+                            ],
+                            "then_": [
+                              "Idx",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "split",
+                                    [ [ "String", "@" ], [ "Id", "k" ] ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            "else_": [ "Id", "k" ]
+                          }
+                        ]
+                      ],
+                      [
+                        [ "Bare", "host" ],
+                        [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [ [ "Id", "v" ], [ "A_string", "type" ] ]
+                                ],
+                                [ "String", "BUILT_IN" ]
+                              ]
+                            ],
+                            "then_": [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "split",
+                                          [
+                                            [ "String", "@" ], [ "Id", "k" ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Int", 1 ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ],
+                            "else_": [ "Null" ]
+                          }
+                        ]
+                      ],
+                      [
+                        [ "Bare", "password" ],
+                        [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [ [ "Id", "v" ], [ "A_string", "type" ] ]
+                                ],
+                                [ "String", "BUILT_IN" ]
+                              ]
+                            ],
+                            "then_": [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "random_password" ],
+                                              [ "A_string", "passwords" ]
+                                            ]
+                                          ],
+                                          [ "Id", "k" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "result" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "password" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "else_": [ "Null" ]
+                          }
+                        ]
+                      ],
+                      [
+                        [ "Bare", "type" ],
+                        [ "Attr", [ [ "Id", "v" ], [ "A_string", "type" ] ] ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "name" ],
+                        [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "is_postgres" ]
+                              ]
+                            ],
+                            "then_": [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "trimsuffix",
+                                      [
+                                        [ "Id", "k" ],
+                                        [ "String", ".gserviceaccount.com" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Id", "k" ]
+                                ]
+                              ]
+                            ],
+                            "else_": [ "Id", "k" ]
+                          }
+                        ]
+                      ],
+                      [ [ "Bare", "host" ], [ "Null" ] ],
+                      [
+                        [ "Bare", "password" ],
+                        [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [ [ "Id", "v" ], [ "A_string", "type" ] ]
+                                ],
+                                [ "String", "BUILT_IN" ]
+                              ]
+                            ],
+                            "then_": [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "random_password" ],
+                                              [ "A_string", "passwords" ]
+                                            ]
+                                          ],
+                                          [ "Id", "k" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "result" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "password" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "else_": [ "Null" ]
+                          }
+                        ]
+                      ],
+                      [
+                        [ "Bare", "type" ],
+                        [ "Attr", [ [ "Id", "v" ], [ "A_string", "type" ] ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_sql_database_instance" ], [ "Lit", "primary" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "Id", "google-beta" ] ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "database_version",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "database_version" ] ] ]
+        ],
+        [
+          "Attribute",
+          "encryption_key_name",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "encryption_key_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "root_password",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "root_password" ] ]
+                  ],
+                  [ "A_string", "random_password" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "random_password" ],
+                          [ "A_string", "root_password" ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [ "A_string", "result" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "root_password" ] ]
+                  ],
+                  [ "A_string", "password" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "settings",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "tier",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tier" ] ] ]
+              ],
+              [
+                "Attribute",
+                "edition",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "edition" ] ] ]
+              ],
+              [
+                "Attribute",
+                "deletion_protection_enabled",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "gcp_deletion_protection" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "disk_autoresize",
+                [
+                  "Equal",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "disk_size" ] ]
+                    ],
+                    [ "Null" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "disk_autoresize_limit",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "disk_autoresize_limit" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "disk_size",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "disk_size" ] ] ]
+              ],
+              [
+                "Attribute",
+                "disk_type",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "disk_type" ] ] ]
+              ],
+              [
+                "Attribute",
+                "availability_type",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "availability_type" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "user_labels",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "labels" ] ] ]
+              ],
+              [
+                "Attribute",
+                "activation_policy",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "activation_policy" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "collation",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "collation" ] ] ]
+              ],
+              [
+                "Attribute",
+                "connector_enforcement",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "connector_enforcement" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "time_zone",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "time_zone" ] ] ]
+              ],
+              [
+                "Attribute",
+                "retain_backups_on_delete",
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "backup_configuration" ]
+                            ]
+                          ],
+                          [ "A_string", "retain_backups_on_delete" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "ip_configuration",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "ipv4_enabled",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "network_config" ]
+                                ]
+                              ],
+                              [ "A_string", "connectivity" ]
+                            ]
+                          ],
+                          [ "A_string", "public_ipv4" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "private_network",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "psa_private_network" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "allocated_ip_range",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "network_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "connectivity" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "psa_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "allocated_ip_ranges" ]
+                                  ]
+                                ],
+                                [ "A_string", "primary" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "ssl_mode",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "ssl" ] ]
+                          ],
+                          [ "A_string", "mode" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "enable_private_path_for_google_cloud_services",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "network_config" ]
+                                ]
+                              ],
+                              [ "A_string", "connectivity" ]
+                            ]
+                          ],
+                          [ "A_string", "enable_private_path_for_services" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "authorized_networks" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Not_equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [ "A_string", "network_config" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "authorized_networks" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "network_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "authorized_networks" ]
+                                  ]
+                                ],
+                                "else_": [ "Object", [] ]
+                              }
+                            ]
+                          ],
+                          [ "Attribute", "iterator", [ "Id", "network" ] ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "name",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "network" ],
+                                      [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "value",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "network" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "psc_config" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Not_equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "network_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "connectivity" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string",
+                                          "psc_allowed_consumer_projects"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                                "else_": [ "Tuple", [] ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "psc_enabled",
+                                  [ "Bool", true ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "allowed_consumer_projects",
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string", "network_config"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "connectivity" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string",
+                                        "psc_allowed_consumer_projects"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "backup_configuration" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "backup_configuration" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [ [ "Int", 1 ] ] ],
+                          "else_": [ "Tuple", [] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "enabled",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "backup_configuration" ]
+                                  ]
+                                ],
+                                [ "A_string", "enabled" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "binary_log_enabled",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Log_and",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "is_mysql" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "backup_configuration"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "enabled" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "Log_or",
+                                  [
+                                    [
+                                      "Log_or",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "backup_configuration"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "binary_log_enabled"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "has_replicas" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "is_regional" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "else_": [ "Null" ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "start_time",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "backup_configuration" ]
+                                  ]
+                                ],
+                                [ "A_string", "start_time" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "location",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "backup_configuration" ]
+                                  ]
+                                ],
+                                [ "A_string", "location" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "point_in_time_recovery_enabled",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string", "backup_configuration"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "enabled" ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string", "backup_configuration"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "A_string",
+                                      "point_in_time_recovery_enabled"
+                                    ]
+                                  ]
+                                ],
+                                "else_": [ "Bool", false ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "transaction_log_retention_days",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "backup_configuration" ]
+                                  ]
+                                ],
+                                [ "A_string", "log_retention_days" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "dynamic",
+                              "labels": [
+                                [ "Lit", "backup_retention_settings" ]
+                              ],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "for_each",
+                                  [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "backup_configuration"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "enabled" ]
+                                        ]
+                                      ],
+                                      "then_": [
+                                        "Object",
+                                        [ [ [ "Bare", "1" ], [ "Int", 1 ] ] ]
+                                      ],
+                                      "else_": [ "Object", [] ]
+                                    }
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "content",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "retained_backups",
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "backup_configuration"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "retention_count" ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "retention_unit",
+                                        [ "String", "COUNT" ]
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "final_backup_config" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Not_equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "backup_configuration"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "final_backup" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "backup_configuration"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "final_backup" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "else_": [ "Tuple", [] ]
+                              }
+                            ],
+                            [ "Tuple", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "enabled",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "final_backup_config" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "enabled" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "retention_days",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "final_backup_config" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "retention_days" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "connection_pool_config" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "managed_connection_pooling_config"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "enabled" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "is_postgres" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "edition" ]
+                                    ]
+                                  ],
+                                  [ "String", "ENTERPRISE_PLUS" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [ [ "Int", 1 ] ] ],
+                          "else_": [ "Tuple", [] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "connection_pooling_enabled",
+                            [ "Bool", true ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "dynamic",
+                              "labels": [ [ "Lit", "flags" ] ],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "for_each",
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "managed_connection_pooling_config"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "flags" ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Attribute", "iterator", [ "Id", "flag" ] ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "content",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "flag" ],
+                                            [ "A_string", "key" ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "value",
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "flag" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "data_cache_config" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ], [ "A_string", "edition" ]
+                                ]
+                              ],
+                              [ "String", "ENTERPRISE_PLUS" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [ [ "Int", 1 ] ] ],
+                          "else_": [ "Tuple", [] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "data_cache_enabled",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "data_cache" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "database_flags" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "flags" ] ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "flags" ] ]
+                          ],
+                          "else_": [ "Object", [] ]
+                        }
+                      ]
+                    ],
+                    [ "Attribute", "iterator", [ "Id", "flag" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "name",
+                            [
+                              "Attr",
+                              [ [ "Id", "flag" ], [ "A_string", "key" ] ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "value",
+                            [
+                              "Attr",
+                              [ [ "Id", "flag" ], [ "A_string", "value" ] ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "deny_maintenance_period" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "maintenance_config" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "deny_maintenance_period" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [ [ "Int", 1 ] ] ],
+                          "else_": [ "Tuple", [] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "start_date",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "maintenance_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "deny_maintenance_period" ]
+                                  ]
+                                ],
+                                [ "A_string", "start_date" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "end_date",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "maintenance_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "deny_maintenance_period" ]
+                                  ]
+                                ],
+                                [ "A_string", "end_date" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "time",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "maintenance_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "deny_maintenance_period" ]
+                                  ]
+                                ],
+                                [ "A_string", "start_time" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "insights_config" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "insights_config" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [ [ "Int", 1 ] ] ],
+                          "else_": [ "Tuple", [] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "query_insights_enabled",
+                            [ "Bool", true ]
+                          ],
+                          [
+                            "Attribute",
+                            "query_string_length",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "insights_config" ]
+                                  ]
+                                ],
+                                [ "A_string", "query_string_length" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "record_application_tags",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "insights_config" ]
+                                  ]
+                                ],
+                                [ "A_string", "record_application_tags" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "record_client_address",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "insights_config" ]
+                                  ]
+                                ],
+                                [ "A_string", "record_client_address" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "query_plans_per_minute",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "insights_config" ]
+                                  ]
+                                ],
+                                [ "A_string", "query_plans_per_minute" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "maintenance_window" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "maintenance_config" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "maintenance_window" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                          "else_": [ "Tuple", [] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "day",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "maintenance_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "maintenance_window" ]
+                                  ]
+                                ],
+                                [ "A_string", "day" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "hour",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "maintenance_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "maintenance_window" ]
+                                  ]
+                                ],
+                                [ "A_string", "hour" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "update_track",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "maintenance_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "maintenance_window" ]
+                                  ]
+                                ],
+                                [ "A_string", "update_track" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "password_validation_policy" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [
+                                    "A_string", "password_validation_policy"
+                                  ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                          "else_": [ "Tuple", [] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "complexity",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "password_validation_policy"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "default_complexity" ]
+                                      ]
+                                    ],
+                                    [ "Bool", true ]
+                                  ]
+                                ],
+                                "then_": [ "String", "COMPLEXITY_DEFAULT" ],
+                                "else_": [ "Null" ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "disallow_username_substring",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "password_validation_policy"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "disallow_username_substring" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "enable_password_policy",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "password_validation_policy"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "enabled" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "min_length",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "password_validation_policy"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "min_length" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "password_change_interval",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "password_validation_policy"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "change_interval" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [ "Null" ],
+                                "else_": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "password_validation_policy"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "change_interval" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "s" ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "reuse_interval",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "password_validation_policy"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "reuse_interval" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "deletion_protection",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "terraform_deletion_protection" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_sql_database_instance" ], [ "Lit", "replicas" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "Id", "google-beta" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "has_replicas" ] ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "replicas" ] ]
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "ctx" ] ] ],
+                    [ "A_string", "locations" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "region" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "region" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "database_version",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "database_version" ] ] ]
+        ],
+        [
+          "Attribute",
+          "encryption_key_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "encryption_key_name" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Fun_call",
+                [
+                  "lookup",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "ctx" ] ]
+                        ],
+                        [ "A_string", "kms_keys" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "encryption_key_name" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "encryption_key_name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "master_instance_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_sql_database_instance" ],
+                  [ "A_string", "primary" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "settings",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "tier",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tier" ] ] ]
+              ],
+              [
+                "Attribute",
+                "edition",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "edition" ] ] ]
+              ],
+              [
+                "Attribute",
+                "deletion_protection_enabled",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "gcp_deletion_protection" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "disk_autoresize",
+                [
+                  "Equal",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "disk_size" ] ]
+                    ],
+                    [ "Null" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "disk_autoresize_limit",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "disk_autoresize_limit" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "disk_size",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "disk_size" ] ] ]
+              ],
+              [
+                "Attribute",
+                "disk_type",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "disk_type" ] ] ]
+              ],
+              [
+                "Attribute",
+                "availability_type",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "availability_type" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "user_labels",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "labels" ] ] ]
+              ],
+              [
+                "Attribute",
+                "activation_policy",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "activation_policy" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "collation",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "collation" ] ] ]
+              ],
+              [
+                "Attribute",
+                "connector_enforcement",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "connector_enforcement" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "time_zone",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "time_zone" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "ip_configuration",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "ipv4_enabled",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "network_config" ]
+                                ]
+                              ],
+                              [ "A_string", "connectivity" ]
+                            ]
+                          ],
+                          [ "A_string", "public_ipv4" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "private_network",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "psa_private_network" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "allocated_ip_range",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "network_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "connectivity" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "psa_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "allocated_ip_ranges" ]
+                                  ]
+                                ],
+                                [ "A_string", "replica" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "ssl_mode",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "ssl" ] ]
+                          ],
+                          [ "A_string", "mode" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "enable_private_path_for_google_cloud_services",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "network_config" ]
+                                ]
+                              ],
+                              [ "A_string", "connectivity" ]
+                            ]
+                          ],
+                          [ "A_string", "enable_private_path_for_services" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "authorized_networks" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Not_equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [ "A_string", "network_config" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "authorized_networks" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "network_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "authorized_networks" ]
+                                  ]
+                                ],
+                                "else_": [ "Object", [] ]
+                              }
+                            ]
+                          ],
+                          [ "Attribute", "iterator", [ "Id", "network" ] ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "name",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "network" ],
+                                      [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "value",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "network" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "psc_config" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Not_equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "network_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "connectivity" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string",
+                                          "psc_allowed_consumer_projects"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [ [ "String", "" ] ] ],
+                                "else_": [ "Tuple", [] ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "psc_enabled",
+                                  [ "Bool", true ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "allowed_consumer_projects",
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string", "network_config"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "connectivity" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string",
+                                        "psc_allowed_consumer_projects"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "database_flags" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "flags" ] ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "flags" ] ]
+                          ],
+                          "else_": [ "Object", [] ]
+                        }
+                      ]
+                    ],
+                    [ "Attribute", "iterator", [ "Id", "flag" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "name",
+                            [
+                              "Attr",
+                              [ [ "Id", "flag" ], [ "A_string", "key" ] ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "value",
+                            [
+                              "Attr",
+                              [ [ "Id", "flag" ], [ "A_string", "value" ] ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "deletion_protection",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "terraform_deletion_protection" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "google_sql_database" ], [ "Lit", "databases" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "databases" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "toset",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "databases" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Fun_call", [ "toset", [ [ "Tuple", [] ] ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instance",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_sql_database_instance" ],
+                  [ "A_string", "primary" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_password" ], [ "Lit", "passwords" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "k", [ "v" ] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "users" ] ]
+                    ],
+                    "output": [ "Id", "k" ],
+                    "cond": [
+                      "Log_and",
+                      [
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "v" ], [ "A_string", "password" ] ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "v" ], [ "A_string", "type" ] ]
+                            ],
+                            [ "String", "BUILT_IN" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "length",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "password_validation_policy" ]
+                      ]
+                    ],
+                    [ "A_string", "min_length" ]
+                  ]
+                ],
+                [ "Int", 16 ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "special", [ "Bool", true ] ],
+        [ "Attribute", "min_lower", [ "Int", 1 ] ],
+        [ "Attribute", "min_numeric", [ "Int", 1 ] ],
+        [ "Attribute", "min_special", [ "Int", 1 ] ],
+        [ "Attribute", "min_upper", [ "Int", 1 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_password" ], [ "Lit", "root_password" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "root_password" ] ]
+                  ],
+                  [ "A_string", "random_password" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "length",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "password_validation_policy" ]
+                      ]
+                    ],
+                    [ "A_string", "min_length" ]
+                  ]
+                ],
+                [ "Int", 16 ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "special", [ "Bool", true ] ],
+        [ "Attribute", "min_lower", [ "Int", 1 ] ],
+        [ "Attribute", "min_numeric", [ "Int", 1 ] ],
+        [ "Attribute", "min_special", [ "Int", 1 ] ],
+        [ "Attribute", "min_upper", [ "Int", 1 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "google_sql_user" ], [ "Lit", "users" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "users" ] ] ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instance",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_sql_database_instance" ],
+                  [ "A_string", "primary" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "host",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "host" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "password",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "password" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "type" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "moved",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "from",
+          [
+            "Attr",
+            [
+              [ "Id", "google_sql_ssl_cert" ],
+              [ "A_string", "postgres_client_certificates" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "to",
+          [
+            "Attr",
+            [
+              [ "Id", "google_sql_ssl_cert" ],
+              [ "A_string", "client_certificates" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_sql_ssl_cert" ], [ "Lit", "client_certificates" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "ssl" ] ] ],
+                      [ "A_string", "client_certificates" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "toset",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "ssl" ] ]
+                        ],
+                        [ "A_string", "client_certificates" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Fun_call", [ "toset", [ [ "Tuple", [] ] ] ] ]
+            }
+          ]
+        ],
+        [ "Attribute", "provider", [ "Id", "google-beta" ] ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instance",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_sql_database_instance" ],
+                  [ "A_string", "primary" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "common_name",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

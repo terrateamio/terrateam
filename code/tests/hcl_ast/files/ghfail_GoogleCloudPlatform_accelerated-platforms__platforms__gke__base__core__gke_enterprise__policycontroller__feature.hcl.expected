@@ -1,0 +1,576 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "kubeconfig_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/../../../kubernetes/kubeconfig" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "kubeconfig_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "kubeconfig_file_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "gatekeeper_iam_roles",
+          [ "Tuple", [ [ "String", "roles/monitoring.metricWriter" ] ] ]
+        ],
+        [
+          "Attribute",
+          "gatekeeper_wi_member",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "wi_principal_prefix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/ns/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [
+                        "A_string", "policy_controller_kubernetes_namespace"
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/sa/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [
+                        "A_string",
+                        "policy_controller_kubernetes_service_account"
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_controller_kubernetes_namespace",
+          [ "String", "gatekeeper-system" ]
+        ],
+        [
+          "Attribute",
+          "policy_controller_kubernetes_service_account",
+          [ "String", "gatekeeper-admin" ]
+        ],
+        [
+          "Attribute",
+          "wi_principal_prefix",
+          [
+            "Template",
+            [
+              [ "Literal", "principal://iam.googleapis.com/projects/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "google_project" ]
+                            ]
+                          ],
+                          [ "A_string", "cluster" ]
+                        ]
+                      ],
+                      [ "A_string", "number" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/locations/global/workloadIdentityPools/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "google_project" ]
+                            ]
+                          ],
+                          [ "A_string", "cluster" ]
+                        ]
+                      ],
+                      [ "A_string", "project_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".svc.id.goog/subject" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "local_file" ], [ "Lit", "kubeconfig" ] ],
+      "body": [
+        [
+          "Attribute",
+          "filename",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "kubeconfig_file" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_gke_hub_feature" ], [ "Lit", "policycontroller" ]
+      ],
+      "body": [
+        [ "Attribute", "location", [ "String", "global" ] ],
+        [ "Attribute", "name", [ "String", "policycontroller" ] ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_project_service" ],
+                  [ "A_string", "anthospolicycontroller_googleapis_com" ]
+                ]
+              ],
+              [ "A_string", "project" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_gke_hub_feature_membership" ],
+        [ "Lit", "cluster_policycontroller" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "feature",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_gke_hub_feature" ],
+                  [ "A_string", "policycontroller" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_gke_hub_feature" ],
+                  [ "A_string", "policycontroller" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "membership",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "google_container_cluster" ]
+                    ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_gke_hub_feature" ],
+                  [ "A_string", "policycontroller" ]
+                ]
+              ],
+              [ "A_string", "project" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "policycontroller",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "version",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "policycontroller_version" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "policy_controller_hub_config",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "audit_interval_seconds", [ "Int", 60 ] ],
+                    [
+                      "Attribute",
+                      "install_spec",
+                      [ "String", "INSTALL_SPEC_ENABLED" ]
+                    ],
+                    [ "Attribute", "log_denies_enabled", [ "Bool", true ] ],
+                    [ "Attribute", "mutation_enabled", [ "Bool", true ] ],
+                    [
+                      "Attribute",
+                      "referential_rules_enabled",
+                      [ "Bool", true ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "policy_content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Block",
+                            {
+                              "type_": "dynamic",
+                              "labels": [ [ "Lit", "bundles" ] ],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "for_each",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "policycontroller_bundles"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "content",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "bundle_name",
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "template_library",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "installation",
+                                  [ "String", "ALL" ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_project_iam_member" ], [ "Lit", "gatekeeper" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "gatekeeper_iam_roles" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "member",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "gatekeeper_wi_member" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_project_service" ],
+                  [ "A_string", "anthospolicycontroller_googleapis_com" ]
+                ]
+              ],
+              [ "A_string", "project" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_wait_gatekeeper_controller" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_gke_hub_feature_membership" ],
+                  [ "A_string", "cluster_policycontroller" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../modules/kubectl_wait" ]
+        ],
+        [ "Attribute", "for", [ "String", "condition=ready" ] ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "policy_controller_kubernetes_namespace" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "resource", [ "String", "pod" ] ],
+        [ "Attribute", "retry_on_failure", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "selector",
+          [ "String", "control-plane=controller-manager" ]
+        ],
+        [ "Attribute", "timeout", [ "String", "300s" ] ],
+        [ "Attribute", "wait_for_create", [ "Bool", true ] ]
+      ]
+    }
+  ]
+]

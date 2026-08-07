@@ -1,0 +1,608 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_s3_bucket" ], [ "Lit", "logs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "bucket",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "bucket" ] ] ]
+        ],
+        [ "Attribute", "acl", [ "String", "private" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role" ], [ "Lit", "firehose_delivery_role" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "firehose-delivery-role" ] ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Heredoc",
+            [
+              "POLICY",
+              "\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Action\": \"sts:AssumeRole\",\n      \"Principal\": {\n        \"Service\": \"firehose.amazonaws.com\"\n      },\n      \"Effect\": \"Allow\",\n      \"Sid\": \"\"\n    }\n  ]\n}\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_policy" ], [ "Lit", "firehose_delivery_policy" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "firehose-delivery-policy" ] ],
+        [ "Attribute", "path", [ "String", "/" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kinesis Firehose delivery policy" ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Template_heredoc",
+            [
+              "POLICY",
+              [
+                [
+                  "Literal",
+                  "\n{\n    \"Version\": \"2012-10-17\",\n    \"Statement\": [\n        {\n            \"Sid\": \"\",\n            \"Effect\": \"Allow\",\n            \"Action\": [\n                \"s3:*\"\n            ],\n            \"Resource\": [\n                \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_s3_bucket" ], [ "A_string", "logs" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n                \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_s3_bucket" ], [ "A_string", "logs" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "/*\"\n            ]\n        },\n        {\n            \"Sid\": \"\",\n            \"Effect\": \"Allow\",\n            \"Action\": [\n                \"es:DescribeElasticsearchDomain\",\n                \"es:DescribeElasticsearchDomains\",\n                \"es:DescribeElasticsearchDomainConfig\",\n                \"es:ESHttpPost\",\n                \"es:ESHttpPut\"\n            ],\n            \"Resource\": [\n                \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "es_arn" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n                \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "es_arn" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "/*\"\n            ]\n        },\n        {\n            \"Sid\": \"\",\n            \"Effect\": \"Allow\",\n            \"Action\": [\n                \"es:ESHttpGet\"\n            ],\n            \"Resource\": [\n                \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "es_arn" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "/_all/_settings\",\n                \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "es_arn" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "/_cluster/stats\",\n                \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "es_arn" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal", "/cxcloud*/_mapping/logs\",\n                \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "es_arn" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "/_nodes\",\n                \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "es_arn" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "/_nodes/stats\",\n                \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "es_arn" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "/_nodes/*/stats\",\n                \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "es_arn" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "/_stats\",\n                \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "es_arn" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "/cxcloud*/_stats\"\n            ]\n        },\n        {\n            \"Sid\": \"\",\n            \"Effect\": \"Allow\",\n            \"Action\": [\n                \"logs:PutLogEvents\"\n            ],\n            \"Resource\": [\n                \"arn:aws:logs:"
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", ":" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "account_id" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  ":log-group:/aws/kinesisfirehose/%FIREHOSE_STREAM_NAME%:log-stream:*\"\n            ]\n        },\n        {\n            \"Sid\": \"\",\n            \"Effect\": \"Allow\",\n            \"Action\": [\n                \"kinesis:DescribeStream\",\n                \"kinesis:GetShardIterator\",\n                \"kinesis:GetRecords\"\n            ],\n            \"Resource\": \"arn:aws:kinesis:"
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", ":" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "account_id" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  ":stream/%FIREHOSE_STREAM_NAME%\"\n        }\n    ]\n}\n"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy_attachment" ],
+        [ "Lit", "attach_delivery_policy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_iam_role" ],
+                  [ "A_string", "firehose_delivery_role" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_iam_policy" ],
+                  [ "A_string", "firehose_delivery_policy" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ],
+        [ "Lit", "assume_kinesis_firehose" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sts:AssumeRole" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "principals",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "AWS" ] ],
+                    [
+                      "Attribute",
+                      "identifiers",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "whitelisted_aws_account_arns" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role" ], [ "Lit", "assume_kinesis_firehose" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "KinesisFirehose" ] ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "assume_kinesis_firehose" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy_attachment" ],
+        [ "Lit", "attach_kinesis_firehose" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_iam_role" ],
+                  [ "A_string", "assume_kinesis_firehose" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_arn",
+          [
+            "String",
+            "arn:aws:iam::aws:policy/AmazonKinesisFirehoseFullAccess"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_kinesis_firehose_delivery_stream" ],
+        [ "Lit", "cxcloud" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "stream_name" ] ] ]
+        ],
+        [ "Attribute", "destination", [ "String", "elasticsearch" ] ],
+        [
+          "Block",
+          {
+            "type_": "s3_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "role_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_iam_role" ],
+                        [ "A_string", "firehose_delivery_role" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "bucket_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "aws_s3_bucket" ], [ "A_string", "logs" ] ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "buffer_size",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "s3_buffer_size" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "buffer_interval",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "s3_buffer_interval" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "compression_format",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "s3_compression_format" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "elasticsearch_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "domain_arn",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "es_arn" ] ] ]
+              ],
+              [
+                "Attribute",
+                "role_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_iam_role" ],
+                        [ "A_string", "firehose_delivery_role" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "index_name",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "es_index_name" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "type_name",
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "es_type_name" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "buffering_size",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "es_buffering_size" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "buffering_interval",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "es_buffering_interval" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "s3_backup_mode",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "s3_backup_mode" ] ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

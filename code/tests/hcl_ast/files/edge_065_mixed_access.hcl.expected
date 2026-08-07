@@ -1,0 +1,25 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Attr",
+      [
+        [
+          "Idx",
+          [
+            [
+              "Attr",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "config" ] ] ],
+                [ "A_string", "servers" ]
+              ]
+            ],
+            [ "Int", 0 ]
+          ]
+        ],
+        [ "A_string", "hostname" ]
+      ]
+    ]
+  ]
+]

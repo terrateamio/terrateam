@@ -1,0 +1,1 @@
+hcl parse: <stdin>:4,33-35: Invalid string literal; Template sequences are not allowed in this string. To include a literal "$", double it (as "$$") to escape it.

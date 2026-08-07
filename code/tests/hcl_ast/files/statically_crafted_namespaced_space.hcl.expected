@@ -1,0 +1,9 @@
+[
+  [ "Attribute", "x", [ "Fun_call", [ "foo::bar", [] ] ] ],
+  [ "Attribute", "y", [ "Fun_call", [ "foo::bar", [] ] ] ],
+  [
+    "Attribute",
+    "z",
+    [ "Fun_call", [ "core::max", [ [ "Int", 1 ], [ "Int", 2 ] ] ] ]
+  ]
+]

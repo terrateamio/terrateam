@@ -1,0 +1,556 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "create_test_user" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Whether to create a test SFTP user" ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "users" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "List of SFTP users. Use public_key as a string - for multiple keys, separate with commas."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "username" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "home_dir" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "public_key" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "role_arn" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "user", [] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "users" ] ]
+                          ],
+                          "output": [
+                            "Lte",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "length",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "split",
+                                              [
+                                                [ "String", "," ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "user" ],
+                                                    [
+                                                      "A_string",
+                                                      "public_key"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 50 ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Maximum of 50 public keys allowed per user as per AWS Transfer Family limits."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "user", [] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "users" ] ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "user" ],
+                                      [ "A_string", "public_key" ]
+                                    ]
+                                  ],
+                                  [ "String", "" ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Equal",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "length",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "split",
+                                                  [
+                                                    [ "String", "," ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "user" ],
+                                                        [
+                                                          "A_string",
+                                                          "public_key"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "length",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "distinct",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "split",
+                                                        [
+                                                          [ "String", "," ],
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id", "user"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "public_key"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Bool", true ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Public key is required and duplicate public keys are not allowed for the same user."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "user", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ], [ "A_string", "users" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "key", [] ],
+                                    "input": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "k", [] ],
+                                        "input": [
+                                          "Fun_call",
+                                          [
+                                            "split",
+                                            [
+                                              [ "String", "," ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "user" ],
+                                                  [
+                                                    "A_string", "public_key"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Fun_call",
+                                          [ "trimspace", [ [ "Id", "k" ] ] ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "can",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "regex",
+                                              [
+                                                [
+                                                  "String",
+                                                  "^(ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521|ssh-ed25519) AAAA[A-Za-z0-9+/]+[=]{0,3}( .+)?$"
+                                                ],
+                                                [ "Id", "key" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "All public keys must be in the format '<key-type> <base64-encoded-key> [comment]' where key-type is one of: ssh-rsa (including rsa-sha2-256 and rsa-sha2-512), ecdsa-sha2-nistp256, ecdsa-sha2-nistp384, ecdsa-sha2-nistp521, or ssh-ed25519. The comment is optional."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "user", [] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "users" ] ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Log_or",
+                                [
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "user" ],
+                                          [ "A_string", "role_arn" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "user" ],
+                                          [ "A_string", "role_arn" ]
+                                        ]
+                                      ],
+                                      [ "String", "" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^arn:aws:iam::[0-9]{12}:role/.+$"
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "user" ],
+                                              [ "A_string", "role_arn" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "If provided, role_arn must be a valid AWS IAM role ARN in the format: arn:aws:iam::123456789012:role/role-name"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "server_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "ID of the Transfer Family server" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "s3_bucket_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Name of the S3 bucket for SFTP storage" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "s3_bucket_arn" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "ARN of the S3 bucket for SFTP storage" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kms_key_id" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "encryption key" ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ]
+]

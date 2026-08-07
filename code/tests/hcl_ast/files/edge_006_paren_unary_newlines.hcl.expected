@@ -1,0 +1,25 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "a",
+          [
+            "Not", [ "Attr", [ [ "Id", "var" ], [ "A_string", "enabled" ] ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "b",
+          [
+            "Minus", [ "Attr", [ [ "Id", "var" ], [ "A_string", "count" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

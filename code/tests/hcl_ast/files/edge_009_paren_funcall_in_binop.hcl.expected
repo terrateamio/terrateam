@@ -1,0 +1,25 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Add",
+      [
+        [
+          "Fun_call",
+          [
+            "length",
+            [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ] ]
+          ]
+        ],
+        [
+          "Fun_call",
+          [
+            "length",
+            [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "other" ] ] ] ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]

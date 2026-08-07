@@ -1,0 +1,140 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name-prefix" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The name of the MSK cluster. This will also be used on associated VPC resources like subnets and security groups."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster-tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "A map containing labels for the MSK cluster" ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vpc-cidr" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "11.0.0.0/16" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The CIDR for the VPC containing the MSK cluster" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "subnet-cidr-list" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [ "String", "11.0.0.0/24" ],
+              [ "String", "11.0.1.0/24" ],
+              [ "String", "11.0.2.0/24" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "The CIDRs for the subnets containing the MSK brokers."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "broker-instance-type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "kafka.m5.large" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Instance type for brokers" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "broker-storage-capacity" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 1000 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Storage capacity on broker instances in GB" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "broker-count" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 3 ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The desired total number of broker nodes in the kafka cluster. It must be a multiple of 3."
+          ]
+        ]
+      ]
+    }
+  ]
+]

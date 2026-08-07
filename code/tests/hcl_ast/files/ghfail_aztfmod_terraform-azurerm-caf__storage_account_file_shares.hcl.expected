@@ -1,0 +1,402 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "storage_account_file_shares" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/storage_account/file_share" ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_role_assignment" ], [ "A_string", "for" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "storage" ] ] ],
+              [ "A_string", "storage_account_file_shares" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_account_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "combined_objects_storage_accounts" ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "storage_account" ]
+                                  ]
+                                ],
+                                [ "A_string", "lz_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "client_config" ]
+                                  ]
+                                ],
+                                [ "A_string", "landingzone_key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "storage_account" ]
+                        ]
+                      ],
+                      [ "A_string", "key" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_account_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "backups" ]
+                          ]
+                        ],
+                        [ "A_string", "vault_key" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string",
+                                "combined_objects_storage_accounts"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "storage_account" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "storage_account" ]
+                            ]
+                          ],
+                          [ "A_string", "key" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "recovery_vault",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "backups" ]
+                          ]
+                        ],
+                        [ "A_string", "vault_key" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "combined_objects_recovery_vaults" ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "backups" ]
+                                  ]
+                                ],
+                                [ "A_string", "lz_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "client_config" ]
+                                  ]
+                                ],
+                                [ "A_string", "landingzone_key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "backups" ]
+                        ]
+                      ],
+                      [ "A_string", "vault_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "backups" ]
+                      ]
+                    ],
+                    [ "A_string", "resource_group_name" ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "storage_account_file_shares" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Id", "module" ],
+              [ "A_string", "storage_account_file_shares" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

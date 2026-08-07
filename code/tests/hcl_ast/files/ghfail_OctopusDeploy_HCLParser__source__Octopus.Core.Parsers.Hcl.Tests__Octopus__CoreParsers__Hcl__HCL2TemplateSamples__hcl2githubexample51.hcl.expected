@@ -1,0 +1,337 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_elasticache_replication_group" ], [ "Lit", "default" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "enabled" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "auth_token",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "transit_encryption_enabled" ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "auth_token" ] ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "replication_group_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ], [ "A_string", "replication_group_id" ]
+                    ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "module" ], [ "A_string", "label" ] ] ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "replication_group_id" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "replication_group_description",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "label" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "node_type",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "instance_type" ] ] ]
+        ],
+        [
+          "Attribute",
+          "number_cache_clusters",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "cluster_mode_enabled" ] ]
+              ],
+              "then_": [
+                "Mult",
+                [
+                  [
+                    "Add",
+                    [
+                      [ "Int", 1 ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "cluster_mode_replicas_per_node_group"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "cluster_mode_num_node_groups" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_size" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "port",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "port" ] ] ]
+        ],
+        [
+          "Attribute",
+          "parameter_group_name",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", "" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_elasticache_parameter_group" ],
+                            [ "A_string", "default" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zones",
+          [
+            "Fun_call",
+            [
+              "slice",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "availability_zones" ] ]
+                ],
+                [ "Int", 0 ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_size" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "automatic_failover_enabled",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "automatic_failover_enabled" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_group_name",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "elasticache_subnet_group_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "security_group_ids",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "use_existing_security_groups" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "existing_security_groups" ]
+                ]
+              ],
+              "else_": [
+                "Tuple",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "join",
+                      [
+                        [ "String", "" ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "aws_security_group" ],
+                                    [ "A_string", "default" ]
+                                  ]
+                                ],
+                                [ "A_splat" ]
+                              ]
+                            ],
+                            [ "A_string", "id" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "maintenance_window",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "maintenance_window" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "notification_topic_arn",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "notification_topic_arn" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "engine_version",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "engine_version" ] ] ]
+        ],
+        [
+          "Attribute",
+          "at_rest_encryption_enabled",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "at_rest_encryption_enabled" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "transit_encryption_enabled",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "transit_encryption_enabled" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "snapshot_window",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "snapshot_window" ] ] ]
+        ],
+        [
+          "Attribute",
+          "snapshot_retention_limit",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "snapshot_retention_limit" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "apply_immediately",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "apply_immediately" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "label" ] ] ],
+              [ "A_string", "tags" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

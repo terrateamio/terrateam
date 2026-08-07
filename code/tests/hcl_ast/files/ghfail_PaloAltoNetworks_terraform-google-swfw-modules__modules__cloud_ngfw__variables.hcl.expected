@@ -1,0 +1,1121 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name_prefix" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A name prefix that will prepend all resources created."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "firewall_endpoints" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA map containing each firewall endpoint and association to create.\n\nFollowing properties are available:\n\n- `firewall_endpoint_name`             - (`string`, required) The name of the firewall endpoint.\n- `org_id`                             - (`string`, required) The Google Cloud organization ID.\n- `zone`                               - (`string`, required) The zone where the firewall endpoint will be deploye\n- `billing_project_id`                 - (`string`, required) The billing project ID for the Google Cloud organization.\n- `firewall_endpoint_association_name` - (`string`, required) The name of the firewall endpoint association.\n- `project_id`                         - (`string`, required) The project ID where network to be associated with the firewall endpoint resides.\n- `tls_inspection_policy`              - (`string`, optional) The name of the TLS inspection policy to be applied to the firewall endpoint.\n- `labels`                             - (`map(string)`, optional) A map of labels to apply to the firewall endpoint and association.\n- `disabled`                           - (`bool`, optional, default: `false`) Whether the firewall endpoint should be disabled. `NOTE`: This value MUST be `false` at creation time.\n\n**Important!** \\\n`disabled` property MUST be `false` at resource creation time. This can be set to `true` later to disable the firewall endpoint.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "firewall_endpoint_name" ],
+                            [ "Id", "string" ]
+                          ],
+                          [ [ "Bare", "org_id" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "zone" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "billing_project_id" ],
+                            [ "Id", "string" ]
+                          ],
+                          [
+                            [ "Bare", "firewall_endpoint_association_name" ],
+                            [ "Id", "string" ]
+                          ],
+                          [ [ "Bare", "project_id" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "network_id" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "tls_inspection_policy" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "labels" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "disabled" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "network_security_profiles" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA map each network security profile and group to create.\n\nFollowing properties are available:\n\n- `profile_name`              - (`string`, required) The name of the network security profile.\n- `profile_group_name`        - (`string`, required) The name of the network security profile group.\n- `org_id`                    - (`string`, required) The Google Cloud organization ID.\n- `profile_description`       - (`string`, optional) The description of the network security profile.\n- `profile_group_description` - (`string`, optional) The description of the network security profile group.\n- `labels`                    - (`map(string)`, optional) A map of labels to apply to the network security profile and group.\n- `location`                  - (`string`, optional, defaults to`\"global\"`) The location where the network security profile and group will be created.\n- `severity_overrides`        - (`map(string)`, optional, defaults to empty map) A map of severity overrides for the network security profile.\n- `threat_overrides`          - (`map(string)`, optional, defaults to empty map) A map of threat overrides for the network security profile.\n\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "profile_name" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "profile_group_name" ],
+                            [ "Id", "string" ]
+                          ],
+                          [ [ "Bare", "org_id" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "profile_description" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "profile_group_description" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "labels" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "location" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [ "Id", "string" ], [ "String", "global" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "severity_overrides" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "threat_overrides" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "network_policies" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA map containing the creation of a single network policies and it's associated rules.\n\nFollowing properties are available:\n\n- `policy_name`              - (`string`, required) The name of the network policy.\n- `create_firewall_policy`   - (`bool`, optional, default: `true`) Whether to create the firewall policy.\n- `description`              - (`string`, optional) The description of the network policy.\n- `project_id`               - (`string`, required) The project ID where the network policy will be created.\n- `network_associations`     - (`map(object)`, required) A map of network associations for the network policy. Each object has the following properties:\n  - `policy_association_name` - (`string`, required) The name of the policy association.\n  - `network_id`              - (`string`, required) The network ID to associate with the policy.\n- `rules`                - (`map(object)`, required) A map of network policy rules for the policy association. Each object has the following properties:\n  - `rule_name`               - (`string`, required) The name of the network policy rule.\n  - `description`             - (`string`, optional) The description of the network policy rule.\n  - `direction`               - (`string`, required) The direction of the network policy rule, either \"INGRESS\" or \"EGRESS\".\n  - `enable_logging`          - (`bool`, optional, default: `false`) Whether to enable logging for the network policy rule.\n  - `tls_inspect`             - (`bool`, optional, default: `false`) Whether to enable TLS inspection for the network policy rule.\n  - `priority`                - (`number`, optional, default: `100`) The priority of the network policy rule.\n  - `action`                  - (`string`, required) The action to take for the network policy rule, either \"ALLOW\" or \"DENY\".\n  - `security_group_key`      - (`string`, optional) The key of the security group to apply the network policy rule to. Either this or `security_group_id` must be set.\n  - `security_group_id`       - (`string`, optional) The ID of the security group to apply the network policy rule to. Either this or `security_group_key` must be set.\n  - `target_service_accounts` - (`list(string)`, optional) The list of service account emails to apply the network policy rule to.\n  - `disabled`                - (`bool`, optional, defaults to `false`) Whether to disable the network policy rule.\n  - `target_secure_tags`      - (`map(object)`, optional) A map of secure tags to apply to the network policy rule. Each object has the following properties:\n    - `name`                  - (`string`, required) The name of the secure tag.\n  - `src_secure_tags`         - (`map(object)`, optional) A map of source secure tags to apply to the network policy rule. Each object has the following properties:\n    - `name`                  - (`string`, required) The name of the source secure tag.\n  - `src_ip_ranges`           - (`list(string)`, optional) A list of source IP ranges to apply to the network policy rule.\n  - `dest_ip_ranges`          - (`list(string)`, optional) A list of destination IP ranges to apply to the network policy rule.\n  - `src_address_groups`      - (`list(string)`, optional) A list of source address groups to apply to the network policy rule.\n  - `dest_address_groups`     - (`list(string)`, optional) A list of destination address groups to apply to the network policy rule.\n  - `src_fqdns`               - (`list(string)`, optional) A list of source fully qualified domain names to apply to the network policy rule.\n  - `dest_fqdns`              - (`list(string)`, optional) A list of destination fully qualified domain names to apply to the network policy rule.\n  - `src_region_codes`        - (`list(string)`, optional) A list of source region codes to apply to the network policy rule.\n  - `dest_region_codes`       - (`list(string)`, optional) A list of destination region codes to apply to the network policy rule.\n  - `src_threat_intelligences`  - (`list(string)`, optional) A list of source threat intelligences to apply to the network policy rule.\n  - `dest_threat_intelligences` - (`list(string)`, optional) A list of destination threat intelligences to apply to the network policy rule.\n  - `ip_protocol`             - (`string`, required) The IP protocol to apply to the network policy rule, either tcp, udp, icmp, esp, ah, ipip, sctp or ip protocol number\n  - `ports`                   - (`list(string)`, optional) A list of ports to apply to the network policy rule. Ranges can also be used - like `123-567`\n\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "policy_name" ], [ "Id", "string" ] ],
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "string" ], [ "Null" ] ] ]
+                      ]
+                    ],
+                    [ [ "Bare", "project_id" ], [ "Id", "string" ] ],
+                    [
+                      [ "Bare", "network_associations" ],
+                      [
+                        "Fun_call",
+                        [
+                          "map",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "policy_association_name" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "network_id" ],
+                                        [ "Id", "string" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "create_firewall_policy" ], [ "Id", "bool" ]
+                    ],
+                    [
+                      [ "Bare", "rules" ],
+                      [
+                        "Fun_call",
+                        [
+                          "map",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "rule_name" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "description" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "string" ], [ "Null" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "direction" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "enable_logging" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "bool" ],
+                                              [ "Bool", false ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "tls_inspect" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "bool" ],
+                                              [ "Bool", false ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "priority" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "number" ],
+                                              [ "Int", 100 ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "action" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "security_group_key" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "string" ] ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "security_group_id" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "string" ] ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "target_service_accounts" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "disabled" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "bool" ],
+                                              [ "Bool", false ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "target_secure_tags" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "map",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "name"
+                                                                ],
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Object", [] ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "src_secure_tags" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "map",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "name"
+                                                                ],
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Object", [] ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "src_ip_ranges" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "dest_ip_ranges" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "src_address_groups" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "dest_address_groups" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "src_fqdns" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "dest_fqdns" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "src_region_codes" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "dest_region_codes" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [
+                                          "Bare", "src_threat_intelligences"
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [
+                                          "Bare", "dest_threat_intelligences"
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "ip_protocol" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "ports" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "rule", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "network_policies" ]
+                                ]
+                              ],
+                              [ "A_string", "rules" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Log_or",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "length",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "target_secure_tags"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Int", 0 ]
+                                        ]
+                                      ],
+                                      [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "length",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "coalesce",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "rule" ],
+                                                          [
+                                                            "A_string",
+                                                            "target_service_accounts"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Tuple", [] ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Int", 0 ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Gt",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "length",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "target_secure_tags"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Int", 0 ]
+                                        ]
+                                      ],
+                                      [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "length",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "coalesce",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "rule" ],
+                                                          [
+                                                            "A_string",
+                                                            "target_service_accounts"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Tuple", [] ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Int", 0 ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "length",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "rule" ],
+                                                [
+                                                  "A_string",
+                                                  "target_secure_tags"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ],
+                                  [
+                                    "Gt",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "length",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "coalesce",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [
+                                                        "A_string",
+                                                        "target_service_accounts"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Tuple", [] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "For each rule, either target_secure_tags OR target_service_accounts can be set, but not both simultaneously."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "rule", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "network_policies" ]
+                                ]
+                              ],
+                              [ "A_string", "rules" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [
+                                            "A_string", "security_group_key"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "security_group_id" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [
+                                            "A_string", "security_group_key"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "security_group_id" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "For each rule, either security_group_key OR security_group_id can be set, but not both simultaneously."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

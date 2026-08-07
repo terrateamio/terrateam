@@ -1,0 +1,183 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "project_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Used to name resources created throughout AWS" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Tags applied to all Airflow related objects" ]
+        ],
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [ [ [ "Quoted", "Project" ], [ "String", "Airflow" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "aws_region" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "AWS Region" ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "us-east-1" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "aws_profile" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Profile from AWS credential file to be used" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "default" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ec2_keypair_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Name of keypair used to access ec2 instances" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "Airflow_key" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "public_key_path" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enter the path to the SSH Public Key to use for ec2 instances."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "~/.ssh/id_rsa.pub" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "private_key_path" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enter the path to the SSH Private Key to use for ec2 instances."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "~/.ssh/id_rsa.pub" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "db_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Name of ETL target database" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "db_instance_type" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Instance type of ETL target database" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "db.t2.large" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "db_username" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Master Username for ETL target database" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "db_password" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Master password for ETL target database" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ]
+]

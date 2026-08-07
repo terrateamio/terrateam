@@ -1,0 +1,292 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Id", "policy" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "denyPasswordAuthLinux" ],
+                      [
+                        "Fun_call",
+                        [
+                          "object",
+                          [
+                            [
+                              "Object",
+                              [ [ [ "Bare", "enable" ], [ "Id", "bool" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Id", "azurerm_subscription_policy_assignment" ],
+        [ "Id", "deny_password_auth_linux" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "policy" ] ]
+                      ],
+                      [ "A_string", "denyPasswordAuthLinux" ]
+                    ]
+                  ],
+                  [ "A_string", "enable" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_policy_definition" ],
+                  [ "A_string", "deny_password_auth_linux" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_policy_definition" ],
+                  [ "A_string", "deny_password_auth_linux" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription_id",
+          [
+            "Template",
+            [
+              [ "Literal", "/subscriptions/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "azurerm_subscription" ]
+                            ]
+                          ],
+                          [ "A_string", "current" ]
+                        ]
+                      ],
+                      [ "A_string", "subscription_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "foundation" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "identity",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "UserAssigned" ] ],
+              [
+                "Attribute",
+                "identity_ids",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "azurerm_user_assigned_identity" ],
+                            [ "A_string", "main" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Id", "azurerm_policy_definition" ],
+        [ "Id", "deny_password_auth_linux" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "denyPasswordAuthLinux" ] ],
+        [
+          "Attribute",
+          "display_name",
+          [ "String", "Deny Linux VM password authentication" ]
+        ],
+        [ "Attribute", "policy_type", [ "String", "Custom" ] ],
+        [ "Attribute", "mode", [ "String", "Indexed" ] ],
+        [
+          "Attribute",
+          "policy_rule",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "if" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "allOf" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "field" ],
+                                      [
+                                        "String",
+                                        "Microsoft.Compute/virtualMachines/storageProfile.osDisk.osType"
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "equals" ],
+                                      [ "String", "Linux" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "field" ],
+                                      [
+                                        "String",
+                                        "Microsoft.Compute/virtualMachines/osProfile.linuxConfiguration.disablePasswordAuthentication"
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "equals" ],
+                                      [ "String", "false" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "effect" ], [ "String", "deny" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

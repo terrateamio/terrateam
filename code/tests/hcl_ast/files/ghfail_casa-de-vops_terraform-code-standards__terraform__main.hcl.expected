@@ -1,0 +1,52 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "these",
+          [
+            "Tuple",
+            [
+              [ "String", "Hello, World!" ], [ "String", "Goodbye, World!" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "this" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../modules/this" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "these" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "in",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

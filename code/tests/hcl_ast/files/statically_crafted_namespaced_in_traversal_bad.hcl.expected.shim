@@ -1,0 +1,1 @@
+hcl parse: <stdin>:4,14-15: Missing open parenthesis; Function selector must be followed by an open parenthesis to begin the function call.

@@ -1,0 +1,1713 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_region" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ],
+        [ "Lit", "workers_assume_role_policy" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "sid", [ "String", "EKSWorkerAssumeRole" ] ],
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sts:AssumeRole" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "principals",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "Service" ] ],
+                    [
+                      "Attribute",
+                      "identifiers",
+                      [ "Tuple", [ [ "String", "ec2.amazonaws.com" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_ami" ], [ "Lit", "eks_worker" ] ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "name" ] ],
+              [
+                "Attribute",
+                "values",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [ "Literal", "amazon-eks-node-" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "cluster_version" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "-" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "worker_ami_name_filter" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "most_recent", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "owners",
+          [ "Tuple", [ [ "String", "602401143452" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ],
+        [ "Lit", "cluster_assume_role_policy" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "sid", [ "String", "EKSClusterAssumeRole" ] ],
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sts:AssumeRole" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "principals",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "Service" ] ],
+                    [
+                      "Attribute",
+                      "identifiers",
+                      [ "Tuple", [ [ "String", "eks.amazonaws.com" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "template_file" ], [ "Lit", "kubeconfig" ] ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "file",
+                      [
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "path" ],
+                                    [ "A_string", "module" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ],
+                            [ "Literal", "/templates/kubeconfig.tpl" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "vars",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "kubeconfig_name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "kubeconfig_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "endpoint",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_eks_cluster" ],
+                                [ "A_string", "this" ]
+                              ]
+                            ],
+                            [ "A_string", "endpoint" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "region",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "aws_region" ]
+                                  ]
+                                ],
+                                [ "A_string", "current" ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "cluster_auth_base64",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "aws_eks_cluster" ],
+                                        [ "A_string", "this" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "certificate_authority" ]
+                                  ]
+                                ],
+                                [ "A_int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "data" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "aws_authenticator_command",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [
+                              "A_string",
+                              "kubeconfig_aws_authenticator_command"
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "aws_authenticator_command_args",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Gt",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "length",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "kubeconfig_aws_authenticator_command_args"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            "then_": [
+                              "Template",
+                              [
+                                [ "Literal", "        - " ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Fun_call",
+                                      [
+                                        "join",
+                                        [
+                                          [ "String", "\n        - " ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "kubeconfig_aws_authenticator_command_args"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ],
+                            "else_": [
+                              "Template",
+                              [
+                                [ "Literal", "        - " ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Fun_call",
+                                      [
+                                        "join",
+                                        [
+                                          [ "String", "\n        - " ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "formatlist",
+                                              [
+                                                [ "String", "\"%s\"" ],
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "list",
+                                                    [
+                                                      [ "String", "token" ],
+                                                      [ "String", "-i" ],
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id",
+                                                                "aws_eks_cluster"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "this"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "name"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ]
+                          }
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "aws_authenticator_additional_args",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Gt",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "length",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "kubeconfig_aws_authenticator_additional_args"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            "then_": [
+                              "Template",
+                              [
+                                [ "Literal", "        - " ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Fun_call",
+                                      [
+                                        "join",
+                                        [
+                                          [ "String", "\n        - " ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "kubeconfig_aws_authenticator_additional_args"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ],
+                            "else_": [ "String", "" ]
+                          }
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "aws_authenticator_env_variables",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Gt",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "length",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "kubeconfig_aws_authenticator_env_variables"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            "then_": [
+                              "Template",
+                              [
+                                [ "Literal", "      env:\n" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Fun_call",
+                                      [
+                                        "join",
+                                        [
+                                          [ "String", "\n" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "data" ],
+                                                          [
+                                                            "A_string",
+                                                            "template_file"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "aws_authenticator_env_variables"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "A_splat" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "rendered" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ],
+                            "else_": [ "String", "" ]
+                          }
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "template_file" ],
+        [ "Lit", "aws_authenticator_env_variables" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n        - name: $${key}\n          value: $${value}\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [
+                              "A_string",
+                              "kubeconfig_aws_authenticator_env_variables"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "vars",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "value",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "element",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "values",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string",
+                                          "kubeconfig_aws_authenticator_env_variables"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "count" ], [ "A_string", "index" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "key",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "element",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "keys",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string",
+                                          "kubeconfig_aws_authenticator_env_variables"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "count" ], [ "A_string", "index" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "template_file" ], [ "Lit", "userdata" ] ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "file",
+                      [
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "path" ],
+                                    [ "A_string", "module" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ],
+                            [ "Literal", "/templates/userdata.sh.tpl" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "worker_group_count" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "vars",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "cluster_name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_eks_cluster" ],
+                                [ "A_string", "this" ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "endpoint",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_eks_cluster" ],
+                                [ "A_string", "this" ]
+                              ]
+                            ],
+                            [ "A_string", "endpoint" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "cluster_auth_base64",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "aws_eks_cluster" ],
+                                        [ "A_string", "this" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "certificate_authority" ]
+                                  ]
+                                ],
+                                [ "A_int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "data" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "pre_userdata",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "worker_groups" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "pre_userdata" ],
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string", "workers_group_defaults"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "pre_userdata" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "additional_userdata",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "worker_groups" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "additional_userdata" ],
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string", "workers_group_defaults"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "additional_userdata" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "enable_docker_bridge",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "worker_groups" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "enable_docker_bridge" ],
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string", "workers_group_defaults"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "enable_docker_bridge" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "kubelet_extra_args",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "worker_groups" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "kubelet_extra_args" ],
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string", "workers_group_defaults"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "kubelet_extra_args" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "template_file" ], [ "Lit", "launch_template_userdata" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "file",
+                      [
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "path" ],
+                                    [ "A_string", "module" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ],
+                            [ "Literal", "/templates/userdata.sh.tpl" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "worker_group_launch_template_count" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "vars",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "cluster_name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_eks_cluster" ],
+                                [ "A_string", "this" ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "endpoint",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_eks_cluster" ],
+                                [ "A_string", "this" ]
+                              ]
+                            ],
+                            [ "A_string", "endpoint" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "cluster_auth_base64",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "aws_eks_cluster" ],
+                                        [ "A_string", "this" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "certificate_authority" ]
+                                  ]
+                                ],
+                                [ "A_int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "data" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "pre_userdata",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "worker_groups_launch_template"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "pre_userdata" ],
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string",
+                                        "workers_group_launch_template_defaults"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "pre_userdata" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "additional_userdata",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "worker_groups_launch_template"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "additional_userdata" ],
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string",
+                                        "workers_group_launch_template_defaults"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "additional_userdata" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "enable_docker_bridge",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "worker_groups_launch_template"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "enable_docker_bridge" ],
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string",
+                                        "workers_group_launch_template_defaults"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "enable_docker_bridge" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "kubelet_extra_args",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "worker_groups_launch_template"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "kubelet_extra_args" ],
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string",
+                                        "workers_group_launch_template_defaults"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "kubelet_extra_args" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

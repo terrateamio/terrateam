@@ -1,0 +1,13 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Fun_call",
+      [
+        "provider::aws::arn_parse",
+        [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "arn" ] ] ] ]
+      ]
+    ]
+  ]
+]

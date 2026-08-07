@@ -1,18 +1,18 @@
 [
-  [ "Attribute", "foo", [ "Tuple", [ [ "Int", 1 ] ] ] ],
+  [ "Attribute", "foo1", [ "Tuple", [ [ "Int", 1 ] ] ] ],
   [
     "Attribute",
-    "foo",
+    "foo2",
     [ "Tuple", [ [ "Int", 1 ], [ "Int", 2 ], [ "Int", 3 ] ] ]
   ],
   [
     "Attribute",
-    "foo",
+    "foo3",
     [ "Tuple", [ [ "Int", 1 ], [ "Int", 2 ], [ "Int", 3 ], [ "Int", 4 ] ] ]
   ],
   [
     "Attribute",
-    "foo",
+    "foo4",
     [
       "For_tuple",
       {
@@ -25,7 +25,7 @@
   ],
   [
     "Attribute",
-    "foo",
+    "foo5",
     [
       "For_tuple",
       {
@@ -44,7 +44,7 @@
   ],
   [
     "Attribute",
-    "foo",
+    "foo6",
     [
       "For_object",
       {
@@ -58,14 +58,14 @@
   ],
   [
     "Attribute",
-    "foo",
+    "foo7",
     [
       "For_tuple",
       {
         "identifiers": [ "s", [] ],
         "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
         "output": [ "Fun_call", [ "upper", [ [ "Id", "s" ] ] ] ],
-        "cond": [ "Not", [ "Equal", [ [ "Id", "s" ], [ "String", "" ] ] ] ]
+        "cond": [ "Not_equal", [ [ "Id", "s" ], [ "String", "" ] ] ]
       }
     ]
   ],

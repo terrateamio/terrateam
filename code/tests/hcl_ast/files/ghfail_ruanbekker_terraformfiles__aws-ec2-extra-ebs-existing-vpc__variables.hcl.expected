@@ -1,0 +1,113 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "region" ] ],
+      "body": [ [ "Attribute", "default", [ "String", "eu-west-1" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "instance_name" ] ],
+      "body": [ [ "Attribute", "default", [ "String", "test-instance" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ssh_user" ] ],
+      "body": [ [ "Attribute", "default", [ "String", "ubuntu" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ssh_key" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [ [ "Bare", "dev" ], [ "String", "~/.ssh/dev.pem" ] ],
+              [ [ "Bare", "prod" ], [ "String", "~/.ssh/prod.pem" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ssh_key_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [ [ "Bare", "dev" ], [ "String", "dev" ] ],
+              [ [ "Bare", "prod" ], [ "String", "prod" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "security_group" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "remote-access-sg" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [ [ "Bare", "name" ], [ "String", "test-instance" ] ],
+              [ [ "Bare", "true" ], [ "String", "Enabled" ] ],
+              [ [ "Bare", "false" ], [ "String", "Disabled" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

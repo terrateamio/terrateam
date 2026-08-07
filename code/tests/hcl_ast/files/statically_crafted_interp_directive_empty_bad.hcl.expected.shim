@@ -1,0 +1,1 @@
+hcl parse: <stdin>:3,12-13: Invalid template directive; A template directive keyword ("if", "for", etc) is expected at the beginning of a %{ sequence.

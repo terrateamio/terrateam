@@ -1,0 +1,1793 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "bucket_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "Heredoc", [ "EOD", "\nName of GCS bucket to use.\n" ] ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "bucket_dir" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Bucket directory for cluster files to be put into." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_debug_logging" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enables debug logging mode. Not for production use." ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "extra_logging_flags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "bool" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The only available flag is `trace_api`" ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "project_id" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "The GCP project ID." ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_slurm_auth" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [ "EOD", "\nEnables slurm authentication instead of munge.\n\n" ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slurm_cluster_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The cluster name, used for resource naming and slurm accounting."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-z]([-a-z0-9]{0,19})$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "slurm_cluster_name" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Variable 'slurm_cluster_name' must be a match of regex '^[a-z]([-a-z0-9]{0,19})$'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "controller_state_disk" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\n  A disk that will be attached to the controller instance template to save state of slurm. The disk is created and used by default.\n  To disable this feature, set this variable to null.\n\n  NOTE: This will not save the contents at /opt/apps and /home. To preserve those, they must be saved externally.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [ [ [ "Bare", "device_name" ], [ "Id", "string" ] ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [ "Object", [ [ [ "Bare", "device_name" ], [ "Null" ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_bigquery_load" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nEnables loading of cluster job usage into big query.\n\nNOTE: Requires Google Bigquery API.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slurmdbd_conf_tpl" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Slurm slurmdbd.conf template file path." ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slurm_conf_tpl" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Slurm slurm.conf template file path. This path is used only if raw content is not provided in 'slurm_conf_template'."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slurm_conf_template" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Slurm slurm.conf template. Content of the file in 'slurm_conf_tpl' is used if this is not set."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cgroup_conf_tpl" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Slurm cgroup.conf template file path." ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cloudsql_secret" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Secret URI to cloudsql secret." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "controller_startup_scripts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "List of scripts to be ran on controller VM startup." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "filename" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "content" ], [ "Id", "string" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "controller_startup_scripts_timeout" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nThe timeout (seconds) applied to each script in controller_startup_scripts. If\nany script exceeds this timeout, then the instance setup process is considered\nfailed and handled accordingly.\n\nNOTE: When set to 0, the timeout is considered infinite and thus disabled.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 300 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "nodeset_startup_scripts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "List of scripts to be ran on compute VM startup in the specific nodeset."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "list",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "object",
+                          [
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "filename" ], [ "Id", "string" ]
+                                ],
+                                [ [ "Bare", "content" ], [ "Id", "string" ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "compute_startup_scripts_timeout" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nThe timeout (seconds) applied to each script in compute_startup_scripts. If\nany script exceeds this timeout, then the instance setup process is considered\nfailed and handled accordingly.\n\nNOTE: When set to 0, the timeout is considered infinite and thus disabled.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 300 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_chs_gpu_health_check_prolog" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nEnable a Cluster Health Sacnner(CHS) GPU health check that slurmd executes as a prolog script whenever it is asked to run a job step from a new job allocation. Compute nodes that fail GPU health check during prolog will be marked as drained. Find more details at:\nhttps://github.com/GoogleCloudPlatform/cluster-toolkit/tree/main/docs/CHS-Slurm.md\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_chs_gpu_health_check_epilog" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nEnable a Cluster Health Sacnner(CHS) GPU health check that slurmd executes as an epilog script after completing a job step from a new job allocation.\nCompute nodes that fail GPU health check during epilog will be marked as drained. Find more details at:\nhttps://github.com/GoogleCloudPlatform/cluster-toolkit/tree/main/docs/CHS-Slurm.md\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "prolog_scripts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nList of scripts to be used for Prolog. Programs for the slurmd to execute\nwhenever it is asked to run a job step from a new job allocation.\nSee https://slurm.schedmd.com/slurm.conf.html#OPT_Prolog.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "filename" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "content" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "source" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "script", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "prolog_scripts" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "content" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "source" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "content" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "source" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Either 'content' or 'source' must be defined, but not both."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "epilog_scripts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nList of scripts to be used for Epilog. Programs for the slurmd to execute\non every node when a user's job completes.\nSee https://slurm.schedmd.com/slurm.conf.html#OPT_Epilog.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "filename" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "content" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "source" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "script", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "epilog_scripts" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "content" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "source" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "content" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "source" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Either 'content' or 'source' must be defined, but not both."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "task_prolog_scripts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nList of scripts to be used for TaskProlog. Programs for the slurmd to execute\nas the slurm job's owner prior to initiation of each task.\nSee https://slurm.schedmd.com/slurm.conf.html#OPT_TaskProlog.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "filename" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "content" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "source" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "script", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "task_prolog_scripts" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "content" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "source" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "content" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "source" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Either 'content' or 'source' must be defined, but not both."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "task_epilog_scripts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nList of scripts to be used for TaskEpilog. Programs for the slurmd to execute\nas the slurm job's owner after termination of each task.\nSee https://slurm.schedmd.com/slurm.conf.html#OPT_TaskEpilog.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "filename" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "content" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "source" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "script", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "task_epilog_scripts" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "content" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "source" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "content" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "script" ],
+                                          [ "A_string", "source" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Either 'content' or 'source' must be defined, but not both."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_external_prolog_epilog" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nAutomatically enable a script that will execute prolog and epilog scripts\nshared by NFS from the controller to compute nodes. Find more details at:\nhttps://github.com/GoogleCloudPlatform/slurm-gcp/blob/v5/tools/prologs-epilogs/README.md\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "disable_default_mounts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nDisable default global network storage from the controller\n- /home\n- /apps\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "network_storage" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nStorage to mounted on all instances.\n- server_ip     : Address of the storage server.\n- remote_mount  : The location in the remote instance filesystem to mount from.\n- local_mount   : The location on the instance filesystem to mount to.\n- fs_type       : Filesystem type (e.g. \"nfs\").\n- mount_options : Options to mount with.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "server_ip" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "remote_mount" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "local_mount" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "fs_type" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "mount_options" ], [ "Id", "string" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "nodeset" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Cluster nodenets, as a list." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "any" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "nodeset_dyn" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Cluster nodenets (dynamic), as a list." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "any" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "nodeset_tpu" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Cluster nodenets (TPU), as a list." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "any" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cloud_parameters" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "cloud.conf options. Default behavior defined in scripts/conf.py"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "no_comma_params" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "private_data" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "scheduler_parameters" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "resume_rate" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "number" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "resume_timeout" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "number" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "suspend_rate" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "number" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "suspend_timeout" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "number" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "slurmd_timeout" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "number" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "unkillable_step_timeout" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "number" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "topology_plugin" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "topology_param" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "tree_width" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "number" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "prolog_flags" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "switch_type" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_hybrid" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nEnables use of hybrid controller mode. When true, controller_hybrid_config will\nbe used instead of controller_instance_config and will disable login instances.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "google_app_cred_path" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Path to Google Application Credentials." ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slurm_bin_dir" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nPath to directory of Slurm binary commands (e.g. scontrol, sinfo). If 'null',\nthen it will be assumed that binaries are in $PATH.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slurm_log_dir" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Directory where Slurm logs to." ]
+        ],
+        [ "Attribute", "default", [ "String", "/var/log/slurm" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slurm_control_host" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nThe short, or long, hostname of the machine where Slurm control daemon is\nexecuted (i.e. the name returned by the command \"hostname -s\").\n\nThis value is passed to slurm.conf such that:\nSlurmctldHost={var.slurm_control_host}\\({var.slurm_control_addr}\\)\n\nSee https://slurm.schedmd.com/slurm.conf.html#OPT_SlurmctldHost\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slurm_control_host_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nThe port number that the Slurm controller, slurmctld, listens to for work.\n\nSee https://slurm.schedmd.com/slurm.conf.html#OPT_SlurmctldPort\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "6818" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slurm_control_addr" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nThe IP address or a name by which the address can be identified.\n\nThis value is passed to slurm.conf such that:\nSlurmctldHost={var.slurm_control_host}\\({var.slurm_control_addr}\\)\n\nSee https://slurm.schedmd.com/slurm.conf.html#OPT_SlurmctldHost\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "output_dir" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nDirectory where this module will write its files to. These files include:\ncloud.conf; cloud_gres.conf; config.yaml; resume.py; suspend.py; and util.py.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "install_dir" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nDirectory where the hybrid configuration directory will be installed on the\non-premise controller (e.g. /etc/slurm/hybrid). This updates the prefix path\nfor the resume and suspend scripts in the generated `cloud.conf` file.\n\nThis variable should be used when the TerraformHost and the SlurmctldHost\nare different.\n\nThis will default to var.output_dir if null.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "munge_mount" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nRemote munge mount for compute and login nodes to acquire the munge.key.\nBy default, the munge mount server will be assumed to be the\n`var.slurm_control_host` (or `var.slurm_control_addr` if non-null) when\n`server_ip=null`.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "server_ip" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "remote_mount" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "fs_type" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "mount_options" ], [ "Id", "string" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [ [ "Bare", "server_ip" ], [ "Null" ] ],
+              [ [ "Bare", "remote_mount" ], [ "String", "/etc/munge/" ] ],
+              [ [ "Bare", "fs_type" ], [ "String", "nfs" ] ],
+              [ [ "Bare", "mount_options" ], [ "String", "" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slurm_key_mount" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOD",
+              "\nRemote mount for compute and login nodes to acquire the slurm.key.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "server_ip" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "remote_mount" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "fs_type" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "mount_options" ], [ "Id", "string" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "endpoint_versions" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Version of the API to use (The compute service is the only API currently supported)"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object", [ [ [ "Bare", "compute" ], [ "Id", "string" ] ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [ "Object", [ [ [ "Bare", "compute" ], [ "Null" ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "controller_network_attachment" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "SelfLink for NetworkAttachment to be attached to the controller, if any."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ]
+]

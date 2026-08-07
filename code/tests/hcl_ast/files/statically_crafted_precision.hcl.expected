@@ -1,0 +1,5 @@
+[
+  [ "Attribute", "x", [ "Float", 0.1 ] ],
+  [ "Attribute", "y", [ "Float", 0.2 ] ],
+  [ "Attribute", "z", [ "Int", 123456789012345678 ] ]
+]

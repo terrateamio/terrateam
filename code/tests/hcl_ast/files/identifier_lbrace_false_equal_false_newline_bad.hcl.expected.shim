@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,16-2,1: Invalid single-argument block definition; An argument definition on the same line as its containing block creates a single-line block definition, which must also be closed on the same line. Place the block's closing brace immediately after the argument definition.

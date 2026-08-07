@@ -1,0 +1,2266 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_caller_identity" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "aws_account_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "aws_account_id" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "aws_caller_identity" ]
+                        ]
+                      ],
+                      [ "A_string", "current" ]
+                    ]
+                  ],
+                  [ "A_string", "account_id" ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "aws_account_id" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "org" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "-" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "-" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "env" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "-" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "comp" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "role_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "role_name" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr", [ [ "Id", "local" ], [ "A_string", "name" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "-github-action" ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "role_name" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "policy_name" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr", [ [ "Id", "local" ], [ "A_string", "name" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "-github-action" ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "policy_name" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_s3",
+          [
+            "Gt",
+            [
+              [
+                "Fun_call",
+                [
+                  "length",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "s3_buckets" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_cloudfront",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "enable_cloudfront" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_ecr",
+          [
+            "Gt",
+            [
+              [
+                "Fun_call",
+                [
+                  "length",
+                  [
+                    [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "ecr_arns" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_ecs",
+          [
+            "Gt",
+            [
+              [
+                "Fun_call",
+                [
+                  "length",
+                  [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "ecs" ] ] ] ]
+                ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_codebuild",
+          [
+            "Not_equal",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "codebuild_project_name" ] ]
+              ],
+              [ "String", "" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kms_key_arn",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "kms_key_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "subs",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "subs" ] ] ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Tuple",
+                [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "sub" ] ] ] ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "subs" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ecs_task_roles",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "r", [] ],
+              "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "ecs" ] ] ],
+              "output": [
+                "Attr", [ [ "Id", "r" ], [ "A_string", "task_role_arn" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ecs_execution_roles",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "r", [] ],
+              "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "ecs" ] ] ],
+              "output": [
+                "Attr",
+                [ [ "Id", "r" ], [ "A_string", "execution_role_arn" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ecs_service_arns",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "r", [] ],
+              "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "ecs" ] ] ],
+              "output": [
+                "Attr", [ [ "Id", "r" ], [ "A_string", "service_arn" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ecs_codedeploy_arns",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "r", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "ecs" ] ]
+                    ],
+                    "output": [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Not_equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "r" ],
+                                      [
+                                        "A_string",
+                                        "codedeploy_application_name"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [
+                          "Tuple",
+                          [
+                            [
+                              "Template",
+                              [
+                                [ "Literal", "arn:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_partition" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":codedeploy:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_region" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "aws_account_id" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":deploymentgroup:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "r" ],
+                                        [
+                                          "A_string",
+                                          "codedeploy_application_name"
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", "/" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "r" ],
+                                        [
+                                          "A_string",
+                                          "codedeploy_deployment_group_name"
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ],
+                            [
+                              "Template",
+                              [
+                                [ "Literal", "arn:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_partition" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":codedeploy:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_region" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "aws_account_id" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":deploymentconfig:*" ]
+                              ]
+                            ],
+                            [
+                              "Template",
+                              [
+                                [ "Literal", "arn:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_partition" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":codedeploy:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_region" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "aws_account_id" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":application:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "r" ],
+                                        [
+                                          "A_string",
+                                          "codedeploy_application_name"
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "else_": [ "Tuple", [] ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ec2_codedeploy_arns",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "r", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "ec2" ] ]
+                    ],
+                    "output": [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Not_equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "r" ],
+                                      [
+                                        "A_string",
+                                        "codedeploy_application_name"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [
+                          "Tuple",
+                          [
+                            [
+                              "Template",
+                              [
+                                [ "Literal", "arn:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_partition" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":codedeploy:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_region" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "aws_account_id" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":deploymentgroup:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "r" ],
+                                        [
+                                          "A_string",
+                                          "codedeploy_application_name"
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", "/" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "r" ],
+                                        [
+                                          "A_string",
+                                          "codedeploy_deployment_group_name"
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ],
+                            [
+                              "Template",
+                              [
+                                [ "Literal", "arn:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_partition" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":codedeploy:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_region" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "aws_account_id" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":deploymentconfig:*" ]
+                              ]
+                            ],
+                            [
+                              "Template",
+                              [
+                                [ "Literal", "arn:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_partition" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":codedeploy:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "aws_region" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "aws_account_id" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ":application:" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "r" ],
+                                        [
+                                          "A_string",
+                                          "codedeploy_application_name"
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "else_": [ "Tuple", [] ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_codedeploy",
+          [
+            "Gt",
+            [
+              [
+                "Fun_call",
+                [
+                  "length",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "ec2_codedeploy_arns" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_iam_policy_document" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "s3_buckets" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "s3:GetBucketLocation" ],
+                          [ "String", "s3:ListBucket" ],
+                          [ "String", "s3:CreateMultipartUpload" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "arn:" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "aws_partition" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ":s3:::" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "statement" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "s3_buckets" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "s3:DeleteObject" ],
+                          [ "String", "s3:GetObject" ],
+                          [ "String", "s3:PutObject" ],
+                          [ "String", "s3:PutObjectAcl" ],
+                          [ "String", "s3:CreateMultipartUpload" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "arn:" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "aws_partition" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ":s3:::" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "statement" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "/*" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "enable_s3" ] ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [ "Tuple", [ [ "String", "s3:ListObjects" ] ] ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [ "Tuple", [ [ "String", "*" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "enable_cloudfront" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "acm:ListCertificates" ],
+                          [ "String", "cloudfront:GetDistribution" ],
+                          [ "String", "cloudfront:GetStreamingDistribution" ],
+                          [ "String", "cloudfront:GetDistributionConfig" ],
+                          [ "String", "cloudfront:ListDistributions" ],
+                          [
+                            "String",
+                            "cloudfront:ListCloudFrontOriginAccessIdentities"
+                          ],
+                          [ "String", "cloudfront:CreateInvalidation" ],
+                          [ "String", "cloudfront:GetInvalidation" ],
+                          [ "String", "cloudfront:ListInvalidations" ],
+                          [
+                            "String",
+                            "elasticloadbalancing:DescribeLoadBalancers"
+                          ],
+                          [ "String", "iam:ListServerCertificates" ],
+                          [ "String", "sns:ListSubscriptionsByTopic" ],
+                          [ "String", "sns:ListTopics" ],
+                          [ "String", "waf:GetWebACL" ],
+                          [ "String", "waf:ListWebACLs" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [ "Tuple", [ [ "String", "*" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "enable_ecr" ] ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "ecr:BatchGetImage" ],
+                          [ "String", "ecr:BatchCheckLayerAvailability" ],
+                          [ "String", "ecr:CompleteLayerUpload" ],
+                          [ "String", "ecr:GetDownloadUrlForLayer" ],
+                          [ "String", "ecr:InitiateLayerUpload" ],
+                          [ "String", "ecr:PutImage" ],
+                          [ "String", "ecr:UploadLayerPart" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "ecr_arns" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "enable_ecr" ] ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [ [ "String", "ecr:GetAuthorizationToken" ] ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [ "Tuple", [ [ "String", "*" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "enable_codebuild" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "codebuild:StartBuild" ],
+                          [ "String", "codebuild:BatchGetBuilds" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "arn:" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "aws_partition" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ":codebuild:" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "aws_region" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ":" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "aws_account_id" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ":project/" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string", "codebuild_project_name"
+                                      ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "enable_codebuild" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [ "Tuple", [ [ "String", "logs:GetLogEvents" ] ] ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "arn:" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "aws_partition" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ":logs:" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "aws_region" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ":" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "aws_account_id" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ":log-group:/aws/codebuild/" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string", "codebuild_project_name"
+                                      ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ":*" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "enable_ecs" ] ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [ [ "String", "ecs:RegisterTaskDefinition" ] ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [ "Tuple", [ [ "String", "*" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "enable_ecs" ] ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [ "Tuple", [ [ "String", "iam:PassRole" ] ] ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [
+                        "Fun_call",
+                        [
+                          "concat",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "ecs_task_roles" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "ecs_execution_roles" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "enable_ecs" ] ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "ecs:UpdateService" ],
+                          [ "String", "ecs:DescribeServices" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "ecs_service_arns" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "enable_codedeploy" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "codedeploy:GetDeploymentGroup" ],
+                          [ "String", "codedeploy:CreateDeployment" ],
+                          [ "String", "codedeploy:GetDeployment" ],
+                          [ "String", "codedeploy:GetDeploymentConfig" ],
+                          [ "String", "codedeploy:GetApplicationRevision" ],
+                          [
+                            "String",
+                            "codedeploy:RegisterApplicationRevision"
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "ecs_codedeploy_arns" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "enable_codedeploy" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "codedeploy:GetDeploymentGroup" ],
+                          [ "String", "codedeploy:CreateDeployment" ],
+                          [ "String", "codedeploy:GetDeployment" ],
+                          [ "String", "codedeploy:GetDeploymentConfig" ],
+                          [ "String", "codedeploy:GetApplicationRevision" ],
+                          [
+                            "String",
+                            "codedeploy:RegisterApplicationRevision"
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "ec2_codedeploy_arns" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "statement" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "kms_key_arn" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [] ],
+                    "else_": [
+                      "Fun_call",
+                      [ "tolist", [ [ "Tuple", [ [ "Int", 1 ] ] ] ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "sid", [ "String", "AllowKeyUsage" ] ],
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "kms:Encrypt" ],
+                          [ "String", "kms:Decrypt" ],
+                          [ "String", "kms:ReEncrypt*" ],
+                          [ "String", "kms:GenerateDataKey*" ],
+                          [ "String", "kms:DescribeKey" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "resources",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "kms_key_arn" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "condition" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Gt",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "length",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string", "kms_key_aliases"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "Fun_call",
+                                  [
+                                    "tolist",
+                                    [ [ "Tuple", [ [ "Int", 1 ] ] ] ]
+                                  ]
+                                ],
+                                "else_": [ "Tuple", [] ]
+                              }
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "test",
+                                  [ "String", "ForAnyValue:StringEquals" ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "variable",
+                                  [ "String", "kms:ResourceAliases" ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "values",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "kms_key_aliases" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_iam_policy_document" ], [ "Lit", "assume" ] ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "actions",
+                [
+                  "Tuple", [ [ "String", "sts:AssumeRoleWithWebIdentity" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "principals",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "Federated" ] ],
+                    [
+                      "Attribute",
+                      "identifiers",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "arn:" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "aws_partition" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ":iam::" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "aws_account_id" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Literal",
+                                ":oidc-provider/token.actions.githubusercontent.com"
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "StringEquals" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [ "String", "token.actions.githubusercontent.com:aud" ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [ "Tuple", [ [ "String", "sts.amazonaws.com" ] ] ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "ForAnyValue:StringLike" ]
+                    ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [ "String", "token.actions.githubusercontent.com:sub" ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "subs" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_iam_role" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "role_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Allow GitHub Action to call AWS services" ]
+        ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "assume" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_iam_policy" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "policy_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Access resources from GitHub Action" ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "this" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy_attachment" ], [ "Lit", "this" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "aws_iam_role" ], [ "A_string", "this" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_policy" ], [ "A_string", "this" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

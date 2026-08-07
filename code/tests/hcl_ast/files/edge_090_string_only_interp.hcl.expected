@@ -1,0 +1,19 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Template",
+      [
+        [
+          "Interpolation",
+          {
+            "expr": [ "Attr", [ [ "Id", "var" ], [ "A_string", "x" ] ] ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ]
+]

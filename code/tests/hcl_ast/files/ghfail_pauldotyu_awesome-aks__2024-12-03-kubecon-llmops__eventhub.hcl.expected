@@ -1,0 +1,462 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_eventhub_namespace" ], [ "Lit", "example" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "eh-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "random_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sku", [ "String", "Basic" ] ],
+        [ "Attribute", "capacity", [ "Int", 1 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_eventhub" ], [ "Lit", "example" ] ],
+      "body": [
+        [
+          "Attribute",
+          "namespace_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_eventhub_namespace" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "myeventhub" ] ],
+        [ "Attribute", "partition_count", [ "Int", 1 ] ],
+        [ "Attribute", "message_retention", [ "Int", 1 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_action_group" ], [ "Lit", "email" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "myemailactiongroup" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "short_name", [ "String", "email" ] ],
+        [
+          "Block",
+          {
+            "type_": "email_receiver",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "sendtoadmin" ] ],
+              [
+                "Attribute",
+                "email_address",
+                [ "String", "pauyu@microsoft.com" ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_action_group" ], [ "Lit", "eventhub" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "myeventhubactiongroup" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "short_name", [ "String", "eventhub" ] ],
+        [
+          "Block",
+          {
+            "type_": "event_hub_receiver",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "event_hub_namespace",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "azurerm_eventhub_namespace" ],
+                        [ "A_string", "example" ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "event_hub_name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "azurerm_eventhub" ],
+                        [ "A_string", "example" ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "name", [ "String", "sendtoeventhub" ] ],
+              [ "Attribute", "use_common_alert_schema", [ "Bool", false ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_alert_prometheus_rule_group" ],
+        [ "Lit", "example" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_kubernetes_cluster" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "ProductRecordingRulesRuleGroup - " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_kubernetes_cluster" ],
+                          [ "A_string", "example" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Model tuning required when product count increases." ]
+        ],
+        [ "Attribute", "rule_group_enabled", [ "Bool", true ] ],
+        [ "Attribute", "interval", [ "String", "PT1M" ] ],
+        [
+          "Attribute",
+          "scopes",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_monitor_workspace" ],
+                      [ "A_string", "example" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_kubernetes_cluster" ],
+                      [ "A_string", "example" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "Total_Product_Count_Delta" ]
+              ],
+              [ "Attribute", "severity", [ "Int", 3 ] ],
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "for", [ "String", "PT1M" ] ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nidelta(total_product_count{job=\"product-service\"}[60s]) > 0\n"
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "action",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "action_group_id",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "azurerm_monitor_action_group" ],
+                              [ "A_string", "email" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "action",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "action_group_id",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "azurerm_monitor_action_group" ],
+                              [ "A_string", "eventhub" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "alert_resolution",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "auto_resolved", [ "Bool", true ] ],
+                    [ "Attribute", "time_to_resolve", [ "String", "PT30M" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

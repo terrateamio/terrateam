@@ -1,0 +1,15 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "For_tuple",
+      {
+        "identifiers": [ "x", [] ],
+        "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
+        "output": [ "Id", "x" ],
+        "cond": null
+      }
+    ]
+  ]
+]

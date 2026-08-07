@@ -1,0 +1,384 @@
+[
+  [
+    "Attribute",
+    "a",
+    [
+      "Object",
+      [
+        [
+          [
+            "Computed",
+            [ "Attr", [ [ "Id", "var" ], [ "A_string", "foo" ] ] ]
+          ],
+          [ "String", "v" ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "a_read",
+    [
+      "Object",
+      [
+        [
+          [ "Bare", "v" ],
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "foo" ] ] ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "b",
+    [
+      "Object",
+      [
+        [
+          [
+            "Computed",
+            [ "Attr", [ [ "Id", "local" ], [ "A_string", "foo" ] ] ]
+          ],
+          [ "String", "v" ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "b_read",
+    [
+      "Object",
+      [
+        [
+          [ "Bare", "v" ],
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "foo" ] ] ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "c",
+    [
+      "Object",
+      [
+        [
+          [
+            "Computed",
+            [ "Attr", [ [ "Id", "module" ], [ "A_string", "foo" ] ] ]
+          ],
+          [ "String", "v" ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "c_read",
+    [
+      "Object",
+      [
+        [
+          [ "Bare", "v" ],
+          [ "Attr", [ [ "Id", "module" ], [ "A_string", "foo" ] ] ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "d",
+    [
+      "Object",
+      [
+        [
+          [
+            "Computed",
+            [ "Attr", [ [ "Id", "data" ], [ "A_string", "foo" ] ] ]
+          ],
+          [ "String", "v" ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "d_read",
+    [
+      "Object",
+      [
+        [
+          [ "Bare", "v" ],
+          [ "Attr", [ [ "Id", "data" ], [ "A_string", "foo" ] ] ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "e",
+    [
+      "Object",
+      [
+        [
+          [
+            "Computed",
+            [ "Attr", [ [ "Id", "path" ], [ "A_string", "foo" ] ] ]
+          ],
+          [ "String", "v" ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "e_read",
+    [
+      "Object",
+      [
+        [
+          [ "Bare", "v" ],
+          [ "Attr", [ [ "Id", "path" ], [ "A_string", "foo" ] ] ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "f",
+    [
+      "Object",
+      [
+        [
+          [
+            "Computed",
+            [ "Attr", [ [ "Id", "terraform" ], [ "A_string", "foo" ] ] ]
+          ],
+          [ "String", "v" ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "f_read",
+    [
+      "Object",
+      [
+        [
+          [ "Bare", "v" ],
+          [ "Attr", [ [ "Id", "terraform" ], [ "A_string", "foo" ] ] ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "g",
+    [ "Object", [ [ [ "Computed", [ "Id", "var" ] ], [ "String", "v" ] ] ] ]
+  ],
+  [
+    "Attribute",
+    "g_read",
+    [ "Object", [ [ [ "Bare", "v" ], [ "Id", "var" ] ] ] ]
+  ],
+  [
+    "Attribute",
+    "h",
+    [ "Object", [ [ [ "Computed", [ "Id", "foo" ] ], [ "String", "v" ] ] ] ]
+  ],
+  [
+    "Attribute",
+    "h_read",
+    [ "Object", [ [ [ "Bare", "v" ], [ "Id", "foo" ] ] ] ]
+  ],
+  [
+    "Attribute",
+    "i",
+    [
+      "Object",
+      [
+        [
+          [
+            "Computed",
+            [
+              "Attr",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+                [ "A_string", "b" ]
+              ]
+            ]
+          ],
+          [ "String", "v" ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "i_read",
+    [
+      "Object",
+      [
+        [
+          [ "Bare", "v" ],
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+              [ "A_string", "b" ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "j",
+    [
+      "Object",
+      [
+        [
+          [
+            "Computed",
+            [
+              "Idx",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+                [ "Int", 0 ]
+              ]
+            ]
+          ],
+          [ "String", "v" ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "j_read",
+    [
+      "Object",
+      [
+        [
+          [ "Bare", "v" ],
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "k",
+    [
+      "Object",
+      [
+        [
+          [
+            "Computed",
+            [
+              "Attr",
+              [
+                [
+                  "Idx",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+                    [ "Int", 0 ]
+                  ]
+                ],
+                [ "A_string", "b" ]
+              ]
+            ]
+          ],
+          [ "String", "v" ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "k_read",
+    [
+      "Object",
+      [
+        [
+          [ "Bare", "v" ],
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "b" ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "l",
+    [
+      "Object",
+      [
+        [ [ "Bare", "k1" ], [ "Int", 1 ] ],
+        [
+          [
+            "Computed",
+            [ "Attr", [ [ "Id", "var" ], [ "A_string", "foo" ] ] ]
+          ],
+          [ "Int", 2 ]
+        ],
+        [ [ "Bare", "k2" ], [ "Int", 3 ] ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "l_read",
+    [
+      "Object",
+      [
+        [ [ "Bare", "k1" ], [ "Int", 1 ] ],
+        [
+          [ "Bare", "k2" ],
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "foo" ] ] ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "m",
+    [
+      "Object",
+      [
+        [ [ "Quoted", "k" ], [ "Int", 1 ] ],
+        [ [ "Quoted", "2" ], [ "Int", 2 ] ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "n",
+    [ "Object", [ [ [ "Quoted", "var.a.b" ], [ "Int", 1 ] ] ] ]
+  ],
+  [
+    "Attribute",
+    "o",
+    [ "Object", [ [ [ "Quoted", "var.a[0]" ], [ "Int", 1 ] ] ] ]
+  ]
+]

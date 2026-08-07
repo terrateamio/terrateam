@@ -1,0 +1,982 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "security_groups",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "security_group_ids" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "security_group_ids" ] ]
+              ],
+              "else_": [
+                "Tuple",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_security_group" ],
+                              [ "A_string", "default" ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_volume_mounts",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", " " ],
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "vol", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "ebs_volumes" ] ]
+                    ],
+                    "output": [
+                      "Template",
+                      [
+                        [ "Literal", "-v /mnt/" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Fun_call",
+                              [
+                                "trimprefix",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vol" ],
+                                      [ "A_string", "device_name" ]
+                                    ]
+                                  ],
+                                  [ "String", "/dev/" ]
+                                ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", ":" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "vol" ], [ "A_string", "mount_path" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_env_vars",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", " " ],
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "key", [ "value" ] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "environment_variables" ]
+                      ]
+                    ],
+                    "output": [
+                      "Template",
+                      [
+                        [ "Literal", "-e " ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [ "Id", "key" ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "=\"" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Fun_call",
+                              [
+                                "replace",
+                                [
+                                  [ "Id", "value" ],
+                                  [ "String", "\"" ],
+                                  [ "String", "\\\\" ]
+                                ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\"" ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_secrets_json",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "map_secrets" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ssm_secret_arns",
+          [
+            "Fun_call",
+            [
+              "distinct",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "arn", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "map_secrets" ] ]
+                    ],
+                    "output": [ "Id", "arn" ],
+                    "cond": [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "regex",
+                              [
+                                [ "String", "arn:aws:ssm:" ], [ "Id", "arn" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sm_secret_arns",
+          [
+            "Fun_call",
+            [
+              "distinct",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "arn", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "map_secrets" ] ]
+                    ],
+                    "output": [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Fun_call",
+                          [
+                            "can",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "regex",
+                                  [
+                                    [ "String", "arn:aws:secretsmanager:" ],
+                                    [ "Id", "arn" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "then_": [
+                          "Idx",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regex",
+                                [
+                                  [
+                                    "String",
+                                    "^(arn:aws:secretsmanager:[^:]+:[^:]+:secret:[^:]+)(?::[^:]+::)?$"
+                                  ],
+                                  [ "Id", "arn" ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "else_": [ "String", "" ]
+                      }
+                    ],
+                    "cond": [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "regex",
+                              [
+                                [ "String", "arn:aws:secretsmanager:" ],
+                                [ "Id", "arn" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "docker_port_args",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", " " ],
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "pm", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "port_mappings" ] ]
+                    ],
+                    "output": [
+                      "Template",
+                      [
+                        [ "Literal", "-p " ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [ [ "Id", "pm" ], [ "A_string", "hostPort" ] ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", ":" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "pm" ],
+                                [ "A_string", "containerPort" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "/" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [ [ "Id", "pm" ], [ "A_string", "protocol" ] ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "common_tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "solution_name" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "-" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "instance_name" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ [ "Bare", "ManagedBy" ], [ "String", "Terraform" ] ],
+                    [
+                      [ "Bare", "Solution" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "solution_name" ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "WorkloadInstance" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "instance_name" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ssm_param_prefix",
+          [
+            "Template",
+            [
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "solution_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/ec2_docker_workload/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "instance_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "internal_dns_zone_id",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_ssm_parameter" ]
+                              ]
+                            ],
+                            [ "A_string", "internal_dns_zone_id" ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [ "A_string", "value" ]
+                  ]
+                ],
+                [ "String", "" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "internal_dns_zone_name",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_ssm_parameter" ]
+                              ]
+                            ],
+                            [ "A_string", "internal_dns_zone_name" ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [ "A_string", "value" ]
+                  ]
+                ],
+                [ "String", "" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "internal_dns_workload_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "internal_dns_workload_name" ]
+                    ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "internal_dns_workload_name" ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "instance_name" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "internal_dns_record_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "enable_internal_dns" ] ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "internal_dns_workload_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "." ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "internal_dns_zone_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "persistent_volumes",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "vol", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "ebs_volumes" ] ]
+              ],
+              "output": [ "Id", "vol" ],
+              "cond": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "vol" ],
+                      [ "A_string", "delete_on_termination" ]
+                    ]
+                  ],
+                  [ "Bool", false ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "volume_az",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "ebs_volume_availability_zone" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "is_ecr_image",
+          [
+            "Fun_call",
+            [
+              "can",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "regex",
+                    [
+                      [ "String", "dkr\\.ecr\\." ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "docker_image_uri" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ecr_repo_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is_ecr_image" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "split",
+                      [
+                        [ "String", "/" ],
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "split",
+                                [
+                                  [ "String", ":" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "docker_image_uri" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 1 ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "use_https_listener",
+          [
+            "Log_and",
+            [
+              [
+                "Log_and",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ], [ "A_string", "enable_load_balancer" ]
+                    ]
+                  ],
+                  [
+                    "Not",
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "internal_service" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [ "A_string", "aws_ssm_parameter" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "alb_listener_443_arn" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "value" ]
+                          ]
+                        ],
+                        [ "String", "-" ]
+                      ]
+                    ],
+                    [ "Bool", false ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "alb_listener_arn",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "use_https_listener" ] ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "aws_ssm_parameter" ]
+                                  ]
+                                ],
+                                [ "A_string", "alb_listener_443_arn" ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [ "A_string", "value" ]
+                      ]
+                    ],
+                    [ "String", "" ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "aws_ssm_parameter" ]
+                                  ]
+                                ],
+                                [ "A_string", "alb_listener_80_arn" ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [ "A_string", "value" ]
+                      ]
+                    ],
+                    [ "String", "" ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "service_port",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ], [ "A_string", "enable_load_balancer" ]
+                    ]
+                  ],
+                  [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "port_mappings" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "port_mappings" ] ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [ "A_string", "hostPort" ]
+                ]
+              ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

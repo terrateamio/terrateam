@@ -1,0 +1,209 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "kubeconfig_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/../../../kubernetes/kubeconfig" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "kubeconfig_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "kubeconfig_file_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kubernetes_namespace",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "cluster_autopilot_enabled" ]
+                ]
+              ],
+              "then_": [ "String", "gke-gmp-system" ],
+              "else_": [ "String", "gmp-system" ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "local_file" ], [ "Lit", "kubeconfig" ] ],
+      "body": [
+        [
+          "Attribute",
+          "filename",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "kubeconfig_file" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_wait" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Log_and",
+                      [
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string",
+                                  "cluster_auto_monitoring_config_scope"
+                                ]
+                              ]
+                            ],
+                            [ "String", "ALL" ]
+                          ]
+                        ],
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "cluster_autopilot_enabled" ]
+                              ]
+                            ],
+                            [ "Bool", false ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [ [ "String", "managed-prometheus-operator" ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../modules/kubectl_wait" ]
+        ],
+        [ "Attribute", "for", [ "String", "condition=ready" ] ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "kubernetes_namespace" ] ]
+          ]
+        ],
+        [ "Attribute", "resource", [ "String", "pod" ] ],
+        [
+          "Attribute",
+          "selector",
+          [ "String", "app=managed-prometheus-operator" ]
+        ],
+        [ "Attribute", "timeout", [ "String", "300s" ] ]
+      ]
+    }
+  ]
+]

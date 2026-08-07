@@ -1,0 +1,16 @@
+[
+  [
+    "Attribute",
+    "o",
+    [
+      "Idx",
+      [
+        [
+          "Tuple",
+          [ [ "String", "a" ], [ "String", "b" ], [ "String", "c" ] ]
+        ],
+        [ "Add", [ [ "Int", 1 ], [ "Int", 1 ] ] ]
+      ]
+    ]
+  ]
+]

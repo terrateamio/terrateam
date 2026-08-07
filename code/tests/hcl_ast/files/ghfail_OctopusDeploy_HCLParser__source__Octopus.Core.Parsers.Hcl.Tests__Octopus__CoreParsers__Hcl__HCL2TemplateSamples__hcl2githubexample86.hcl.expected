@@ -1,0 +1,499 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cognito_user_pool" ], [ "Lit", "user_pool" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "celsus_user_pool" ] ],
+        [
+          "Block",
+          {
+            "type_": "password_policy",
+            "labels": [],
+            "body": [
+              [ "Attribute", "minimum_length", [ "String", "8" ] ],
+              [ "Attribute", "require_lowercase", [ "String", "true" ] ],
+              [ "Attribute", "require_numbers", [ "String", "true" ] ],
+              [ "Attribute", "require_symbols", [ "String", "true" ] ],
+              [ "Attribute", "require_uppercase", [ "String", "true" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "admin_create_user_config",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "allow_admin_create_user_only",
+                [ "String", "false" ]
+              ],
+              [
+                "Attribute",
+                "unused_account_validity_days",
+                [ "String", "7" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "user_pool_add_ons",
+            "labels": [],
+            "body": [
+              [ "Attribute", "advanced_security_mode", [ "String", "OFF" ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cognito_user_pool_client" ], [ "Lit", "client" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "celsus_client" ] ],
+        [
+          "Attribute",
+          "user_pool_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cognito_user_pool" ],
+                  [ "A_string", "user_pool" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "explicit_auth_flows",
+          [ "Tuple", [ [ "String", "USER_PASSWORD_AUTH" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cognito_identity_pool" ], [ "Lit", "identity_pool" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "identity_pool_name",
+          [ "String", "celsus_identity_pool" ]
+        ],
+        [
+          "Attribute",
+          "allow_unauthenticated_identities",
+          [ "String", "false" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "cognito_identity_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "provider_name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_cognito_user_pool" ],
+                        [ "A_string", "user_pool" ]
+                      ]
+                    ],
+                    [ "A_string", "endpoint" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "client_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_cognito_user_pool_client" ],
+                        [ "A_string", "client" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute", "server_side_token_check", [ "String", "true" ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "template_file" ],
+        [ "Lit", "identity_pool_auth_role_policy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n        \"Federated\": \"cognito-identity.amazonaws.com\"\n      },\n      \"Action\": \"sts:AssumeRoleWithWebIdentity\",\n      \"Condition\": {\n        \"StringEquals\": {\n          \"cognito-identity.amazonaws.com:aud\": \"$${cognito_identity_pool_id}\"\n        },\n        \"ForAnyValue:StringLike\": {\n          \"cognito-identity.amazonaws.com:amr\": \"authenticated\"\n        }\n      }\n    }\n  ]\n}\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vars",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "cognito_identity_pool_id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_cognito_identity_pool" ],
+                        [ "A_string", "identity_pool" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role" ], [ "Lit", "identity_pool_auth_role" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "celsus_identity_authenticated_role" ]
+        ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "template_file" ] ]
+                  ],
+                  [ "A_string", "identity_pool_auth_role_policy" ]
+                ]
+              ],
+              [ "A_string", "rendered" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy" ], [ "Lit", "authenticated" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "celsus_identity_authenticated_policy" ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_iam_role" ],
+                  [ "A_string", "identity_pool_auth_role" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n{\n    \"Version\": \"2012-10-17\",\n    \"Statement\": [\n        {\n            \"Effect\": \"Allow\",\n            \"Action\": [\n                \"mobileanalytics:PutEvents\",\n                \"cognito-sync:*\",\n                \"cognito-identity:*\"\n            ],\n            \"Resource\": [\n                \"*\"\n            ]\n        }\n    ]\n}\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "template_file" ],
+        [ "Lit", "identity_pool_unauth_role_policy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n        \"Federated\": \"cognito-identity.amazonaws.com\"\n      },\n      \"Action\": \"sts:AssumeRoleWithWebIdentity\",\n      \"Condition\": {\n        \"StringEquals\": {\n          \"cognito-identity.amazonaws.com:aud\": \"$${cognito_identity_pool_id}\"\n        },\n        \"ForAnyValue:StringLike\": {\n          \"cognito-identity.amazonaws.com:amr\": \"unauthenticated\"\n        }\n      }\n    }\n  ]\n}\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vars",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "cognito_identity_pool_id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_cognito_identity_pool" ],
+                        [ "A_string", "identity_pool" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role" ], [ "Lit", "identity_pool_unauth_role" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "celsus_identity_unauthenticated_role" ]
+        ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "template_file" ] ]
+                  ],
+                  [ "A_string", "identity_pool_unauth_role_policy" ]
+                ]
+              ],
+              [ "A_string", "rendered" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy" ], [ "Lit", "unauthenticated" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "celsus_identity_unauthenticated_policy" ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_iam_role" ],
+                  [ "A_string", "identity_pool_unauth_role" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n{\n    \"Version\": \"2012-10-17\",\n    \"Statement\": [\n        {\n            \"Effect\": \"Allow\",\n            \"Action\": [\n                \"mobileanalytics:PutEvents\",\n                \"cognito-sync:*\"\n            ],\n            \"Resource\": [\n                \"*\"\n            ]\n        }\n    ]\n}\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cognito_identity_pool_roles_attachment" ],
+        [ "Lit", "identity_pool_roles_main" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "identity_pool_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cognito_identity_pool" ],
+                  [ "A_string", "identity_pool" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "roles",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "authenticated" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_iam_role" ],
+                        [ "A_string", "identity_pool_auth_role" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Quoted", "unauthenticated" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_iam_role" ],
+                        [ "A_string", "identity_pool_unauth_role" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

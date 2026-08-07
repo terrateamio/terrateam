@@ -1,0 +1,8 @@
+(rule
+ (target sg_hcl_shim)
+ (deps
+  (glob_files *.go)
+  go.mod
+  go.sum)
+ (action
+  (run go build -o %{target} .)))

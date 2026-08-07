@@ -1,0 +1,1545 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "k8s_available_pods_by_deployments" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "# Available pods by deployments" ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Number of pods ready by deployments" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('k8s.deployment.available', rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "refresh_interval", [ "Int", 5 ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "Available pods" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ],
+        [ "Lit", "k8s_top_10_cpu_usage_per_pod" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "Top 10 CPU usage per pod (CPU units)" ]
+        ],
+        [ "Attribute", "description", [ "String", "Pod name | Node name" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('container_cpu_utilization', rollup='rate').mean(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).scale(0.01).top(count=10).publish(label='A')\nB = data('container.cpu.time').mean(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).top(count=10).publish(label='B')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", true ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", true ] ],
+        [ "Attribute", "max_precision", [ "Int", 5 ] ],
+        [ "Attribute", "refresh_interval", [ "Int", 5 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.pod.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.node.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "k8s.cluster.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "k8s.pod.uid" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "OTel pre translated CPU usage" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Top 10 pods by average CPU usage" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ],
+        [ "Lit", "k8s_network_bytes_per_sec" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Network bytes / sec" ] ],
+        [ "Attribute", "description", [ "String", "" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('k8s.pod.network.io', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('sf_tags', '*', match_missing=True) and filter('k8s.deployment.name', '*', match_missing=True), rollup='rate', extrapolation='zero').sum(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Binary" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", true ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Rx bytes /sec (RED)" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "min_value", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "axis_right",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Tx bytes /sec (BLUE)" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "min_value", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "gold" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "brown" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Network bytes / sec" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Byte" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "k8s_desired_pods_by_deployments" ]
+      ],
+      "body": [
+        [
+          "Attribute", "name", [ "String", "# Desired pods by deployments" ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "Number of pods that should be created by deployments"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('k8s.deployment.desired', rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "refresh_interval", [ "Int", 5 ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Desired pods by deployments" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ],
+        [ "Lit", "k8s_network_errors_per_sec" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Network errors / sec" ] ],
+        [ "Attribute", "description", [ "String", "" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('k8s.pod.network.errors', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True), rollup='rate').sum(by=['k8s.pod.name', 'k8s.cluster.name', 'k8s.node.name', 'k8s.pod.uid']).publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", true ] ],
+        [ "Attribute", "max_precision", [ "Int", 4 ] ],
+        [ "Attribute", "refresh_interval", [ "Int", 5 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.pod.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.node.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "k8s.cluster.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "k8s.pod.uid" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "brown" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Network error / sec" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "k8s_memory_usage_pct" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Memory usage (%)" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "With EKS/Fargate metric data can possibly go >100%" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('container.memory.usage', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True)).sum(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).publish(label='A', enable=False)\nB = data('k8s.container.memory_limit', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True)).sum(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).above(0, inclusive=True).publish(label='B', enable=False)\nC = (A/B*100).publish(label='C')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", true ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "axes_include_zero", [ "Bool", true ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "% memory used" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [ "Attribute", "max_value", [ "Int", 110 ] ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "gold" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.pod.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.node.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.cluster.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.pod.uid" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Memory used (%)" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [ "Attribute", "display_name", [ "String", "Container" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "yellow" ] ],
+              [ "Attribute", "display_name", [ "String", "Limit" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "k8s_active_pods" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "# Active pods" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "This may include \"pause\" containers used internally by k8s"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('k8s.pod.phase').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count().publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "refresh_interval", [ "Int", 5 ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "Number of pods" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ],
+        [ "Lit", "k8s_top_10_pods_by_avg_memory_usage" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "Top 10 pods by average memory usage (bytes)" ]
+        ],
+        [ "Attribute", "description", [ "String", "Pod name | Node name" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('container.memory.usage', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True)).mean(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).top(count=10).publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", true ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Binary" ] ],
+        [ "Attribute", "refresh_interval", [ "Int", 5 ] ],
+        [ "Attribute", "max_precision", [ "Int", 4 ] ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.pod.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.node.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "k8s.cluster.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "k8s.pod.uid" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Top 10 pods by average memory usage" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Byte" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "k8s_pods_by_phase" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "# Pods by phase" ] ],
+        [ "Attribute", "description", [ "String", "" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nB = data('k8s.pod.phase', rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count().publish(label='B')\nA = data('k8s.pod.phase', rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count().publish(label='A')\nC = data('k8s.pod.phase', rollup='latest').between(2.5, 3.5, low_inclusive=True, high_inclusive=True).count().publish(label='C')\nD = data('k8s.pod.phase', rollup='latest').between(3.5, 4.5, low_inclusive=True, high_inclusive=True).count().publish(label='D')\nE = data('k8s.pod.phase', rollup='latest').between(4.5, 5.5, low_inclusive=True, high_inclusive=True).count().publish(label='E')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "sort_by", [ "String", "+sf_originatingMetric" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", true ] ],
+        [ "Attribute", "max_precision", [ "Int", 4 ] ],
+        [ "Attribute", "refresh_interval", [ "Int", 5 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "azure" ] ],
+              [ "Attribute", "display_name", [ "String", "Succeeded" ] ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_suffix", [ "String", "pods" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "brown" ] ],
+              [ "Attribute", "display_name", [ "String", "Failed" ] ],
+              [ "Attribute", "label", [ "String", "D" ] ],
+              [ "Attribute", "value_suffix", [ "String", "pods" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "purple" ] ],
+              [ "Attribute", "display_name", [ "String", "Unknown" ] ],
+              [ "Attribute", "label", [ "String", "E" ] ],
+              [ "Attribute", "value_suffix", [ "String", "pods" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "yellow" ] ],
+              [ "Attribute", "display_name", [ "String", "Pending" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "pods" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "yellowgreen" ] ],
+              [ "Attribute", "display_name", [ "String", "Running" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "pods" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "k8s_memory_usage_bytes" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Memory usage (bytes)" ] ],
+        [ "Attribute", "description", [ "String", "" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('container.memory.usage', filter=filter('k8s.node.name', '*')).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.uid', 'k8s.pod.name', 'k8s.node.name']).publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", true ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Binary" ] ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "gold" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute", "property", [ "String", "kubernetes_pod_name" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute", "property", [ "String", "kubernetes_namespace" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "kubernetes_cluster" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "kubernetes_pod_uid" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.namespace.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.pod.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.cluster.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.pod.uid" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "k8s.node.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Memory usage per pod" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Byte" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "signalfx_dashboard" ], [ "Lit", "runner_k8s" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "K8S Runners" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Kubernetes-based runners: pod states, CPU, memory, and network health."
+          ]
+        ],
+        [
+          "Attribute",
+          "dashboard_group",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "dashboard_group" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "variable",
+            "labels": [],
+            "body": [
+              [ "Attribute", "property", [ "String", "k8s.namespace.name" ] ],
+              [ "Attribute", "alias", [ "String", "ForgeCICD Tenant Name" ] ],
+              [ "Attribute", "description", [ "String", "" ] ],
+              [ "Attribute", "values", [ "Tuple", [] ] ],
+              [ "Attribute", "value_required", [ "Bool", false ] ],
+              [
+                "Attribute",
+                "values_suggested",
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "tenant_names" ] ]
+                ]
+              ],
+              [ "Attribute", "restricted_suggestions", [ "Bool", true ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "variable",
+            "labels": [],
+            "body": [
+              [ "Attribute", "property", [ "String", "k8s.pod.name" ] ],
+              [ "Attribute", "alias", [ "String", "ForgeCICD Instance Id" ] ],
+              [ "Attribute", "description", [ "String", "" ] ],
+              [ "Attribute", "values", [ "Tuple", [] ] ],
+              [ "Attribute", "value_required", [ "Bool", false ] ],
+              [ "Attribute", "values_suggested", [ "Tuple", [] ] ],
+              [ "Attribute", "restricted_suggestions", [ "Bool", false ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "variable" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "dynamic_variables" ] ]
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "var_def" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "property",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "property" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "alias",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "alias" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "description",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "description" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "values" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "value_required",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "value_required" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values_suggested",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "values_suggested" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "restricted_suggestions",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "restricted_suggestions" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "k8s_active_pods" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "k8s_available_pods_by_deployments" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "column", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "k8s_top_10_pods_by_avg_memory_usage" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "column", [ "Int", 9 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "k8s_desired_pods_by_deployments" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "k8s_pods_by_phase" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "k8s_memory_usage_pct" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "column", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "k8s_memory_usage_bytes" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "k8s_network_errors_per_sec" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "column", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 5 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "k8s_network_bytes_per_sec" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "k8s_top_10_cpu_usage_per_pod" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "row", [ "Int", 3 ] ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

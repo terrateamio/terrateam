@@ -1,0 +1,15 @@
+[
+  [
+    "Attribute",
+    "o",
+    [
+      "For_tuple",
+      {
+        "identifiers": [ "true", [] ],
+        "input": [ "Tuple", [] ],
+        "output": [ "Int", 0 ],
+        "cond": null
+      }
+    ]
+  ]
+]

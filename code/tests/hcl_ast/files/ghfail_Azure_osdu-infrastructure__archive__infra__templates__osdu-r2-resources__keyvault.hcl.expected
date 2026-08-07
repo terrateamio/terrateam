@@ -1,0 +1,612 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_id" ], [ "Lit", "entitlement_key" ] ],
+      "body": [ [ "Attribute", "byte_length", [ "Int", 18 ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "keyvault" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/keyvault" ]
+        ],
+        [
+          "Attribute",
+          "keyvault_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "kv_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "app_rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "secrets_map",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "aad-client-id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ], [ "A_string", "ad_application" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "appinsights-key" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "module" ], [ "A_string", "app_insights" ] ]
+                    ],
+                    [ "A_string", "app_insights_instrumentation_key" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "sb-connection" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "module" ], [ "A_string", "service_bus" ] ]
+                    ],
+                    [
+                      "A_string",
+                      "service_bus_namespace_default_connection_string"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "elastic-endpoint" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "elasticsearch_endpoint" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "elastic-username" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "elasticsearch_username" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "elastic-password" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "elasticsearch_password" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "cosmos-endpoint" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "module" ],
+                                [ "A_string", "cosmosdb_account" ]
+                              ]
+                            ],
+                            [ "A_string", "properties" ]
+                          ]
+                        ],
+                        [ "A_string", "cosmosdb" ]
+                      ]
+                    ],
+                    [ "A_string", "endpoint" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "cosmos-primary-key" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "module" ],
+                                [ "A_string", "cosmosdb_account" ]
+                              ]
+                            ],
+                            [ "A_string", "properties" ]
+                          ]
+                        ],
+                        [ "A_string", "cosmosdb" ]
+                      ]
+                    ],
+                    [ "A_string", "primary_master_key" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "cosmos-connection" ],
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "module" ],
+                                    [ "A_string", "cosmosdb_account" ]
+                                  ]
+                                ],
+                                [ "A_string", "properties" ]
+                              ]
+                            ],
+                            [ "A_string", "cosmosdb" ]
+                          ]
+                        ],
+                        [ "A_string", "connection_strings" ]
+                      ]
+                    ],
+                    [ "Int", 0 ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "entitlement-key" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "random_id" ],
+                        [ "A_string", "entitlement_key" ]
+                      ]
+                    ],
+                    [ "A_string", "hex" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "storage-account-key" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ], [ "A_string", "storage_account" ]
+                      ]
+                    ],
+                    [ "A_string", "primary_access_key" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app-dev-sp-username" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ],
+                        [ "A_string", "app_management_service_principal" ]
+                      ]
+                    ],
+                    [ "A_string", "client_id" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app-dev-sp-password" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ],
+                        [ "A_string", "app_management_service_principal" ]
+                      ]
+                    ],
+                    [ "A_string", "client_secret" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app-dev-sp-tenant-id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "azurerm_client_config" ]
+                          ]
+                        ],
+                        [ "A_string", "current" ]
+                      ]
+                    ],
+                    [ "A_string", "tenant_id" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "output_secret_map",
+          [
+            "For_object",
+            {
+              "identifiers": [ "secret", [] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ], [ "A_string", "keyvault_secrets" ]
+                    ]
+                  ],
+                  [ "A_string", "keyvault_secret_attributes" ]
+                ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "secret" ], [ "A_string", "name" ] ]
+              ],
+              "value_output": [
+                "Attr", [ [ "Id", "secret" ], [ "A_string", "id" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "app_setting_kv_format",
+          [ "String", "@Microsoft.KeyVault(SecretUri=%s)" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "keyvault_secrets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/keyvault-secret" ]
+        ],
+        [
+          "Attribute",
+          "keyvault_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "keyvault" ] ] ],
+              [ "A_string", "keyvault_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secrets",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "secrets_map" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "authn_app_service_keyvault_access_policy" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/keyvault-policy" ]
+        ],
+        [
+          "Attribute",
+          "vault_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "keyvault" ] ] ],
+              [ "A_string", "keyvault_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tenant_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "authn_app_service" ] ]
+              ],
+              [ "A_string", "app_service_identity_tenant_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "object_ids",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "authn_app_service" ] ]
+              ],
+              [ "A_string", "app_service_identity_object_ids" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key_permissions",
+          [ "Tuple", [ [ "String", "get" ], [ "String", "list" ] ] ]
+        ],
+        [
+          "Attribute",
+          "secret_permissions",
+          [ "Tuple", [ [ "String", "get" ], [ "String", "list" ] ] ]
+        ],
+        [
+          "Attribute",
+          "certificate_permissions",
+          [ "Tuple", [ [ "String", "get" ], [ "String", "list" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "function_app_keyvault_access_policy" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/keyvault-policy" ]
+        ],
+        [
+          "Attribute",
+          "vault_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "keyvault" ] ] ],
+              [ "A_string", "keyvault_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tenant_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "function_app" ] ]
+              ],
+              [ "A_string", "identity_tenant_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "object_ids",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "function_app" ] ]
+              ],
+              [ "A_string", "identity_object_ids" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key_permissions",
+          [ "Tuple", [ [ "String", "get" ], [ "String", "list" ] ] ]
+        ],
+        [
+          "Attribute",
+          "secret_permissions",
+          [ "Tuple", [ [ "String", "get" ], [ "String", "list" ] ] ]
+        ],
+        [
+          "Attribute",
+          "certificate_permissions",
+          [ "Tuple", [ [ "String", "get" ], [ "String", "list" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [
+        [ "Lit", "app_management_service_principal_keyvault_access_policy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/providers/azure/keyvault-policy" ]
+        ],
+        [
+          "Attribute",
+          "vault_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "keyvault" ] ] ],
+              [ "A_string", "keyvault_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tenant_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "authn_app_service" ] ]
+              ],
+              [ "A_string", "app_service_identity_tenant_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "object_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ],
+                      [ "A_string", "app_management_service_principal" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key_permissions",
+          [
+            "Tuple",
+            [
+              [ "String", "update" ],
+              [ "String", "delete" ],
+              [ "String", "get" ],
+              [ "String", "list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret_permissions",
+          [
+            "Tuple",
+            [
+              [ "String", "set" ],
+              [ "String", "delete" ],
+              [ "String", "get" ],
+              [ "String", "list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "certificate_permissions",
+          [
+            "Tuple",
+            [
+              [ "String", "update" ],
+              [ "String", "delete" ],
+              [ "String", "get" ],
+              [ "String", "list" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

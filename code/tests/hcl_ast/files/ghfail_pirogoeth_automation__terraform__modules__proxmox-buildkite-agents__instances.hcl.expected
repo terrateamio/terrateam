@@ -1,0 +1,596 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "macaddress" ], [ "Lit", "agent" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "agent_count" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "default_ipconfig", [ "String", "ip=dhcp,ip6=auto" ] ],
+        [
+          "Attribute",
+          "node_ips",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "subnet" ] ] ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "For_object",
+                {
+                  "identifiers": [ "i", [] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "range",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "agent_count" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [ "Id", "i" ],
+                  "value_output": [
+                    "Fun_call",
+                    [
+                      "cidrhost",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "subnet" ] ]
+                        ],
+                        [ "Id", "i" ]
+                      ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "else_": [
+                "For_object",
+                {
+                  "identifiers": [ "i", [] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "range",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "agent_count" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [ "Id", "i" ],
+                  "value_output": [ "Null" ],
+                  "cond": null
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_bitnum",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "subnet" ] ] ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "split",
+                      [
+                        [ "String", "/" ],
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "subnet" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 1 ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "node_ipconfigs",
+          [
+            "For_object",
+            {
+              "identifiers": [ "i", [ "address" ] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "node_ips" ] ]
+              ],
+              "key_output": [ "Id", "i" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [ "Not_equal", [ [ "Id", "address" ], [ "Null" ] ] ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "format",
+                      [
+                        [ "String", "ip=%s/%s,gw=%s" ],
+                        [ "Id", "address" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "cidr_bitnum" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "network_gateway" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "default_ipconfig" ] ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "proxmox_vm_qemu" ], [ "Lit", "agent" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "agent_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "target_node",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "proxmox_node" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "join",
+                      [
+                        [ "String", "-" ],
+                        [
+                          "Tuple",
+                          [
+                            [ "String", "buildkite" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "domain_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "desc",
+          [
+            "Template",
+            [
+              [ "Literal", "Buildkite agent " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "os_type", [ "String", "cloud-init" ] ],
+        [ "Attribute", "agent", [ "Int", 1 ] ],
+        [
+          "Attribute",
+          "clone",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "source_template" ] ] ]
+        ],
+        [
+          "Attribute",
+          "pool",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "proxmox_resource_pool" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ciuser",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+              [ "A_string", "user" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sshkeys",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "authorized_keys_file" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ipconfig0",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "node_ipconfigs" ] ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "nameserver",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "nameserver" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cores",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+              [ "A_string", "cores" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sockets",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+              [ "A_string", "sockets" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "memory",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+              [ "A_string", "memory" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "scsihw", [ "String", "virtio-scsi-pci" ] ],
+        [
+          "Block",
+          {
+            "type_": "disk",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "type",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+                    [ "A_string", "storage_type" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "storage",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+                    [ "A_string", "storage_id" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "size",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+                    [ "A_string", "disk_size" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "disk" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+                    [ "A_string", "extra_disks" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "type",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "disk" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "type" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "storage",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "disk" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "storage" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "size",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "disk" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "size" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "cache",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "disk" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "cache" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "backup",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "disk" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "backup" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "network",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "bridge",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+                    [ "A_string", "network_bridge" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "firewall", [ "Bool", true ] ],
+              [ "Attribute", "link_down", [ "Bool", false ] ],
+              [
+                "Attribute",
+                "macaddr",
+                [
+                  "Fun_call",
+                  [
+                    "upper",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "macaddress" ],
+                                  [ "A_string", "agent" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "count" ], [ "A_string", "index" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "address" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "model", [ "String", "virtio" ] ],
+              [ "Attribute", "queues", [ "Int", 0 ] ],
+              [ "Attribute", "rate", [ "Int", 0 ] ],
+              [
+                "Attribute",
+                "tag",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+                    [ "A_string", "network_tag" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [
+                  "Tuple",
+                  [
+                    [ "Id", "ciuser" ],
+                    [ "Id", "cicustom" ],
+                    [ "Id", "sshkeys" ],
+                    [ "Idx", [ [ "Id", "disk" ], [ "Int", 0 ] ] ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

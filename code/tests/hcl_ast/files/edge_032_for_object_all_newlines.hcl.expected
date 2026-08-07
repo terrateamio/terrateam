@@ -1,0 +1,16 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "For_object",
+      {
+        "identifiers": [ "k", [ "v" ] ],
+        "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "map" ] ] ],
+        "key_output": [ "Id", "k" ],
+        "value_output": [ "Id", "v" ],
+        "cond": null
+      }
+    ]
+  ]
+]

@@ -1,0 +1,3769 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the Azure Virtual Machine Scale Set." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "resource_group_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the Resource Group to use." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "region" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The name of the Azure region to deploy the resources in."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The map of tags to assign to all created resources." ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "authentication" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA map defining authentication settings (including username and password).\n\nFollowing properties are available:\n\n- `username`                        - (`string`, optional, defaults to `panadmin`) the initial administrative VM-Series\n                                      username.\n- `password`                        - (`string`, optional, defaults to `null`) the initial administrative VM-Series password.\n- `disable_password_authentication` - (`bool`, optional, defaults to `true`) disables password-based authentication.\n- `ssh_keys`                        - (`list`, optional, defaults to `[]`) a list of initial administrative SSH public keys.\n\n**Important!** \\\nThe `password` property is required when `ssh_keys` is not specified. You can have both, password and key authentication.\n\n**Important!** \\\n`ssh_keys` property is a list of strings, so each item should be the actual public key value.\nIf you would like to load them from files use the `file` function, for example: `[ file(\"/path/to/public/keys/key_1.pub\") ]`.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "username" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [ [ "Id", "string" ], [ "String", "panadmin" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "password" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "disable_password_authentication" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "ssh_keys" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ],
+                            [ "Tuple", [] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Not",
+                  [
+                    "Log_and",
+                    [
+                      [
+                        "Log_and",
+                        [
+                          [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "authentication" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "password" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          [
+                            "Not",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "authentication" ]
+                                  ]
+                                ],
+                                [
+                                  "A_string",
+                                  "disable_password_authentication"
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Equal",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "length",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "authentication" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "ssh_keys" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nAt least `password` or `ssh_keys` property has to be set when `disable_password_authentication` is `false`.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Not",
+                  [
+                    "Log_and",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "authentication" ]
+                            ]
+                          ],
+                          [ "A_string", "disable_password_authentication" ]
+                        ]
+                      ],
+                      [
+                        "Equal",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "length",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "authentication" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "ssh_keys" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `ssh_keys` property has to be set when `disable_password_authentication` is `true`.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "image" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nBasic Azure VM configuration.\n\nFollowing properties are available:\n\n- `use_airs`                - (`bool`, optional, defaults to `false`) when set to `true`, the AI Runtime Security VM image is\n                              used instead of the one passed to the module and version for `airs-flex` offer must be provided.\n- `version`                 - (`string`, optional, defaults to `null`) VM-Series PAN-OS version; list available with \n                              `az vm image list -o table --publisher paloaltonetworks --offer vmseries-flex --all`.\n- `publisher`               - (`string`, optional, defaults to `paloaltonetworks`) the Azure Publisher identifier for an image\n                              which should be deployed.\n- `offer`                   - (`string`, optional, defaults to `vmseries-flex`) the Azure Offer identifier corresponding to a\n                              published image.\n- `sku`                     - (`string`, optional, defaults to `byol`) VM-Series SKU, list available with\n                              `az vm image list -o table --all --publisher paloaltonetworks`.\n- `enable_marketplace_plan` - (`bool`, optional, defaults to `true`) when set to `true` accepts the license for an offer/plan\n                              on Azure Market Place.\n- `custom_id`               - (`string`, optional, defaults to `null`) absolute ID of your own custom PAN-OS image to be used\n                              for creating new Virtual Machines.\n\n**Important!** \\\n`custom_id` and `version` properties are mutually exclusive.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "use_airs" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "version" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "publisher" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Id", "string" ],
+                            [ "String", "paloaltonetworks" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "offer" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Id", "string" ], [ "String", "vmseries-flex" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "sku" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [ [ "Id", "string" ], [ "String", "byol" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_marketplace_plan" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "custom_id" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Not_equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ], [ "A_string", "image" ]
+                                  ]
+                                ],
+                                [ "A_string", "custom_id" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ], [ "A_string", "image" ]
+                                  ]
+                                ],
+                                [ "A_string", "version" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ], [ "A_string", "image" ]
+                                  ]
+                                ],
+                                [ "A_string", "custom_id" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        [
+                          "Not_equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ], [ "A_string", "image" ]
+                                  ]
+                                ],
+                                [ "A_string", "version" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nEither `custom_id` or `version` has to be defined.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "virtual_machine_scale_set" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nScale set parameters configuration.\n\nThis map contains basic, as well as some optional Virtual Machine Scale Set parameters. Both types contain sane defaults.\nNevertheless they should be at least reviewed to meet deployment requirements.\n\nList of either required or important properties: \n\n- `orchestration_type` - (`string`, optional, defaults to `Uniform`) this variable is used to select between the Uniform or\n                         Flexible Scale Set orchestration modes. Possible values are `Uniform` and `Flexible`.\n- `size`               - (`string`, optional, defaults to `Standard_D3_v2`) Azure VM size (type). Consult the *VM-Series\n                         Deployment Guide* as only few selected sizes are supported. The default one is a VM-300 equivalent.\n- `zones`              - (`list`, optional, defaults to `null`) a list of Availability Zones in which VMs from this Scale Set\n                         will be created. Zone balance is available from at least 2 zones.\n- `disk_type`          - (`string`, optional, defaults to `StandardSSD_LRS`) type of Managed Disk which should be created,\n                         possible values are `Standard_LRS`, `StandardSSD_LRS` or `Premium_LRS` (works only for selected `size`\n                         values).\n- `bootstrap_options`  - (`string`, optional) bootstrap options to pass to VM-Series instance.\n\n    Proper syntax is a string of semicolon separated properties, for example:\n\n    ```hcl\n    bootstrap_options = \"type=dhcp-client;panorama-server=1.2.3.4\"\n    ```\n\n    For more details on bootstrapping [see documentation](https://docs.paloaltonetworks.com/vm-series/10-2/vm-series-deployment/bootstrap-the-vm-series-firewall/create-the-init-cfgtxt-file/init-cfgtxt-file-components).\n\nList of other, optional properties:\n\n- `accelerated_networking`        - (`bool`, optional, defaults to `true`) when set to `true` enables Azure accelerated\n                                    networking (SR-IOV) for all dataplane network interfaces, this does not affect the\n                                    management interface (always disabled).\n- `allow_extension_operations`    - (`bool`, optional, defaults to `false`) should Extension Operations be allowed on this VM.\n- `disk_encryption_set_id`        - (`string`, optional, defaults to `null`) the ID of the Disk Encryption Set which should be\n                                    used to encrypt this VM's disk.\n- `encryption_at_host_enabled`    - (`bool`, optional, defaults to Azure defaults) should all of disks be encrypted by enabling\n                                    Encryption at Host.\n- `overprovision`                 - (`bool`, optional, defaults to `true`) controls whether Azure should over-provision Virtual\n                                    Machines in the Scale Set for improved deployment time and provisioning success rate.\n- `platform_fault_domain_count`   - (`number`, optional, defaults to `5`) specifies the number of fault domains that are used\n                                    by this Virtual Machine Scale Set. The Flexible orchestration mode requires this parameter\n                                    to be set.\n- `single_placement_group`        - (`bool`, optional, defaults to Azure defaults) when `true` this Virtual Machine Scale Set\n                                    will be limited to a Single Placement Group, which means the number of instances will be\n                                    capped at 100 Virtual Machines.\n- `capacity_reservation_group_id` - (`string`, optional, defaults to `null`) specifies the ID of the Capacity Reservation Group\n                                    which the Virtual Machine Scale Set should be allocated to.\n- `enable_boot_diagnostics`       - (`bool`, optional, defaults to `false`) enables boot diagnostics for a VM.\n- `boot_diagnostics_storage_uri`  - (`string`, optional, defaults to `null`) Storage Account's Blob endpoint to hold diagnostic\n                                    files, when skipped a managed Storage Account will be used (preferred).\n- `identity_type`                 - (`string`, optional, defaults to `SystemAssigned`) type of Managed Service Identity that\n                                    should be configured on this VM. Can be one of \"SystemAssigned\", \"UserAssigned\" or\n                                    \"SystemAssigned, UserAssigned\". For the Flexible orchestration mode this parameter must be\n                                    configured to \"UserAssigned\".\n- `identity_ids`                  - (`list`, optional, defaults to `[]`) a list of User Assigned Managed Identity IDs to be \n                                    assigned to this VM. Required only if `identity_type` is not \"SystemAssigned\".\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "orchestration_type" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [ [ "Id", "string" ], [ "String", "Uniform" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "size" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Id", "string" ],
+                            [ "String", "Standard_D3_v2" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "bootstrap_options" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "zones" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "disk_type" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Id", "string" ],
+                            [ "String", "StandardSSD_LRS" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "accelerated_networking" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "allow_extension_operations" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "encryption_at_host_enabled" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "bool" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "overprovision" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "platform_fault_domain_count" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "number" ], [ "Int", 5 ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "single_placement_group" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "bool" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "capacity_reservation_group_id" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "disk_encryption_set_id" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "enable_boot_diagnostics" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "boot_diagnostics_storage_uri" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "identity_type" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Id", "string" ],
+                            [ "String", "SystemAssigned" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "identity_ids" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ],
+                            [ "Tuple", [] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [ [ "String", "Flexible" ], [ "String", "Uniform" ] ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "virtual_machine_scale_set" ]
+                            ]
+                          ],
+                          [ "A_string", "orchestration_type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe orchestration type must be Flexible or Uniform, it can't have any other value assigned\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "Standard_LRS" ],
+                          [ "String", "StandardSSD_LRS" ],
+                          [ "String", "Premium_LRS" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "virtual_machine_scale_set" ]
+                            ]
+                          ],
+                          [ "A_string", "disk_type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `disk_type` property can be one of: `Standard_LRS`, `StandardSSD_LRS` or `Premium_LRS`.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "virtual_machine_scale_set" ]
+                              ]
+                            ],
+                            [ "A_string", "capacity_reservation_group_id" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "virtual_machine_scale_set" ]
+                              ]
+                            ],
+                            [ "A_string", "single_placement_group" ]
+                          ]
+                        ],
+                        [ "Bool", false ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nWhen `capacity_reservation_group_id` value is set, the `single_placement_group` value must equal to false.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "SystemAssigned" ],
+                          [ "String", "UserAssigned" ],
+                          [ "String", "SystemAssigned, UserAssigned" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "virtual_machine_scale_set" ]
+                            ]
+                          ],
+                          [ "A_string", "identity_type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `identity_type` property can be one of \\\"SystemAssigned\\\", \\\"UserAssigned\\\" or \\\"SystemAssigned, UserAssigned\\\".\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "virtual_machine_scale_set" ]
+                              ]
+                            ],
+                            [ "A_string", "identity_type" ]
+                          ]
+                        ],
+                        [ "String", "SystemAssigned" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "virtual_machine_scale_set"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "identity_ids" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "else_": [
+                      "Gte",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "virtual_machine_scale_set"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "identity_ids" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `identity_ids` property is required when `identity_type` is not \\\"SystemAssigned\\\".\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "interfaces" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nList of the network interfaces specifications.\n\n**Note!** \\\nThe ORDER in which you specify the interfaces DOES MATTER.\n\nInterfaces will be attached to VM in the order you define here, therefore:\n\n- the first should be the management interface, which does not participate in data filtering\n- the remaining ones are the dataplane interfaces.\n  \nFollowing configuration options are available:\n\n- `name`                           - (`string`, required) the interface name.\n- `subnet_id`                      - (`string`, required) ID of an existing subnet to create the interface in.\n- `ip_configurations`              - (`map`, required) A map that contains the IP configurations for the interface.\n  - `name`                           - (`string`, optional, defaults to `primary`) the name of the interface IP configuration.\n  - `primary`                        - (`bool`, optional, defaults to `true`) sets the current IP configuration as the primary\n                                       one.\n  - `create_public_ip`               - (`bool`, optional, defaults to `false`) if `true`, create a public IP for the interface.\n  - `pip_domain_name_label`          - (`string`, optional, defaults to `null`) the Prefix which should be used for the Domain\n                                       Name Label for each Virtual Machine Instance.\n  - `pip_idle_timeout_in_minutes`    - (`number`, optional, defaults to Azure default) the Idle Timeout in minutes for the \n                                       Public IP Address, possible values are in the range from 4 to 32.\n  - `pip_prefix_name`                - (`string`, optional) the name of an existing Public IP Address Prefix from where Public\n                                       IP Addresses should be allocated.\n  - `pip_prefix_resource_group_name` - (`string`, optional, defaults to the VMSS's RG) name of a Resource Group hosting an \n                                       existing Public IP Prefix resource.\n  - `pip_prefix_id`                  - (`string`, optional) you can specify Public IP Prefix ID as an alternative to the\n                                       properties above (name and resource group), in case you want to avoid using a data\n                                       source block.\n- `lb_backend_pool_ids`            - (`list`, optional, defaults to `[]`) a list of identifiers of existing Load Balancer\n                                     backend pools to associate the interface with. Only applied to primary IP configuration.\n- `appgw_backend_pool_ids`         - (`list`, optional, defaults to `[]`) a list of identifier of Application Gateway's backend\n                                     pools to associate the interface with. Only applied to primary IP configuration.\n\nExample:\n\n```hcl\n[\n  {\n    name       = \"management\"\n    subnet_id  = azurerm_subnet.my_mgmt_subnet.id\n    ip_configurations = {\n        primary-ip = {\n          name             = \"primary-ip\"\n          primary          = true\n          create_public_ip = true\n    }\n  },\n  {\n    name      = \"private\"\n    subnet_id = azurerm_subnet.my_priv_subnet.id\n    ip_configurations = {\n        primary-ip = {\n          name             = \"primary-ip\"\n          primary          = true\n          create_public_ip = false\n    }\n  },\n  {\n    name                = \"public\"\n    subnet_id           = azurerm_subnet.my_pub_subnet.id\n    lb_backend_pool_ids = [azurerm_lb_backend_address_pool.lb_backend.id]\n    ip_configurations = {\n        primary-ip = {\n          name             = \"primary-ip\"\n          primary          = true\n          create_public_ip = true\n    }\n  }\n]\n```\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "subnet_id" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "ip_configurations" ],
+                            [
+                              "Fun_call",
+                              [
+                                "map",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "name" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [ "String", "primary" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "primary" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "bool" ],
+                                                    [ "Bool", true ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "create_public_ip" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "bool" ],
+                                                    [ "Bool", false ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "pip_domain_name_label"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "pip_idle_timeout_in_minutes"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "number" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "pip_prefix_name" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "pip_prefix_resource_group_name"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "pip_prefix_id" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "lb_backend_pool_ids" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "appgw_backend_pool_ids" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "interfaces" ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ],
+                                  [ "A_string", "lb_backend_pool_ids" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "interfaces" ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ],
+                                  [ "A_string", "appgw_backend_pool_ids" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `lb_backend_pool_ids` and `appgw_backend_pool_ids` properties are not acceptable for the 1st (management) interface.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "interface", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "interfaces" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Equal",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "length",
+                                            [
+                                              [
+                                                "For_tuple",
+                                                {
+                                                  "identifiers": [
+                                                    "config_key",
+                                                    [ "config" ]
+                                                  ],
+                                                  "input": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "interface" ],
+                                                      [
+                                                        "A_string",
+                                                        "ip_configurations"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "output": [
+                                                    "Id", "config_key"
+                                                  ],
+                                                  "cond": [
+                                                    "Equal",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "config" ],
+                                                          [
+                                                            "A_string",
+                                                            "primary"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Bool", true ]
+                                                    ]
+                                                  ]
+                                                }
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Int", 1 ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nEach interface must have exactly one IP configuration with `primary = true`.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "interface", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "interfaces" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [
+                                      "ip_config_name", [ "ip_config" ]
+                                    ],
+                                    "input": [
+                                      "Fun_call",
+                                      [
+                                        "coalesce",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "interface" ],
+                                              [
+                                                "A_string",
+                                                "ip_configurations"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Object", [] ]
+                                        ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Log_and",
+                                      [
+                                        [
+                                          "Gte",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "ip_config" ],
+                                                [
+                                                  "A_string",
+                                                  "pip_idle_timeout_in_minutes"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Int", 4 ]
+                                          ]
+                                        ],
+                                        [
+                                          "Lte",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "ip_config" ],
+                                                [
+                                                  "A_string",
+                                                  "pip_idle_timeout_in_minutes"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Int", 32 ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": [
+                                      "Not_equal",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "ip_config" ],
+                                            [
+                                              "A_string",
+                                              "pip_idle_timeout_in_minutes"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `pip_idle_timeout_in_minutes` value must be a number between 4 and 32.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "autoscaling_configuration" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nAutoscaling configuration common to all policies.\n\nFollowing properties are available:\n\n- `application_insights_id` - (`string`, optional, defaults to `null`) an ID of Application Insights instance that should\n                              be used to provide metrics for autoscaling; to **avoid false positives** this should be an\n                              instance **dedicated to this Scale Set**.\n- `default_count`           - (`number`, optional, defaults to `2`) minimum number of instances that should be present\n                              in the scale set when the autoscaling engine cannot read the metrics or is otherwise unable\n                              to compare the metrics to the thresholds.\n- `scale_in_policy`         - (`string`, optional, defaults to Azure default) controls which VMs are chosen for removal\n                              during a scale-in, can be one of: `Default`, `NewestVM`, `OldestVM`.\n- `scale_in_force_deletion` - (`bool`, optional, defaults to `false`) when `true` will **force delete** machines during a \n                              scale-in operation.\n- `notification_emails`     - (`list`, optional, defaults to `[]`) list of email addresses to notify about autoscaling\n                              events.\n- `webhooks_uris`           - (`map`, optional, defaults to `{}`) the URIs that receive autoscaling events; a map where keys\n                              are just arbitrary identifiers and the values are the webhook URIs.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "application_insights_id" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "default_count" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "number" ], [ "Int", 2 ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "scale_in_policy" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "scale_in_force_deletion" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "notification_emails" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ],
+                            [ "Tuple", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "webhooks_uris" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "autoscaling_configuration" ]
+                              ]
+                            ],
+                            [ "A_string", "scale_in_policy" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "contains",
+                        [
+                          [
+                            "Tuple",
+                            [
+                              [ "String", "Default" ],
+                              [ "String", "NewestVM" ],
+                              [ "String", "OldestVM" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "autoscaling_configuration" ]
+                                ]
+                              ],
+                              [ "A_string", "scale_in_policy" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `scale_in_policy` property can be one of: `Default`, `NewestVM`, `OldestVM`.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "autoscaling_profiles" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA list defining autoscaling profiles.\n\n**Note!** \\\nThe order does matter. The 1<sup>st</sup> profile becomes the default one.\n\nThere are some considerations when creating autoscaling configuration:\n\n1. the 1<sup>st</sup> profile created will become the default one, it cannot contain any schedule.\n2. all other profiles should contain schedules.\n3. the scaling rules are optional, if you skip them you will create a profile with a set number of VM instances \n  (in such case the `minimum_count` and `maximum_count` properties are skipped).\n\nFollowing properties are available:\n\n- `name`          - (`string`, required) the name of the profile.\n- `default_count` - (`number`, required) the default number of VMs.\n- `minimum_count` - (`number`, optional, defaults to `default_count`) minimum number of VMs when scaling in.\n- `maximum_count` - (`number`, optional, defaults to `default_count`) maximum number of VMs when you scale out.\n- `recurrence`    - (`map`, required for rules beside the 1st one) a map defining time schedule for the profile to apply:\n  - `timezone`   - (`string`, optional, defaults to Azure default (UTC)) timezone for the time schedule, supported list can\n                   be found [here](https://learn.microsoft.com/en-us/rest/api/monitor/autoscale-settings/create-or-update?view=rest-monitor-2022-10-01&tabs=HTTP#:~:text=takes%20effect%20at.-,timeZone,-string).\n  - `days`       - (`list`, required) list of days of the week during which the profile is applicable, case sensitive, possible\n                   values are \"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\" and \"Sunday\".\n  - `start_time` - (`string`, required) profile start time in RFC3339 format.\n  - `end_time`   - (`string`, required) profile end time in RFC3339 format.\n- `scale_rules`   - (`list`, optional, defaults to `[]`) a list of maps defining metrics and rules for autoscaling. \n\n    **Note!** \\\n    By default all VMSS built-in metrics are available. These do not differentiate between management and data planes.\n    For more accuracy please use NGFW metrics.\n\n    Each metric definition is a map with 3 properties:\n\n    - `name`             - (`string`, required) name of the rule.\n    - `scale_out_config` - (`map`, required) definition of the rule used to scale-out.\n    - `scale_in_config`  - (`map`, required) definition of the rule used to scale-in.\n\n        Both `scale_out_config` and `scale_in_config` maps contain the same properties. The ones that are required for\n        scale-out but optional for scale-in, when skipped in the latter configuration, default to scale-out values:\n          \n        - `threshold`                  - (`number`, required) the threshold of a metric that triggers the scale action.\n        - `operator`                   - (`string`, optional, defaults to `>=` or `<=` for scale-out and scale-in respectively)\n                                         the metric vs. threshold comparison operator, can be one of: `>`, `>=`, `<`, `<=`,\n                                         `==` or `!=`.\n        - `grain_window_minutes`       - (`number`, required for scale-out, optional for scale-in) granularity of metrics that\n                                         the rule monitors, between 1 minute and 12 hours (specified in minutes).\n        - `grain_aggregation_type`     - (`string`, optional, defaults to \"Average\") method used to combine data from \n                                         `grain_window`, can be one of `Average`, `Max`, `Min` or `Sum`.\n        - `aggregation_window_minutes` - (`number`, required for scale-out, optional for scale-in) time window used to analyze\n                                         metrics, between 5 minutes and 12 hours (specified in minutes), must be greater than\n                                         `grain_window_minutes`.\n        - `aggregation_window_type`    - (`string`, optional, defaults to \"Average\") method used to combine data from\n                                         `aggregation_window`, can be one of `Average`, `Maximum`, `Minimum`, `Count`, `Last`\n                                         or `Total`.\n        - `cooldown_window_minutes`    - (`number`, required) the amount of time to wait after a scale action, between 1 minute\n                                         and 1 week (specified in minutes).\n        - `change_count_by`            - (`number`, optional, default to `1`) a number of VM instances by which the total count\n                                         of instances in a Scale Set will be changed during a scale action.\n\nExample:\n\n```hcl\n# defining one profile\nautoscaling_profiles = [\n  {\n    name          = \"default_profile\"\n    default_count = 2\n    minimum_count = 2\n    maximum_count = 4\n    scale_rules = [\n      {\n        name = \"DataPlaneCPUUtilizationPct\"\n        scale_out_config = {\n          threshold                  = 85\n          grain_window_minutes       = 1\n          aggregation_window_minutes = 25\n          cooldown_window_minutes    = 60\n        }\n        scale_in_config = {\n          threshold               = 60\n          cooldown_window_minutes = 120\n        }\n      }\n    ]\n  }\n]\n\n# defining a profile with a rule scaling to 1 NGFW, used when no other rule is applicable\n# and a second rule used for autoscaling during 'office hours'\nautoscaling_profiles = [\n  {\n    name          = \"default_profile\"\n    default_count = 1\n  },\n  {\n    name          = \"weekday_profile\"\n    default_count = 2\n    minimum_count = 2\n    maximum_count = 10\n    recurrence = {\n      days       = [\"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\"]\n      start_time = \"07:30\"\n      end_time   = \"17:00\"\n    }\n    scale_rules = [\n      {\n        name = \"Percentage CPU\"\n        scale_out_config = {\n          threshold                  = 70\n          grain_window_minutes       = 5\n          aggregation_window_minutes = 30\n          cooldown_window_minutes    = 60\n        }\n        scale_in_config = {\n          threshold               = 40\n          cooldown_window_minutes = 120\n        }\n      },\n      {\n        name = \"Outbound Flows\"\n        scale_out_config = {\n          threshold                  = 500\n          grain_window_minutes       = 5\n          aggregation_window_minutes = 30\n          cooldown_window_minutes    = 60\n        }\n        scale_in_config = {\n          threshold               = 400\n          cooldown_window_minutes = 60\n        }\n      }\n    ]\n  },\n]\n```\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "minimum_count" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "number" ] ] ]
+                            ]
+                          ],
+                          [ [ "Bare", "default_count" ], [ "Id", "number" ] ],
+                          [
+                            [ "Bare", "maximum_count" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "number" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "recurrence" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "timezone" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "days" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "start_time" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [ "Bare", "end_time" ],
+                                              [ "Id", "string" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "scale_rules" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "list",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "object",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "name" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "scale_out_config"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "threshold"
+                                                                ],
+                                                                [
+                                                                  "Id",
+                                                                  "number"
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "operator"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    ">="
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "grain_window_minutes"
+                                                                ],
+                                                                [
+                                                                  "Id",
+                                                                  "number"
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "grain_aggregation_type"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    "Average"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "aggregation_window_minutes"
+                                                                ],
+                                                                [
+                                                                  "Id",
+                                                                  "number"
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "aggregation_window_type"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    "Average"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "cooldown_window_minutes"
+                                                                ],
+                                                                [
+                                                                  "Id",
+                                                                  "number"
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "change_count_by"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "number"
+                                                                    ],
+                                                                    [
+                                                                    "Int", 1
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "scale_in_config"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "threshold"
+                                                                ],
+                                                                [
+                                                                  "Id",
+                                                                  "number"
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "operator"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    "<="
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "grain_window_minutes"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "number"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "grain_aggregation_type"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    "Average"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "aggregation_window_minutes"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "number"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "aggregation_window_type"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    "Average"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "cooldown_window_minutes"
+                                                                ],
+                                                                [
+                                                                  "Id",
+                                                                  "number"
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "change_count_by"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "number"
+                                                                    ],
+                                                                    [
+                                                                    "Int", 1
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Lte",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "autoscaling_profiles" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 20 ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nAzure supports up to 20 autoscaling profiles.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Gt",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "autoscaling_profiles" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "then_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaling_profiles" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "recurrence" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `autoscaling_profiles->recurrence` property is not allowed in the 1st profile definition.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Gt",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "autoscaling_profiles" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "v", [] ],
+                              "input": [
+                                "Fun_call",
+                                [
+                                  "slice",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string", "autoscaling_profiles"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 1 ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "length",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "autoscaling_profiles"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "output": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "recurrence" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `autoscaling_profiles->recurrence` property is required in all profiles except the 1st one.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Gt",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "autoscaling_profiles" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "flatten",
+                              [
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "v", [] ],
+                                    "input": [
+                                      "Fun_call",
+                                      [
+                                        "slice",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "autoscaling_profiles"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Int", 1 ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "length",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string",
+                                                      "autoscaling_profiles"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "day", [] ],
+                                        "input": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "v" ],
+                                                [ "A_string", "recurrence" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "days" ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Fun_call",
+                                          [
+                                            "contains",
+                                            [
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [ "String", "Monday" ],
+                                                  [ "String", "Tuesday" ],
+                                                  [ "String", "Wednesday" ],
+                                                  [ "String", "Thursday" ],
+                                                  [ "String", "Friday" ],
+                                                  [ "String", "Saturday" ],
+                                                  [ "String", "Sunday" ]
+                                                ]
+                                              ],
+                                              [ "Id", "day" ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `autoscaling_profiles->recurrence.days` property can be one of: `Monday`, `Tuesday`, `Wednesday`, `Thursday`, `Friday`,\n`Saturday` or `Sunday`.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Gt",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "autoscaling_profiles" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "v", [] ],
+                              "input": [
+                                "Fun_call",
+                                [
+                                  "slice",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string", "autoscaling_profiles"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 1 ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "length",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "autoscaling_profiles"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "output": [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^(([0,1][0-9])|(2[0-3])):([0-5][0-9])$"
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [
+                                                    "A_string", "recurrence"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "A_string", "start_time" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `autoscaling_profiles->recurrence.start_time` property has to be a time in RFC3339 format.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Gt",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "autoscaling_profiles" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "v", [] ],
+                              "input": [
+                                "Fun_call",
+                                [
+                                  "slice",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string", "autoscaling_profiles"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 1 ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "length",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "autoscaling_profiles"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "output": [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^(([0,1][0-9])|(2[0-3])):([0-5][0-9])$"
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [
+                                                    "A_string", "recurrence"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "A_string", "end_time" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `autoscaling_profiles->recurrence.end_time` property has to be a time in RFC3339 format.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "profile", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "autoscaling_profiles" ]
+                            ]
+                          ],
+                          "output": [
+                            "Lte",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "profile" ],
+                                        [ "A_string", "scale_rules" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 10 ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nAzure supports up to 10 scale rules per autoscaling profile.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "profile", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaling_profiles" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "rule", [] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "profile" ],
+                                        [ "A_string", "scale_rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "config", [] ],
+                                        "input": [
+                                          "Tuple",
+                                          [
+                                            [ "String", "scale_out_config" ],
+                                            [ "String", "scale_in_config" ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Fun_call",
+                                          [
+                                            "contains",
+                                            [
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [ "String", ">" ],
+                                                  [ "String", ">=" ],
+                                                  [ "String", "<" ],
+                                                  [ "String", "<=" ],
+                                                  [ "String", "==" ],
+                                                  [ "String", "!=" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Idx",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [ "Id", "config" ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "operator" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `operator` property can be one of: `>`, `>=`, `<`, `<=`, `==` or `!=`.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "profile", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaling_profiles" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "rule", [] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "profile" ],
+                                        [ "A_string", "scale_rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "config", [] ],
+                                        "input": [
+                                          "Tuple",
+                                          [
+                                            [ "String", "scale_out_config" ],
+                                            [ "String", "scale_in_config" ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Log_and",
+                                          [
+                                            [
+                                              "Gte",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [ "Id", "rule" ],
+                                                        [ "Id", "config" ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "grain_window_minutes"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Int", 1 ]
+                                              ]
+                                            ],
+                                            [
+                                              "Lte",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [ "Id", "rule" ],
+                                                        [ "Id", "config" ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "grain_window_minutes"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Int", 720 ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": [
+                                          "Not_equal",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Idx",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [ "Id", "config" ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string",
+                                                  "grain_window_minutes"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Null" ]
+                                          ]
+                                        ]
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `grain_window_minutes` property has to be between 1 minute and 12 hours.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "profile", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaling_profiles" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "rule", [] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "profile" ],
+                                        [ "A_string", "scale_rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "config", [] ],
+                                        "input": [
+                                          "Tuple",
+                                          [
+                                            [ "String", "scale_out_config" ],
+                                            [ "String", "scale_in_config" ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Fun_call",
+                                          [
+                                            "contains",
+                                            [
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [ "String", "Average" ],
+                                                  [ "String", "Max" ],
+                                                  [ "String", "Min" ],
+                                                  [ "String", "Sum" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Idx",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [ "Id", "config" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "grain_aggregation_type"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `grain_aggregation_type` property can be one of: `Average`, `Max`, `Min` or `Sum`.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "profile", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaling_profiles" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "rule", [] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "profile" ],
+                                        [ "A_string", "scale_rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "config", [] ],
+                                        "input": [
+                                          "Tuple",
+                                          [
+                                            [ "String", "scale_out_config" ],
+                                            [ "String", "scale_in_config" ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Log_and",
+                                          [
+                                            [
+                                              "Log_and",
+                                              [
+                                                [
+                                                  "Gte",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Idx",
+                                                          [
+                                                            [ "Id", "rule" ],
+                                                            [
+                                                              "Id", "config"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "aggregation_window_minutes"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Int", 5 ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Lte",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Idx",
+                                                          [
+                                                            [ "Id", "rule" ],
+                                                            [
+                                                              "Id", "config"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "aggregation_window_minutes"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Int", 720 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Gt",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [ "Id", "rule" ],
+                                                        [ "Id", "config" ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "aggregation_window_minutes"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [ "Id", "rule" ],
+                                                        [ "Id", "config" ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "grain_window_minutes"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": [
+                                          "Not_equal",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Idx",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [ "Id", "config" ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string",
+                                                  "aggregation_window_minutes"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Null" ]
+                                          ]
+                                        ]
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `aggregation_window_minutes` property has to be between 5 minute and 12 hours and should be longer than\n`grain_window_minutes`.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "profile", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaling_profiles" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "rule", [] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "profile" ],
+                                        [ "A_string", "scale_rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "config", [] ],
+                                        "input": [
+                                          "Tuple",
+                                          [
+                                            [ "String", "scale_out_config" ],
+                                            [ "String", "scale_in_config" ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Fun_call",
+                                          [
+                                            "contains",
+                                            [
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [ "String", "Average" ],
+                                                  [ "String", "Maximum" ],
+                                                  [ "String", "Minimum" ],
+                                                  [ "String", "Total" ],
+                                                  [ "String", "Count" ],
+                                                  [ "String", "Last" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Idx",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [ "Id", "config" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "aggregation_window_type"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `aggregation_window_type` property can be one of: `Average`, `Maximum`, `Minimum`, `Count`, `Last` or `Total`.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "profile", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaling_profiles" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "rule", [] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "profile" ],
+                                        [ "A_string", "scale_rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "config", [] ],
+                                        "input": [
+                                          "Tuple",
+                                          [
+                                            [ "String", "scale_out_config" ],
+                                            [ "String", "scale_in_config" ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Log_and",
+                                          [
+                                            [
+                                              "Gte",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [ "Id", "rule" ],
+                                                        [ "Id", "config" ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "cooldown_window_minutes"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Int", 1 ]
+                                              ]
+                                            ],
+                                            [
+                                              "Lte",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [ "Id", "rule" ],
+                                                        [ "Id", "config" ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "cooldown_window_minutes"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Int", 10080 ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `cooldown_window_minutes` property has to be between 1 minute and 1 week.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,1 @@
+hcl parse: <stdin>:4,12-5,1: Invalid multi-line string; Quoted strings may not be split over multiple lines. To produce a multi-line string, either use the \n escape to represent a newline character or use the "heredoc" multi-line template syntax., and 1 other diagnostic(s)

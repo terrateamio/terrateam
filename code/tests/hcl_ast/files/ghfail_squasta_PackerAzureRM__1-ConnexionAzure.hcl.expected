@@ -1,0 +1,31 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "azurerm" ] ],
+      "body": [
+        [
+          "Attribute",
+          "subscription_id",
+          [ "String", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" ]
+        ],
+        [
+          "Attribute",
+          "client_id",
+          [ "String", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" ]
+        ],
+        [
+          "Attribute",
+          "client_secret",
+          [ "String", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=" ]
+        ],
+        [
+          "Attribute",
+          "tenant_id",
+          [ "String", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" ]
+        ]
+      ]
+    }
+  ]
+]

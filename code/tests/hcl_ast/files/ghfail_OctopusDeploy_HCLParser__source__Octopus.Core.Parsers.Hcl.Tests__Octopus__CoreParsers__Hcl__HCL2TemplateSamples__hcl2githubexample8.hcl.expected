@@ -1,0 +1,178 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_iam_role" ], [ "Lit", "firehose_waf_logs" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "firehose_waf_logs" ] ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Action\": \"sts:AssumeRole\",\n      \"Principal\": {\n        \"Service\": \"firehose.amazonaws.com\"\n      },\n      \"Effect\": \"Allow\",\n      \"Sid\": \"\"\n    }\n  ]\n}\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy" ], [ "Lit", "firehose_waf_logs" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "firehose-waf-logs-policy" ] ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_iam_role" ],
+                  [ "A_string", "firehose_waf_logs" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [
+                  "Literal",
+                  "\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"\",\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"s3:AbortMultipartUpload\",\n        \"s3:GetBucketLocation\",\n        \"s3:GetObject\",\n        \"s3:ListBucket\",\n        \"s3:ListBucketMultipartUploads\",\n        \"s3:PutObject\"\n      ],\n      \"Resource\": [\n        \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_s3_bucket" ],
+                            [ "A_string", "firehose_waf_logs" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n        \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_s3_bucket" ],
+                            [ "A_string", "firehose_waf_logs" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "/*\"\n      ]\n    },\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"iam:CreateServiceLinkedRole\",\n      \"Resource\": \"arn:aws:iam::*:role/aws-service-role/wafv2.amazonaws.com/AWSServiceRoleForWAFV2Logging\"\n    }\n  ]\n}\n"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_kinesis_firehose_delivery_stream" ],
+        [ "Lit", "firehose_waf_logs" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "aws-waf-logs-covid-portal" ] ],
+        [ "Attribute", "destination", [ "String", "s3" ] ],
+        [
+          "Block",
+          {
+            "type_": "server_side_encryption",
+            "labels": [],
+            "body": [ [ "Attribute", "enabled", [ "Bool", true ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "s3_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "role_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_iam_role" ],
+                        [ "A_string", "firehose_waf_logs" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "bucket_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_s3_bucket" ],
+                        [ "A_string", "firehose_waf_logs" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,14 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Object",
+      [
+        [ [ "Bare", "2e0" ], [ "String", "a" ] ],
+        [ [ "Bare", "3E1" ], [ "String", "b" ] ],
+        [ [ "Bare", "4.5e-2" ], [ "String", "c" ] ]
+      ]
+    ]
+  ]
+]

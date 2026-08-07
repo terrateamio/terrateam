@@ -1,0 +1,1929 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "azurerm",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "source" ], [ "String", "hashicorp/azurerm" ]
+                    ],
+                    [ [ "Bare", "version" ], [ "String", "=2.98.0" ] ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "azurerm" ] ],
+      "body": [
+        [ "Block", { "type_": "features", "labels": [], "body": [] } ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_pet" ], [ "Lit", "p" ] ],
+      "body": [
+        [ "Attribute", "length", [ "Int", 1 ] ],
+        [ "Attribute", "separator", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_integer" ], [ "Lit", "i" ] ],
+      "body": [
+        [ "Attribute", "min", [ "Int", 100 ] ],
+        [ "Attribute", "max", [ "Int", 999 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "resource_name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [ "String", "%s%s" ],
+                [ "String", "avd" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "random_pet" ], [ "A_string", "p" ] ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_name_unique",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [ "String", "%s%s%s" ],
+                [ "String", "avd" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "random_pet" ], [ "A_string", "p" ] ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "random_integer" ], [ "A_string", "i" ] ]
+                    ],
+                    [ "A_string", "result" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "avd" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "rg-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "resource_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_virtual_network" ], [ "Lit", "avd" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "vn-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "resource_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "address_space",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "vnet_address_space" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dns_servers",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "vnet_custom_dns_servers" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_subnet" ], [ "Lit", "avd" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "sn-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "resource_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ], [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "snet_address_space" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_security_group" ], [ "Lit", "avd" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "nsg-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "resource_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subnet_network_security_group_association" ],
+        [ "Lit", "avd" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "azurerm_subnet" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_network_security_group" ],
+                  [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "azurerm" ] ],
+      "body": [
+        [ "Block", { "type_": "features", "labels": [], "body": [] } ],
+        [ "Attribute", "alias", [ "String", "netops" ] ],
+        [
+          "Attribute",
+          "subscription_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "netops_subscription_id" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_resources" ], [ "Lit", "vnets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "provider",
+          [ "Attr", [ [ "Id", "azurerm" ], [ "A_string", "netops" ] ] ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "String", "Microsoft.Network/virtualNetworks" ]
+        ],
+        [
+          "Attribute",
+          "required_tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "role" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "netops_role_tag_value" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network_peering" ], [ "Lit", "out" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "azurerm_resources" ]
+                          ]
+                        ],
+                        [ "A_string", "vnets" ]
+                      ]
+                    ],
+                    [ "A_string", "resources" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "azurerm_resources" ]
+                            ]
+                          ],
+                          [ "A_string", "vnets" ]
+                        ]
+                      ],
+                      [ "A_string", "resources" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "remote_virtual_network_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "azurerm_resources" ]
+                            ]
+                          ],
+                          [ "A_string", "vnets" ]
+                        ]
+                      ],
+                      [ "A_string", "resources" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ], [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "allow_virtual_network_access", [ "Bool", true ] ],
+        [ "Attribute", "allow_forwarded_traffic", [ "Bool", true ] ],
+        [ "Attribute", "allow_gateway_transit", [ "Bool", false ] ],
+        [ "Attribute", "use_remote_gateways", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network_peering" ], [ "Lit", "in" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "provider",
+          [ "Attr", [ [ "Id", "azurerm" ], [ "A_string", "netops" ] ] ]
+        ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "azurerm_resources" ]
+                          ]
+                        ],
+                        [ "A_string", "vnets" ]
+                      ]
+                    ],
+                    [ "A_string", "resources" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ], [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "remote_virtual_network_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ], [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Idx",
+            [
+              [
+                "Fun_call",
+                [
+                  "split",
+                  [
+                    [ "String", "/" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [ "A_string", "azurerm_resources" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "vnets" ]
+                                  ]
+                                ],
+                                [ "A_string", "resources" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Int", 4 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "azurerm_resources" ]
+                            ]
+                          ],
+                          [ "A_string", "vnets" ]
+                        ]
+                      ],
+                      [ "A_string", "resources" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "allow_virtual_network_access", [ "Bool", true ] ],
+        [ "Attribute", "allow_forwarded_traffic", [ "Bool", true ] ],
+        [ "Attribute", "allow_gateway_transit", [ "Bool", true ] ],
+        [ "Attribute", "use_remote_gateways", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "azurerm" ] ],
+      "body": [
+        [ "Block", { "type_": "features", "labels": [], "body": [] } ],
+        [ "Attribute", "alias", [ "String", "devops" ] ],
+        [
+          "Attribute",
+          "subscription_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "devops_subscription_id" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_resources" ], [ "Lit", "devops_vnets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "provider",
+          [ "Attr", [ [ "Id", "azurerm" ], [ "A_string", "devops" ] ] ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "String", "Microsoft.Network/virtualNetworks" ]
+        ],
+        [
+          "Attribute",
+          "required_tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "role" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "devops_role_tag_value" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network_peering" ],
+        [ "Lit", "devops_vnet_peer_out" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "azurerm_resources" ]
+                          ]
+                        ],
+                        [ "A_string", "devops_vnets" ]
+                      ]
+                    ],
+                    [ "A_string", "resources" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "azurerm_resources" ]
+                            ]
+                          ],
+                          [ "A_string", "devops_vnets" ]
+                        ]
+                      ],
+                      [ "A_string", "resources" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "remote_virtual_network_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "azurerm_resources" ]
+                            ]
+                          ],
+                          [ "A_string", "devops_vnets" ]
+                        ]
+                      ],
+                      [ "A_string", "resources" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ], [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "allow_virtual_network_access", [ "Bool", true ] ],
+        [ "Attribute", "allow_forwarded_traffic", [ "Bool", true ] ],
+        [ "Attribute", "allow_gateway_transit", [ "Bool", false ] ],
+        [ "Attribute", "use_remote_gateways", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network_peering" ],
+        [ "Lit", "devops_vnet_peer_in" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "provider",
+          [ "Attr", [ [ "Id", "azurerm" ], [ "A_string", "devops" ] ] ]
+        ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "azurerm_resources" ]
+                          ]
+                        ],
+                        [ "A_string", "devops_vnets" ]
+                      ]
+                    ],
+                    [ "A_string", "resources" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ], [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "remote_virtual_network_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ], [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Idx",
+            [
+              [
+                "Fun_call",
+                [
+                  "split",
+                  [
+                    [ "String", "/" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [ "A_string", "azurerm_resources" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "devops_vnets" ]
+                                  ]
+                                ],
+                                [ "A_string", "resources" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Int", 4 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "azurerm_resources" ]
+                            ]
+                          ],
+                          [ "A_string", "devops_vnets" ]
+                        ]
+                      ],
+                      [ "A_string", "resources" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "allow_virtual_network_access", [ "Bool", true ] ],
+        [ "Attribute", "allow_forwarded_traffic", [ "Bool", true ] ],
+        [ "Attribute", "allow_gateway_transit", [ "Bool", true ] ],
+        [ "Attribute", "use_remote_gateways", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_desktop_host_pool" ], [ "Lit", "avd" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "hp-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "resource_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "desktopvirtualization_location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "host_pool_type" ] ] ]
+        ],
+        [
+          "Attribute",
+          "load_balancer_type",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "host_pool_load_balancer_type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "validate_environment",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "host_pool_validate_environment" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "maximum_sessions_allowed",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "host_pool_max_sessions_allowed" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_desktop_host_pool_registration_info" ],
+        [ "Lit", "avd" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "hostpool_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_desktop_host_pool" ],
+                  [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "expiration_date",
+          [
+            "Fun_call",
+            [
+              "timeadd",
+              [ [ "Fun_call", [ "timestamp", [] ] ], [ "String", "2h" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_desktop_application_group" ],
+        [ "Lit", "avd" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "ag-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "resource_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "desktopvirtualization_location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "host_pool_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_desktop_host_pool" ],
+                  [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "desktop_app_group_type" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "friendly_name",
+          [
+            "Fun_call",
+            [
+              "upper",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "resource_name" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_desktop_workspace" ], [ "Lit", "avd" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "ws-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "resource_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "desktopvirtualization_location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "friendly_name",
+          [
+            "Fun_call",
+            [
+              "upper",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "resource_name" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [
+          "Lit",
+          "azurerm_virtual_desktop_workspace_application_group_association"
+        ],
+        [ "Lit", "avd" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "workspace_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_desktop_workspace" ],
+                  [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "application_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_desktop_application_group" ],
+                  [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_shared_image" ], [ "Lit", "avd" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "acg_image_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "gallery_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "acg_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "acg_resource_group_name" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "sessionhosts" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./modules/sessionhosts" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "sh", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "session_hosts" ] ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "sh" ], [ "A_string", "batch" ] ]
+              ],
+              "value_output": [ "Id", "sh" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "session_host_status",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "String", "status" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vm_count",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "String", "count" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vm_custom_image_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "azurerm_shared_image" ]
+                            ]
+                          ],
+                          [ "A_string", "avd" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/versions/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Idx",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "String", "acg_image_version" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vm_name_prefix",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [ "String", "%s-%s" ],
+                [
+                  "Fun_call",
+                  [
+                    "upper",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "substr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "resource_name" ]
+                              ]
+                            ],
+                            [ "Int", 0 ],
+                            [ "Int", 8 ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "Idx",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "String", "batch" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "azurerm_subnet" ], [ "A_string", "avd" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "host_pool_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_desktop_host_pool" ],
+                  [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "host_pool_token",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Id",
+                    "azurerm_virtual_desktop_host_pool_registration_info"
+                  ],
+                  [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "token" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vm_sku",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vm_sku" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vm_username",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vm_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vm_password",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vm_password" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vm_os_disk_caching",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "vm_os_disk_caching" ] ]
+          ]
+        ],
+        [ "Attribute", "vm_marketplace_image", [ "Null" ] ],
+        [
+          "Attribute",
+          "configure_using_ansible",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "configure_using_ansible" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "domain_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "domain_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "domain_ou_path",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "domain_ou_path" ] ] ]
+        ],
+        [
+          "Attribute",
+          "domain_username",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "domain_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "domain_password",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "domain_password" ] ] ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_desktop_host_pool" ],
+                  [ "A_string", "avd" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network_peering" ],
+                  [ "A_string", "out" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network_peering" ],
+                  [ "A_string", "in" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azuread_group" ], [ "Lit", "avd" ] ],
+      "body": [
+        [
+          "Attribute",
+          "display_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "aad_group_name" ] ] ]
+        ],
+        [ "Attribute", "security_enabled", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_role_assignment" ], [ "Lit", "avd" ] ],
+      "body": [
+        [
+          "Attribute",
+          "scope",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_desktop_application_group" ],
+                  [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role_definition_name",
+          [ "String", "Desktop Virtualization User" ]
+        ],
+        [
+          "Attribute",
+          "principal_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "azuread_group" ] ]
+                  ],
+                  [ "A_string", "avd" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

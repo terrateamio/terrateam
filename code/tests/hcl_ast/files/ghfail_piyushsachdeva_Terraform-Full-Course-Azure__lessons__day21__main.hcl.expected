@@ -1,0 +1,526 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_subscription" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_policy_definition" ], [ "Lit", "tag" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "allowed-tag" ] ],
+        [ "Attribute", "policy_type", [ "String", "Custom" ] ],
+        [ "Attribute", "mode", [ "String", "All" ] ],
+        [ "Attribute", "display_name", [ "String", "Allowed tags policy" ] ],
+        [
+          "Attribute",
+          "policy_rule",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "if" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "anyOf" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "field" ],
+                                      [
+                                        "Template",
+                                        [
+                                          [ "Literal", "tags[" ],
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [
+                                                "Idx",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "var" ],
+                                                      [
+                                                        "A_string",
+                                                        "allowed_tags"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Int", 0 ]
+                                                ]
+                                              ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ],
+                                          [ "Literal", "]" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "exists" ], [ "Bool", false ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "field" ],
+                                      [
+                                        "Template",
+                                        [
+                                          [ "Literal", "tags[" ],
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [
+                                                "Idx",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "var" ],
+                                                      [
+                                                        "A_string",
+                                                        "allowed_tags"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Int", 1 ]
+                                                ]
+                                              ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ],
+                                          [ "Literal", "]" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "exists" ], [ "Bool", false ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "effect" ], [ "String", "deny" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subscription_policy_assignment" ],
+        [ "Lit", "example" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "tag-assignment" ] ],
+        [
+          "Attribute",
+          "policy_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_policy_definition" ],
+                  [ "A_string", "tag" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_subscription" ]
+                    ]
+                  ],
+                  [ "A_string", "current" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_policy_definition" ], [ "Lit", "vm_size" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "vm-size" ] ],
+        [ "Attribute", "policy_type", [ "String", "Custom" ] ],
+        [ "Attribute", "mode", [ "String", "All" ] ],
+        [ "Attribute", "display_name", [ "String", "Allowed vm policy" ] ],
+        [
+          "Attribute",
+          "policy_rule",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "if" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "field" ],
+                            [
+                              "String",
+                              "Microsoft.Compute/virtualMachines/sku.name"
+                            ]
+                          ],
+                          [
+                            [ "Bare", "notIn" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "vm_sizes" ]
+                                              ]
+                                            ],
+                                            [ "Int", 0 ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "vm_sizes" ]
+                                              ]
+                                            ],
+                                            [ "Int", 1 ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "effect" ], [ "String", "deny" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subscription_policy_assignment" ],
+        [ "Lit", "example1" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "size-assignment" ] ],
+        [
+          "Attribute",
+          "policy_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_policy_definition" ],
+                  [ "A_string", "vm_size" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_subscription" ]
+                    ]
+                  ],
+                  [ "A_string", "current" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_policy_definition" ], [ "Lit", "location" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "location" ] ],
+        [ "Attribute", "policy_type", [ "String", "Custom" ] ],
+        [ "Attribute", "mode", [ "String", "All" ] ],
+        [
+          "Attribute",
+          "display_name",
+          [ "String", "Allowed location policy" ]
+        ],
+        [
+          "Attribute",
+          "policy_rule",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "if" ],
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "field" ], [ "String", "location" ] ],
+                          [
+                            [ "Bare", "notIn" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "location" ]
+                                              ]
+                                            ],
+                                            [ "Int", 0 ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "location" ]
+                                              ]
+                                            ],
+                                            [ "Int", 1 ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "effect" ], [ "String", "deny" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subscription_policy_assignment" ],
+        [ "Lit", "example2" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "location-assignment" ] ],
+        [
+          "Attribute",
+          "policy_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_policy_definition" ],
+                  [ "A_string", "location" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_subscription" ]
+                    ]
+                  ],
+                  [ "A_string", "current" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

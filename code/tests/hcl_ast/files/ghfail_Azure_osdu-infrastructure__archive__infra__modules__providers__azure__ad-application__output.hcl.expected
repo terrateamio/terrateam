@@ -1,0 +1,195 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azuread_application" ], [ "A_string", "main" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The display name of the application." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azuread_application" ], [ "A_string", "main" ] ]
+              ],
+              [ "A_string", "application_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The ID of the application." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "object_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azuread_application" ], [ "A_string", "main" ] ]
+              ],
+              [ "A_string", "object_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The object ID of the application." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "roles" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "For_object",
+            {
+              "identifiers": [ "r", [] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azuread_application" ], [ "A_string", "main" ]
+                    ]
+                  ],
+                  [ "A_string", "app_role" ]
+                ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "r" ], [ "A_string", "display_name" ] ]
+              ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "id" ],
+                    [ "Attr", [ [ "Id", "r" ], [ "A_string", "id" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "r" ], [ "A_string", "display_name" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "value" ],
+                    [ "Attr", [ [ "Id", "r" ], [ "A_string", "value" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "description" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "r" ], [ "A_string", "description" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "enabled" ],
+                    [
+                      "Attr", [ [ "Id", "r" ], [ "A_string", "is_enabled" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute", "description", [ "String", "The application roles." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "password" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azuread_application_password" ],
+                      [ "A_string", "main" ]
+                    ]
+                  ],
+                  [ "A_int", 0 ]
+                ]
+              ],
+              [ "A_string", "value" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The password for the application." ]
+        ]
+      ]
+    }
+  ]
+]

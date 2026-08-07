@@ -1,0 +1,268 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cidr_blocks" ] ] ]
+        ],
+        [
+          "Attribute",
+          "assign_ipv6_address_on_creation",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "enable_ipv6" ] ] ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "ipv6_cidr_block",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "ipv6_cidrs" ] ] ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "map_public_ip_on_launch",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "enable_public_ip_on_launch" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "AvailabilityZone" ],
+                      [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Fun_call",
+                        [
+                          "join",
+                          [
+                            [ "String", "-" ],
+                            [
+                              "Fun_call",
+                              [
+                                "concat",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "namespace" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Tuple",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "name" ]
+                                        ]
+                                      ],
+                                      [ "String", "public" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Quoted", "kubernetes.io/role/elb" ],
+                      [ "String", "1" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "azs",
+          [
+            "Fun_call",
+            [
+              "sort",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "keys",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "cidr_blocks" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidrs",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "az", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "sort",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "keys",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "cidr_blocks" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "enable_ipv6" ] ]
+                  ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "cidrsubnet",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "cidrsubnet",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ], [ "A_string", "vpc" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "ipv6_cidr_block" ]
+                                ]
+                              ],
+                              [ "Int", 1 ],
+                              [ "Int", 0 ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 7 ],
+                        [
+                          "Fun_call",
+                          [
+                            "index",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "local" ], [ "A_string", "azs" ] ]
+                              ],
+                              [ "Id", "az" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [ "Null" ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ipv6_cidrs",
+          [
+            "Fun_call",
+            [
+              "zipmap",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "azs" ] ] ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "cidrs" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,175 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "globals",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "ansible_instance_type" ], [ "String", "t3.small" ]
+              ],
+              [
+                [ "Bare", "database_subnet_a" ],
+                [ "String", "10.1.201.0/24" ]
+              ],
+              [
+                [ "Bare", "database_subnet_b" ],
+                [ "String", "10.1.202.0/24" ]
+              ],
+              [
+                [ "Bare", "database_subnet_c" ],
+                [ "String", "10.1.203.0/24" ]
+              ],
+              [ [ "Bare", "db_instance_type" ], [ "String", "db.t3.small" ] ],
+              [ [ "Bare", "environment" ], [ "String", "dev" ] ],
+              [ [ "Bare", "grafana_provider" ], [ "Bool", false ] ],
+              [ [ "Bare", "instance_type" ], [ "String", "t3.small" ] ],
+              [ [ "Bare", "intra_subnet_a" ], [ "String", "10.1.51.0/24" ] ],
+              [ [ "Bare", "intra_subnet_b" ], [ "String", "10.1.52.0/24" ] ],
+              [ [ "Bare", "intra_subnet_c" ], [ "String", "10.1.53.0/24" ] ],
+              [ [ "Bare", "key_name" ], [ "String", "terraform-aws-dev" ] ],
+              [
+                [ "Bare", "platform_eks_services" ],
+                [ "String", "10.2.0.0/16" ]
+              ],
+              [ [ "Bare", "private_subnet_a" ], [ "String", "10.1.1.0/24" ] ],
+              [ [ "Bare", "private_subnet_b" ], [ "String", "10.1.2.0/24" ] ],
+              [ [ "Bare", "private_subnet_c" ], [ "String", "10.1.3.0/24" ] ],
+              [
+                [ "Bare", "public_subnet_a" ], [ "String", "10.1.101.0/24" ]
+              ],
+              [
+                [ "Bare", "public_subnet_b" ], [ "String", "10.1.102.0/24" ]
+              ],
+              [
+                [ "Bare", "public_subnet_c" ], [ "String", "10.1.103.0/24" ]
+              ],
+              [ [ "Bare", "rds_allocated_storage" ], [ "Int", 10 ] ],
+              [ [ "Bare", "rds_max_allocated_storage" ], [ "Int", 20 ] ],
+              [ [ "Bare", "region" ], [ "String", "us-east-1" ] ],
+              [
+                [ "Bare", "remote_state_bucket" ],
+                [ "String", "terraform-state20220711040913053000000001" ]
+              ],
+              [ [ "Bare", "remote_state_data_enabled" ], [ "Bool", true ] ],
+              [
+                [ "Bare", "remote_state_datasources" ],
+                [
+                  "Tuple",
+                  [
+                    [ "String", "vx28Nz65Ks3lbQuuG6uwKqQdYPO5Y3aq6mbN-aws" ],
+                    [
+                      "String",
+                      "PzaQTyLp7RV3UkOuNO7yJ33MXBmqEaMy7maC-platform-k8s"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "remote_state_dynamodb" ],
+                [ "String", "terraform-state" ]
+              ],
+              [
+                [ "Bare", "required_providers" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "aws" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "source" ],
+                            [ "String", "hashicorp/aws" ]
+                          ],
+                          [ [ "Bare", "version" ], [ "String", "4.57.1" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "external" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "source" ],
+                            [ "String", "hashicorp/external" ]
+                          ],
+                          [ [ "Bare", "version" ], [ "String", "2.3.1" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "github" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "source" ],
+                            [ "String", "integrations/github" ]
+                          ],
+                          [ [ "Bare", "version" ], [ "String", "5.42.0" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "helm" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "source" ],
+                            [ "String", "hashicorp/helm" ]
+                          ],
+                          [ [ "Bare", "version" ], [ "String", ">= 2.7" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "kubernetes" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "source" ],
+                            [ "String", "hashicorp/kubernetes" ]
+                          ],
+                          [ [ "Bare", "version" ], [ "String", "2.20.0" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "null" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "source" ],
+                            [ "String", "hashicorp/null" ]
+                          ],
+                          [ [ "Bare", "version" ], [ "String", ">= 3.0" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "terraform_version" ],
+                [ "Tuple", [ [ "String", "1.2.4" ] ] ]
+              ],
+              [ [ "Bare", "vpc_cidr" ], [ "String", "10.1.0.0/16" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

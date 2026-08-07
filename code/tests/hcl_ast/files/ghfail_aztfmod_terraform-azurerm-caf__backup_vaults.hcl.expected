@@ -1,0 +1,2939 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "backup_vaults" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./modules/backup_vault" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "data_protection" ] ]
+              ],
+              [ "A_string", "backup_vaults" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "global_settings",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "client_config",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "client_config" ] ] ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "storage_accounts",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "combined_objects_storage_accounts" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "diagnostics",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "combined_diagnostics" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "identity",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "identity" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_groups",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "combined_objects_resource_groups" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "global_settings" ]
+                              ]
+                            ],
+                            [ "A_string", "regions" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "region" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "global_settings" ]
+                        ]
+                      ],
+                      [ "A_string", "regions" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "region" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string",
+                                "combined_objects_resource_groups"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "resource_group" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "resource_group" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group_key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "location" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_or",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "can",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group" ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "can",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group_name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group" ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "resource_group_name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string",
+                                "combined_objects_resource_groups"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "resource_group" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "resource_group" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "base_tags",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "global_settings" ]
+                          ]
+                        ],
+                        [ "A_string", "inherit_tags" ]
+                      ]
+                    ],
+                    [ "Bool", false ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "combined_objects_resource_groups"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "each" ],
+                                                  [ "A_string", "value" ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string", "resource_group"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "lz_key" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [ "A_string", "client_config" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "landingzone_key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "resource_group" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "key" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "resource_group_key" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "tags" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "backup_vaults" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [ "Attr", [ [ "Id", "module" ], [ "A_string", "backup_vaults" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "backup_vault_policies_blob_storage" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [
+            "String",
+            "./modules/backup_vault/backup_vault_policy_blob_storage"
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "data_protection" ] ]
+                  ],
+                  [ "A_string", "backup_vault_policies" ]
+                ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [ "Id", "value" ],
+              "cond": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "value" ], [ "A_string", "type" ] ] ],
+                  [ "String", "blob_storage" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "global_settings",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vault_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_or",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "can",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "backup_vault" ]
+                              ]
+                            ],
+                            [ "A_string", "id" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Equal",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "can",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "backup_vault_key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Bool", false ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "backup_vault" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ],
+                    [ "Null" ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string", "combined_objects_backup_vaults"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "backup_vault" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "backup_vault_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "backup_vault" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "backup_vault_policies_disk" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/backup_vault/backup_vault_policy_disk" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "data_protection" ] ]
+                  ],
+                  [ "A_string", "backup_vault_policies" ]
+                ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [ "Id", "value" ],
+              "cond": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "value" ], [ "A_string", "type" ] ] ],
+                  [ "String", "disk" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "global_settings",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vault_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_or",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "can",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "backup_vault" ]
+                              ]
+                            ],
+                            [ "A_string", "id" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Equal",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "can",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "backup_vault_key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Bool", false ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "backup_vault" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ],
+                    [ "Null" ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string", "combined_objects_backup_vaults"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "backup_vault" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "backup_vault_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "backup_vault" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "backup_vault_policies",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "module" ],
+                    [ "A_string", "backup_vault_policies_blob_storage" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "module" ],
+                    [ "A_string", "backup_vault_policies_disk" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "backup_vault_policies" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "backup_vault_policies" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "backup_vault_instances_blob_storage" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [
+            "String",
+            "./modules/backup_vault/backup_vault_instance_blob_storage"
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_role_assignment" ], [ "A_string", "for" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "data_protection" ] ]
+                  ],
+                  [ "A_string", "backup_vault_instances" ]
+                ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [ "Id", "value" ],
+              "cond": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "value" ], [ "A_string", "type" ] ] ],
+                  [ "String", "blob_storage" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vault_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "backup_vault" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "backup_vault" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string", "combined_objects_backup_vaults"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "backup_vault" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "backup_vault_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "backup_vault" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "global_settings" ]
+                              ]
+                            ],
+                            [ "A_string", "regions" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "region" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "global_settings" ]
+                        ]
+                      ],
+                      [ "A_string", "regions" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "region" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string",
+                                "combined_objects_resource_groups"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "resource_group" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "resource_group" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group_key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "location" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_account_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "storage_account" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "storage_account" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string",
+                                "combined_objects_storage_accounts"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "storage_account" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "storage_account_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "storage_account" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "backup_policy_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "backup_vault_policy" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "backup_vault_policy" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string",
+                                "combined_objects_backup_vault_policies"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "backup_vault_policy" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "backup_vault_policy_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "backup_vault_policy" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "backup_vault_instances_disk" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/backup_vault/backup_vault_instance_disk" ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_role_assignment" ], [ "A_string", "for" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "data_protection" ] ]
+                  ],
+                  [ "A_string", "backup_vault_instances" ]
+                ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [ "Id", "value" ],
+              "cond": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "value" ], [ "A_string", "type" ] ] ],
+                  [ "String", "disk" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vault_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "backup_vault" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "backup_vault" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string", "combined_objects_backup_vaults"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "backup_vault" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "backup_vault_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "backup_vault" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "global_settings" ]
+                              ]
+                            ],
+                            [ "A_string", "regions" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "region" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "global_settings" ]
+                        ]
+                      ],
+                      [ "A_string", "regions" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "region" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string",
+                                "combined_objects_resource_groups"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "resource_group" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "resource_group" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group_key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "location" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "backup_policy_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "can",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "backup_vault_policy" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "backup_vault_policy" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string",
+                                "combined_objects_backup_vault_policies"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "backup_vault_policy" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "backup_vault_policy_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "backup_vault_policy" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "snapshot_resource_group_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_or",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "can",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "snapshot_resource_group" ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "can",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "snapshot_resource_group_name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "snapshot_resource_group" ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "snapshot_resource_group_name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [
+                                "A_string",
+                                "combined_objects_resource_groups"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string",
+                                          "snapshot_resource_group"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "lz_key" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "client_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "landingzone_key" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "snapshot_resource_group_key" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "snapshot_resource_group" ]
+                                  ]
+                                ],
+                                [ "A_string", "key" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "disk_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "disk" ]
+                              ]
+                            ],
+                            [ "A_string", "os_disk" ]
+                          ]
+                        ],
+                        [ "Bool", false ]
+                      ]
+                    ]
+                  ],
+                  [ "Bool", true ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "combined_objects_virtual_machines"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "each" ],
+                                                  [ "A_string", "value" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "disk" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "lz_key" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [ "A_string", "client_config" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "landingzone_key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "disk" ]
+                                  ]
+                                ],
+                                [ "A_string", "vm_key" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "os_disk_id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string",
+                                          "combined_objects_virtual_machines"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "try",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "each" ],
+                                                      [ "A_string", "value" ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "disk" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "lz_key" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "client_config"
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string", "landingzone_key"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "disk" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "vm_key" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "data_disks" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "disk" ]
+                              ]
+                            ],
+                            [ "A_string", "disk_key" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "backup_vault_instances",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "module" ],
+                    [ "A_string", "backup_vault_instances_blob_storage" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "module" ],
+                    [ "A_string", "backup_vault_instances_disk" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "backup_vault_instances" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "backup_vault_instances" ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

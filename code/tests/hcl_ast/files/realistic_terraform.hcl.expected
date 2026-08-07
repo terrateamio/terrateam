@@ -1,0 +1,285 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [ "Attribute", "required_version", [ "String", ">= 1.0" ] ],
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "aws",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "source" ], [ "String", "hashicorp/aws" ] ],
+                    [ [ "Bare", "version" ], [ "String", "~> 5.0" ] ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "environment" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "dev" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "bucket_names" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [ "Tuple", [ [ "String", "logs" ], [ "String", "data" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "common_tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Environment" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                ]
+              ],
+              [ [ "Bare", "ManagedBy" ], [ "String", "terraform" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket_count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "bucket_names" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_s3_bucket" ], [ "Lit", "main" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "bucket_names" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-bucket" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "common_tags" ] ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Purpose" ],
+                      [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "web" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  [ "String", "prod" ]
+                ]
+              ],
+              "then_": [ "Int", 3 ],
+              "else_": [ "Int", 1 ]
+            }
+          ]
+        ],
+        [ "Attribute", "ami", [ "String", "ami-12345" ] ],
+        [ "Attribute", "instance_type", [ "String", "t2.micro" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "common_tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "bucket_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "aws_s3_bucket" ], [ "A_string", "main" ] ]
+              ],
+              "output": [ "Attr", [ [ "Id", "v" ], [ "A_string", "id" ] ] ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "instance_count" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "bucket_count" ] ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "length",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "aws_instance" ], [ "A_string", "web" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

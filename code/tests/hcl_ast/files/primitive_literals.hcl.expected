@@ -7,14 +7,14 @@
     "fractional_number_precision",
     [ "Float", 3.141592653589793 ]
   ],
-  [ "Attribute", "fractional_number_exp", [ "Float", 310.0 ] ],
-  [ "Attribute", "fractional_number_exp", [ "Float", 0.031 ] ],
-  [ "Attribute", "fractional_number_exp", [ "Float", 310.0 ] ],
-  [ "Attribute", "fractional_number_exp", [ "Float", 0.031 ] ],
-  [ "Attribute", "fractional_number_exp", [ "Float", 0.03 ] ],
-  [ "Attribute", "fractional_number_exp", [ "Float", 300.0 ] ],
-  [ "Attribute", "fractional_number_exp", [ "Float", 300.0 ] ],
-  [ "Attribute", "fractional_number_exp", [ "Float", 0.03 ] ],
+  [ "Attribute", "fractional_number_exp", [ "Int", 310 ] ],
+  [ "Attribute", "fractional_number_exp2", [ "Float", 0.031 ] ],
+  [ "Attribute", "fractional_number_exp3", [ "Int", 310 ] ],
+  [ "Attribute", "fractional_number_exp4", [ "Float", 0.031 ] ],
+  [ "Attribute", "fractional_number_exp5", [ "Float", 0.03 ] ],
+  [ "Attribute", "fractional_number_exp6", [ "Int", 300 ] ],
+  [ "Attribute", "fractional_number_exp7", [ "Int", 300 ] ],
+  [ "Attribute", "fractional_number_exp8", [ "Float", 0.03 ] ],
   [ "Attribute", "string_ascii", [ "String", "hello" ] ],
   [ "Attribute", "string_unicode_bmp", [ "String", "ЖЖ" ] ],
   [
@@ -22,7 +22,7 @@
     "string_unicode_astral",
     [ "String", "👩‍👩‍👧‍👦" ]
   ],
-  [ "Attribute", "string_unicode_nonnorm", [ "String", "años" ] ],
+  [ "Attribute", "string_unicode_nonnorm", [ "String", "años" ] ],
   [ "Attribute", "true", [ "Bool", true ] ],
   [ "Attribute", "false", [ "Bool", false ] ],
   [ "Attribute", "null", [ "Null" ] ]

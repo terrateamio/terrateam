@@ -1,0 +1,337 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "data_landing_zone" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../" ] ],
+        [
+          "Attribute",
+          "providers",
+          [
+            "Object",
+            [
+              [ [ "Bare", "azurerm" ], [ "Id", "azurerm" ] ],
+              [ [ "Bare", "azapi" ], [ "Id", "azapi" ] ],
+              [ [ "Bare", "azuread" ], [ "Id", "azuread" ] ],
+              [ [ "Bare", "fabric" ], [ "Id", "fabric" ] ],
+              [ [ "Bare", "null" ], [ "Null" ] ],
+              [ [ "Bare", "time" ], [ "Id", "time" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "environment",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "environment" ] ] ]
+        ],
+        [
+          "Attribute",
+          "prefix",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "trusted_subscription_ids",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "trusted_subscription_ids" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "trusted_fabric_workspace_ids",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "trusted_fabric_workspace_ids" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "data_application_library_path",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "data_application_library_path" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "data_application_file_variables",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "data_application_file_variables" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_cluster_policy_library_path",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "databricks_cluster_policy_library_path" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_cluster_policy_file_variables",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "databricks_cluster_policy_file_variables" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_account_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "databricks_account_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_network_connectivity_config_name",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "databricks_network_connectivity_config_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_network_policy_details",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "databricks_network_policy_details" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_workspace_consumption_enabled",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "databricks_workspace_consumption_enabled" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_compliance_security_profile_standards",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [
+                "A_string",
+                "databricks_compliance_security_profile_standards"
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_workspace_binding_catalog",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "databricks_workspace_binding_catalog" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "fabric_capacity_details",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "fabric_capacity_details" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "zone_redundancy_enabled",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "zone_redundancy_enabled" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "geo_redundancy_storage_enabled",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "geo_redundancy_storage_enabled" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "log_analytics_workspace_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "log_analytics_workspace_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_principal_name_terraform_plan",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "service_principal_name_terraform_plan" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vnet_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vnet_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "nsg_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "nsg_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "route_table_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "subnet_cidr_ranges",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "subnet_cidr_ranges" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_id_blob",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "private_dns_zone_id_blob" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_id_dfs",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "private_dns_zone_id_dfs" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_id_queue",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "private_dns_zone_id_queue" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_id_vault",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "private_dns_zone_id_vault" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_id_databricks",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "private_dns_zone_id_databricks" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_id_cognitive_account",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "private_dns_zone_id_cognitive_account" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_id_open_ai",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "private_dns_zone_id_open_ai" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_id_data_factory",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "private_dns_zone_id_data_factory" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_id_search_service",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "private_dns_zone_id_search_service" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "customer_managed_key",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "customer_managed_key" ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

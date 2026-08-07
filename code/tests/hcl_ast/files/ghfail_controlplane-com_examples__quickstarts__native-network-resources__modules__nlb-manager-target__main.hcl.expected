@@ -1,0 +1,553 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_lb" ], [ "Lit", "nlb" ] ],
+      "body": [
+        [
+          "Attribute",
+          "arn",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "nlb-arn" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_target_group" ], [ "Lit", "aws-target-group" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "port",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "target" ] ] ],
+              [ "A_string", "internal-port" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "target_type", [ "String", "ip" ] ],
+        [ "Attribute", "protocol", [ "String", "TCP" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "aws_lb" ] ] ],
+                  [ "A_string", "nlb" ]
+                ]
+              ],
+              [ "A_string", "vpc_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ],
+              [
+                [ "Bare", "FQDN" ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "target" ] ] ],
+                    [ "A_string", "FQDN" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_listener" ], [ "Lit", "aws-lb-listener" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "load_balancer_arn",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "nlb-arn" ] ] ]
+        ],
+        [ "Attribute", "protocol", [ "String", "TCP" ] ],
+        [
+          "Attribute",
+          "port",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "target" ] ] ],
+              [ "A_string", "external-port" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ],
+              [
+                [ "Bare", "FQDN" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_lb_target_group" ],
+                            [ "A_string", "aws-target-group" ]
+                          ]
+                        ],
+                        [ "A_string", "tags" ]
+                      ]
+                    ],
+                    [ "A_string", "FQDN" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-listener" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "default_action",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "forward" ] ],
+              [
+                "Attribute",
+                "target_group_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_lb_target_group" ],
+                        [ "A_string", "aws-target-group" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_event_rule" ], [ "Lit", "schedule" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-schedule-rule" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "schedule_expression",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "polling-schedule-expression" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ],
+              [
+                [ "Bare", "FQDN" ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "target" ] ] ],
+                    [ "A_string", "FQDN" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lambda_permission" ], [ "Lit", "schedule-permission" ]
+      ],
+      "body": [
+        [ "Attribute", "action", [ "String", "lambda:InvokeFunction" ] ],
+        [
+          "Attribute",
+          "function_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "lambda-name" ] ] ]
+        ],
+        [ "Attribute", "principal", [ "String", "events.amazonaws.com" ] ],
+        [
+          "Attribute",
+          "source_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_event_rule" ],
+                  [ "A_string", "schedule" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_event_target" ],
+        [ "Lit", "schedule-target" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "arn",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "lambda-arn" ] ] ]
+        ],
+        [
+          "Attribute",
+          "rule",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_event_rule" ],
+                  [ "A_string", "schedule" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "input",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [ "Literal", "\n    {\n      \"Name\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n      \"TargetGroups\": {\n        \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_lb_target_group" ],
+                            [ "A_string", "aws-target-group" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\": {\n          \"FQDN\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "target" ] ]
+                        ],
+                        [ "A_string", "FQDN" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\"\n        }\n      }\n    }\n" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_lambda_invocation" ], [ "Lit", "initial-target-setup" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "function_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "lambda-name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "input",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [ "Literal", "\n    {\n      \"Name\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n      \"TargetGroups\": {\n        \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_lb_target_group" ],
+                            [ "A_string", "aws-target-group" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\": {\n          \"FQDN\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "target" ] ]
+                        ],
+                        [ "A_string", "FQDN" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\"\n        }\n      }\n    }\n" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "aws-lb-target-group" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Id", "aws_lb_target_group" ],
+              [ "A_string", "aws-target-group" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "aws-lb-listener" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Id", "aws_lb_listener" ], [ "A_string", "aws-lb-listener" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "initial-target-setup-result" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_lambda_invocation" ]
+                    ]
+                  ],
+                  [ "A_string", "initial-target-setup" ]
+                ]
+              ],
+              [ "A_string", "result" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

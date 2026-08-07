@@ -1,0 +1,75 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "iam_workshop_user" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./iam_workshop_user" ] ],
+        [
+          "Attribute",
+          "username",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "workshop_user_username" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "notebook_instance" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./notebook_instance" ] ],
+        [
+          "Attribute",
+          "notebook_instance_role_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "notebook_instance_role" ]
+                ]
+              ],
+              [ "A_string", "notebook_instance_role_arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "notebook_instance_name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "notebook_instance_name" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "notebook_instance_role" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./notebook_instance_role" ] ],
+        [
+          "Attribute",
+          "notebook_instance_role_name",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "notebook_instance_role_name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

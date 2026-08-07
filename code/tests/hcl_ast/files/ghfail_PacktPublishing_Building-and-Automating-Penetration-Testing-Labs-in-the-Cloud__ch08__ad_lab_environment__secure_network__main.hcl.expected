@@ -1,0 +1,776 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "rg_01" ] ],
+      "body": [
+        [ "Attribute", "location", [ "String", "eastus" ] ],
+        [ "Attribute", "name", [ "String", "resource-group-01" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "rg_02" ] ],
+      "body": [
+        [ "Attribute", "location", [ "String", "eastus" ] ],
+        [ "Attribute", "name", [ "String", "resource-group-02" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network" ], [ "Lit", "vnet_01" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "vnet-01" ] ],
+        [
+          "Attribute",
+          "address_space",
+          [ "Tuple", [ [ "String", "10.0.0.0/16" ] ] ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_01" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_01" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_subnet" ], [ "Lit", "subnet_01" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "subnet-01" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_01" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "vnet_01" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [ "Tuple", [ [ "String", "10.0.1.0/24" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_application_security_group" ], [ "Lit", "asg_01" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "asg-01" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_01" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_01" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_security_group" ], [ "Lit", "nsg_01" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "nsg-01" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_01" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_01" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network" ], [ "Lit", "vnet_02" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "vnet-02" ] ],
+        [
+          "Attribute",
+          "address_space",
+          [ "Tuple", [ [ "String", "192.168.0.0/16" ] ] ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_02" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_02" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_subnet" ], [ "Lit", "subnet_02" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "subnet-02" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_02" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "vnet_02" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [ "Tuple", [ [ "String", "192.168.1.0/24" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_application_security_group" ], [ "Lit", "asg_02" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "asg-02" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_02" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_02" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_security_group" ], [ "Lit", "nsg_02" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "nsg-02" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_02" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_02" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network_peering" ],
+        [ "Lit", "peer_1_to_2" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "peer1to2" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_01" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "vnet_01" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "remote_virtual_network_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "vnet_02" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network_peering" ],
+        [ "Lit", "peer_2_to_1" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "peer2to1" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_02" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "vnet_02" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "remote_virtual_network_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "vnet_01" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_security_rule" ],
+        [ "Lit", "desktop-access" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Desktop-Access" ] ],
+        [ "Attribute", "priority", [ "Int", 900 ] ],
+        [ "Attribute", "direction", [ "String", "Inbound" ] ],
+        [ "Attribute", "access", [ "String", "Allow" ] ],
+        [ "Attribute", "protocol", [ "String", "*" ] ],
+        [ "Attribute", "source_port_range", [ "String", "*" ] ],
+        [ "Attribute", "destination_port_range", [ "String", "8081" ] ],
+        [
+          "Attribute",
+          "source_address_prefix",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "my_ip" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/32" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_address_prefix",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_subnet" ], [ "A_string", "subnet_02" ] ]
+              ],
+              [ "A_string", "address_prefix" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_02" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_security_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_network_security_group" ],
+                  [ "A_string", "nsg_02" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_security_rule" ], [ "Lit", "ssh-access" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "SSH-Access" ] ],
+        [ "Attribute", "priority", [ "Int", 1000 ] ],
+        [ "Attribute", "direction", [ "String", "Inbound" ] ],
+        [ "Attribute", "access", [ "String", "Allow" ] ],
+        [ "Attribute", "protocol", [ "String", "*" ] ],
+        [ "Attribute", "source_port_range", [ "String", "*" ] ],
+        [ "Attribute", "destination_port_range", [ "String", "22" ] ],
+        [
+          "Attribute",
+          "source_address_prefix",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "my_ip" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/32" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_address_prefix",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_subnet" ], [ "A_string", "subnet_02" ] ]
+              ],
+              [ "A_string", "address_prefix" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_02" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_security_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_network_security_group" ],
+                  [ "A_string", "nsg_02" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_security_rule" ], [ "Lit", "rdp-access" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "RDP-Access" ] ],
+        [ "Attribute", "priority", [ "Int", 800 ] ],
+        [ "Attribute", "direction", [ "String", "Inbound" ] ],
+        [ "Attribute", "access", [ "String", "Allow" ] ],
+        [ "Attribute", "protocol", [ "String", "*" ] ],
+        [ "Attribute", "source_port_range", [ "String", "*" ] ],
+        [ "Attribute", "destination_port_range", [ "String", "3389" ] ],
+        [
+          "Attribute",
+          "source_address_prefix",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "my_ip" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/32" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_address_prefix",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_subnet" ], [ "A_string", "subnet_01" ] ]
+              ],
+              [ "A_string", "address_prefix" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "rg_01" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_security_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_network_security_group" ],
+                  [ "A_string", "nsg_01" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

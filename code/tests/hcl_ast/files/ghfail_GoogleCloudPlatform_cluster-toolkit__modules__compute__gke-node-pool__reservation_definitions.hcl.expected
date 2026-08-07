@@ -1,0 +1,1383 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "input_reservation_names",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "r", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "reservation_affinity" ]
+                          ]
+                        ],
+                        [ "A_string", "specific_reservations" ]
+                      ]
+                    ],
+                    [ "Tuple", [] ]
+                  ]
+                ]
+              ],
+              "output": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "split",
+                      [
+                        [ "String", "/" ],
+                        [ "Attr", [ [ "Id", "r" ], [ "A_string", "name" ] ] ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "input_reservation_projects",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "r", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "reservation_affinity" ]
+                          ]
+                        ],
+                        [ "A_string", "specific_reservations" ]
+                      ]
+                    ],
+                    [ "Tuple", [] ]
+                  ]
+                ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "coalesce",
+                  [
+                    [ "Attr", [ [ "Id", "r" ], [ "A_string", "project" ] ] ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "project_id" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "input_reservation_suffixes",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "r", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "reservation_affinity" ]
+                          ]
+                        ],
+                        [ "A_string", "specific_reservations" ]
+                      ]
+                    ],
+                    [ "Tuple", [] ]
+                  ]
+                ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "substr",
+                  [
+                    [ "Attr", [ [ "Id", "r" ], [ "A_string", "name" ] ] ],
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "split",
+                                  [
+                                    [ "String", "/" ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "r" ], [ "A_string", "name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Minus", [ "Int", 1 ] ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "is_tpu",
+          [
+            "Not_equal",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "placement_policy" ] ]
+                  ],
+                  [ "A_string", "tpu_topology" ]
+                ]
+              ],
+              [ "Null" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "google_compute_reservation" ],
+        [ "Lit", "specific_reservations" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "input_specific_reservations_count" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Object", [] ],
+              "else_": [
+                "For_object",
+                {
+                  "identifiers": [ "pair", [] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "flatten",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "zone", [] ],
+                            "input": [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "zones" ]
+                                    ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [
+                                  "i", [ "reservation_name" ]
+                                ],
+                                "input": [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [
+                                            "A_string",
+                                            "input_reservation_names"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "key" ],
+                                      [
+                                        "Template",
+                                        [
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [
+                                                "Idx",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "input_reservation_projects"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Id", "i" ]
+                                                ]
+                                              ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ],
+                                          [ "Literal", "/" ],
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [ "Id", "zone" ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ],
+                                          [ "Literal", "/" ],
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [
+                                                "Id", "reservation_name"
+                                              ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ [ "Bare", "zone" ], [ "Id", "zone" ] ],
+                                    [
+                                      [ "Bare", "reservation_name" ],
+                                      [ "Id", "reservation_name" ]
+                                    ],
+                                    [
+                                      [ "Bare", "project" ],
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "input_reservation_projects"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Id", "i" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [
+                    "Attr", [ [ "Id", "pair" ], [ "A_string", "key" ] ]
+                  ],
+                  "value_output": [ "Id", "pair" ],
+                  "cond": null
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "reservation_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "zone",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "zone" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "project" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "generated_guest_accelerator",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "gpu" ] ] ],
+              [ "A_string", "machine_type_guest_accelerator" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "reservation_resource_api_label",
+          [ "String", "compute.googleapis.com/reservation-name" ]
+        ],
+        [
+          "Attribute",
+          "input_specific_reservations_count",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "length",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "reservation_affinity" ]
+                            ]
+                          ],
+                          [ "A_string", "specific_reservations" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [ "Int", 0 ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "verified_specific_reservations",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "google_compute_reservation" ]
+                    ]
+                  ],
+                  [ "A_string", "specific_reservations" ]
+                ]
+              ],
+              "output": [ "Id", "v" ],
+              "cond": [
+                "Log_and",
+                [
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "v" ],
+                          [ "A_string", "specific_reservation" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "v" ],
+                          [ "A_string", "specific_reservation_required" ]
+                        ]
+                      ],
+                      [ "Bool", true ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "reservation_vm_properties",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is_tpu" ] ]
+              ],
+              "then_": [ "Tuple", [] ],
+              "else_": [
+                "For_tuple",
+                {
+                  "identifiers": [ "reservation", [] ],
+                  "input": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "verified_specific_reservations" ]
+                    ]
+                  ],
+                  "output": [
+                    "Object",
+                    [
+                      [
+                        [ "Quoted", "machine_type" ],
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "reservation" ],
+                                                  [
+                                                    "A_string",
+                                                    "specific_reservation"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Int", 0 ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string", "instance_properties"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ],
+                                  [ "A_string", "machine_type" ]
+                                ]
+                              ],
+                              [ "String", "" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Quoted", "guest_accelerators" ],
+                        [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Attr",
+                              [
+                                [ "Id", "local" ], [ "A_string", "has_gpu" ]
+                              ]
+                            ],
+                            "then_": [
+                              "For_object",
+                              {
+                                "identifiers": [ "acc", [] ],
+                                "input": [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Idx",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Id",
+                                                            "reservation"
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "specific_reservation"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Int", 0 ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "instance_properties"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Int", 0 ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string", "guest_accelerators"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                "key_output": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "acc" ],
+                                    [ "A_string", "accelerator_type" ]
+                                  ]
+                                ],
+                                "value_output": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "acc" ],
+                                    [ "A_string", "accelerator_count" ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "else_": [ "Object", [] ]
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "nodepool_vm_properties",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "machine_type" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "machine_type" ] ]
+                ]
+              ],
+              [
+                [ "Quoted", "guest_accelerators" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "has_gpu" ] ]
+                    ],
+                    "then_": [
+                      "For_object",
+                      {
+                        "identifiers": [ "acc", [] ],
+                        "input": [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "guest_accelerator" ]
+                                ]
+                              ],
+                              [ "Tuple", [] ]
+                            ]
+                          ]
+                        ],
+                        "key_output": [
+                          "Fun_call",
+                          [
+                            "coalesce",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "acc" ], [ "A_string", "type" ] ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string",
+                                                  "generated_guest_accelerator"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Int", 0 ]
+                                          ]
+                                        ],
+                                        [ "A_string", "type" ]
+                                      ]
+                                    ],
+                                    [ "String", "" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "value_output": [
+                          "Fun_call",
+                          [
+                            "coalesce",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "acc" ], [ "A_string", "count" ] ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string",
+                                                  "generated_guest_accelerator"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Int", 0 ]
+                                          ]
+                                        ],
+                                        [ "A_string", "count" ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    "else_": [ "Object", [] ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "specific_reservation_requirement_violations",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "reservation_vm_properties" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Tuple", [] ],
+              "else_": [
+                "For_tuple",
+                {
+                  "identifiers": [ "k", [ "v" ] ],
+                  "input": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "nodepool_vm_properties" ]
+                    ]
+                  ],
+                  "output": [ "Id", "k" ],
+                  "cond": [
+                    "Not_equal",
+                    [
+                      [ "Id", "v" ],
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "reservation_vm_properties" ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "Id", "k" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "specific_reservation_requirement_violation_messages",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "machine_type" ],
+                [
+                  "Template_heredoc",
+                  [
+                    "EOT",
+                    [
+                      [ "Literal", "\nThe reservation has \"" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "reservation_vm_properties"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Int", 0 ]
+                                      ]
+                                    ],
+                                    [ "A_string", "machine_type" ]
+                                  ]
+                                ],
+                                [ "String", "" ]
+                              ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [
+                        "Literal", "\" machine type and the node pool has \""
+                      ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "nodepool_vm_properties" ]
+                                ]
+                              ],
+                              [ "A_string", "machine_type" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [
+                        "Literal",
+                        "\". Check the relevant node pool setting: \"machine_type\"\n"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Quoted", "guest_accelerators" ],
+                [
+                  "Template_heredoc",
+                  [
+                    "EOT",
+                    [
+                      [ "Literal", "\nThe reservation has " ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Fun_call",
+                            [
+                              "jsonencode",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "reservation_vm_properties"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Int", 0 ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string", "guest_accelerators"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Object", [] ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", " accelerators and the node pool has " ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Fun_call",
+                            [
+                              "jsonencode",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "nodepool_vm_properties"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string", "guest_accelerators"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Object", [] ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [
+                        "Literal",
+                        ". Check the relevant node pool setting: \"guest_accelerator\". When unspecified, for the machine_type="
+                      ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "machine_type" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", ", the default is guest_accelerator=" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Fun_call",
+                            [
+                              "jsonencode",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [
+                                            "A_string",
+                                            "generated_guest_accelerator"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [ [ "Object", [] ] ] ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", ".\n" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "is_valid_reservation",
+          [
+            "Log_or",
+            [
+              [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "verified_specific_reservations" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 1 ]
+                ]
+              ],
+              [
+                "Not",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "is_reservation_active" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "active_reservation_values",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "i", [ "r" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "verified_specific_reservations" ]
+                ]
+              ],
+              "output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "input_reservation_suffixes"
+                                    ]
+                                  ]
+                                ],
+                                [ "Id", "i" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "format",
+                      [
+                        [ "String", "%s%s" ],
+                        [ "Attr", [ [ "Id", "r" ], [ "A_string", "name" ] ] ],
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "input_reservation_suffixes" ]
+                              ]
+                            ],
+                            [ "Id", "i" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Template",
+                    [
+                      [ "Literal", "projects/" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [ [ "Id", "r" ], [ "A_string", "project" ] ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "/reservations/" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr", [ [ "Id", "r" ], [ "A_string", "name" ] ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "specific_reservation_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "input_reservation_names" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "input_reservation_names" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "default_reservation_values",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [ "Literal", "projects/" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "project_id" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "/reservations/" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "specific_reservation_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

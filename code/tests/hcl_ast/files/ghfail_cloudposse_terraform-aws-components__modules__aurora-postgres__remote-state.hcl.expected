@@ -1,0 +1,323 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "vpc" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "cloudposse/stack-config/yaml//modules/remote-state" ]
+        ],
+        [ "Attribute", "version", [ "String", "1.5.0" ] ],
+        [
+          "Attribute",
+          "component",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "vpc_component_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "context",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "cluster" ] ] ],
+              [ "A_string", "context" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "vpc_ingress" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "cloudposse/stack-config/yaml//modules/remote-state" ]
+        ],
+        [ "Attribute", "version", [ "String", "1.5.0" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "i", [ "account" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "allow_ingress_from_vpc_accounts" ]
+                ]
+              ],
+              "key_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Not_equal",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "account" ], [ "A_string", "tenant" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "module" ],
+                                    [ "A_string", "this" ]
+                                  ]
+                                ],
+                                [ "A_string", "tenant" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "format",
+                      [
+                        [ "String", "%s-%s" ],
+                        [
+                          "Attr",
+                          [ [ "Id", "account" ], [ "A_string", "tenant" ] ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "account" ], [ "A_string", "stage" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr", [ [ "Id", "account" ], [ "A_string", "stage" ] ]
+                  ]
+                }
+              ],
+              "value_output": [ "Id", "account" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "component",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "vpc" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tenant",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "tenant" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "module" ], [ "A_string", "this" ] ]
+                    ],
+                    [ "A_string", "tenant" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "environment",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "environment" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "module" ], [ "A_string", "this" ] ]
+                    ],
+                    [ "A_string", "environment" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stage",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "stage" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "module" ], [ "A_string", "this" ] ]
+                    ],
+                    [ "A_string", "stage" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "context",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "cluster" ] ] ],
+              [ "A_string", "context" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "eks" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "cloudposse/stack-config/yaml//modules/remote-state" ]
+        ],
+        [ "Attribute", "version", [ "String", "1.5.0" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "eks_security_group_enabled" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "eks_component_names" ] ]
+              ],
+              "else_": [ "Fun_call", [ "toset", [ [ "Tuple", [] ] ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "component",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "context",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "cluster" ] ] ],
+              [ "A_string", "context" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "dns_gbl_delegated" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "cloudposse/stack-config/yaml//modules/remote-state" ]
+        ],
+        [ "Attribute", "version", [ "String", "1.5.0" ] ],
+        [ "Attribute", "component", [ "String", "dns-delegated" ] ],
+        [
+          "Attribute",
+          "environment",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "dns_gbl_delegated_environment_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "context",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "cluster" ] ] ],
+              [ "A_string", "context" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

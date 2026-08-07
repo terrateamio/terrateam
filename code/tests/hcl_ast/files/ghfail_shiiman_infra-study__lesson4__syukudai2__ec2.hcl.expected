@@ -1,0 +1,378 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "iam_instance_profile" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "web_instance" ] ],
+      "body": [
+        [ "Attribute", "count", [ "Int", 1 ] ],
+        [ "Attribute", "ami", [ "String", "ami-02c3627b04781eada" ] ],
+        [ "Attribute", "instance_type", [ "String", "t2.micro" ] ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "resource" ],
+                          [ "A_string", "aws_security_group" ]
+                        ]
+                      ],
+                      [ "A_string", "sg_web_instance" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Idx",
+            [
+              [
+                "Fun_call",
+                [
+                  "split",
+                  [
+                    [ "String", "," ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "module" ], [ "A_string", "before" ] ]
+                        ],
+                        [ "A_string", "private_subnet_ids" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Mod",
+                [
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ],
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "split",
+                            [
+                              [ "String", "," ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "module" ],
+                                      [ "A_string", "before" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "private_subnet_ids" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "associate_public_ip_address", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "iam_instance_profile",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "iam_instance_profile" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Fun_call",
+                  [
+                    "format",
+                    [
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "user_name" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "-web-instance%04d" ]
+                        ]
+                      ],
+                      [
+                        "Add",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                          ],
+                          [ "Int", 1 ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "volume_tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "format",
+                            [
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "user_name" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [ "Literal", "-web-instance%04d" ]
+                                ]
+                              ],
+                              [
+                                "Add",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ],
+                                  [ "Int", 1 ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-ebs" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "web_instance2" ] ],
+      "body": [
+        [
+          "Attribute",
+          "ami",
+          [ "Tuple", [ [ "Id", "作成したカスタムAMI" ] ] ]
+        ],
+        [ "Attribute", "instance_type", [ "String", "t2.micro" ] ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "resource" ],
+                          [ "A_string", "aws_security_group" ]
+                        ]
+                      ],
+                      [ "A_string", "sg_web_instance" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Idx",
+            [
+              [
+                "Fun_call",
+                [
+                  "split",
+                  [
+                    [ "String", "," ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "module" ], [ "A_string", "before" ] ]
+                        ],
+                        [ "A_string", "private_subnet_ids" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Int", 1 ]
+            ]
+          ]
+        ],
+        [ "Attribute", "associate_public_ip_address", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "iam_instance_profile",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "iam_instance_profile" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "user_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-web-instance2-0001" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "volume_tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "user_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-web-instance2-0001-ebs" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

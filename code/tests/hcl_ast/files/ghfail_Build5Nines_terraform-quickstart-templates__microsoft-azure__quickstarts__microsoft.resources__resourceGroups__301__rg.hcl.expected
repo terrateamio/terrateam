@@ -1,0 +1,13 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "rg" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./modules/rg" ] ],
+        [ "Attribute", "locations", [ "Tuple", [] ] ]
+      ]
+    }
+  ]
+]

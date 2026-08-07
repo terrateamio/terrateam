@@ -1,0 +1,306 @@
+[
+  [
+    "Block",
+    {
+      "type_": "templates",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "simple",
+          [
+            "Template",
+            [
+              [ "Literal", "Hello, " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "!" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "multiple",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "first" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " and " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "second" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "pure",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "value" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "expr",
+          [
+            "Template",
+            [
+              [ "Literal", "Result: " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Add",
+                    [
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "b" ] ] ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "func",
+          [
+            "Template",
+            [
+              [ "Literal", "Upper: " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "upper",
+                      [
+                        [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cond",
+          [
+            "Template",
+            [
+              [ "Literal", "Status: " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "enabled" ] ]
+                      ],
+                      "then_": [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "yes_text" ] ]
+                      ],
+                      "else_": [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "no_text" ] ]
+                      ]
+                    }
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "nested",
+          [
+            "Template",
+            [
+              [ "Literal", "Value: " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "map" ] ] ],
+                      [ "A_string", "key" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "mixed",
+          [
+            "Template",
+            [
+              [ "Literal", "prefix-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "middle" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-suffix" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "start_interp",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "x" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "suffix" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "end_interp",
+          [
+            "Template",
+            [
+              [ "Literal", "prefix" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "x" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "plain", [ "String", "just a regular string" ] ],
+        [
+          "Attribute",
+          "indexed",
+          [
+            "Template",
+            [
+              [ "Literal", "Item: " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Idx",
+                    [
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "method_like",
+          [
+            "Template",
+            [
+              [ "Literal", "Length: " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "items" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

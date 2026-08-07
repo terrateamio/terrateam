@@ -1,0 +1,979 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "databricks_core" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./modules/databrickscore" ] ],
+        [
+          "Attribute",
+          "providers",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "databricks" ],
+                [
+                  "Attr",
+                  [ [ "Id", "databricks" ], [ "A_string", "engineering" ] ]
+                ]
+              ],
+              [
+                [
+                  "Expr",
+                  [
+                    "Attr",
+                    [ [ "Id", "databricks" ], [ "A_string", "account" ] ]
+                  ]
+                ],
+                [ "Id", "databricks" ]
+              ],
+              [ [ "Bare", "null" ], [ "Null" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "environment",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "environment" ] ] ]
+        ],
+        [
+          "Attribute",
+          "prefix",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "storage_account_ids",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "core" ] ] ],
+              [ "A_string", "storage_account_ids" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_dependencies",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "core" ] ] ],
+              [ "A_string", "storage_dependencies" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_account_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "databricks_account_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_workspace_details",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "databricks_workspace_details" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_private_endpoint_rules",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "databricks_private_endpoint_rules" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "databricks_ip_access_list_allow", [ "Tuple", [] ] ],
+        [ "Attribute", "databricks_ip_access_list_deny", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "databricks_network_connectivity_config_name",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "databricks_network_connectivity_config_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_compliance_security_profile_standards",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [
+                "A_string",
+                "databricks_compliance_security_profile_standards"
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_principal_name_terraform_plan",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "service_principal_name_terraform_plan" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "module" ], [ "A_string", "core" ] ] ],
+                  [ "A_string", "databricks_dependencies" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "databricks_data_application" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "data_application_definitions" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/databricksdataapplication" ]
+        ],
+        [
+          "Attribute",
+          "providers",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "databricks" ],
+                [
+                  "Attr",
+                  [ [ "Id", "databricks" ], [ "A_string", "engineering" ] ]
+                ]
+              ],
+              [
+                [
+                  "Expr",
+                  [
+                    "Attr",
+                    [ [ "Id", "databricks" ], [ "A_string", "account" ] ]
+                  ]
+                ],
+                [ "Id", "databricks" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "environment",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "environment" ] ] ]
+        ],
+        [
+          "Attribute",
+          "prefix",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "tags" ]
+                        ]
+                      ],
+                      [ "Object", [] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_name",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+        ],
+        [
+          "Attribute",
+          "databricks_account_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "databricks_account_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_workspace_workspace_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "module" ], [ "A_string", "core" ] ]
+                      ],
+                      [ "A_string", "databricks_workspace_details" ]
+                    ]
+                  ],
+                  [ "A_string", "engineering" ]
+                ]
+              ],
+              [ "A_string", "workspace_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_access_connector_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ], [ "A_string", "data_application" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "databricks_access_connector_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_cluster_policy_library_path",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "databricks_cluster_policy_library_path" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_cluster_policy_file_variables",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [
+                      "A_string", "databricks_cluster_policy_file_variables"
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "databricks" ]
+                            ]
+                          ],
+                          [ "A_string", "cluster_policy_file_variables" ]
+                        ]
+                      ],
+                      [ "Object", [] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_cluster_policy_file_overwrites",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "databricks" ]
+                      ]
+                    ],
+                    [ "A_string", "cluster_policy_file_overwrites" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_keyvault_secret_scope_details",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "module" ],
+                            [ "A_string", "data_application" ]
+                          ]
+                        ],
+                        [
+                          "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "key_vault_details" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_user_assigned_identity_details",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ], [ "A_string", "data_application" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "user_assigned_identity_details" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_sql_endpoint_details",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "databricks" ]
+                      ]
+                    ],
+                    [ "A_string", "sql_endpoints" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_workspace_binding_catalog",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "databricks_workspace_binding_catalog" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_data_factory_details",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "data_factory_enabled" ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "data_factory" ]
+                            ]
+                          ],
+                          [ "A_string", "enabled" ]
+                        ]
+                      ],
+                      [ "Bool", false ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "data_factory_id" ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "module" ],
+                                      [ "A_string", "data_application" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ], [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "data_factory_details" ]
+                            ]
+                          ],
+                          [ "A_string", "data_factory_id" ]
+                        ]
+                      ],
+                      [ "Object", [] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "data_factory_name" ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "module" ],
+                                      [ "A_string", "data_application" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ], [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "data_factory_details" ]
+                            ]
+                          ],
+                          [ "A_string", "data_factory_name" ]
+                        ]
+                      ],
+                      [ "Object", [] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "data_factory_principal_id" ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "module" ],
+                                      [ "A_string", "data_application" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ], [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "data_factory_details" ]
+                            ]
+                          ],
+                          [ "A_string", "data_factory_principal_id" ]
+                        ]
+                      ],
+                      [ "Object", [] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "data_factory_client_id" ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "module" ],
+                                      [ "A_string", "data_application" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ], [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "data_factory_details" ]
+                            ]
+                          ],
+                          [ "A_string", "data_factory_client_id" ]
+                        ]
+                      ],
+                      [ "Object", [] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_container_ids",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "module" ],
+                            [ "A_string", "data_application" ]
+                          ]
+                        ],
+                        [
+                          "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "storage_container_ids" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_queue_ids",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "module" ],
+                            [ "A_string", "data_application" ]
+                          ]
+                        ],
+                        [
+                          "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "storage_queue_ids" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "data_provider_details",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "data_providers" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "admin_group_name",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "identity" ]
+                      ]
+                    ],
+                    [ "A_string", "admin_group_name" ]
+                  ]
+                ],
+                [ "String", "" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "developer_group_name",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "identity" ]
+                      ]
+                    ],
+                    [ "A_string", "developer_group_name" ]
+                  ]
+                ],
+                [ "String", "" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "reader_group_name",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "identity" ]
+                      ]
+                    ],
+                    [ "A_string", "reader_group_name" ]
+                  ]
+                ],
+                [ "String", "" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_principal_name",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "identity" ]
+                      ]
+                    ],
+                    [ "A_string", "service_principal_name" ]
+                  ]
+                ],
+                [ "String", "" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_principal_name_terraform_plan",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "service_principal_name_terraform_plan" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "databricks_service_principal_terraform_plan_details",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "databricks_core" ] ]
+              ],
+              [
+                "A_string",
+                "databricks_service_principal_terraform_plan_details"
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "budget",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "budget" ]
+                  ]
+                ],
+                [ "Int", 100 ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "module" ], [ "A_string", "core" ] ] ],
+                  [ "A_string", "databricks_dependencies" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

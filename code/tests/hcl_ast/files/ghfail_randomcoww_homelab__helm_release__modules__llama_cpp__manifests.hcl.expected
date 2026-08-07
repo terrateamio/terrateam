@@ -1,0 +1,1329 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "llama_cpp_port", [ "Int", 8080 ] ],
+        [ "Attribute", "models_path", [ "String", "/models" ] ],
+        [ "Attribute", "llama_swap_path", [ "String", "/llama-swap" ] ],
+        [
+          "Attribute",
+          "config_file",
+          [ "String", "/var/lib/llama-cpp/config.yaml" ]
+        ],
+        [
+          "Attribute",
+          "models",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "k", [ "image" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "models" ] ]
+              ],
+              "output": [
+                "Object",
+                [
+                  [ [ "Bare", "key" ], [ "Id", "k" ] ],
+                  [
+                    [ "Bare", "image" ],
+                    [
+                      "Attr", [ [ "Id", "image" ], [ "A_string", "image" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "file" ],
+                    [ "Attr", [ [ "Id", "image" ], [ "A_string", "file" ] ] ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "manifests",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "statefulset" ] ]
+                  ],
+                  [ "A_string", "manifest" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "module" ], [ "A_string", "service" ] ]
+                  ],
+                  [ "A_string", "manifest" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "httproute" ] ]
+                  ],
+                  [ "A_string", "manifest" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "module" ], [ "A_string", "secret" ] ]
+                  ],
+                  [ "A_string", "manifest" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "secret" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../../modules/secret" ] ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "app",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "release",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "release" ] ] ]
+        ],
+        [
+          "Attribute",
+          "data",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [
+                        "Expr",
+                        [
+                          "Fun_call",
+                          [
+                            "basename",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "config_file" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "yamlencode",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "merge",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "llama_swap_config" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "macros" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "merge",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "model_path" ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "local" ],
+                                                        [
+                                                          "A_string",
+                                                          "models_path"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "default_cmd" ],
+                                                    [
+                                                      "Heredoc",
+                                                      [
+                                                        "EOF",
+                                                        "\n/app/llama-server \\\n--port $${PORT} \\\n--flash-attn on \\\n--no-webui \\\n--context-shift \\\n--no-mmap\n"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "For_object",
+                                                {
+                                                  "identifiers": [
+                                                    "_", [ "v" ]
+                                                  ],
+                                                  "input": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string", "models"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "key_output": [
+                                                    "Template",
+                                                    [
+                                                      [
+                                                        "Interpolation",
+                                                        {
+                                                          "expr": [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "v" ],
+                                                              [
+                                                                "A_string",
+                                                                "key"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          "strip_before": false,
+                                                          "strip_after": false
+                                                        }
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "value_output": [
+                                                    "Template",
+                                                    [
+                                                      [
+                                                        "Interpolation",
+                                                        {
+                                                          "expr": [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id", "local"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "models_path"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          "strip_before": false,
+                                                          "strip_after": false
+                                                        }
+                                                      ],
+                                                      [ "Literal", "/" ],
+                                                      [
+                                                        "Interpolation",
+                                                        {
+                                                          "expr": [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "v" ],
+                                                              [
+                                                                "A_string",
+                                                                "key"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          "strip_before": false,
+                                                          "strip_after": false
+                                                        }
+                                                      ],
+                                                      [ "Literal", "/" ],
+                                                      [
+                                                        "Interpolation",
+                                                        {
+                                                          "expr": [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "v" ],
+                                                              [
+                                                                "A_string",
+                                                                "file"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          "strip_before": false,
+                                                          "strip_after": false
+                                                        }
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "cond": null
+                                                }
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "apiKeys" ],
+                                        [
+                                          "For_tuple",
+                                          {
+                                            "identifiers": [ "i", [ "k" ] ],
+                                            "input": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "api_keys" ]
+                                              ]
+                                            ],
+                                            "output": [
+                                              "Template",
+                                              [
+                                                [
+                                                  "Literal", "${env.API_KEY_"
+                                                ],
+                                                [
+                                                  "Interpolation",
+                                                  {
+                                                    "expr": [ "Id", "i" ],
+                                                    "strip_before": false,
+                                                    "strip_after": false
+                                                  }
+                                                ],
+                                                [ "Literal", "}" ]
+                                              ]
+                                            ],
+                                            "cond": null
+                                          }
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "i", [ "k" ] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "api_keys" ] ]
+                    ],
+                    "key_output": [
+                      "Template",
+                      [
+                        [ "Literal", "API_KEY_" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [ "Id", "i" ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ],
+                    "value_output": [ "Id", "k" ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "service" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../../modules/service" ] ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "app",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "release",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "release" ] ] ]
+        ],
+        [
+          "Attribute",
+          "spec",
+          [
+            "Object",
+            [
+              [ [ "Bare", "type" ], [ "String", "ClusterIP" ] ],
+              [
+                [ "Bare", "ports" ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "port" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "llama_cpp_port" ]
+                            ]
+                          ]
+                        ],
+                        [ [ "Bare", "protocol" ], [ "String", "TCP" ] ],
+                        [
+                          [ "Bare", "targetPort" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "llama_cpp_port" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "httproute" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../../modules/httproute" ] ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "app",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "release",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "release" ] ] ]
+        ],
+        [
+          "Attribute",
+          "spec",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "parentRefs" ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "merge",
+                        [
+                          [
+                            "Object",
+                            [
+                              [ [ "Bare", "kind" ], [ "String", "Gateway" ] ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "gateway_ref" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "hostnames" ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "ingress_hostname" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "rules" ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "matches" ],
+                          [
+                            "Tuple",
+                            [
+                              [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "path" ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "type" ],
+                                          [ "String", "PathPrefix" ]
+                                        ],
+                                        [
+                                          [ "Bare", "value" ],
+                                          [ "String", "/" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "backendRefs" ],
+                          [
+                            "Tuple",
+                            [
+                              [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "name" ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "module" ],
+                                            [ "A_string", "service" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "name" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    [ "Bare", "port" ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "llama_cpp_port" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "statefulset" ] ],
+      "body": [
+        [
+          "Attribute", "source", [ "String", "../../../modules/statefulset" ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "app",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "release",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "release" ] ] ]
+        ],
+        [
+          "Attribute",
+          "affinity",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "affinity" ] ] ]
+        ],
+        [ "Attribute", "replicas", [ "Int", 1 ] ],
+        [
+          "Attribute",
+          "annotations",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "checksum/secret" ],
+                [
+                  "Fun_call",
+                  [
+                    "sha256",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "module" ], [ "A_string", "secret" ] ]
+                          ],
+                          [ "A_string", "manifest" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "template_spec",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "resources" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "requests" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "memory" ], [ "String", "8Gi" ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "limits" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "memory" ], [ "String", "96Gi" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "containers" ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "image" ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "images" ] ]
+                              ],
+                              [ "A_string", "llama_swap" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "command" ],
+                          [
+                            "Tuple",
+                            [
+                              [ "String", "/app/llama-swap" ],
+                              [ "String", "--config" ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "config_file" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ],
+                              [ "String", "--listen" ],
+                              [
+                                "Template",
+                                [
+                                  [ "Literal", "0.0.0.0:" ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "llama_cpp_port" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "volumeMounts" ],
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "name" ],
+                                          [ "String", "config" ]
+                                        ],
+                                        [
+                                          [ "Bare", "mountPath" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [ "A_string", "config_file" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "subPath" ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "basename",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "config_file"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "name" ],
+                                          [ "String", "ca-trust-bundle" ]
+                                        ],
+                                        [
+                                          [ "Bare", "mountPath" ],
+                                          [
+                                            "String",
+                                            "/etc/ssl/certs/ca-certificates.crt"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "readOnly" ],
+                                          [ "Bool", true ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "v" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "models" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "name" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "v" ],
+                                              [ "A_string", "key" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "mountPath" ],
+                                          [
+                                            "Template",
+                                            [
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "models_path"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ],
+                                              [ "Literal", "/" ],
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "v" ],
+                                                      [ "A_string", "key" ]
+                                                    ]
+                                                  ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "env" ],
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "e" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "extra_envs" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "name" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "e" ],
+                                              [ "A_string", "name" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "value" ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "tostring",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "e" ],
+                                                    [ "A_string", "value" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "i", [ "_" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "api_keys" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "name" ],
+                                          [
+                                            "Template",
+                                            [
+                                              [ "Literal", "API_KEY_" ],
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [ "Id", "i" ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "valueFrom" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "secretKeyRef" ],
+                                                [
+                                                  "Object",
+                                                  [
+                                                    [
+                                                      [ "Bare", "name" ],
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id",
+                                                                "module"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "secret"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "name"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      [ "Bare", "key" ],
+                                                      [
+                                                        "Template",
+                                                        [
+                                                          [
+                                                            "Literal",
+                                                            "API_KEY_"
+                                                          ],
+                                                          [
+                                                            "Interpolation",
+                                                            {
+                                                              "expr": [
+                                                                "Id", "i"
+                                                              ],
+                                                              "strip_before": false,
+                                                              "strip_after": false
+                                                            }
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "resources" ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "requests" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Quoted", "amd.com/gpu" ],
+                                      [ "Int", 1 ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Bare", "limits" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Quoted", "amd.com/gpu" ],
+                                      [ "Int", 1 ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "ports" ],
+                          [
+                            "Tuple",
+                            [
+                              [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "containerPort" ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "llama_cpp_port" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "livenessProbe" ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "httpGet" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "port" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "llama_cpp_port" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "path" ],
+                                      [ "String", "/health" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Bare", "initialDelaySeconds" ],
+                                [ "Int", 10 ]
+                              ],
+                              [ [ "Bare", "timeoutSeconds" ], [ "Int", 2 ] ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "readinessProbe" ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "httpGet" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "port" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "llama_cpp_port" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "path" ],
+                                      [ "String", "/health" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "volumes" ],
+                [
+                  "Fun_call",
+                  [
+                    "concat",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [ [ "Bare", "name" ], [ "String", "config" ] ],
+                              [
+                                [ "Bare", "secret" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "secretName" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "module" ],
+                                              [ "A_string", "secret" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "name" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "name" ],
+                                [ "String", "ca-trust-bundle" ]
+                              ],
+                              [
+                                [ "Bare", "hostPath" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "path" ],
+                                      [
+                                        "String",
+                                        "/etc/ssl/certs/ca-certificates.crt"
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "type" ],
+                                      [ "String", "File" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "_", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "models" ] ]
+                          ],
+                          "output": [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "name" ],
+                                [
+                                  "Attr",
+                                  [ [ "Id", "v" ], [ "A_string", "key" ] ]
+                                ]
+                              ],
+                              [
+                                [ "Bare", "image" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "reference" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "v" ],
+                                          [ "A_string", "image" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

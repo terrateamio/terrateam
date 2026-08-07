@@ -1,0 +1,1125 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "internal_network_resource_ids",
+          [
+            "For_object",
+            {
+              "identifiers": [ "network_name", [ "network" ] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "networks" ] ]
+              ],
+              "key_output": [ "Id", "network_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_id" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "module" ],
+                                [ "A_string", "networks" ]
+                              ]
+                            ],
+                            [ "Id", "network_name" ]
+                          ]
+                        ],
+                        [ "A_string", "resource_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnets" ],
+                    [
+                      "For_object",
+                      {
+                        "identifiers": [ "subnet_name", [ "subnet" ] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "network" ], [ "A_string", "subnets" ] ]
+                        ],
+                        "key_output": [ "Id", "subnet_name" ],
+                        "value_output": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "resource_id" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "module" ],
+                                                  [ "A_string", "networks" ]
+                                                ]
+                                              ],
+                                              [ "Id", "network_name" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "subnets" ]
+                                        ]
+                                      ],
+                                      [ "Id", "subnet_name" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "resource_id" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [ "Not_equal", [ [ "Id", "network" ], [ "Null" ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "external_network_resource_ids",
+          [
+            "For_object",
+            {
+              "identifiers": [ "network_name", [ "network" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "external_networks" ] ]
+              ],
+              "key_output": [ "Id", "network_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_id" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "network" ], [ "A_string", "resource_id" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnets" ],
+                    [
+                      "For_object",
+                      {
+                        "identifiers": [ "subnet_name", [ "subnet" ] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "network" ], [ "A_string", "subnets" ] ]
+                        ],
+                        "key_output": [ "Id", "subnet_name" ],
+                        "value_output": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "resource_id" ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Fun_call",
+                                        [
+                                          "trimsuffix",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "network" ],
+                                                [ "A_string", "resource_id" ]
+                                              ]
+                                            ],
+                                            [ "String", "/" ]
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [ "Literal", "/subnets/" ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Fun_call",
+                                        [
+                                          "coalesce",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "subnet" ],
+                                                [ "A_string", "name" ]
+                                              ]
+                                            ],
+                                            [ "Id", "subnet_name" ]
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "network" ],
+                            [ "A_string", "resource_id" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "network_resource_ids",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "internal_network_resource_ids" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "external_network_resource_ids" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "registration_dns_zones",
+          [
+            "For_object",
+            {
+              "identifiers": [ "network_name", [ "network" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "networks" ] ]
+              ],
+              "key_output": [ "Id", "network_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "zone_name" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "network" ],
+                            [ "A_string", "private_dns_zones" ]
+                          ]
+                        ],
+                        [ "A_string", "registration_zone_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "zone_config" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "private_dns_zones" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "network" ],
+                                [ "A_string", "private_dns_zones" ]
+                              ]
+                            ],
+                            [ "A_string", "registration_zone_name" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "zone_id" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "azurerm_private_dns_zone" ],
+                                [ "A_string", "private_dns_zones" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "network" ],
+                                    [ "A_string", "private_dns_zones" ]
+                                  ]
+                                ],
+                                [ "A_string", "registration_zone_name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "network" ],
+                                [ "A_string", "private_dns_zones" ]
+                              ]
+                            ],
+                            [ "A_string", "registration_zone_name" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "resolution_dns_zones",
+          [
+            "For_object",
+            {
+              "identifiers": [ "network_resolution_zone", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "flatten",
+                  [
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "network_name", [ "network" ] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "networks" ] ]
+                        ],
+                        "output": [
+                          "Fun_call",
+                          [
+                            "values",
+                            [
+                              [
+                                "For_object",
+                                {
+                                  "identifiers": [ "zone_name", [] ],
+                                  "input": [
+                                    "Fun_call",
+                                    [
+                                      "concat",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "compact",
+                                            [
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "network" ],
+                                                          [
+                                                            "A_string",
+                                                            "private_dns_zones"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "resolution_zone_name"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "try",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "network" ],
+                                                      [
+                                                        "A_string",
+                                                        "private_dns_zones"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "resolution_zone_names"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Tuple", [] ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "key_output": [ "Id", "zone_name" ],
+                                  "value_output": [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "network_name" ],
+                                        [ "Id", "network_name" ]
+                                      ],
+                                      [
+                                        [ "Bare", "zone_name" ],
+                                        [ "Id", "zone_name" ]
+                                      ],
+                                      [
+                                        [ "Bare", "zone_config" ],
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "private_dns_zones"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "zone_name" ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "zone_id" ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Idx",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Id",
+                                                      "azurerm_private_dns_zone"
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "private_dns_zones"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Id", "zone_name" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "id" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "cond": null
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": [
+                          "Not_equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "network" ],
+                                [ "A_string", "private_dns_zones" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "network_resolution_zone" ],
+                          [ "A_string", "network_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "_" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "network_resolution_zone" ],
+                          [ "A_string", "zone_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "value_output": [ "Id", "network_resolution_zone" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "networks",
+          [
+            "For_object",
+            {
+              "identifiers": [ "network_ref", [ "network" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "networks" ] ]
+              ],
+              "key_output": [ "Id", "network_ref" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "address_spaces" ],
+                    [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "network" ],
+                              [ "A_string", "address_spaces" ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "compact",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "network" ],
+                                        [ "A_string", "address_space" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "dns_ips" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "network" ],
+                        [ "A_string", "dns_ip_addresses" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "enable_ddos_protection" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "network" ],
+                        [ "A_string", "enable_ddos_protection" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "location_name" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "network" ], [ "A_string", "location_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "resource_group_name" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "network" ],
+                        [ "A_string", "resource_group_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "network_names" ]
+                          ]
+                        ],
+                        [ "Id", "network_ref" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "tags" ],
+                    [
+                      "Attr", [ [ "Id", "network" ], [ "A_string", "tags" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "lock" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Gt",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "For_tuple",
+                                    {
+                                      "identifiers": [ "group", [] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "network" ],
+                                          [ "A_string", "lock_groups" ]
+                                        ]
+                                      ],
+                                      "output": [ "Id", "group" ],
+                                      "cond": [
+                                        "Fun_call",
+                                        [
+                                          "contains",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "keys",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "locked_groups"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "group" ]
+                                          ]
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "then_": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Fun_call",
+                              [
+                                "anytrue",
+                                [
+                                  [
+                                    "For_tuple",
+                                    {
+                                      "identifiers": [ "group", [] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "network" ],
+                                          [ "A_string", "lock_groups" ]
+                                        ]
+                                      ],
+                                      "output": [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "contains",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "keys",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "locked_groups"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Id", "group" ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "locked_groups"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Id", "group" ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string", "read_only"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Bool", false ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "cond": null
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "then_": [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "kind" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "lock_modes" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "read_only" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "else_": [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "kind" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "lock_modes" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "no_delete" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          }
+                        ],
+                        "else_": [ "Null" ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnets" ],
+                    [
+                      "For_object",
+                      {
+                        "identifiers": [ "subnet_ref", [ "subnet" ] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "network" ], [ "A_string", "subnets" ] ]
+                        ],
+                        "key_output": [ "Id", "subnet_ref" ],
+                        "value_output": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "address_space" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "subnet" ],
+                                  [ "A_string", "address_space" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "name" ],
+                              [
+                                "Fun_call",
+                                [
+                                  "lower",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "coalesce",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "subnet" ],
+                                              [ "A_string", "name" ]
+                                            ]
+                                          ],
+                                          [ "Id", "subnet_ref" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "security_group_name" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "subnet" ],
+                                  [ "A_string", "security_group_name" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "route_table_name" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "subnet" ],
+                                  [ "A_string", "route_table_name" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "routes" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "subnet" ],
+                                  [ "A_string", "route_traffic" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [ "Not_equal", [ [ "Id", "network" ], [ "Null" ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "network_address_spaces",
+          [
+            "For_object",
+            {
+              "identifiers": [ "network_name", [ "network" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "networks" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "external_networks" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "network_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "address_spaces" ],
+                    [
+                      "Fun_call",
+                      [
+                        "toset",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "network" ],
+                                    [ "A_string", "address_spaces" ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "compact",
+                                    [
+                                      [
+                                        "Tuple",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "network" ],
+                                              [ "A_string", "address_space" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnets" ],
+                    [
+                      "For_object",
+                      {
+                        "identifiers": [ "subnet_name", [ "subnet" ] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "network" ], [ "A_string", "subnets" ] ]
+                        ],
+                        "key_output": [ "Id", "subnet_name" ],
+                        "value_output": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "address_space" ],
+                              [
+                                "Fun_call",
+                                [
+                                  "tostring",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "subnet" ],
+                                        [ "A_string", "address_space" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [ "Not_equal", [ [ "Id", "network" ], [ "Null" ] ] ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

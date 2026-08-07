@@ -1,0 +1,3935 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "boot_volume_size",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+                [ "String", "boot_volume_size" ],
+                [ "Int", 50 ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "boot_volume_vpus_per_gb",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+                [ "String", "boot_volume_vpus_per_gb" ],
+                [ "Int", 10 ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "memory",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+                [ "String", "memory" ],
+                [ "Int", 4 ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ocpus",
+          [
+            "Fun_call",
+            [
+              "max",
+              [
+                [ "Int", 1 ],
+                [
+                  "Fun_call",
+                  [
+                    "lookup",
+                    [
+                      [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ]
+                      ],
+                      [ "String", "ocpus" ],
+                      [ "Int", 1 ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "shape",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "shape" ] ] ],
+                [ "String", "shape" ],
+                [ "String", "VM.Standard.E4.Flex" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "fault_domains_all",
+          [
+            "Fun_call",
+            [
+              "formatlist",
+              [
+                [ "String", "FD-%v" ],
+                [ "Tuple", [ [ "Int", 1 ], [ "Int", 2 ], [ "Int", 3 ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "fault_domains_available",
+          [
+            "For_object",
+            {
+              "identifiers": [ "ad", [ "fd" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "oci_identity_fault_domains" ]
+                    ]
+                  ],
+                  [ "A_string", "all" ]
+                ]
+              ],
+              "key_output": [ "Id", "ad" ],
+              "value_output": [ "Id", "fd" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_pool_defaults",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "agent_config" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "are_all_plugins_disabled" ],
+                      [ "Bool", false ]
+                    ],
+                    [
+                      [ "Bare", "is_management_disabled" ], [ "Bool", false ]
+                    ],
+                    [
+                      [ "Bare", "is_monitoring_disabled" ], [ "Bool", false ]
+                    ],
+                    [ [ "Bare", "plugins_config" ], [ "Object", [] ] ]
+                  ]
+                ]
+              ],
+              [ [ "Bare", "allow_autoscaler" ], [ "Bool", false ] ],
+              [
+                [ "Bare", "legacy_imds_endpoints_disabled" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "legacy_imds_endpoints_disabled" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "assign_public_ip" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "assign_public_ip" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "assign_ipv6ip" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "enable_ipv6" ] ]
+                    ],
+                    "then_": [ "Bool", true ],
+                    "else_": [ "Bool", false ]
+                  }
+                ]
+              ],
+              [ [ "Bare", "autoscale" ], [ "Bool", false ] ],
+              [
+                [ "Bare", "block_volume_type" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "block_volume_type" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "boot_volume_size" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "boot_volume_size" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "boot_volume_vpus_per_gb" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "boot_volume_vpus_per_gb" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "capacity_reservation_id" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "capacity_reservation_id" ]
+                  ]
+                ]
+              ],
+              [ [ "Bare", "cloud_init" ], [ "Tuple", [] ] ],
+              [
+                [ "Bare", "compartment_id" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "compartment_id" ] ]
+                ]
+              ],
+              [ [ "Bare", "create" ], [ "Bool", true ] ],
+              [
+                [ "Bare", "disable_default_cloud_init" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "disable_default_cloud_init" ]
+                  ]
+                ]
+              ],
+              [ [ "Bare", "drain" ], [ "Bool", false ] ],
+              [ [ "Bare", "eviction_grace_duration" ], [ "Int", 300 ] ],
+              [ [ "Bare", "force_node_action" ], [ "Bool", true ] ],
+              [ [ "Bare", "force_node_delete" ], [ "Bool", true ] ],
+              [ [ "Bare", "extended_metadata" ], [ "Object", [] ] ],
+              [ [ "Bare", "ignore_initial_pool_size" ], [ "Bool", false ] ],
+              [
+                [ "Bare", "image_id" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "image_id" ] ] ]
+              ],
+              [
+                [ "Bare", "image_type" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "image_type" ] ] ]
+              ],
+              [
+                [ "Bare", "kubernetes_version" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "kubernetes_version" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "max_pods_per_node" ],
+                [
+                  "Fun_call",
+                  [
+                    "min",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "max",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "max_pods_per_node" ]
+                              ]
+                            ],
+                            [ "Int", 1 ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 110 ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "memory" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "memory" ] ] ]
+              ],
+              [
+                [ "Bare", "mode" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "worker_pool_mode" ] ]
+                ]
+              ],
+              [ [ "Bare", "node_cycling_enabled" ], [ "Bool", false ] ],
+              [ [ "Bare", "node_cycling_max_surge" ], [ "Int", 1 ] ],
+              [ [ "Bare", "node_cycling_max_unavailable" ], [ "Int", 0 ] ],
+              [
+                [ "Bare", "node_cycling_mode" ],
+                [ "Tuple", [ [ "String", "instance" ] ] ]
+              ],
+              [
+                [ "Bare", "node_labels" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "node_labels" ] ]
+                ]
+              ],
+              [ [ "Bare", "nsg_ids" ], [ "Tuple", [] ] ],
+              [
+                [ "Bare", "ocpus" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "ocpus" ] ] ]
+              ],
+              [
+                [ "Bare", "os" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "image_os" ] ] ]
+              ],
+              [
+                [ "Bare", "os_version" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "image_os_version" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "placement_ads" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "ad_numbers" ] ] ]
+              ],
+              [
+                [ "Bare", "platform_config" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "platform_config" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "pod_nsg_ids" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "pod_nsg_ids" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "pod_subnet_id" ],
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "pod_subnet_id" ] ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "worker_subnet_id" ]
+                        ]
+                      ],
+                      [ "String", "none" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "preemptible_config" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "preemptible_config" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "pv_transit_encryption" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "pv_transit_encryption" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "shape" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "shape" ] ] ]
+              ],
+              [
+                [ "Bare", "size" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "worker_pool_size" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "subnet_id" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "worker_subnet_id" ] ]
+                ]
+              ],
+              [ [ "Bare", "taints" ], [ "Tuple", [] ] ],
+              [
+                [ "Bare", "volume_kms_key_id" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "volume_kms_key_id" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_pools_with_defaults",
+          [
+            "For_object",
+            {
+              "identifiers": [ "pool_name", [ "pool" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "worker_pools" ] ]
+              ],
+              "key_output": [ "Id", "pool_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "worker_pool_defaults" ]
+                      ]
+                    ],
+                    [ "Id", "pool" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_worker_pools",
+          [
+            "For_object",
+            {
+              "identifiers": [ "pool_name", [ "pool" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "worker_pools_with_defaults" ]
+                ]
+              ],
+              "key_output": [ "Id", "pool_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [ "Id", "pool" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "preemptible_config" ],
+                          [
+                            "Fun_call",
+                            [
+                              "lookup",
+                              [
+                                [ "Id", "pool" ],
+                                [ "String", "preemptible_config" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "pool" ],
+                                    [ "A_string", "preemptible_config" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "block_volume_type" ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Gt",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "length",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "regexall",
+                                            [
+                                              [ "String", "^BM" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "pool" ],
+                                                  [ "A_string", "shape" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Int", 0 ]
+                                ]
+                              ],
+                              "then_": [ "String", "iscsi" ],
+                              "else_": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "block_volume_type" ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ],
+                        [
+                          [ "Bare", "pv_transit_encryption" ],
+                          [
+                            "Fun_call",
+                            [
+                              "alltrue",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string", "pv_transit_encryption"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Equal",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "pool" ],
+                                            [
+                                              "A_string", "block_volume_type"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "String", "paravirtualized" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Gt",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "length",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "regexall",
+                                                  [
+                                                    [ "String", "^VM" ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "pool" ],
+                                                        [
+                                                          "A_string", "shape"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Int", 0 ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "cloud_init" ],
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "part", [] ],
+                              "input": [
+                                "Fun_call",
+                                [
+                                  "concat",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "cloud_init" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pool" ],
+                                        [ "A_string", "cloud_init" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "output": [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "content" ],
+                                    [
+                                      "Cond",
+                                      {
+                                        "if_": [
+                                          "Fun_call",
+                                          [
+                                            "contains",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "keys",
+                                                  [ [ "Id", "part" ] ]
+                                                ]
+                                              ],
+                                              [ "String", "content" ]
+                                            ]
+                                          ]
+                                        ],
+                                        "then_": [
+                                          "Cond",
+                                          {
+                                            "if_": [
+                                              "Fun_call",
+                                              [
+                                                "try",
+                                                [
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "fileexists",
+                                                      [
+                                                        [
+                                                          "Fun_call",
+                                                          [
+                                                            "lookup",
+                                                            [
+                                                              [
+                                                                "Id", "part"
+                                                              ],
+                                                              [
+                                                                "String",
+                                                                "content"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Bool", false ]
+                                                ]
+                                              ]
+                                            ],
+                                            "then_": [
+                                              "Fun_call",
+                                              [
+                                                "file",
+                                                [
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "lookup",
+                                                      [
+                                                        [ "Id", "part" ],
+                                                        [
+                                                          "String", "content"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "else_": [
+                                              "Fun_call",
+                                              [
+                                                "try",
+                                                [
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "base64decode",
+                                                      [
+                                                        [
+                                                          "Fun_call",
+                                                          [
+                                                            "lookup",
+                                                            [
+                                                              [
+                                                                "Id", "part"
+                                                              ],
+                                                              [
+                                                                "String",
+                                                                "content"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "lookup",
+                                                      [
+                                                        [ "Id", "part" ],
+                                                        [
+                                                          "String", "content"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          }
+                                        ],
+                                        "else_": [ "String", "" ]
+                                      }
+                                    ]
+                                  ],
+                                  [
+                                    [ "Bare", "content_type" ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [ "Id", "part" ],
+                                          [ "String", "content_type" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "default_cloud_init_content_type"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    [ "Bare", "filename" ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [ "Id", "part" ],
+                                          [ "String", "filename" ],
+                                          [ "Null" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    [ "Bare", "merge_type" ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [ "Id", "part" ],
+                                          [ "String", "merge_type" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "default_cloud_init_merge_type"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ],
+                        [
+                          [ "Bare", "agent_config" ],
+                          [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "agent_config" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "pool" ],
+                                    [ "A_string", "agent_config" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "worker_pool_defaults"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "agent_config" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "availability_domains" ],
+                          [
+                            "Fun_call",
+                            [
+                              "compact",
+                              [
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "ad_number", [] ],
+                                    "input": [
+                                      "Fun_call",
+                                      [
+                                        "tolist",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "setintersection",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "pool" ],
+                                                    [
+                                                      "A_string",
+                                                      "placement_ads"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string",
+                                                      "ad_numbers"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "ad_numbers_to_names"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Id", "ad_number" ],
+                                          [ "Null" ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "image_id" ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "pool" ],
+                                      [ "A_string", "image_type" ]
+                                    ]
+                                  ],
+                                  [ "String", "custom" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Attr",
+                                [
+                                  [ "Id", "pool" ],
+                                  [ "A_string", "image_id" ]
+                                ]
+                              ],
+                              "else_": [
+                                "Fun_call",
+                                [
+                                  "element",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "split",
+                                        [
+                                          [ "String", "###" ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "element",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "reverse",
+                                                    [
+                                                      [
+                                                        "Fun_call",
+                                                        [
+                                                          "sort",
+                                                          [
+                                                            [
+                                                              "For_tuple",
+                                                              {
+                                                                "identifiers": [
+                                                                  "entry", []
+                                                                ],
+                                                                "input": [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "tolist",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "setintersection",
+                                                                    [
+                                                                    [
+                                                                    "Ellipsis",
+                                                                    [
+                                                                    "Tuple",
+                                                                    [
+                                                                    [
+                                                                    "Cond",
+                                                                    {
+                                                                    "if_": [
+                                                                    "Equal",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "pool"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "image_type"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    "oke"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "then_": [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "setintersection",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "lookup",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "image_ids"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    "oke"
+                                                                    ],
+                                                                    [
+                                                                    "Null"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "lookup",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "image_ids"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "trimprefix",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "lower",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "pool"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "kubernetes_version"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    "v"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Null"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "else_": [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "lookup",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "image_ids"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    "platform"
+                                                                    ],
+                                                                    [
+                                                                    "Null"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "lookup",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "image_ids"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "pool"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "image_type"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Null"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Cond",
+                                                                    {
+                                                                    "if_": [
+                                                                    "Gt",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "length",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "regexall",
+                                                                    [
+                                                                    [
+                                                                    "String",
+                                                                    "GPU"
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "pool"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "shape"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Int", 0
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "then_": [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "image_ids"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "gpu"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "else_": [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "image_ids"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "nongpu"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    [
+                                                                    "Cond",
+                                                                    {
+                                                                    "if_": [
+                                                                    "Gt",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "length",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "regexall",
+                                                                    [
+                                                                    [
+                                                                    "String",
+                                                                    "A[12]\\."
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "pool"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "shape"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Int", 0
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "then_": [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "image_ids"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "aarch64"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "else_": [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "image_ids"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "x86_64"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "lookup",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "image_ids"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "format",
+                                                                    [
+                                                                    [
+                                                                    "String",
+                                                                    "%v %v"
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "pool"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "os"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Idx",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "split",
+                                                                    [
+                                                                    [
+                                                                    "String",
+                                                                    "."
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "pool"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "os_version"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Int", 0
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Null"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ],
+                                                                "output": [
+                                                                  "Template",
+                                                                  [
+                                                                    [
+                                                                    "Interpolation",
+                                                                    {
+                                                                    "expr": [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Idx",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "indexed_images"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "entry"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "sort_key"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "strip_before": false,
+                                                                    "strip_after": false
+                                                                    }
+                                                                    ],
+                                                                    [
+                                                                    "Literal",
+                                                                    "###"
+                                                                    ],
+                                                                    [
+                                                                    "Interpolation",
+                                                                    {
+                                                                    "expr": [
+                                                                    "Id",
+                                                                    "entry"
+                                                                    ],
+                                                                    "strip_before": false,
+                                                                    "strip_after": false
+                                                                    }
+                                                                    ]
+                                                                  ]
+                                                                ],
+                                                                "cond": null
+                                                              }
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Int", 0 ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 1 ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ],
+                        [
+                          [ "Bare", "defined_tags" ],
+                          [
+                            "Fun_call",
+                            [
+                              "merge",
+                              [
+                                [
+                                  "Cond",
+                                  {
+                                    "if_": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "use_defined_tags" ]
+                                      ]
+                                    ],
+                                    "then_": [
+                                      "Fun_call",
+                                      [
+                                        "merge",
+                                        [
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [
+                                                  "Template",
+                                                  [
+                                                    [
+                                                      "Interpolation",
+                                                      {
+                                                        "expr": [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "var" ],
+                                                            [
+                                                              "A_string",
+                                                              "tag_namespace"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "strip_before": false,
+                                                        "strip_after": false
+                                                      }
+                                                    ],
+                                                    [
+                                                      "Literal", ".state_id"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string", "state_id"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                [
+                                                  "Template",
+                                                  [
+                                                    [
+                                                      "Interpolation",
+                                                      {
+                                                        "expr": [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "var" ],
+                                                            [
+                                                              "A_string",
+                                                              "tag_namespace"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "strip_before": false,
+                                                        "strip_after": false
+                                                      }
+                                                    ],
+                                                    [ "Literal", ".role" ]
+                                                  ]
+                                                ],
+                                                [ "String", "worker" ]
+                                              ],
+                                              [
+                                                [
+                                                  "Template",
+                                                  [
+                                                    [
+                                                      "Interpolation",
+                                                      {
+                                                        "expr": [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "var" ],
+                                                            [
+                                                              "A_string",
+                                                              "tag_namespace"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "strip_before": false,
+                                                        "strip_after": false
+                                                      }
+                                                    ],
+                                                    [ "Literal", ".pool" ]
+                                                  ]
+                                                ],
+                                                [ "Id", "pool_name" ]
+                                              ],
+                                              [
+                                                [
+                                                  "Template",
+                                                  [
+                                                    [
+                                                      "Interpolation",
+                                                      {
+                                                        "expr": [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "var" ],
+                                                            [
+                                                              "A_string",
+                                                              "tag_namespace"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "strip_before": false,
+                                                        "strip_after": false
+                                                      }
+                                                    ],
+                                                    [
+                                                      "Literal",
+                                                      ".cluster_autoscaler"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Cond",
+                                                  {
+                                                    "if_": [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "pool" ],
+                                                        [
+                                                          "A_string",
+                                                          "allow_autoscaler"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    "then_": [
+                                                      "String", "allowed"
+                                                    ],
+                                                    "else_": [
+                                                      "String", "disabled"
+                                                    ]
+                                                  }
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Cond",
+                                            {
+                                              "if_": [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "pool" ],
+                                                  [ "A_string", "autoscale" ]
+                                                ]
+                                              ],
+                                              "then_": [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [
+                                                      "Template",
+                                                      [
+                                                        [
+                                                          "Interpolation",
+                                                          {
+                                                            "expr": [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id", "var"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "tag_namespace"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            "strip_before": false,
+                                                            "strip_after": false
+                                                          }
+                                                        ],
+                                                        [
+                                                          "Literal",
+                                                          ".cluster_autoscaler"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "String", "managed" ]
+                                                  ]
+                                                ]
+                                              ],
+                                              "else_": [ "Object", [] ]
+                                            }
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "else_": [ "Object", [] ]
+                                  }
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "defined_tags" ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "lookup",
+                                    [
+                                      [ "Id", "pool" ],
+                                      [ "String", "defined_tags" ],
+                                      [ "Object", [] ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "freeform_tags" ],
+                          [
+                            "Fun_call",
+                            [
+                              "merge",
+                              [
+                                [
+                                  "Cond",
+                                  {
+                                    "if_": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "use_defined_tags" ]
+                                      ]
+                                    ],
+                                    "then_": [ "Object", [] ],
+                                    "else_": [
+                                      "Fun_call",
+                                      [
+                                        "merge",
+                                        [
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Quoted", "state_id" ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string", "state_id"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                [ "Quoted", "role" ],
+                                                [ "String", "worker" ]
+                                              ],
+                                              [
+                                                [ "Quoted", "pool" ],
+                                                [ "Id", "pool_name" ]
+                                              ],
+                                              [
+                                                [
+                                                  "Quoted",
+                                                  "cluster_autoscaler"
+                                                ],
+                                                [
+                                                  "Cond",
+                                                  {
+                                                    "if_": [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "pool" ],
+                                                        [
+                                                          "A_string",
+                                                          "allow_autoscaler"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    "then_": [
+                                                      "String", "allowed"
+                                                    ],
+                                                    "else_": [
+                                                      "String", "disabled"
+                                                    ]
+                                                  }
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Cond",
+                                            {
+                                              "if_": [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "pool" ],
+                                                  [ "A_string", "autoscale" ]
+                                                ]
+                                              ],
+                                              "then_": [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [
+                                                      "Quoted",
+                                                      "cluster_autoscaler"
+                                                    ],
+                                                    [ "String", "managed" ]
+                                                  ]
+                                                ]
+                                              ],
+                                              "else_": [ "Object", [] ]
+                                            }
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "freeform_tags" ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "lookup",
+                                    [
+                                      [ "Id", "pool" ],
+                                      [ "String", "freeform_tags" ],
+                                      [ "Object", [] ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "nsg_ids" ],
+                          [
+                            "Fun_call",
+                            [
+                              "compact",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "concat",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "worker_nsg_ids" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "pool" ],
+                                          [ "A_string", "nsg_ids" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "pods_nsg_ids" ],
+                          [
+                            "Fun_call",
+                            [
+                              "compact",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "concat",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "pod_nsg_ids" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "pool" ],
+                                          [ "A_string", "pod_nsg_ids" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "node_labels" ],
+                          [
+                            "Fun_call",
+                            [
+                              "merge",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [
+                                        "Quoted",
+                                        "oke.oraclecloud.com/tf.module"
+                                      ],
+                                      [ "String", "terraform-oci-oke" ]
+                                    ],
+                                    [
+                                      [
+                                        "Quoted",
+                                        "oke.oraclecloud.com/tf.state_id"
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "state_id" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [
+                                        "Quoted",
+                                        "oke.oraclecloud.com/pool.name"
+                                      ],
+                                      [ "Id", "pool_name" ]
+                                    ],
+                                    [
+                                      [
+                                        "Quoted",
+                                        "oke.oraclecloud.com/pool.mode"
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "pool" ],
+                                          [ "A_string", "mode" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [
+                                        "Quoted",
+                                        "oke.oraclecloud.com/cluster_autoscaler"
+                                      ],
+                                      [
+                                        "Cond",
+                                        {
+                                          "if_": [
+                                            "Attr",
+                                            [
+                                              [ "Id", "pool" ],
+                                              [
+                                                "A_string",
+                                                "allow_autoscaler"
+                                              ]
+                                            ]
+                                          ],
+                                          "then_": [ "String", "allowed" ],
+                                          "else_": [ "String", "disabled" ]
+                                        }
+                                      ]
+                                    ],
+                                    [
+                                      [
+                                        "Quoted",
+                                        "oci.oraclecloud.com/vcn-native-ip-cni"
+                                      ],
+                                      [
+                                        "Cond",
+                                        {
+                                          "if_": [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [ "A_string", "cni_type" ]
+                                                ]
+                                              ],
+                                              [ "String", "npn" ]
+                                            ]
+                                          ],
+                                          "then_": [ "Bool", true ],
+                                          "else_": [ "Bool", false ]
+                                        }
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Cond",
+                                  {
+                                    "if_": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pool" ],
+                                        [ "A_string", "autoscale" ]
+                                      ]
+                                    ],
+                                    "then_": [
+                                      "Object",
+                                      [
+                                        [
+                                          [
+                                            "Quoted",
+                                            "oke.oraclecloud.com/cluster_autoscaler"
+                                          ],
+                                          [ "String", "managed" ]
+                                        ]
+                                      ]
+                                    ],
+                                    "else_": [ "Object", [] ]
+                                  }
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "pool" ],
+                                    [ "A_string", "node_labels" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "node_cycling_mode" ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "pool" ],
+                                      [ "A_string", "node_cycling_mode" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "For_tuple",
+                                {
+                                  "identifiers": [ "entry", [] ],
+                                  "input": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "pool" ],
+                                      [ "A_string", "node_cycling_mode" ]
+                                    ]
+                                  ],
+                                  "output": [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "supported_node_cycling_mode"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [ "lower", [ [ "Id", "entry" ] ] ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "cond": null
+                                }
+                              ],
+                              "else_": [ "Null" ]
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Fun_call",
+                [
+                  "tobool",
+                  [
+                    [
+                      "Attr", [ [ "Id", "pool" ], [ "A_string", "create" ] ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "supported_node_cycling_mode",
+          [
+            "Object",
+            [
+              [ [ "Bare", "instance" ], [ "String", "INSTANCE_REPLACE" ] ],
+              [
+                [ "Bare", "boot_volume" ],
+                [ "String", "BOOT_VOLUME_REPLACE" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_modes",
+          [
+            "Fun_call",
+            [
+              "distinct",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "w", [] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "values",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "enabled_worker_pools" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "output": [
+                      "Attr", [ [ "Id", "w" ], [ "A_string", "mode" ] ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "expected_node_count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "enabled_worker_pools" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Int", 0 ],
+              "else_": [
+                "Fun_call",
+                [
+                  "sum",
+                  [
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "k", [ "v" ] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "enabled_worker_pools" ]
+                          ]
+                        ],
+                        "output": [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [ "Id", "v" ],
+                              [ "String", "size" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "worker_pool_size" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "expected_drain_count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "enabled_worker_pools" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Int", 0 ],
+              "else_": [
+                "Fun_call",
+                [
+                  "sum",
+                  [
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "k", [ "v" ] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "enabled_worker_pools" ]
+                          ]
+                        ],
+                        "output": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Fun_call",
+                              [
+                                "tobool",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ], [ "A_string", "drain" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "then_": [
+                              "Fun_call",
+                              [
+                                "lookup",
+                                [
+                                  [ "Id", "v" ],
+                                  [ "String", "size" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "worker_pool_size" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "else_": [ "Int", 0 ]
+                          }
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "expected_autoscale_worker_pools",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "enabled_worker_pools" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Int", 0 ],
+              "else_": [
+                "Fun_call",
+                [
+                  "sum",
+                  [
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "k", [ "v" ] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "enabled_worker_pools" ]
+                          ]
+                        ],
+                        "output": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Fun_call",
+                              [
+                                "tobool",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "autoscale" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "then_": [ "Int", 1 ],
+                            "else_": [ "Int", 0 ]
+                          }
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_node_pools",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "enabled_worker_pools" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "lookup",
+                      [
+                        [ "Id", "v" ], [ "String", "mode" ], [ "String", "" ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "node-pool" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_virtual_node_pools",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "enabled_worker_pools" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "lookup",
+                      [
+                        [ "Id", "v" ], [ "String", "mode" ], [ "String", "" ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "virtual-node-pool" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_instance_configs",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "enabled_worker_pools" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": [
+                "Fun_call",
+                [
+                  "contains",
+                  [
+                    [
+                      "Tuple",
+                      [
+                        [ "String", "cluster-network" ],
+                        [ "String", "instance-pool" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [ "Id", "v" ],
+                          [ "String", "mode" ],
+                          [ "String", "" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_instance_pools",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "enabled_worker_pools" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "lookup",
+                      [
+                        [ "Id", "v" ], [ "String", "mode" ], [ "String", "" ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "instance-pool" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_instances",
+          [
+            "For_object",
+            {
+              "identifiers": [ "e", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "concat",
+                  [
+                    [ "Tuple", [] ],
+                    [
+                      "Ellipsis",
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "enabled_worker_pools" ]
+                            ]
+                          ],
+                          "output": [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "i", [] ],
+                              "input": [
+                                "Fun_call",
+                                [
+                                  "range",
+                                  [
+                                    [ "Int", 0 ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [ "Id", "v" ],
+                                          [ "String", "size" ],
+                                          [ "Int", 0 ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "output": [
+                                "Fun_call",
+                                [
+                                  "merge",
+                                  [
+                                    [ "Id", "v" ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Quoted", "key" ], [ "Id", "k" ]
+                                        ],
+                                        [
+                                          [ "Quoted", "index" ],
+                                          [ "Id", "i" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ],
+                          "cond": [
+                            "Equal",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "lookup",
+                                  [
+                                    [ "Id", "v" ],
+                                    [ "String", "mode" ],
+                                    [ "String", "" ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "instance" ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Fun_call",
+                [
+                  "format",
+                  [
+                    [ "String", "%v-%v" ],
+                    [
+                      "Fun_call",
+                      [ "lookup", [ [ "Id", "e" ], [ "String", "key" ] ] ]
+                    ],
+                    [
+                      "Fun_call",
+                      [ "lookup", [ [ "Id", "e" ], [ "String", "index" ] ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "value_output": [ "Id", "e" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_cluster_networks",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "enabled_worker_pools" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "lookup",
+                      [
+                        [ "Id", "v" ], [ "String", "mode" ], [ "String", "" ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "cluster-network" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_compute_clusters",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "enabled_worker_pools" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "lookup",
+                      [
+                        [ "Id", "v" ], [ "String", "mode" ], [ "String", "" ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "compute-cluster" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "compute_cluster_instance_ids_map",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "enabled_compute_clusters" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "toset",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [ "Id", "v" ],
+                          [ "String", "instance_ids" ],
+                          [ "Tuple", [] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "compute_cluster_instance_ids",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "concat",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "k", [ "v" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "compute_cluster_instance_ids_map"
+                                    ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "id", [] ],
+                                    "input": [ "Id", "v" ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "format",
+                                        [
+                                          [ "String", "%s###%s" ],
+                                          [ "Id", "k" ],
+                                          [ "Id", "id" ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "compute_cluster_instance_map",
+          [
+            "For_object",
+            {
+              "identifiers": [ "id", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "compute_cluster_instance_ids" ]
+                ]
+              ],
+              "key_output": [ "Id", "id" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "lookup",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "enabled_compute_clusters" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "element",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "split",
+                              [ [ "String", "###" ], [ "Id", "id" ] ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_pools_final",
+          [
+            "For_object",
+            {
+              "identifiers": [ "pool_name", [ "pool" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "enabled_worker_pools" ] ]
+              ],
+              "key_output": [ "Id", "pool_name" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "a", [ "b" ] ],
+                  "input": [ "Id", "pool" ],
+                  "key_output": [ "Id", "a" ],
+                  "value_output": [ "Id", "b" ],
+                  "cond": [
+                    "Log_and",
+                    [
+                      [
+                        "Log_and",
+                        [
+                          [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Not_equal",
+                                            [
+                                              [ "Id", "a" ],
+                                              [ "String", "create" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Not_equal",
+                                            [ [ "Id", "b" ], [ "Null" ] ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Not_equal",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "length",
+                                                    [ [ "Id", "b" ] ]
+                                                  ]
+                                                ],
+                                                [ "Minus", [ "Int", 1 ] ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Int", 0 ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Not",
+                                          [
+                                            "Not",
+                                            [
+                                              "Fun_call",
+                                              [ "tobool", [ [ "Id", "b" ] ] ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Bool", true ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Not",
+                                [
+                                  "Log_and",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "contains",
+                                        [
+                                          [
+                                            "Tuple",
+                                            [
+                                              [ "String", "os" ],
+                                              [ "String", "os_version" ]
+                                            ]
+                                          ],
+                                          [ "Id", "a" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Equal",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "pool" ],
+                                            [ "A_string", "image_type" ]
+                                          ]
+                                        ],
+                                        [ "String", "custom" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Not",
+                            [
+                              "Log_and",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "contains",
+                                    [
+                                      [
+                                        "Tuple",
+                                        [
+                                          [ "String", "pod_nsg_ids" ],
+                                          [ "String", "pod_subnet_id" ]
+                                        ]
+                                      ],
+                                      [ "Id", "a" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Not_equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "cni_type" ]
+                                      ]
+                                    ],
+                                    [ "String", "npn" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Not",
+                        [
+                          "Log_and",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "contains",
+                                [
+                                  [
+                                    "Tuple",
+                                    [
+                                      [ "String", "ocpus" ],
+                                      [ "String", "memory" ]
+                                    ]
+                                  ],
+                                  [ "Id", "a" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Equal",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "length",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "regexall",
+                                          [
+                                            [ "String", "Flex" ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "pool" ],
+                                                [ "A_string", "shape" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_node_pools",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "oci_containerengine_node_pool" ],
+                        [ "A_string", "tfscaled_workers" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "oci_containerengine_node_pool" ],
+                        [ "A_string", "autoscaled_workers" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "worker_pools_final" ]
+                            ]
+                          ],
+                          [ "Id", "k" ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ],
+                    [ "Id", "v" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_virtual_node_pools",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "oci_containerengine_virtual_node_pool" ],
+                  [ "A_string", "workers" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "worker_pools_final" ]
+                            ]
+                          ],
+                          [ "Id", "k" ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ],
+                    [ "Id", "v" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_instance_pools",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "oci_core_instance_pool" ],
+                        [ "A_string", "tfscaled_workers" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "oci_core_instance_pool" ],
+                        [ "A_string", "autoscaled_workers" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "worker_pools_final" ]
+                            ]
+                          ],
+                          [ "Id", "k" ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ],
+                    [ "Id", "v" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_cluster_networks",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "oci_core_cluster_network" ],
+                  [ "A_string", "workers" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "worker_pools_final" ]
+                            ]
+                          ],
+                          [ "Id", "k" ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ],
+                    [ "Id", "v" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_instances",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "oci_core_instance" ], [ "A_string", "workers" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "worker_pools_final" ]
+                            ]
+                          ],
+                          [ "Id", "k" ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ],
+                    [ "Id", "v" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_pools_output",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "worker_node_pools" ] ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "worker_virtual_node_pools" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "worker_instance_pools" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "worker_cluster_networks" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_pool_ids",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "worker_pools_output" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Attr", [ [ "Id", "v" ], [ "A_string", "id" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_instance_ips",
+          [
+            "For_object",
+            {
+              "identifiers": [ "x", [ "y" ] ],
+              "input": [
+                "For_object",
+                {
+                  "identifiers": [ "k", [ "v" ] ],
+                  "input": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "worker_instances" ] ]
+                  ],
+                  "key_output": [
+                    "Fun_call",
+                    [
+                      "replace",
+                      [
+                        [ "Id", "k" ],
+                        [ "String", "/-[^-]*$/" ],
+                        [ "String", "" ]
+                      ]
+                    ]
+                  ],
+                  "value_output": [
+                    "Ellipsis",
+                    [
+                      "Object",
+                      [
+                        [
+                          [
+                            "Expr",
+                            [
+                              "Fun_call",
+                              [
+                                "lookup",
+                                [
+                                  [ "Id", "v" ],
+                                  [ "String", "id" ],
+                                  [ "String", "" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "lookup",
+                              [
+                                [ "Id", "v" ],
+                                [ "String", "private_ip" ],
+                                [ "Null" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "key_output": [ "Id", "x" ],
+              "value_output": [
+                "Fun_call", [ "merge", [ [ "Ellipsis", [ "Id", "y" ] ] ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_nodepool_ips",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "worker_node_pools" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "n", [] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "lookup",
+                      [
+                        [ "Id", "v" ], [ "String", "nodes" ], [ "Tuple", [] ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [
+                    "Fun_call",
+                    [
+                      "lookup",
+                      [ [ "Id", "n" ], [ "String", "id" ], [ "String", "" ] ]
+                    ]
+                  ],
+                  "value_output": [
+                    "Fun_call",
+                    [
+                      "lookup",
+                      [
+                        [ "Id", "n" ], [ "String", "private_ip" ], [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_pool_ips",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "worker_instance_ips" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "worker_nodepool_ips" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ubuntu_supported_versions",
+          [
+            "Object",
+            [
+              [ [ "Quoted", "22.04" ], [ "String", "jammy" ] ],
+              [ [ "Quoted", "24.04" ], [ "String", "noble" ] ],
+              [ [ "Quoted", "22.04 Minimal" ], [ "String", "jammy" ] ],
+              [
+                [ "Quoted", "22.04 Minimal aarch64" ], [ "String", "jammy" ]
+              ],
+              [ [ "Quoted", "24.04 Minimal" ], [ "String", "noble" ] ],
+              [
+                [ "Quoted", "24.04 Minimal aarch64" ], [ "String", "noble" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ubuntu_worker_pools",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "enabled_worker_pools" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "kubernetes_major_version" ],
+                    [
+                      "Fun_call",
+                      [
+                        "substr",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "lookup",
+                              [
+                                [ "Id", "v" ],
+                                [ "String", "kubernetes_version" ],
+                                [ "String", "" ]
+                              ]
+                            ]
+                          ],
+                          [ "Int", 1 ],
+                          [ "Int", 4 ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "kubernetes_minor_version" ],
+                    [
+                      "Fun_call",
+                      [
+                        "substr",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "lookup",
+                              [
+                                [ "Id", "v" ],
+                                [ "String", "kubernetes_version" ],
+                                [ "String", "" ]
+                              ]
+                            ]
+                          ],
+                          [ "Int", 1 ],
+                          [ "Minus", [ "Int", 1 ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "ubuntu_release" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Not_equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "lookup",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "data" ],
+                                                [
+                                                  "A_string",
+                                                  "oci_core_image"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "workers" ]
+                                          ]
+                                        ],
+                                        [ "Id", "k" ],
+                                        [ "Object", [] ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "operating_system_version" ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "lookup",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "data" ],
+                                            [ "A_string", "oci_core_image" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "workers" ]
+                                      ]
+                                    ],
+                                    [ "Id", "k" ],
+                                    [ "Object", [] ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "operating_system_version" ]
+                            ]
+                          ]
+                        ],
+                        "else_": [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [ "Id", "v" ],
+                              [ "String", "os_version" ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Log_and",
+                [
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [ "Id", "v" ],
+                            [ "String", "mode" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "worker_pool_mode" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "String", "virtual-node-pool" ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "contains",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "coalescelist",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "split",
+                                  [
+                                    [ "String", " " ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "lookup",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "data" ],
+                                                        [
+                                                          "A_string",
+                                                          "oci_core_image"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "A_string", "workers" ]
+                                                  ]
+                                                ],
+                                                [ "Id", "k" ],
+                                                [ "Object", [] ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "String", "operating_system" ],
+                                          [ "String", "" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Tuple",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "String", "os" ],
+                                        [ "String", "" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "String", "Ubuntu" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

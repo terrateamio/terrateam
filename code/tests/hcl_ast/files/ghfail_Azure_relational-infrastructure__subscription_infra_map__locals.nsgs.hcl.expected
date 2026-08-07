@@ -1,0 +1,2599 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "allow_in_security_rules",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "network_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [ [ "Bare", "access" ], [ "String", "Allow" ] ],
+                  [ [ "Bare", "direction" ], [ "String", "Inbound" ] ],
+                  [
+                    [ "Bare", "protocol" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule" ], [ "A_string", "protocol" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "from" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "allow" ] ]
+                            ],
+                            [ "A_string", "in" ]
+                          ]
+                        ],
+                        [ "A_string", "from" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "to" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "allow" ] ]
+                            ],
+                            [ "A_string", "in" ]
+                          ]
+                        ],
+                        [ "A_string", "to" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_port_names" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule" ], [ "A_string", "port_names" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_port_names" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "allow" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "in" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "from" ]
+                                ]
+                              ],
+                              [ "A_string", "port_names" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "allow" ] ]
+                            ],
+                            [ "A_string", "in" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [ "Bool", false ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "allow_out_security_rules",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "network_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [ [ "Bare", "access" ], [ "String", "Allow" ] ],
+                  [ [ "Bare", "direction" ], [ "String", "Outbound" ] ],
+                  [
+                    [ "Bare", "protocol" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule" ], [ "A_string", "protocol" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "from" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "allow" ] ]
+                            ],
+                            [ "A_string", "out" ]
+                          ]
+                        ],
+                        [ "A_string", "from" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "to" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "allow" ] ]
+                            ],
+                            [ "A_string", "out" ]
+                          ]
+                        ],
+                        [ "A_string", "to" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_port_names" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule" ], [ "A_string", "port_names" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_port_names" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "allow" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "out" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "from" ]
+                                ]
+                              ],
+                              [ "A_string", "port_names" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "allow" ] ]
+                            ],
+                            [ "A_string", "out" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [ "Bool", false ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "deny_in_security_rules",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "network_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [ [ "Bare", "access" ], [ "String", "Deny" ] ],
+                  [ [ "Bare", "direction" ], [ "String", "Inbound" ] ],
+                  [
+                    [ "Bare", "protocol" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule" ], [ "A_string", "protocol" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "from" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "deny" ] ]
+                            ],
+                            [ "A_string", "in" ]
+                          ]
+                        ],
+                        [ "A_string", "from" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "to" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "deny" ] ]
+                            ],
+                            [ "A_string", "in" ]
+                          ]
+                        ],
+                        [ "A_string", "to" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_port_names" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule" ], [ "A_string", "port_names" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_port_names" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "deny" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "in" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "from" ]
+                                ]
+                              ],
+                              [ "A_string", "port_names" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "deny" ] ]
+                            ],
+                            [ "A_string", "in" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [ "Bool", false ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "deny_out_security_rules",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "network_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [ [ "Bare", "access" ], [ "String", "Deny" ] ],
+                  [ [ "Bare", "direction" ], [ "String", "Outbound" ] ],
+                  [
+                    [ "Bare", "protocol" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule" ], [ "A_string", "protocol" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "from" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "deny" ] ]
+                            ],
+                            [ "A_string", "out" ]
+                          ]
+                        ],
+                        [ "A_string", "from" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "to" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "deny" ] ]
+                            ],
+                            [ "A_string", "out" ]
+                          ]
+                        ],
+                        [ "A_string", "to" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_port_names" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule" ], [ "A_string", "port_names" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_port_names" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "deny" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "out" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "from" ]
+                                ]
+                              ],
+                              [ "A_string", "port_names" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "deny" ] ]
+                            ],
+                            [ "A_string", "out" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [ "Bool", false ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "security_rule_port_ranges",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "destination_port_range" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "rule" ],
+                                [ "A_string", "destination_port_names" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [ "String", "*" ],
+                        "else_": [
+                          "Fun_call", [ "tostring", [ [ "Null" ] ] ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_port_range" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "rule" ],
+                                [ "A_string", "source_port_names" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [ "String", "*" ],
+                        "else_": [
+                          "Fun_call", [ "tostring", [ [ "Null" ] ] ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_port_ranges" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "rule" ],
+                                [ "A_string", "destination_port_names" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [ "Tuple", [] ],
+                        "else_": [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "port_name", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [ "Id", "rule" ],
+                                [ "A_string", "destination_port_names" ]
+                              ]
+                            ],
+                            "output": [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_ports" ]
+                                  ]
+                                ],
+                                [ "Id", "port_name" ]
+                              ]
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_port_ranges" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "rule" ],
+                                [ "A_string", "source_port_names" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [ "Tuple", [] ],
+                        "else_": [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "port_name", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [ "Id", "rule" ],
+                                [ "A_string", "source_port_names" ]
+                              ]
+                            ],
+                            "output": [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_ports" ]
+                                  ]
+                                ],
+                                [ "Id", "port_name" ]
+                              ]
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "base_security_rules",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "allow_in_security_rules" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "allow_out_security_rules" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "deny_in_security_rules" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "deny_out_security_rules" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "is_source_default",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tobool",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "rule" ], [ "A_string", "from" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "is_source_address_space",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tobool",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "rule" ],
+                                      [ "A_string", "from" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "address_space" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "is_source_network",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tobool",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "rule" ],
+                                      [ "A_string", "from" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "network" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "is_source_subnet",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tobool",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "rule" ],
+                                      [ "A_string", "from" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "subnet" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "is_source_vm_set",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tobool",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "rule" ],
+                                      [ "A_string", "from" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "vm_set" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "is_destination_default",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tobool",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr", [ [ "Id", "rule" ], [ "A_string", "to" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "is_destination_address_space",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tobool",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "rule" ], [ "A_string", "to" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "address_space" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "is_destination_network",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tobool",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "rule" ], [ "A_string", "to" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "network" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "is_destination_subnet",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tobool",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "rule" ], [ "A_string", "to" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "subnet" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "is_destination_vm_set",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tobool",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "rule" ], [ "A_string", "to" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "vm_set" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_address_spaces_to_address_spaces",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tostring",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "network_address_spaces" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [ [ "Id", "rule" ], [ "A_string", "to" ] ]
+                                ],
+                                [ "A_string", "address_space" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "address_space" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "is_destination_address_space" ]
+                    ]
+                  ],
+                  [ "Id", "rule_name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_address_space_sets",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "toset",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "network_address_spaces" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "rule" ],
+                                        [ "A_string", "to" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "network" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "address_spaces" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "is_destination_network" ]
+                    ]
+                  ],
+                  [ "Id", "rule_name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_subnets_to_address_spaces",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tostring",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string",
+                                          "network_address_spaces"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "rule" ],
+                                                [ "A_string", "to" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "subnet" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "network_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "subnets" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "rule" ],
+                                        [ "A_string", "to" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "subnet" ]
+                                  ]
+                                ],
+                                [ "A_string", "subnet_name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "address_space" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "is_destination_subnet" ]
+                    ]
+                  ],
+                  [ "Id", "rule_name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_app_security_group_ids",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tostring",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Id", "azurerm_application_security_group"
+                                ],
+                                [ "A_string", "application_security_group" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "rule" ],
+                                        [ "A_string", "to" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "vm_set" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "is_destination_vm_set" ]
+                    ]
+                  ],
+                  [ "Id", "rule_name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_address_spaces",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "destination_address_spaces_to_address_spaces"
+                    ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "destination_subnets_to_address_spaces" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source_address_spaces_to_address_spaces",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tostring",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "network_address_spaces" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "from" ]
+                                  ]
+                                ],
+                                [ "A_string", "address_space" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "address_space" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "is_source_address_space" ]
+                    ]
+                  ],
+                  [ "Id", "rule_name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "source_address_space_sets",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "toset",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "network_address_spaces" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "rule" ],
+                                        [ "A_string", "from" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "network" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "address_spaces" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "is_source_network" ]
+                    ]
+                  ],
+                  [ "Id", "rule_name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "source_subnets_to_address_spaces",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tostring",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string",
+                                          "network_address_spaces"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "rule" ],
+                                                [ "A_string", "from" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "subnet" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "network_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "subnets" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "rule" ],
+                                        [ "A_string", "from" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "subnet" ]
+                                  ]
+                                ],
+                                [ "A_string", "subnet_name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "address_space" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "is_source_subnet" ] ]
+                  ],
+                  [ "Id", "rule_name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "source_app_security_group_ids",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "tostring",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Id", "azurerm_application_security_group"
+                                ],
+                                [ "A_string", "application_security_group" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "rule" ],
+                                        [ "A_string", "from" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "vm_set" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "is_source_vm_set" ] ]
+                  ],
+                  [ "Id", "rule_name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "source_address_spaces",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "source_address_spaces_to_address_spaces" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "source_subnets_to_address_spaces" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_network_tuples",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "is_destination_default" ]
+                        ]
+                      ],
+                      [ "Id", "rule_name" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "default_network_tuple" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "address_space" ],
+                        [
+                          "Fun_call",
+                          [
+                            "tostring",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "lookup",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string",
+                                          "destination_address_spaces"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Id", "rule_name" ],
+                                    [ "Null" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "address_spaces" ],
+                        [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [
+                                    "A_string",
+                                    "destination_address_space_sets"
+                                  ]
+                                ]
+                              ],
+                              [ "Id", "rule_name" ],
+                              [ "Tuple", [] ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "app_security_group_ids" ],
+                        [
+                          "Fun_call",
+                          [
+                            "compact",
+                            [
+                              [
+                                "Tuple",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "destination_app_security_group_ids"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Id", "rule_name" ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "source_network_tuples",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "is_source_default" ]
+                        ]
+                      ],
+                      [ "Id", "rule_name" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "default_network_tuple" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "address_space" ],
+                        [
+                          "Fun_call",
+                          [
+                            "tostring",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "lookup",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "source_address_spaces"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Id", "rule_name" ],
+                                    [ "Null" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "address_spaces" ],
+                        [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "source_address_space_sets" ]
+                                ]
+                              ],
+                              [ "Id", "rule_name" ],
+                              [ "Tuple", [] ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "app_security_group_ids" ],
+                        [
+                          "Fun_call",
+                          [
+                            "compact",
+                            [
+                              [
+                                "Tuple",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "source_app_security_group_ids"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Id", "rule_name" ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "security_rules",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "base_security_rules" ] ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "access" ],
+                    [
+                      "Attr", [ [ "Id", "rule" ], [ "A_string", "access" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "direction" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule" ], [ "A_string", "direction" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "protocol" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule" ], [ "A_string", "protocol" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_address_prefix" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "destination_network_tuples" ]
+                              ]
+                            ],
+                            [ "Id", "rule_name" ]
+                          ]
+                        ],
+                        [ "A_string", "address_space" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_address_prefixes" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "destination_network_tuples" ]
+                              ]
+                            ],
+                            [ "Id", "rule_name" ]
+                          ]
+                        ],
+                        [ "A_string", "address_spaces" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_application_security_group_ids" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "destination_network_tuples" ]
+                              ]
+                            ],
+                            [ "Id", "rule_name" ]
+                          ]
+                        ],
+                        [ "A_string", "app_security_group_ids" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_port_range" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "security_rule_port_ranges" ]
+                              ]
+                            ],
+                            [ "Id", "rule_name" ]
+                          ]
+                        ],
+                        [ "A_string", "destination_port_range" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_port_ranges" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "security_rule_port_ranges" ]
+                              ]
+                            ],
+                            [ "Id", "rule_name" ]
+                          ]
+                        ],
+                        [ "A_string", "destination_port_ranges" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_address_prefix" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "source_network_tuples" ]
+                              ]
+                            ],
+                            [ "Id", "rule_name" ]
+                          ]
+                        ],
+                        [ "A_string", "address_space" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_address_prefixes" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "source_network_tuples" ]
+                              ]
+                            ],
+                            [ "Id", "rule_name" ]
+                          ]
+                        ],
+                        [ "A_string", "address_spaces" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_application_security_group_ids" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "source_network_tuples" ]
+                              ]
+                            ],
+                            [ "Id", "rule_name" ]
+                          ]
+                        ],
+                        [ "A_string", "app_security_group_ids" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_port_range" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "security_rule_port_ranges" ]
+                              ]
+                            ],
+                            [ "Id", "rule_name" ]
+                          ]
+                        ],
+                        [ "A_string", "source_port_range" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_port_ranges" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "security_rule_port_ranges" ]
+                              ]
+                            ],
+                            [ "Id", "rule_name" ]
+                          ]
+                        ],
+                        [ "A_string", "source_port_ranges" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "default_network_tuple",
+          [
+            "Object",
+            [
+              [ [ "Bare", "address_space" ], [ "String", "*" ] ],
+              [ [ "Bare", "address_spaces" ], [ "Tuple", [] ] ],
+              [ [ "Bare", "app_security_group_ids" ], [ "Tuple", [] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_security_groups_to_provision",
+          [
+            "Fun_call",
+            [
+              "tomap",
+              [
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "nsg_name", [ "nsg" ] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "network_security_groups" ]
+                      ]
+                    ],
+                    "key_output": [ "Id", "nsg_name" ],
+                    "value_output": [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "location_name" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "nsg" ],
+                              [ "A_string", "location_name" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "resource_group_name" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "nsg" ],
+                              [ "A_string", "resource_group_name" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [
+                                    "A_string",
+                                    "network_security_group_names"
+                                  ]
+                                ]
+                              ],
+                              [ "Id", "nsg_name" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "tags" ],
+                          [
+                            "Attr",
+                            [ [ "Id", "nsg" ], [ "A_string", "tags" ] ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "security_rules" ],
+                          [
+                            "For_object",
+                            {
+                              "identifiers": [
+                                "rule_index", [ "rule_name" ]
+                              ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "nsg" ],
+                                  [ "A_string", "security_rules" ]
+                                ]
+                              ],
+                              "key_output": [ "Id", "rule_name" ],
+                              "value_output": [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "priority" ],
+                                    [
+                                      "Add",
+                                      [
+                                        [ "Int", 100 ],
+                                        [ "Id", "rule_index" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    [ "Bare", "config" ],
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "security_rules" ]
+                                          ]
+                                        ],
+                                        [ "Id", "rule_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,21 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "backend",
+            "labels": [ [ "Lit", "azurerm" ] ],
+            "body": [
+              [ "Attribute", "key", [ "String", "terraform.tfstate" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

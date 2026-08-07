@@ -1,0 +1,213 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ], [ "Lit", "aws-s3" ]
+      ],
+      "body": [
+        [ "Attribute", "driver_type", [ "String", "humanitec/container" ] ],
+        [ "Attribute", "id", [ "String", "aws-s3" ] ],
+        [ "Attribute", "name", [ "String", "aws-s3" ] ],
+        [ "Attribute", "type", [ "String", "s3" ] ],
+        [
+          "Attribute", "driver_account", [ "String", "my-aws-cloud-account" ]
+        ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "job" ],
+                            [
+                              "String",
+                              "${resources['config.runner'].outputs.job}"
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "cluster" ],
+                            [
+                              "String",
+                              "${resources['config.runner'].outputs.cluster}"
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "credentials_config" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "environment" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Quoted", "AWS_ACCESS_KEY_ID" ],
+                                        [ "String", "AccessKeyId" ]
+                                      ],
+                                      [
+                                        [ "Quoted", "AWS_SECRET_ACCESS_KEY" ],
+                                        [ "String", "SecretAccessKey" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "files" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "terraform.tfvars.json" ],
+                                  [
+                                    "String",
+                                    "{\"REGION\": \"eu-west-3\", \"BUCKET\": \"${context.app.id}-${context.env.id}\"}\n"
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "backend.tf" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\nterraform {\n  backend \"s3\" {\n    bucket = \"my-s3-to-store-tf-state\"\n    key = \"$${context.res.guresid}/state/terraform.tfstate\"\n    region = \"eu-west-3\"\n  }\n}\n"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "providers.tf" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\nterraform {\n  required_providers {\n    aws = {\n      source = \"hashicorp/aws\"\n      version = \"~> 5.72.0\"\n    }\n  }\n}\n"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "vars.tf" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\nvariable \"REGION\" {\n    type = string\n}\n\nvariable \"BUCKET\" {\n    type = string\n}\n"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "main.tf" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\nprovider \"aws\" {\n  region     = var.REGION\n  default_tags {\n    tags = {\n      CreatedBy = \"Humanitec\"\n    }\n  }\n}\n\nresource \"random_string\" \"bucket_suffix\" {\n  length           = 5\n  special          = false\n  upper            = false\n}\n\nmodule \"aws_s3\" {\n  source = \"terraform-aws-modules/s3-bucket/aws\"\n  bucket = format(\"%s-%s\", var.BUCKET, random_string.bucket_suffix.result)\n  acl    = \"private\"\n  force_destroy = true\n  control_object_ownership = true\n  object_ownership         = \"BucketOwnerPreferred\"\n}\n\noutput \"region\" {\n  value = module.aws_s3.s3_bucket_region\n}\n\noutput \"bucket\" {\n  value = module.aws_s3.s3_bucket_id\n}\n"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "secret_refs" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "cluster" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "agent_url" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Quoted", "value" ],
+                                        [
+                                          "String",
+                                          "${resources['config.runner'].outputs.agent_url}"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition_criteria" ],
+        [ "Lit", "aws-s3_criteria_0" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "resource" ],
+                      [ "A_string", "humanitec_resource_definition" ]
+                    ]
+                  ],
+                  [ "A_string", "aws-s3" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "env_type", [ "String", "development" ] ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,26 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Id", "true" ], [ "Id", "name" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Id", "null" ], [ "Id", "name" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Id", "false" ], [ "Id", "name" ] ],
+      "body": []
+    }
+  ]
+]

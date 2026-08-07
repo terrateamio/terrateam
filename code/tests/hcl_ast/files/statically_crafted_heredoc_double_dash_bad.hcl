@@ -1,0 +1,3 @@
+x = <<--EOF
+body
+EOF

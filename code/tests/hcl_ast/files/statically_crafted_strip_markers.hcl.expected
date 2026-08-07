@@ -1,0 +1,53 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Template",
+      [
+        [ "Literal", "a" ],
+        [
+          "If_directive",
+          {
+            "cond": [ "Id", "y" ],
+            "then_": [ [ "Literal", "b" ] ],
+            "else_": [ [ "Literal", "c" ] ],
+            "strip_before": true,
+            "strip_after": true
+          }
+        ],
+        [ "Literal", "d" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "y",
+    [
+      "Template",
+      [
+        [ "Literal", "e" ],
+        [
+          "For_directive",
+          {
+            "vars": [ "v", null ],
+            "input": [ "Id", "xs" ],
+            "body": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "v" ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ],
+            "strip_before": true,
+            "strip_after": true
+          }
+        ],
+        [ "Literal", "f" ]
+      ]
+    ]
+  ]
+]

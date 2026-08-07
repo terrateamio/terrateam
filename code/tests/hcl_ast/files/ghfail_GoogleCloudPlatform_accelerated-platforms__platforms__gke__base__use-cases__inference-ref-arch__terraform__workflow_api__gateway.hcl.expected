@@ -1,0 +1,1789 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "gateway_subnetwork_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "unique_identifier_prefix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-gateway" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "proxy_subnetwork_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "unique_identifier_prefix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-proxy" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "gateway_manifests_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "namespace_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/gateway-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "workflow_api_default_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "hostname_suffix",
+          [
+            "Template",
+            [
+              [ "Literal", "endpoints." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "google_project" ]
+                            ]
+                          ],
+                          [ "A_string", "cluster" ]
+                        ]
+                      ],
+                      [ "A_string", "project_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".cloud.goog" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "iap_oath_brand",
+          [
+            "Template",
+            [
+              [ "Literal", "projects/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "google_project" ]
+                            ]
+                          ],
+                          [ "A_string", "comfyui_iap_oath_branding" ]
+                        ]
+                      ],
+                      [ "A_string", "number" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/brands/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "google_project" ]
+                            ]
+                          ],
+                          [ "A_string", "comfyui_iap_oath_branding" ]
+                        ]
+                      ],
+                      [ "A_string", "number" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "workflow_api_service_name",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ], [ "A_string", "workflow_api_default_name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "workflow_api_service_port", [ "Int", 8080 ] ],
+        [
+          "Attribute",
+          "workflow_api_serviceaccount",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "unique_identifier_prefix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "workflow_api_default_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "workflow_api_backend_service_regex",
+          [
+            "Template",
+            [
+              [ "Literal", ".*" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "comfyui_kubernetes_namespace" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "workflow_api_default_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-8080-.*" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "google_client_config" ], [ "Lit", "default" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "google_client_openid_userinfo" ], [ "Lit", "identity" ]
+      ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "local_file" ], [ "Lit", "workflow_api_serviceaccount" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/templates/serviceaccount.tftpl.yaml" ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "workflow_api_serviceaccount" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "namespace" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "comfyui_kubernetes_namespace" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "namespace_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/serviceaccount-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "workflow_api_serviceaccount" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".yaml" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_apply_serviceaccount" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local_file" ],
+                  [ "A_string", "workflow_api_serviceaccount" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../../modules/kubectl_apply" ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifest",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local_file" ],
+                  [ "A_string", "workflow_api_serviceaccount" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "manifest_includes_namespace", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_project_service" ],
+        [ "Lit", "certificatemanager_googleapis_com" ]
+      ],
+      "body": [
+        [ "Attribute", "disable_dependent_services", [ "Bool", false ] ],
+        [ "Attribute", "disable_on_destroy", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "google_project" ] ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "project_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service",
+          [ "String", "certificatemanager.googleapis.com" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_global_address" ],
+        [ "Lit", "external_gateway_https" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "workflow_api_gateway_address_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "google_project" ] ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "project_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_managed_ssl_certificate" ],
+        [ "Lit", "workflow_api" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_project_service" ],
+                  [ "A_string", "certificatemanager_googleapis_com" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "workflow_api_endpoints_ssl_certificate_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "google_project" ] ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "project_id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "managed",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "domains",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "workflow_api_endpoints_hostname" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "local_file" ], [ "Lit", "external_gateway_https_yaml" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "/templates/gateway-external-https.tftpl.yaml"
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "address_name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "google_compute_global_address" ],
+                              [ "A_string", "external_gateway_https" ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "gateway_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "workflow_api_gateway_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "namespace" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "comfyui_kubernetes_namespace" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "ssl_certificate_name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Id",
+                                "google_compute_managed_ssl_certificate"
+                              ],
+                              [ "A_string", "workflow_api" ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "gateway_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "workflow_api_gateway_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".yaml" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "local_file" ], [ "Lit", "health_check_policy_yaml" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal", "/templates/health-check-policy.tftpl.yaml"
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "policy_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "workflow_api_default_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "service_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "workflow_api_service_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "namespace" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "comfyui_kubernetes_namespace" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "gateway_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/health-check-policy-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "workflow_api_default_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".yaml" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "local_file" ], [ "Lit", "route_workflow_api_https_yaml" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/templates/http-route-service.tftpl.yaml" ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "gateway_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "workflow_api_gateway_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "hostname" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "workflow_api_endpoints_hostname" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "http_route_name" ],
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "workflow_api_default_name" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "-https" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "namespace" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "comfyui_kubernetes_namespace" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "service_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "workflow_api_service_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "service_port" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "workflow_api_service_port" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "gateway_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/route-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "workflow_api_default_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-https.yaml" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "local_file" ], [ "Lit", "policy_iap_workflow_api_yaml" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "/templates/gcp-backend-policy-iap-service.tftpl.yaml"
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "policy_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "workflow_api_default_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "service_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "workflow_api_service_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "namespace" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "comfyui_kubernetes_namespace" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "gateway_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/gcp-backend-policy-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "workflow_api_default_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".yaml" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "terraform_data" ],
+        [ "Lit", "workflow_api_https_endpoint_undelete" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template",
+                  [
+                    [ "Literal", "gcloud endpoints services undelete " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "workflow_api_endpoints_hostname" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " --project=" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "google_project" ]
+                                  ]
+                                ],
+                                [ "A_string", "cluster" ]
+                              ]
+                            ],
+                            [ "A_string", "project_id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " --quiet >/dev/null 2>&1 || exit 0" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "interpreter",
+                [ "Tuple", [ [ "String", "bash" ], [ "String", "-c" ] ] ]
+              ],
+              [
+                "Attribute",
+                "working_dir",
+                [ "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_endpoints_service" ],
+        [ "Lit", "workflow_api_https" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "terraform_data" ],
+                  [ "A_string", "workflow_api_https_endpoint_undelete" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "google_compute_global_address" ],
+                  [ "A_string", "external_gateway_https" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "openapi_config",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/templates/endpoint.tftpl.yaml" ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "endpoint" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "workflow_api_endpoints_hostname" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "ip_address" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "google_compute_global_address" ],
+                              [ "A_string", "external_gateway_https" ]
+                            ]
+                          ],
+                          [ "A_string", "address" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "google_project" ] ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "project_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_name",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "workflow_api_endpoints_hostname" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_apply_gateway_res" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_endpoints_service" ],
+                  [ "A_string", "workflow_api_https" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "local_file" ],
+                  [ "A_string", "external_gateway_https_yaml" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "local_file" ],
+                  [ "A_string", "policy_iap_workflow_api_yaml" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "local_file" ],
+                  [ "A_string", "route_workflow_api_https_yaml" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../../modules/kubectl_apply" ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifest",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "gateway_manifests_directory" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "manifest_includes_namespace", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_wait_for_gateway" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_apply_gateway_res" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_apply_workload_manifest" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../../modules/kubectl_wait" ]
+        ],
+        [
+          "Attribute",
+          "for",
+          [
+            "String",
+            "jsonpath={.status.conditions[?(@.type==\"networking.gke.io/GatewayHealthy\")].status}=True"
+          ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "comfyui_kubernetes_namespace" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource",
+          [
+            "Template",
+            [
+              [ "Literal", "gateway/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "workflow_api_gateway_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "timeout", [ "String", "300s" ] ],
+        [ "Attribute", "wait_for_create", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "kubernetes_resources" ], [ "Lit", "gateway" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_wait_for_gateway" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_version",
+          [ "String", "gateway.networking.k8s.io/v1" ]
+        ],
+        [ "Attribute", "kind", [ "String", "Gateway" ] ],
+        [
+          "Attribute",
+          "field_selector",
+          [
+            "Template",
+            [
+              [ "Literal", "metadata.name==" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "workflow_api_gateway_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "comfyui_kubernetes_namespace" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_iap_web_backend_service_iam_member" ],
+        [ "Lit", "service_account_iap_https_resource_accessor" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "member",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_service_account" ],
+                  [ "A_string", "workflow_api_user" ]
+                ]
+              ],
+              [ "A_string", "member" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [ "String", "roles/iap.httpsResourceAccessor" ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "cluster_project_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "web_backend_service",
+          [
+            "Fun_call",
+            [
+              "basename",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "one",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "backend", [] ],
+                          "input": [
+                            "Fun_call",
+                            [
+                              "split",
+                              [
+                                [ "String", ", " ],
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Idx",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "data" ],
+                                                            [
+                                                              "A_string",
+                                                              "kubernetes_resources"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "gateway"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "A_string", "objects" ]
+                                                  ]
+                                                ],
+                                                [ "Int", 0 ]
+                                              ]
+                                            ],
+                                            [ "A_string", "metadata" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "annotations" ]
+                                      ]
+                                    ],
+                                    [
+                                      "String",
+                                      "networking.gke.io/backend-services"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "output": [ "Id", "backend" ],
+                          "cond": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [
+                                            "A_string",
+                                            "workflow_api_backend_service_regex"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Id", "backend" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

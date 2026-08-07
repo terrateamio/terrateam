@@ -1,0 +1,331 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "bucket_name", [ "String", "celsus.isnan.eu" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "template_file" ], [ "Lit", "web_app_bucket_policy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n  {\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"AddPerm\",\n      \"Effect\": \"Allow\",\n      \"Principal\": \"*\",\n      \"Action\": \"s3:GetObject\",\n      \"Resource\": \"arn:aws:s3:::$${bucket}/*\"\n    }\n  ]\n}\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vars",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "bucket" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "bucket_name" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_s3_bucket" ], [ "Lit", "web_app" ] ],
+      "body": [
+        [
+          "Attribute",
+          "bucket",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "bucket_name" ] ] ]
+        ],
+        [ "Attribute", "acl", [ "String", "public-read" ] ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "template_file" ] ]
+                  ],
+                  [ "A_string", "web_app_bucket_policy" ]
+                ]
+              ],
+              [ "A_string", "rendered" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "website",
+            "labels": [],
+            "body": [
+              [ "Attribute", "index_document", [ "String", "index.html" ] ],
+              [ "Attribute", "error_document", [ "String", "error.html" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "cors_rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "allowed_origins",
+                [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Attribute",
+                "allowed_methods",
+                [ "Tuple", [ [ "String", "GET" ] ] ]
+              ],
+              [ "Attribute", "max_age_seconds", [ "String", "3000" ] ],
+              [
+                "Attribute",
+                "allowed_headers",
+                [
+                  "Tuple",
+                  [
+                    [ "String", "Authorization" ],
+                    [ "String", "Content-Length" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "s3_origin_id", [ "String", "celsus-web-client" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudfront_distribution" ],
+        [ "Lit", "web_app_distribution" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "origin",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "domain_name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_s3_bucket" ], [ "A_string", "web_app" ]
+                      ]
+                    ],
+                    [ "A_string", "bucket_regional_domain_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "origin_id",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "s3_origin_id" ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "default_root_object", [ "String", "index.html" ] ],
+        [ "Attribute", "enabled", [ "String", "true" ] ],
+        [ "Attribute", "is_ipv6_enabled", [ "String", "true" ] ],
+        [ "Attribute", "wait_for_deployment", [ "String", "false" ] ],
+        [
+          "Attribute",
+          "aliases",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_s3_bucket" ], [ "A_string", "web_app" ] ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "price_class", [ "String", "PriceClass_100" ] ],
+        [
+          "Block",
+          {
+            "type_": "restrictions",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "geo_restriction",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "restriction_type", [ "String", "none" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "default_cache_behavior",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "viewer_protocol_policy",
+                [ "String", "redirect-to-https" ]
+              ],
+              [ "Attribute", "compress", [ "String", "true" ] ],
+              [
+                "Attribute",
+                "target_origin_id",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "s3_origin_id" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "forwarded_values",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "query_string", [ "String", "false" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "cookies",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "forward", [ "String", "none" ] ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Attribute",
+                "allowed_methods",
+                [ "Tuple", [ [ "String", "GET" ], [ "String", "HEAD" ] ] ]
+              ],
+              [
+                "Attribute",
+                "cached_methods",
+                [ "Tuple", [ [ "String", "GET" ], [ "String", "HEAD" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viewer_certificate",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "acm_certificate_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "aws_acm_certificate" ]
+                          ]
+                        ],
+                        [ "A_string", "main_certificate" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "ssl_support_method", [ "String", "sni-only" ] ],
+              [
+                "Attribute",
+                "minimum_protocol_version",
+                [ "String", "TLSv1" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

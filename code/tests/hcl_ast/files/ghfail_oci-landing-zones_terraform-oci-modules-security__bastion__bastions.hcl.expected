@@ -1,0 +1,1044 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "oci_bastion_bastion" ], [ "Lit", "these" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "bastions_configuration" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "bastions_configuration" ]
+                    ]
+                  ],
+                  [ "String", "bastions" ]
+                ]
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [
+                                    "A_string", "max_session_ttl_in_seconds"
+                                  ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Log_or",
+                                [
+                                  [
+                                    "Lt",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "max_session_ttl_in_seconds"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Int", 1800 ]
+                                    ]
+                                  ],
+                                  [
+                                    "Gt",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "max_session_ttl_in_seconds"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Int", 10800 ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "then_": [ "Bool", false ],
+                              "else_": [ "Bool", true ]
+                            }
+                          ],
+                          "else_": [ "Bool", true ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "VALIDATION FAILURE in bastion \"" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [
+                            "Literal",
+                            "\": the session time to live must be between 1800s(30min) and 10800s(3h). Please change the \"max_session_ttl_in_seconds\" attribute value."
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Log_or",
+                        [
+                          [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "cidr_block_allow_list" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string", "bastions_configuration"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "A_string",
+                                    "default_cidr_block_allow_list"
+                                  ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "VALIDATION FAILURE in bastion \"" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [
+                            "Literal",
+                            "\": You must provide at least one CIDR block either in \"cidr_block_allow_list\" or \"default_cidr_block_allow_list\". "
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "bastions_configuration" ]
+                                ]
+                              ],
+                              [ "A_string", "enable_cidr_check" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "cidr_block_allow_list" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Cond",
+                                {
+                                  "if_": [
+                                    "Fun_call",
+                                    [
+                                      "contains",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "each" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "cidr_block_allow_list"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "String", "0.0.0.0/0" ]
+                                      ]
+                                    ]
+                                  ],
+                                  "then_": [ "Bool", false ],
+                                  "else_": [ "Bool", true ]
+                                }
+                              ],
+                              "else_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "bastions_configuration"
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string",
+                                        "default_cidr_block_allow_list"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "null",
+                                      [
+                                        [
+                                          "Cond",
+                                          {
+                                            "if_": [
+                                              "Fun_call",
+                                              [
+                                                "contains",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "var" ],
+                                                          [
+                                                            "A_string",
+                                                            "bastions_configuration"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "default_cidr_block_allow_list"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "String", "0.0.0.0/0" ]
+                                                ]
+                                              ]
+                                            ],
+                                            "then_": [ "Bool", false ],
+                                            "else_": [ "Bool", true ]
+                                          }
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ],
+                          "else_": [ "Bool", true ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "VALIDATION FAILURE in bastion \"" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [
+                            "Literal",
+                            "\": \"cidr_block_allow_list\" or \"default_cidr_block_allow_list\" must not be \"0.0.0.0/0\". Either change their values or disable this check by setting \"enable_cidr_check\" attribute of \"bastions_configuration\" to false."
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "bastion_type",
+          [
+            "Fun_call",
+            [
+              "upper",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "bastion_type" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "compartment_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "compartment_id" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regexall",
+                                [
+                                  [ "String", "^ocid1.*$" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "compartment_id" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "compartment_id" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "compartments_dependency" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "compartment_id" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ]
+                }
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regexall",
+                                [
+                                  [ "String", "^ocid1.*$" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "bastions_configuration"
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "default_compartment_id"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "bastions_configuration" ]
+                        ]
+                      ],
+                      [ "A_string", "default_compartment_id" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "compartments_dependency" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "bastions_configuration" ]
+                                ]
+                              ],
+                              [ "A_string", "default_compartment_id" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "target_subnet_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "subnet_id" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regexall",
+                                [
+                                  [ "String", "^ocid1.*$" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "subnet_id" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "subnet_id" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "network_dependency" ]
+                                ]
+                              ],
+                              [ "String", "subnets" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "subnet_id" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ]
+                }
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regexall",
+                                [
+                                  [ "String", "^ocid1.*$" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "bastions_configuration"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "default_subnet_id" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "bastions_configuration" ]
+                        ]
+                      ],
+                      [ "A_string", "default_subnet_id" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "network_dependency" ]
+                                ]
+                              ],
+                              [ "String", "subnets" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "bastions_configuration" ]
+                                ]
+                              ],
+                              [ "A_string", "default_subnet_id" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "defined_tags",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "defined_tags" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "defined_tags" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "bastions_configuration" ]
+                    ]
+                  ],
+                  [ "A_string", "default_defined_tags" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "freeform_tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "cislz_module_tag" ] ]
+                ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "freeform_tags" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "freeform_tags" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "bastions_configuration" ]
+                          ]
+                        ],
+                        [ "A_string", "default_freeform_tags" ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "client_cidr_block_allow_list",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "cidr_block_allow_list" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "cidr_block_allow_list" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "bastions_configuration" ]
+                    ]
+                  ],
+                  [ "A_string", "default_cidr_block_allow_list" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "dns_proxy_status",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "enable_dns_proxy" ]
+                ]
+              ],
+              "then_": [ "String", "ENABLED" ],
+              "else_": [ "String", "DISABLED" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "max_session_ttl_in_seconds",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "max_session_ttl_in_seconds" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

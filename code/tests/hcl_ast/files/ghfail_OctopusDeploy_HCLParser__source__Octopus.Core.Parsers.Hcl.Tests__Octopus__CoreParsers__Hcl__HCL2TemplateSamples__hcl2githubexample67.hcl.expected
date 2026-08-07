@@ -1,0 +1,58 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "lb_galera_prod" ] ],
+      "body": [
+        [
+          "Attribute",
+          "lb_members",
+          [
+            "Fun_call",
+            [
+              "slice",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ],
+                        [ "A_string", "galera_production" ]
+                      ]
+                    ],
+                    [ "A_string", "out_members_access_ip_v4" ]
+                  ]
+                ],
+                [ "Int", 0 ],
+                [
+                  "Fun_call",
+                  [
+                    "length",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "module" ],
+                              [ "A_string", "galera_production" ]
+                            ]
+                          ],
+                          [ "A_string", "out_members_access_ip_v4" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,104 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "image_name",
+          [ "String", "covid-alert-portal-terraform" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_ecr_repository" ], [ "Lit", "repository" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "image_name" ] ] ]
+        ],
+        [ "Attribute", "image_tag_mutability", [ "String", "MUTABLE" ] ],
+        [
+          "Block",
+          {
+            "type_": "image_scanning_configuration",
+            "labels": [],
+            "body": [ [ "Attribute", "scan_on_push", [ "Bool", true ] ] ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ecr_lifecycle_policy" ], [ "Lit", "policy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "repository",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_ecr_repository" ],
+                  [ "A_string", "repository" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n{\n    \"rules\": [\n        {\n            \"rulePriority\": 1,\n            \"description\": \"Keep last 30 images\",\n            \"selection\": {\n                \"tagStatus\": \"tagged\",\n                \"tagPrefixList\": [\"v\"],\n                \"countType\": \"imageCountMoreThan\",\n                \"countNumber\": 30\n            },\n            \"action\": {\n                \"type\": \"expire\"\n            }\n        }\n    ]\n}\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "ecr_repository_url" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_ecr_repository" ],
+                  [ "A_string", "repository" ]
+                ]
+              ],
+              [ "A_string", "repository_url" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

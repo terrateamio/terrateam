@@ -1,0 +1,1244 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_resource_group" ], [ "Lit", "rancher-quickstart" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-rancher-quickstart" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "azure_location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Creator" ], [ "String", "rancher-quickstart" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_public_ip" ], [ "Lit", "rancher-server-pip" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "rancher-server-pip" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "allocation_method", [ "String", "Dynamic" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Creator" ], [ "String", "rancher-quickstart" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network" ], [ "Lit", "rancher-quickstart" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-network" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_space",
+          [ "Tuple", [ [ "String", "10.0.0.0/16" ] ] ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Creator" ], [ "String", "rancher-quickstart" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subnet" ], [ "Lit", "rancher-quickstart-internal" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "rancher-quickstart-internal" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "address_prefix", [ "String", "10.0.0.0/16" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_interface" ],
+        [ "Lit", "rancher-server-interface" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "rancher-quickstart-interface" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ip_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "name", [ "String", "rancher_server_ip_config" ]
+              ],
+              [
+                "Attribute",
+                "subnet_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "azurerm_subnet" ],
+                        [ "A_string", "rancher-quickstart-internal" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "private_ip_address_allocation",
+                [ "String", "Dynamic" ]
+              ],
+              [
+                "Attribute",
+                "public_ip_address_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "azurerm_public_ip" ],
+                        [ "A_string", "rancher-server-pip" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Creator" ], [ "String", "rancher-quickstart" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_linux_virtual_machine" ],
+        [ "Lit", "rancher_server" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-rancher-server" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_interface_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_network_interface" ],
+                      [ "A_string", "rancher-server-interface" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "size",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "instance_type" ] ] ]
+        ],
+        [
+          "Attribute",
+          "admin_username",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "node_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "custom_data",
+          [
+            "Fun_call",
+            [
+              "base64encode",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "templatefile",
+                    [
+                      [
+                        "String",
+                        "../cloud-common/files/userdata_rancher_server.template"
+                      ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "docker_version" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "docker_version" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "username" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "node_username" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "source_image_reference",
+            "labels": [],
+            "body": [
+              [ "Attribute", "publisher", [ "String", "Canonical" ] ],
+              [ "Attribute", "offer", [ "String", "UbuntuServer" ] ],
+              [ "Attribute", "sku", [ "String", "18.04-LTS" ] ],
+              [ "Attribute", "version", [ "String", "latest" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "admin_ssh_key",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "username",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "node_username" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "public_key",
+                [
+                  "Fun_call",
+                  [
+                    "file",
+                    [
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "ssh_key_file_name" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", ".pub" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "os_disk",
+            "labels": [],
+            "body": [
+              [ "Attribute", "caching", [ "String", "ReadWrite" ] ],
+              [
+                "Attribute",
+                "storage_account_type",
+                [ "String", "Standard_LRS" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Creator" ], [ "String", "rancher-quickstart" ] ] ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "inline",
+                [ "Tuple", [ [ "String", "cloud-init status --wait" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "connection",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "ssh" ] ],
+                    [
+                      "Attribute",
+                      "host",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "self" ],
+                          [ "A_string", "public_ip_address" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "user",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "node_username" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "private_key",
+                      [
+                        "Fun_call",
+                        [
+                          "file",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ssh_key_file_name" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "rancher_common" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../rancher-common" ] ],
+        [
+          "Attribute",
+          "node_public_ip",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_linux_virtual_machine" ],
+                  [ "A_string", "rancher_server" ]
+                ]
+              ],
+              [ "A_string", "public_ip_address" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "node_internal_ip",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_linux_virtual_machine" ],
+                  [ "A_string", "rancher_server" ]
+                ]
+              ],
+              [ "A_string", "private_ip_address" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "node_username",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "node_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "ssh_key_file_name",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "ssh_key_file_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "rke_kubernetes_version",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "rke_kubernetes_version" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cert_manager_version",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "cert_manager_version" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "rancher_version",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rancher_version" ] ] ]
+        ],
+        [
+          "Attribute",
+          "rancher_server_dns",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "replace",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "azurerm_linux_virtual_machine" ],
+                                [ "A_string", "rancher_server" ]
+                              ]
+                            ],
+                            [ "A_string", "public_ip_address" ]
+                          ]
+                        ],
+                        [ "String", "." ],
+                        [ "String", "-" ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".nip.io" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "admin_password",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "rancher_server_admin_password" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "workload_kubernetes_version",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "workload_kubernetes_version" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "workload_cluster_name",
+          [ "String", "quickstart-azure-custom" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_public_ip" ], [ "Lit", "quickstart-node-pip" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "quickstart-node-pip" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "allocation_method", [ "String", "Dynamic" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Creator" ], [ "String", "rancher-quickstart" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_interface" ],
+        [ "Lit", "quickstart-node-interface" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "quickstart-node-interface" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ip_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "name", [ "String", "rancher_server_ip_config" ]
+              ],
+              [
+                "Attribute",
+                "subnet_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "azurerm_subnet" ],
+                        [ "A_string", "rancher-quickstart-internal" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "private_ip_address_allocation",
+                [ "String", "Dynamic" ]
+              ],
+              [
+                "Attribute",
+                "public_ip_address_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "azurerm_public_ip" ],
+                        [ "A_string", "quickstart-node-pip" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Creator" ], [ "String", "rancher-quickstart" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_linux_virtual_machine" ],
+        [ "Lit", "quickstart-node" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-quickstart-node" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "rancher-quickstart" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_interface_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_network_interface" ],
+                      [ "A_string", "quickstart-node-interface" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "size",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "instance_type" ] ] ]
+        ],
+        [
+          "Attribute",
+          "admin_username",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "node_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "custom_data",
+          [
+            "Fun_call",
+            [
+              "base64encode",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "templatefile",
+                    [
+                      [
+                        "String",
+                        "../cloud-common/files/userdata_quickstart_node.template"
+                      ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "docker_version" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "docker_version" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "username" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "node_username" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "register_command" ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "module" ],
+                                    [ "A_string", "rancher_common" ]
+                                  ]
+                                ],
+                                [ "A_string", "custom_cluster_command" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "source_image_reference",
+            "labels": [],
+            "body": [
+              [ "Attribute", "publisher", [ "String", "Canonical" ] ],
+              [ "Attribute", "offer", [ "String", "UbuntuServer" ] ],
+              [ "Attribute", "sku", [ "String", "18.04-LTS" ] ],
+              [ "Attribute", "version", [ "String", "latest" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "admin_ssh_key",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "username",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "node_username" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "public_key",
+                [
+                  "Fun_call",
+                  [
+                    "file",
+                    [
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "ssh_key_file_name" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", ".pub" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "os_disk",
+            "labels": [],
+            "body": [
+              [ "Attribute", "caching", [ "String", "ReadWrite" ] ],
+              [
+                "Attribute",
+                "storage_account_type",
+                [ "String", "Standard_LRS" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Creator" ], [ "String", "rancher-quickstart" ] ] ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "inline",
+                [ "Tuple", [ [ "String", "cloud-init status --wait" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "connection",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "ssh" ] ],
+                    [
+                      "Attribute",
+                      "host",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "self" ],
+                          [ "A_string", "public_ip_address" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "user",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "node_username" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "private_key",
+                      [
+                        "Fun_call",
+                        [
+                          "file",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ssh_key_file_name" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

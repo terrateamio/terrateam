@@ -1,0 +1,37 @@
+[
+  [
+    "Block",
+    {
+      "type_": "outer",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "inner1",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "inner2",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "inner3",
+                        "labels": [],
+                        "body": [ [ "Attribute", "x", [ "Int", 1 ] ] ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

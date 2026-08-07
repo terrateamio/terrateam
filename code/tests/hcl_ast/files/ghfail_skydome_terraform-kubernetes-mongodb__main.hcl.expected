@@ -1,0 +1,1382 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "kubernetes_config_map" ],
+        [ "Lit", "mongodb_replicaset_init" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "metadata",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-mongodb-replicaset-init" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "namespace",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "namespace" ] ] ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "app" ], [ "String", "mongodb-replicaset" ] ],
+                    [
+                      [ "Bare", "release" ],
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "data",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "on-start.sh" ],
+                [
+                  "String",
+                  "#!/usr/bin/env bash\n\n# Copyright 2018 The Kubernetes Authors. All rights reserved.\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#     http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\nset -e pipefail\n\nport=27017\nreplica_set=\"$REPLICA_SET\"\nscript_name=${0##*/}\nSECONDS=0\ntimeout=\"${TIMEOUT:-900}\"\n\nif [[ \"$AUTH\" == \"true\" ]]; then\n    admin_user=\"$ADMIN_USER\"\n    admin_password=\"$ADMIN_PASSWORD\"\n    admin_creds=(-u \"$admin_user\" -p \"$admin_password\")\n    if [[ \"$METRICS\" == \"true\" ]]; then\n        metrics_user=\"$METRICS_USER\"\n        metrics_password=\"$METRICS_PASSWORD\"\n    fi\n    auth_args=(\"--auth\" \"--keyFile=/data/configdb/key.txt\")\nfi\n\nlog() {\n    local msg=\"$1\"\n    local timestamp\n    timestamp=$(date --iso-8601=ns)\n    echo \"[$timestamp] [$script_name] $msg\" 2>&1 | tee -a /work-dir/log.txt 1>&2\n}\n\nretry_until() {\n    local host=\"${1}\"\n    local command=\"${2}\"\n    local expected=\"${3}\"\n    local creds=(\"${admin_creds[@]}\")\n\n    # Don't need credentials for admin user creation and pings that run on localhost\n    if [[ \"${host}\" =~ ^localhost ]]; then\n        creds=()\n    fi\n\n    until [[ $(mongo admin --host \"${host}\" \"${creds[@]}\" \"${ssl_args[@]}\" --quiet --eval \"${command}\") == \"${expected}\" ]]; do\n        sleep 1\n\n        if (! ps \"${pid}\" &>/dev/null); then\n            log \"mongod shutdown unexpectedly\"\n            exit 1\n        fi\n        if [[ \"${SECONDS}\" -ge \"${timeout}\" ]]; then\n            log \"Timed out after ${timeout}s attempting to bootstrap mongod\"\n            exit 1\n        fi\n\n        log \"Retrying ${command} on ${host}\"\n    done\n}\n\nshutdown_mongo() {\n    local host=\"${1:-localhost}\"\n    local args='force: true'\n    log \"Shutting down MongoDB ($args)...\"\n    if (! mongo admin --host \"${host}\" \"${admin_creds[@]}\" \"${ssl_args[@]}\" --eval \"db.shutdownServer({$args})\"); then\n      log \"db.shutdownServer() failed, sending the terminate signal\"\n      kill -TERM \"${pid}\"\n    fi\n}\n\ninit_mongod_standalone() {\n    if [[ ! -f /init/initMongodStandalone.js ]]; then\n        log \"Skipping init mongod standalone script\"\n        return 0\n    elif [[ -z \"$(ls -1A /data/db)\" ]]; then\n        log \"mongod standalone script currently not supported on initial install\"\n        return 0\n    fi\n\n    local port=\"27018\"\n    log \"Starting a MongoDB instance as standalone...\"\n    mongod --config /data/configdb/mongod.conf --dbpath=/data/db \"${auth_args[@]}\" --port \"${port}\" --bind_ip=0.0.0.0 2>&1 | tee -a /work-dir/log.txt 1>&2 &\n    export pid=$!\n    trap shutdown_mongo EXIT\n    log \"Waiting for MongoDB to be ready...\"\n    retry_until \"localhost:${port}\" \"db.adminCommand('ping').ok\" \"1\"\n    log \"Running init js script on standalone mongod\"\n    mongo admin --port \"${port}\" \"${admin_creds[@]}\" \"${ssl_args[@]}\" /init/initMongodStandalone.js\n    shutdown_mongo \"localhost:${port}\"\n}\n\nmy_hostname=$(hostname)\nlog \"Bootstrapping MongoDB replica set member: $my_hostname\"\n\nlog \"Reading standard input...\"\nwhile read -ra line; do\n    if [[ \"${line}\" == *\"${my_hostname}\"* ]]; then\n        service_name=\"$line\"\n    fi\n    peers=(\"${peers[@]}\" \"$line\")\ndone\n\n# Generate the ca cert\nca_crt=/data/configdb/tls.crt\nif [ -f \"$ca_crt\"  ]; then\n    log \"Generating certificate\"\n    ca_key=/data/configdb/tls.key\n    pem=/work-dir/mongo.pem\n    ssl_args=(--ssl --sslCAFile \"$ca_crt\" --sslPEMKeyFile \"$pem\")\n\n# Move into /work-dir\npushd /work-dir\n\ncat >openssl.cnf <<EOL\n[req]\nreq_extensions = v3_req\ndistinguished_name = req_distinguished_name\n[req_distinguished_name]\n[ v3_req ]\nbasicConstraints = CA:FALSE\nkeyUsage = nonRepudiation, digitalSignature, keyEncipherment\nsubjectAltName = @alt_names\n[alt_names]\nDNS.1 = $(echo -n \"$my_hostname\" | sed s/-[0-9]*$//)\nDNS.2 = $my_hostname\nDNS.3 = $service_name\nDNS.4 = localhost\nDNS.5 = 127.0.0.1\nEOL\n\n    # Generate the certs\n    openssl genrsa -out mongo.key 2048\n    openssl req -new -key mongo.key -out mongo.csr -subj \"/OU=MongoDB/CN=$my_hostname\" -config openssl.cnf\n    openssl x509 -req -in mongo.csr \\\n        -CA \"$ca_crt\" -CAkey \"$ca_key\" -CAcreateserial \\\n        -out mongo.crt -days 3650 -extensions v3_req -extfile openssl.cnf\n\n    rm mongo.csr\n    cat mongo.crt mongo.key > $pem\n    rm mongo.key mongo.crt\nfi\n\ninit_mongod_standalone\n\nlog \"Peers: ${peers[*]}\"\nlog \"Starting a MongoDB replica\"\nmongod --config /data/configdb/mongod.conf --dbpath=/data/db --replSet=\"$replica_set\" --port=\"${port}\" \"${auth_args[@]}\" --bind_ip=0.0.0.0 2>&1 | tee -a /work-dir/log.txt 1>&2 &\npid=$!\ntrap shutdown_mongo EXIT\n\nlog \"Waiting for MongoDB to be ready...\"\nretry_until \"localhost\" \"db.adminCommand('ping').ok\" \"1\"\nlog \"Initialized.\"\n\n# try to find a master\nfor peer in \"${peers[@]}\"; do\n    log \"Checking if ${peer} is primary\"\n    # Check rs.status() first since it could be in primary catch up mode which db.isMaster() doesn't show\n    if [[ $(mongo admin --host \"${peer}\" \"${admin_creds[@]}\" \"${ssl_args[@]}\" --quiet --eval \"rs.status().myState\") == \"1\" ]]; then\n        retry_until \"${peer}\" \"db.isMaster().ismaster\" \"true\"\n        log \"Found primary: ${peer}\"\n        primary=\"${peer}\"\n        break\n    fi\ndone\n\nif [[ \"${primary}\" = \"${service_name}\" ]]; then\n    log \"This replica is already PRIMARY\"\nelif [[ -n \"${primary}\" ]]; then\n    if [[ $(mongo admin --host \"${primary}\" \"${admin_creds[@]}\" \"${ssl_args[@]}\" --quiet --eval \"rs.conf().members.findIndex(m => m.host == '${service_name}:${port}')\") == \"-1\" ]]; then\n      log \"Adding myself (${service_name}) to replica set...\"\n      if (mongo admin --host \"${primary}\" \"${admin_creds[@]}\" \"${ssl_args[@]}\" --eval \"rs.add('${service_name}')\" | grep 'Quorum check failed'); then\n          log 'Quorum check failed, unable to join replicaset. Exiting prematurely.'\n          exit 1\n      fi\n    fi\n\n    sleep 3\n    log 'Waiting for replica to reach SECONDARY state...'\n    retry_until \"${service_name}\" \"rs.status().myState\" \"2\"\n    log '✓ Replica reached SECONDARY state.'\n\nelif (mongo \"${ssl_args[@]}\" --eval \"rs.status()\" | grep \"no replset config has been received\"); then\n    log \"Initiating a new replica set with myself ($service_name)...\"\n    mongo \"${ssl_args[@]}\" --eval \"rs.initiate({'_id': '$replica_set', 'members': [{'_id': 0, 'host': '$service_name'}]})\"\n\n    sleep 3\n    log 'Waiting for replica to reach PRIMARY state...'\n    retry_until \"localhost\" \"db.isMaster().ismaster\" \"true\"\n    primary=\"${service_name}\"\n    log '✓ Replica reached PRIMARY state.'\n\n    if [[ \"${AUTH}\" == \"true\" ]]; then\n        log \"Creating admin user...\"\n        mongo admin \"${ssl_args[@]}\" --eval \"db.createUser({user: '${admin_user}', pwd: '${admin_password}', roles: [{role: 'root', db: 'admin'}]})\"\n    fi\nfi\n\n# User creation\nif [[ -n \"${primary}\" && \"$AUTH\" == \"true\" && \"$METRICS\" == \"true\" ]]; then\n    metric_user_count=$(mongo admin --host \"${primary}\" \"${admin_creds[@]}\" \"${ssl_args[@]}\" --eval \"db.system.users.find({user: '${metrics_user}'}).count()\" --quiet)\n    if [[ \"${metric_user_count}\" == \"0\" ]]; then\n        log \"Creating clusterMonitor user...\"\n        mongo admin --host \"${primary}\" \"${admin_creds[@]}\" \"${ssl_args[@]}\" --eval \"db.createUser({user: '${metrics_user}', pwd: '${metrics_password}', roles: [{role: 'clusterMonitor', db: 'admin'}, {role: 'read', db: 'local'}]})\"\n    fi\nfi\n\nlog \"MongoDB bootstrap complete\"\nexit 0\n"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "kubernetes_config_map" ],
+        [ "Lit", "mongodb_replicaset_mongodb" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "metadata",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-mongodb-replicaset-mongodb" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "namespace",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "namespace" ] ] ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "app" ], [ "String", "mongodb-replicaset" ] ],
+                    [
+                      [ "Bare", "release" ],
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "data",
+          [
+            "Object",
+            [ [ [ "Quoted", "mongod.conf" ], [ "String", "{}\n" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "kubernetes_service" ], [ "Lit", "mongodb_replicaset" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "metadata",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-mongodb-replicaset" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "namespace",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "namespace" ] ] ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "app" ], [ "String", "mongodb-replicaset" ] ],
+                    [
+                      [ "Bare", "release" ],
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [
+                        "Quoted",
+                        "service.alpha.kubernetes.io/tolerate-unready-endpoints"
+                      ],
+                      [ "String", "true" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "spec",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "port",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "name", [ "String", "mongodb" ] ],
+                    [ "Attribute", "port", [ "Int", 27017 ] ]
+                  ]
+                }
+              ],
+              [
+                "Attribute",
+                "selector",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "app" ], [ "String", "mongodb-replicaset" ] ],
+                    [
+                      [ "Bare", "release" ],
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "cluster_ip", [ "String", "None" ] ],
+              [ "Attribute", "type", [ "String", "ClusterIP" ] ],
+              [
+                "Attribute", "publish_not_ready_addresses", [ "Bool", true ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "kubernetes_stateful_set" ], [ "Lit", "mongodb_replicaset" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "metadata",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-mongodb-replicaset" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "namespace",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "namespace" ] ] ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "app" ], [ "String", "mongodb-replicaset" ] ],
+                    [
+                      [ "Bare", "release" ],
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "spec",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "replicas",
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "replicacount" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "selector",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "match_labels",
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "app" ],
+                            [ "String", "mongodb-replicaset" ]
+                          ],
+                          [
+                            [ "Bare", "release" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "template",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "metadata",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "labels",
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "app" ],
+                                  [ "String", "mongodb-replicaset" ]
+                                ],
+                                [
+                                  [ "Bare", "release" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ], [ "A_string", "name" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "annotations",
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "checksum/config" ],
+                                  [
+                                    "String",
+                                    "d2443db7eccf79039fa12519adbce04b24232c89bff87ff7dada29bd0fdd3f48"
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "spec",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Block",
+                            {
+                              "type_": "volume",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute", "name", [ "String", "config" ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "config_map",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [
+                                          "Template",
+                                          [
+                                            [
+                                              "Interpolation",
+                                              {
+                                                "expr": [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [ "A_string", "name" ]
+                                                  ]
+                                                ],
+                                                "strip_before": false,
+                                                "strip_after": false
+                                              }
+                                            ],
+                                            [
+                                              "Literal",
+                                              "-mongodb-replicaset-mongodb"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "volume",
+                              "labels": [],
+                              "body": [
+                                [ "Attribute", "name", [ "String", "init" ] ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "config_map",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [
+                                          "Template",
+                                          [
+                                            [
+                                              "Interpolation",
+                                              {
+                                                "expr": [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [ "A_string", "name" ]
+                                                  ]
+                                                ],
+                                                "strip_before": false,
+                                                "strip_after": false
+                                              }
+                                            ],
+                                            [
+                                              "Literal",
+                                              "-mongodb-replicaset-init"
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "default_mode",
+                                        [ "String", "0755" ]
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "volume",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "name",
+                                  [ "String", "workdir" ]
+                                ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "volume",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "name",
+                                  [ "String", "configdir" ]
+                                ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "init_container",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "name",
+                                  [ "String", "copy-config" ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "image",
+                                  [ "String", "busybox:1.29.3" ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "command",
+                                  [ "Tuple", [ [ "String", "sh" ] ] ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "args",
+                                  [
+                                    "Tuple",
+                                    [
+                                      [ "String", "-c" ],
+                                      [
+                                        "String",
+                                        "set -e\nset -x\n\ncp /configdb-readonly/mongod.conf /data/configdb/mongod.conf\n"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "volume_mount",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "workdir" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "mount_path",
+                                        [ "String", "/work-dir" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "volume_mount",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "config" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "mount_path",
+                                        [ "String", "/configdb-readonly" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "volume_mount",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "configdir" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "mount_path",
+                                        [ "String", "/data/configdb" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Attribute",
+                                  "image_pull_policy",
+                                  [ "String", "IfNotPresent" ]
+                                ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "init_container",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "name",
+                                  [ "String", "install" ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "image",
+                                  [
+                                    "String",
+                                    "unguiculus/mongodb-install:0.7"
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "args",
+                                  [
+                                    "Tuple",
+                                    [ [ "String", "--work-dir=/work-dir" ] ]
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "volume_mount",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "workdir" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "mount_path",
+                                        [ "String", "/work-dir" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Attribute",
+                                  "image_pull_policy",
+                                  [ "String", "IfNotPresent" ]
+                                ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "init_container",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "name",
+                                  [ "String", "bootstrap" ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "image",
+                                  [ "String", "mongo:bionic" ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "command",
+                                  [
+                                    "Tuple",
+                                    [ [ "String", "/work-dir/peer-finder" ] ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "args",
+                                  [
+                                    "Tuple",
+                                    [
+                                      [
+                                        "String",
+                                        "-on-start=/init/on-start.sh"
+                                      ],
+                                      [
+                                        "String",
+                                        "-service=$(POD_NAME)-mongodb-replicaset"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "env",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "POD_NAME" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "value",
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [ "A_string", "name" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "env",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "POD_NAMESPACE" ]
+                                      ],
+                                      [
+                                        "Block",
+                                        {
+                                          "type_": "value_from",
+                                          "labels": [],
+                                          "body": [
+                                            [
+                                              "Block",
+                                              {
+                                                "type_": "field_ref",
+                                                "labels": [],
+                                                "body": [
+                                                  [
+                                                    "Attribute",
+                                                    "api_version",
+                                                    [ "String", "v1" ]
+                                                  ],
+                                                  [
+                                                    "Attribute",
+                                                    "field_path",
+                                                    [
+                                                      "String",
+                                                      "metadata.namespace"
+                                                    ]
+                                                  ]
+                                                ]
+                                              }
+                                            ]
+                                          ]
+                                        }
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "env",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "REPLICA_SET" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "value",
+                                        [ "String", "rs0" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "env",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "TIMEOUT" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "value",
+                                        [ "String", "900" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "volume_mount",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "workdir" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "mount_path",
+                                        [ "String", "/work-dir" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "volume_mount",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "init" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "mount_path",
+                                        [ "String", "/init" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "volume_mount",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "configdir" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "mount_path",
+                                        [ "String", "/data/configdb" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "volume_mount",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "datadir" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "mount_path",
+                                        [ "String", "/data/db" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Attribute",
+                                  "image_pull_policy",
+                                  [ "String", "IfNotPresent" ]
+                                ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "container",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "name",
+                                  [ "String", "mongodb-replicaset" ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "image",
+                                  [ "String", "mongo:bionic" ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "command",
+                                  [ "Tuple", [ [ "String", "mongod" ] ] ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "args",
+                                  [
+                                    "Tuple",
+                                    [
+                                      [
+                                        "String",
+                                        "--config=/data/configdb/mongod.conf"
+                                      ],
+                                      [ "String", "--dbpath=/data/db" ],
+                                      [ "String", "--replSet=rs0" ],
+                                      [ "String", "--port=27017" ],
+                                      [ "String", "--bind_ip=0.0.0.0" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "port",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "mongodb" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "container_port",
+                                        [ "Int", 27017 ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "volume_mount",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "datadir" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "mount_path",
+                                        [ "String", "/data/db" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "volume_mount",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "configdir" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "mount_path",
+                                        [ "String", "/data/configdb" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "volume_mount",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "name",
+                                        [ "String", "workdir" ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "mount_path",
+                                        [ "String", "/work-dir" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "resources",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "limits",
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "cpu" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [ "A_string", "limit_cpu" ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "memory" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [ "A_string", "limit_mem" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "requests",
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "cpu" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string", "request_cpu"
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "memory" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string", "request_mem"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "liveness_probe",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Block",
+                                        {
+                                          "type_": "exec",
+                                          "labels": [],
+                                          "body": [
+                                            [
+                                              "Attribute",
+                                              "command",
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [ "String", "mongo" ],
+                                                  [ "String", "--eval" ],
+                                                  [
+                                                    "String",
+                                                    "db.adminCommand('ping')"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        }
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "initial_delay_seconds",
+                                        [ "Int", 30 ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "timeout_seconds",
+                                        [ "Int", 5 ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "period_seconds",
+                                        [ "Int", 10 ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "success_threshold",
+                                        [ "Int", 1 ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "failure_threshold",
+                                        [ "Int", 3 ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "readiness_probe",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Block",
+                                        {
+                                          "type_": "exec",
+                                          "labels": [],
+                                          "body": [
+                                            [
+                                              "Attribute",
+                                              "command",
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [ "String", "mongo" ],
+                                                  [ "String", "--eval" ],
+                                                  [
+                                                    "String",
+                                                    "db.adminCommand('ping')"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        }
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "initial_delay_seconds",
+                                        [ "Int", 5 ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "timeout_seconds",
+                                        [ "Int", 1 ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "period_seconds",
+                                        [ "Int", 10 ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "success_threshold",
+                                        [ "Int", 1 ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "failure_threshold",
+                                        [ "Int", 3 ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Attribute",
+                                  "image_pull_policy",
+                                  [ "String", "IfNotPresent" ]
+                                ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Attribute",
+                            "termination_grace_period_seconds",
+                            [ "Int", 30 ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "security_context",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute", "run_as_user", [ "Int", 999 ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "run_as_non_root",
+                                  [ "Bool", true ]
+                                ],
+                                [ "Attribute", "fs_group", [ "Int", 999 ] ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "volume_claim_template",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "metadata",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "name", [ "String", "datadir" ] ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "spec",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "access_modes",
+                            [ "Tuple", [ [ "String", "ReadWriteOnce" ] ] ]
+                          ],
+                          [
+                            "Attribute",
+                            "storage_class_name",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "storage_class_name" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "resources",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "requests",
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "storage" ],
+                                        [
+                                          "Template",
+                                          [
+                                            [
+                                              "Interpolation",
+                                              {
+                                                "expr": [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string",
+                                                      "storage_size"
+                                                    ]
+                                                  ]
+                                                ],
+                                                "strip_before": false,
+                                                "strip_after": false
+                                              }
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Attribute",
+                "service_name",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-mongodb-replicaset" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

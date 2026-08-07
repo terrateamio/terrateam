@@ -1,0 +1,47 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_launch_configuration" ], [ "Lit", "web" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "web-lc" ] ],
+        [ "Attribute", "image_id", [ "String", "ami-0c55b159cbfafe1f0" ] ],
+        [ "Attribute", "instance_type", [ "String", "t2.micro" ] ],
+        [
+          "Attribute",
+          "security_groups",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "web_sg" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "user_data",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n#!/bin/bash\necho \"Hello, World!\" > /var/www/html/index.html\nyum install -y httpd\nsystemctl start httpd\nsystemctl enable httpd\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

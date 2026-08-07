@@ -1,0 +1,149 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_s3_bucket" ], [ "Lit", "codepipeline_bucket" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name_suffix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-bucket" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "acl", [ "String", "private" ] ],
+        [
+          "Block",
+          {
+            "type_": "versioning",
+            "labels": [],
+            "body": [ [ "Attribute", "enabled", [ "Bool", true ] ] ]
+          }
+        ],
+        [ "Attribute", "force_destroy", [ "Bool", true ] ],
+        [
+          "Block",
+          {
+            "type_": "server_side_encryption_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "rule",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "apply_server_side_encryption_by_default",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "sse_algorithm",
+                            [ "String", "aws:kms" ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "null_resource" ], [ "Lit", "sync_to_s3" ] ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template",
+                  [
+                    [ "Literal", "aws s3 cp ArchiveItems.zip s3://" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_s3_bucket" ],
+                                [ "A_string", "codepipeline_bucket" ]
+                              ]
+                            ],
+                            [ "A_string", "bucket" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

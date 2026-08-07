@@ -1,0 +1,1537 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "secrets_vault_kvv2",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "podman_kube", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "podman_kubes" ] ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "value_refer", [] ],
+                        "input": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "podman_kube" ],
+                                        [ "A_string", "helm" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "value_refers" ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ],
+                            "then_": [ "Tuple", [] ],
+                            "else_": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "podman_kube" ],
+                                    [ "A_string", "helm" ]
+                                  ]
+                                ],
+                                [ "A_string", "value_refers" ]
+                              ]
+                            ]
+                          }
+                        ],
+                        "output": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "mount" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "value_refer" ],
+                                      [ "A_string", "vault_kvv2" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "mount" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "name" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "value_refer" ],
+                                      [ "A_string", "vault_kvv2" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "name" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": [
+                          "Not_equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "secret" ],
+                                [ "A_string", "vault_kvv2" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tls_tfstate",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "podman_kube", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "podman_kubes" ] ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "value_refer", [] ],
+                        "input": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "podman_kube" ],
+                                        [ "A_string", "helm" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "value_refers" ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ],
+                            "then_": [ "Tuple", [] ],
+                            "else_": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "podman_kube" ],
+                                    [ "A_string", "helm" ]
+                                  ]
+                                ],
+                                [ "A_string", "value_refers" ]
+                              ]
+                            ]
+                          }
+                        ],
+                        "output": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "backend" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "value_refer" ],
+                                      [ "A_string", "tfstate" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "backend" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "name" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "value_refer" ],
+                                      [ "A_string", "tfstate" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "cert_name" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": [
+                          "Not_equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "secret" ], [ "A_string", "tfstate" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "terraform_remote_state" ], [ "Lit", "tfstate" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "tls_tfstate" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "For_object",
+                {
+                  "identifiers": [ "tls_tfstate", [] ],
+                  "input": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "tls_tfstate" ] ]
+                  ],
+                  "key_output": [
+                    "Attr",
+                    [ [ "Id", "tls_tfstate" ], [ "A_string", "name" ] ]
+                  ],
+                  "value_output": [ "Id", "tls_tfstate" ],
+                  "cond": null
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "backend",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "backend" ]
+                ]
+              ],
+              [ "A_string", "type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "config",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "backend" ]
+                ]
+              ],
+              [ "A_string", "config" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "cert_list",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "terraform_remote_state" ]
+                        ]
+                      ],
+                      [ "A_string", "tfstate" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Fun_call",
+                [
+                  "flatten",
+                  [
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "podman_kube", [] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "podman_kubes" ] ]
+                        ],
+                        "output": [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "value_refer", [] ],
+                            "input": [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "podman_kube" ],
+                                            [ "A_string", "helm" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "value_refers" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [] ],
+                                "else_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "podman_kube" ],
+                                        [ "A_string", "helm" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "value_refers" ]
+                                  ]
+                                ]
+                              }
+                            ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "cert", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "data" ],
+                                                    [
+                                                      "A_string",
+                                                      "terraform_remote_state"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "tfstate" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "value_refer" ],
+                                                    [ "A_string", "tfstate" ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "cert_name" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "outputs" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "signed_certs" ]
+                                  ]
+                                ],
+                                "output": [ "Id", "cert" ],
+                                "cond": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "cert" ],
+                                        [ "A_string", "name" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "value_refer" ],
+                                            [ "A_string", "tfstate" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "cert_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ],
+                            "cond": [
+                              "Not_equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "secret" ],
+                                    [ "A_string", "tfstate" ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ]
+                          }
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "certs",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "terraform_remote_state" ]
+                        ]
+                      ],
+                      [ "A_string", "tfstate" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "For_object",
+                {
+                  "identifiers": [ "cert", [] ],
+                  "input": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "cert_list" ] ]
+                  ],
+                  "key_output": [
+                    "Attr", [ [ "Id", "cert" ], [ "A_string", "name" ] ]
+                  ],
+                  "value_output": [ "Id", "cert" ],
+                  "cond": null
+                }
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "helm_template" ], [ "Lit", "podman_kubes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "podman_kube", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "podman_kubes" ] ]
+              ],
+              "key_output": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "podman_kube" ], [ "A_string", "helm" ] ]
+                  ],
+                  [ "A_string", "name" ]
+                ]
+              ],
+              "value_output": [ "Id", "podman_kube" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "helm" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "chart",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "helm" ]
+                ]
+              ],
+              [ "A_string", "chart" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "values",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Fun_call",
+                        [
+                          "file",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "helm" ]
+                                  ]
+                                ],
+                                [ "A_string", "value_file" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "set",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "helm" ]
+                                  ]
+                                ],
+                                [ "A_string", "value_sets" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [ "Tuple", [] ],
+                        "else_": [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "value_set", [] ],
+                            "input": [
+                              "Fun_call",
+                              [
+                                "flatten",
+                                [
+                                  [
+                                    "Tuple",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "each" ],
+                                                  [ "A_string", "value" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "helm" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "value_sets" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "output": [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "name" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "value_set" ],
+                                      [ "A_string", "name" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "value" ],
+                                  [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Not_equal",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "value_set" ],
+                                              [ "A_string", "value_string" ]
+                                            ]
+                                          ],
+                                          [ "Null" ]
+                                        ]
+                                      ],
+                                      "then_": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "value_set" ],
+                                          [ "A_string", "value_string" ]
+                                        ]
+                                      ],
+                                      "else_": [
+                                        "Fun_call",
+                                        [
+                                          "templatefile",
+                                          [
+                                            [
+                                              "Template",
+                                              [
+                                                [
+                                                  "Interpolation",
+                                                  {
+                                                    "expr": [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "value_set" ],
+                                                        [
+                                                          "A_string",
+                                                          "value_template_path"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    "strip_before": false,
+                                                    "strip_after": false
+                                                  }
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Template",
+                                              [
+                                                [
+                                                  "Interpolation",
+                                                  {
+                                                    "expr": [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "value_set" ],
+                                                        [
+                                                          "A_string",
+                                                          "value_template_vars"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    "strip_before": false,
+                                                    "strip_after": false
+                                                  }
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "set_sensitive",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "helm" ]
+                                  ]
+                                ],
+                                [ "A_string", "value_refers" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [ "Tuple", [] ],
+                        "else_": [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "value_refer", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "helm" ]
+                                  ]
+                                ],
+                                [ "A_string", "value_refers" ]
+                              ]
+                            ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "value_set", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "value_refer" ],
+                                    [ "A_string", "value_sets" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "name" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "value_set" ],
+                                          [ "A_string", "name" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "value" ],
+                                      [
+                                        "Cond",
+                                        {
+                                          "if_": [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "secret" ],
+                                                  [ "A_string", "tfstate" ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ],
+                                          "then_": [ "Null" ],
+                                          "else_": [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Idx",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [ "A_string", "certs" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Id",
+                                                            "value_refer"
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "tfstate"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "cert_name"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "value_set" ],
+                                                  [
+                                                    "A_string",
+                                                    "value_ref_key"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        }
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "remote_file" ], [ "Lit", "podman_kubes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "podman_kube", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "podman_kubes" ] ]
+              ],
+              "key_output": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "podman_kube" ], [ "A_string", "helm" ] ]
+                  ],
+                  [ "A_string", "name" ]
+                ]
+              ],
+              "value_output": [ "Id", "podman_kube" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "path",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "manifest_dest_path" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "data" ], [ "A_string", "helm_template" ] ]
+                      ],
+                      [ "A_string", "podman_kubes" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "manifest" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "podman_quadlet" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "remote_file" ], [ "A_string", "podman_kubes" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/system-systemd_quadlet" ]
+        ],
+        [
+          "Attribute",
+          "vm_conn",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "prov_remote" ] ] ]
+        ],
+        [
+          "Attribute",
+          "podman_quadlet",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "files" ],
+                [
+                  "Fun_call",
+                  [
+                    "flatten",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "unit", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "podman_quadlet" ]
+                                ]
+                              ],
+                              [ "A_string", "units" ]
+                            ]
+                          ],
+                          "output": [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "file", [] ],
+                              "input": [
+                                "Attr",
+                                [ [ "Id", "unit" ], [ "A_string", "files" ] ]
+                              ],
+                              "output": [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "content" ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "templatefile",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "file" ],
+                                              [ "A_string", "template" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "file" ],
+                                              [ "A_string", "vars" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    [ "Bare", "path" ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "join",
+                                        [
+                                          [ "String", "/" ],
+                                          [
+                                            "Tuple",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "var" ],
+                                                      [
+                                                        "A_string",
+                                                        "podman_quadlet"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "dir" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "join",
+                                                  [
+                                                    [ "String", "." ],
+                                                    [
+                                                      "Tuple",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "unit"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "service"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "name"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "Idx",
+                                                          [
+                                                            [
+                                                              "Fun_call",
+                                                              [
+                                                                "split",
+                                                                [
+                                                                  [
+                                                                    "String",
+                                                                    "."
+                                                                  ],
+                                                                  [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "basename",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "file"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "template"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [ "Int", 1 ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "services" ],
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "unit", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "podman_quadlet" ]
+                          ]
+                        ],
+                        [ "A_string", "units" ]
+                      ]
+                    ],
+                    "output": [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "unit" ], [ "A_string", "service" ] ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [ "Null" ],
+                        "else_": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "name" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "unit" ],
+                                      [ "A_string", "service" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "name" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "status" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "unit" ],
+                                      [ "A_string", "service" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "status" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "custom_trigger" ],
+                              [
+                                "Fun_call",
+                                [
+                                  "md5",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "remote_file" ],
+                                                [
+                                                  "A_string", "podman_kubes"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "unit" ],
+                                                    [ "A_string", "service" ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "name" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "content" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "remote_file" ], [ "Lit", "traefik_file_provider" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "podman_quadlet" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Tuple",
+                  [ [ "String", "./attachments/tfbackend-pg.consul.hcl" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "path",
+          [
+            "Template",
+            [
+              [ "Literal", "/var/home/podmgr/consul-services/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "basename",
+                      [
+                        [
+                          "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

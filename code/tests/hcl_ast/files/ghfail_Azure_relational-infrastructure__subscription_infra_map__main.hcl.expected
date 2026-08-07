@@ -1,0 +1,5707 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "http" ], [ "Lit", "ip" ] ],
+      "body": [
+        [ "Attribute", "url", [ "String", "https://api.ipify.org/" ] ],
+        [
+          "Block",
+          {
+            "type_": "retry",
+            "labels": [],
+            "body": [
+              [ "Attribute", "attempts", [ "Int", 5 ] ],
+              [ "Attribute", "max_delay_ms", [ "Int", 1000 ] ],
+              [ "Attribute", "min_delay_ms", [ "Int", 500 ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "resource_groups" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "Azure/avm-res-resources-resourcegroup/azurerm" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_groups" ] ] ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "location_name" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "values",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "locations" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "else_": [
+                "Idx",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "locations" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "location_name" ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "resource_group_names" ] ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lock",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "group", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "lock_groups" ]
+                              ]
+                            ],
+                            "output": [ "Id", "group" ],
+                            "cond": [
+                              "Fun_call",
+                              [
+                                "contains",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "keys",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "locked_groups" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Id", "group" ]
+                                ]
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "anytrue",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "group", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "lock_groups" ]
+                              ]
+                            ],
+                            "output": [
+                              "Log_and",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "contains",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "keys",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "locked_groups"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Id", "group" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "locked_groups"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "group" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "read_only" ]
+                                        ]
+                                      ],
+                                      [ "Bool", false ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "kind" ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "lock_modes" ]
+                              ]
+                            ],
+                            [ "A_string", "read_only" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "kind" ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "lock_modes" ]
+                              ]
+                            ],
+                            [ "A_string", "no_delete" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "resource_group_tags" ] ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "ddos_protection_plan" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "Azure/avm-res-network-ddosprotectionplan/azurerm" ]
+        ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "anytrue",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "values",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "networks" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Splat" ]
+                          ]
+                        ],
+                        [ "A_string", "enable_ddos_protection" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Idx",
+            [
+              [
+                "Fun_call",
+                [
+                  "values",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "locations" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "deployment_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-ddosplan" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "default_resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_client_config" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "naming" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "Azure/naming/azurerm" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "storage_accounts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "Azure/avm-res-storage-storageaccount/azurerm" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "storage_accounts" ] ] ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "locations" ] ] ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "location_name" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ], [ "A_string", "storage_account_names" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "storage_account_tags" ] ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "access_tier",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "access_tier" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "account_tier",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "account_tier" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "account_kind",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "account_type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "account_replication_type",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "replication_type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "https_traffic_only_enabled",
+          [
+            "Not",
+            [
+              "Attr",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "A_string", "allow_http_access" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lock",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "group", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "lock_groups" ]
+                              ]
+                            ],
+                            "output": [ "Id", "group" ],
+                            "cond": [
+                              "Fun_call",
+                              [
+                                "contains",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "keys",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "locked_groups" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Id", "group" ]
+                                ]
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "anytrue",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "group", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "lock_groups" ]
+                              ]
+                            ],
+                            "output": [
+                              "Log_and",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "contains",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "keys",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "locked_groups"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Id", "group" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "locked_groups"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "group" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "read_only" ]
+                                        ]
+                                      ],
+                                      [ "Bool", false ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "kind" ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "lock_modes" ]
+                              ]
+                            ],
+                            [ "A_string", "read_only" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "kind" ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "lock_modes" ]
+                              ]
+                            ],
+                            [ "A_string", "no_delete" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "containers",
+          [
+            "For_object",
+            {
+              "identifiers": [ "container_name", [ "container" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "blob_containers" ] ]
+              ],
+              "key_output": [ "Id", "container_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "container" ], [ "A_string", "name" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "public_access" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Attr",
+                          [
+                            [ "Id", "container" ],
+                            [ "A_string", "enable_public_network_access" ]
+                          ]
+                        ],
+                        "then_": [ "String", "Blob" ],
+                        "else_": [ "String", "None" ]
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "container" ],
+                      [ "A_string", "storage_account_name" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "shares",
+          [
+            "For_object",
+            {
+              "identifiers": [ "share_name", [ "share" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "file_shares" ] ]
+              ],
+              "key_output": [ "Id", "share_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [ "Attr", [ [ "Id", "share" ], [ "A_string", "name" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "quota" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "share" ], [ "A_string", "quota_gb" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "access_tier" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "share" ], [ "A_string", "access_tier" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "enabled_protocol" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "share" ], [ "A_string", "protocol" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "share" ],
+                      [ "A_string", "storage_account_name" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "key_vaults" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "Azure/avm-res-keyvault-vault/azurerm" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "name", [ "kv" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "key_vaults" ] ]
+              ],
+              "key_output": [ "Id", "name" ],
+              "value_output": [ "Id", "kv" ],
+              "cond": [ "Not_equal", [ [ "Id", "kv" ], [ "Null" ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "locations" ] ] ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "location_name" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "key_vault_names" ] ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lock",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "group", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "lock_groups" ]
+                              ]
+                            ],
+                            "output": [ "Id", "group" ],
+                            "cond": [
+                              "Fun_call",
+                              [
+                                "contains",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "keys",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "locked_groups" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Id", "group" ]
+                                ]
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "anytrue",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "group", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "lock_groups" ]
+                              ]
+                            ],
+                            "output": [
+                              "Log_and",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "contains",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "keys",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "locked_groups"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Id", "group" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "locked_groups"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "group" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "read_only" ]
+                                        ]
+                                      ],
+                                      [ "Bool", false ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "kind" ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "lock_modes" ]
+                              ]
+                            ],
+                            [ "A_string", "read_only" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "kind" ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "lock_modes" ]
+                              ]
+                            ],
+                            [ "A_string", "no_delete" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "tenant_id",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "tenant_id" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "azurerm_client_config" ]
+                          ]
+                        ],
+                        [ "A_string", "current" ]
+                      ]
+                    ],
+                    [ "A_string", "tenant_id" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sku_name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "sku_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_for_deployment",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "enabled_for_deployment" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_for_disk_encryption",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "enabled_for_disk_encryption" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_for_template_deployment",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "enabled_for_template_deployment" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "purge_protection_enabled",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "purge_protection_enabled" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "public_network_access_enabled",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "public_network_access_enabled" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "soft_delete_retention_days",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "soft_delete_retention_days" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "wait_for_rbac_before_key_operations",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "wait_for_rbac_before_key_operations" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "wait_for_rbac_before_secret_operations",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "wait_for_rbac_before_secret_operations" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "wait_for_rbac_before_contact_operations",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "wait_for_rbac_before_contact_operations" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role_assignments",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "role_assignments" ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "current_user_admin" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "role_definition_id_or_name" ],
+                            [ "String", "Key Vault Administrator" ]
+                          ],
+                          [
+                            [ "Bare", "principal_id" ],
+                            [
+                              "Template",
+                              [
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "data" ],
+                                                [
+                                                  "A_string",
+                                                  "azurerm_client_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "current" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "object_id" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_acls",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "network_acls" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "bypass" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "network_acls" ]
+                          ]
+                        ],
+                        [ "A_string", "bypass" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "default_action" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "network_acls" ]
+                          ]
+                        ],
+                        [ "A_string", "default_action" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "ip_rules" ],
+                    [
+                      "Fun_call",
+                      [
+                        "concat",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "network_acls" ]
+                                ]
+                              ],
+                              [ "A_string", "ip_rules" ]
+                            ]
+                          ],
+                          [
+                            "Tuple",
+                            [
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "data" ],
+                                                  [ "A_string", "http" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "ip" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "response_body" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [ "Literal", "/32" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "key_vault_tags" ] ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_private_dns_zone" ], [ "Lit", "private_dns_zones" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "private_dns_zones" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "domain_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "zone_name" ],
+                      [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_private_dns_zone_virtual_network_link" ],
+        [ "Lit", "private_dns_registration_zone_vnet_links" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "registration_dns_zones" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_registration_link_to_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "zone_config" ]
+                        ]
+                      ],
+                      [ "A_string", "domain_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "zone_config" ]
+                        ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "zone_config" ]
+                ]
+              ],
+              [ "A_string", "domain_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "networks" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "resource_id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "registration_enabled", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_private_dns_zone_virtual_network_link" ],
+        [ "Lit", "private_dns_resolution_zone_vnet_links" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "resolution_dns_zones" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "network_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_resolution_link_to_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "zone_config" ]
+                        ]
+                      ],
+                      [ "A_string", "domain_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "zone_config" ]
+                        ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "zone_config" ]
+                ]
+              ],
+              [ "A_string", "domain_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "networks" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "network_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "resource_id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "registration_enabled", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "private_endpoints" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "Azure/avm-res-network-privateendpoint/azurerm" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "all_private_endpoints" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "all_private_endpoint_names" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_resource_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "subnet_resource_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_connection_resource_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "private_connection_resource_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_interface_name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "network_interface_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ip_configurations",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "ip_configurations" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subresource_names",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "subresource_names" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_group_name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "private_dns_zone_group_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_resource_ids",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "private_dns_zone_resource_ids" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_service_connection_name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "private_service_connection_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ], [ "A_string", "private_endpoint_tags" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "networks" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "Azure/avm-res-network-virtualnetwork/azurerm" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "networks" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "locations" ] ] ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "location_name" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_space",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "address_spaces" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parent_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "resource_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Idx",
+            [
+              [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "network_tags" ] ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ddos_protection_plan",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "enable_ddos_protection" ]
+                ]
+              ],
+              "then_": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "id" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "module" ],
+                                [ "A_string", "ddos_protection_plan" ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [ "A_string", "resource_id" ]
+                      ]
+                    ]
+                  ],
+                  [ [ "Bare", "enable" ], [ "Bool", true ] ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "lock",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "lock" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dns_servers",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "dns_servers" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "dns_ips" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Null" ],
+                    "else_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "dns_ips" ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnets",
+          [
+            "For_object",
+            {
+              "identifiers": [ "subnet_name", [ "subnet" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "subnets" ]
+                ]
+              ],
+              "key_output": [ "Id", "subnet_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "subnet" ], [ "A_string", "name" ] ]
+                          ],
+                          [ "Id", "subnet_name" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "address_prefixes" ],
+                    [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "subnet" ],
+                            [ "A_string", "address_space" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "network_security_group" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "contains",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "keys",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "network_security_groups_to_provision"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "subnet" ],
+                                        [ "A_string", "security_group_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "then_": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "id" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "module" ],
+                                          [
+                                            "A_string",
+                                            "network_security_groups"
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "subnet" ],
+                                          [
+                                            "A_string", "security_group_name"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "resource_id" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "else_": [ "Null" ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "route_table" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Fun_call",
+                          [
+                            "contains",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "keys",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "route_tables" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "key" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [ "Literal", "_" ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [ "Id", "subnet_name" ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "then_": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "id" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "module" ],
+                                          [ "A_string", "route_tables" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Template",
+                                        [
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "each" ],
+                                                  [ "A_string", "key" ]
+                                                ]
+                                              ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ],
+                                          [ "Literal", "_" ],
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [ "Id", "subnet_name" ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "resource_id" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "else_": [ "Null" ]
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "route_tables" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "Azure/avm-res-network-routetable/azurerm" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "route_tables" ] ] ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "locations" ] ] ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "location_ref" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Idx",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "route_table_names" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "network_ref" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "subnet_ref" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lock",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "lock" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Idx",
+            [
+              [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "network_tags" ] ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "network_ref" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "routes",
+          [
+            "For_object",
+            {
+              "identifiers": [ "route_ref", [ "route" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "routes" ]
+                ]
+              ],
+              "key_output": [ "Id", "route_ref" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "route" ], [ "A_string", "route_name" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "address_prefix" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "route" ], [ "A_string", "address_prefix" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "next_hop_type" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "route" ], [ "A_string", "next_hop_type" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "next_hop_in_ip_address" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "route" ],
+                        [ "A_string", "next_hop_ip_address" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_activity_log_alert" ],
+        [ "Lit", "route_table_activity_log_alerts" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "route_tables" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "route_table_names" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "network_ref" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "subnet_ref" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-changed-alert" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "location", [ "String", "global" ] ],
+        [
+          "Attribute",
+          "scopes",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "route_tables" ]
+                        ]
+                      ],
+                      [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                    ]
+                  ],
+                  [ "A_string", "resource_id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Idx",
+            [
+              [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "network_tags" ] ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "network_ref" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [ "Literal", "This alert will monitor route table [" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "route_table_names" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "network_ref" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "subnet_ref" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "] for any changes." ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "criteria",
+            "labels": [],
+            "body": [
+              [ "Attribute", "category", [ "String", "Administrative" ] ],
+              [
+                "Attribute",
+                "operation_name",
+                [ "String", "Microsoft.Network/routeTables/write" ]
+              ],
+              [
+                "Attribute",
+                "resource_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "module" ],
+                            [ "A_string", "route_tables" ]
+                          ]
+                        ],
+                        [
+                          "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "resource_id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "network_security_groups" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "Azure/avm-res-network-networksecuritygroup/azurerm" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "network_security_groups_to_provision" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "locations" ] ] ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "location_name" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "tags" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "security_rules",
+          [
+            "For_object",
+            {
+              "identifiers": [ "rule_name", [ "rule" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "security_rules" ]
+                ]
+              ],
+              "key_output": [ "Id", "rule_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "access" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                        ],
+                        [ "A_string", "access" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "direction" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                        ],
+                        [ "A_string", "direction" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "priority" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule" ], [ "A_string", "priority" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "protocol" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                        ],
+                        [ "A_string", "protocol" ]
+                      ]
+                    ]
+                  ],
+                  [ [ "Bare", "name" ], [ "Id", "rule_name" ] ],
+                  [
+                    [ "Bare", "destination_address_prefix" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                        ],
+                        [ "A_string", "destination_address_prefix" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_port_range" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                        ],
+                        [ "A_string", "destination_port_range" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_address_prefix" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                        ],
+                        [ "A_string", "source_address_prefix" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_port_range" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                        ],
+                        [ "A_string", "source_port_range" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_application_security_group_ids" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "config" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string",
+                                        "destination_application_security_group_ids"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "then_": [ "Null" ],
+                        "else_": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                            ],
+                            [
+                              "A_string",
+                              "destination_application_security_group_ids"
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_address_prefixes" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "config" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string",
+                                        "destination_address_prefixes"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "then_": [ "Null" ],
+                        "else_": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                            ],
+                            [ "A_string", "destination_address_prefixes" ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_address_prefixes" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "config" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "source_address_prefixes"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "then_": [ "Null" ],
+                        "else_": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                            ],
+                            [ "A_string", "source_address_prefixes" ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_application_security_group_ids" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "config" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string",
+                                        "source_application_security_group_ids"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "then_": [ "Null" ],
+                        "else_": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                            ],
+                            [
+                              "A_string",
+                              "source_application_security_group_ids"
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destination_port_ranges" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "config" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "destination_port_ranges"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "then_": [ "Null" ],
+                        "else_": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                            ],
+                            [ "A_string", "destination_port_ranges" ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "source_port_ranges" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "config" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "source_port_ranges" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "then_": [ "Null" ],
+                        "else_": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "rule" ], [ "A_string", "config" ] ]
+                            ],
+                            [ "A_string", "source_port_ranges" ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_activity_log_alert" ],
+        [ "Lit", "network_security_group_activity_log_alerts" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "network_security_groups_to_provision" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "network_security_group_names" ]
+                        ]
+                      ],
+                      [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-changed-alert" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "location", [ "String", "global" ] ],
+        [
+          "Attribute",
+          "scopes",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ],
+                          [ "A_string", "network_security_groups" ]
+                        ]
+                      ],
+                      [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                    ]
+                  ],
+                  [ "A_string", "resource_id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [
+                "Literal", "This alert will monitor network security group ["
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "network_security_group_names" ]
+                        ]
+                      ],
+                      [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "] for any changes." ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "criteria",
+            "labels": [],
+            "body": [
+              [ "Attribute", "category", [ "String", "Administrative" ] ],
+              [
+                "Attribute",
+                "operation_name",
+                [ "String", "Microsoft.Network/networkSecurityGroups/write" ]
+              ],
+              [
+                "Attribute",
+                "resource_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "module" ],
+                            [ "A_string", "network_security_groups" ]
+                          ]
+                        ],
+                        [
+                          "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "resource_id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_application_security_group" ],
+        [ "Lit", "application_security_group" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "name", [ "vm_set" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "virtual_machine_sets" ] ]
+              ],
+              "key_output": [ "Id", "name" ],
+              "value_output": [ "Id", "vm_set" ],
+              "cond": [ "Not_equal", [ [ "Id", "vm_set" ], [ "Null" ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "virtual_machine_set_asg_names" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "locations" ] ] ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "location_name" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "virtual_machine_set_asg_tags" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "virtual_machine_sets" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../infra_map_vm_set" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "name", [ "vm_set" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "virtual_machine_sets" ] ]
+              ],
+              "key_output": [ "Id", "name" ],
+              "value_output": [ "Id", "vm_set" ],
+              "cond": [ "Not_equal", [ [ "Id", "vm_set" ], [ "Null" ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_security_group" ],
+                  [ "A_string", "application_security_group" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "locations" ] ] ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "location_name" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "resource_groups" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "resource_group_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "resource_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_tags",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "virtual_machine_set_tags" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_count",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "virtual_machine_set_specs" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "vm_count" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "deploy_scale_set",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "deploy_scale_set" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_automatic_updates",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "enable_automatic_updates" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_virtual_machine_boot_diagnostics",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "enable_boot_diagnostics" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "user_assigned_identity_ids",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "user_assigned_identity_ids" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_ports",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "network_ports" ] ] ]
+        ],
+        [
+          "Attribute",
+          "enable_vm_system_assigned_identity",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "enable_vm_system_assigned_identity" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_capacity_reservation_group_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "capacity_reservation_group_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_disk_controller_type",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "disk_controller_type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_image",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "virtual_machine_images" ] ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "image_name" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_os_type",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "os_type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_sku_size",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "virtual_machine_set_specs" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "sku_size" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_zone_distribution",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "virtual_machine_set_zone_distribution"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "custom" ], [ "Null" ] ],
+                    [
+                      [ "Bare", "even" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "1" ],
+                          [ "String", "2" ],
+                          [ "String", "3" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_prefix",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "include_deployment_prefix_in_name" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "deployment_prefix" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Fun_call",
+                        [
+                          "coalesce",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [
+                "Fun_call",
+                [
+                  "coalesce",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ],
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "maintenance_configuration",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "maintenance" ]
+                              ]
+                            ],
+                            [ "A_string", "schedule_name" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "vm_set_maintenance_configurations" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_shutdown_schedule",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "shutdown_schedule_name" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "vm_set_shutdown_schedules" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "lock_mode",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "group", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "lock_groups" ]
+                              ]
+                            ],
+                            "output": [ "Id", "group" ],
+                            "cond": [
+                              "Fun_call",
+                              [
+                                "contains",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "keys",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "locked_groups" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Id", "group" ]
+                                ]
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "anytrue",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "group", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "lock_groups" ]
+                              ]
+                            ],
+                            "output": [
+                              "Log_and",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "contains",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "keys",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "locked_groups"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Id", "group" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "locked_groups"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "group" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "read_only" ]
+                                        ]
+                                      ],
+                                      [ "Bool", false ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [ "String", "read_only" ],
+                  "else_": [ "String", "no_delete" ]
+                }
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "generated_secrets_key_vault_secret_config",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "key_vault_resource_id" ],
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "secrets_key_vault_resource_id" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [ "A_string", "key_vaults" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "key_vault_name" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "resource_id" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "name" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "vm-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "replace",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ],
+                              [ "String", "/[^a-zA-Z0-9-]/" ],
+                              [ "String", "" ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-creds" ]
+                  ]
+                ]
+              ],
+              [ [ "Bare", "expiration_date_length_in_days" ], [ "Int", 90 ] ],
+              [ [ "Bare", "content_type" ], [ "String", "password" ] ],
+              [
+                [ "Bare", "tags" ],
+                [
+                  "Fun_call",
+                  [
+                    "merge",
+                    [
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "tags" ]
+                        ]
+                      ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "credential_type" ],
+                            [ "String", "generated" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_extensions",
+          [
+            "For_object",
+            {
+              "identifiers": [ "extension_name", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "concat",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "extensions" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "extensions" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "extension_name" ],
+              "value_output": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "virtual_machine_extensions" ]
+                    ]
+                  ],
+                  [ "Id", "extension_name" ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_data_disks",
+          [
+            "For_object",
+            {
+              "identifiers": [ "disk_name", [ "disk" ] ],
+              "input": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "data_disks" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              "key_output": [ "Id", "disk_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "caching" ],
+                    [
+                      "Attr", [ [ "Id", "disk" ], [ "A_string", "caching" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "image" ],
+                    [ "Attr", [ [ "Id", "disk" ], [ "A_string", "image" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "lun" ],
+                    [ "Attr", [ [ "Id", "disk" ], [ "A_string", "lun" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "disk_size_gb" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "disk" ], [ "A_string", "disk_size_gb" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "storage_account_type" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "disk" ],
+                        [ "A_string", "storage_account_type" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "enable_public_network_access" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "disk" ],
+                        [ "A_string", "enable_public_network_access" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "disk_iops_read_only" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "disk" ],
+                        [ "A_string", "disk_iops_read_only" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "disk_iops_read_write" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "disk" ],
+                        [ "A_string", "disk_iops_read_write" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "disk_encryption_set_id" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "disk" ],
+                        [ "A_string", "disk_encryption_set_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "tags" ],
+                    [ "Attr", [ [ "Id", "disk" ], [ "A_string", "tags" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "lock_mode" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Gt",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "For_tuple",
+                                    {
+                                      "identifiers": [ "group", [] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "disk" ],
+                                          [ "A_string", "lock_groups" ]
+                                        ]
+                                      ],
+                                      "output": [ "Id", "group" ],
+                                      "cond": [
+                                        "Fun_call",
+                                        [
+                                          "contains",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "keys",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "locked_groups"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "group" ]
+                                          ]
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "then_": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Fun_call",
+                              [
+                                "anytrue",
+                                [
+                                  [
+                                    "For_tuple",
+                                    {
+                                      "identifiers": [ "group", [] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "disk" ],
+                                          [ "A_string", "lock_groups" ]
+                                        ]
+                                      ],
+                                      "output": [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "contains",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "keys",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "locked_groups"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Id", "group" ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "locked_groups"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Id", "group" ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string", "read_only"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Bool", false ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "cond": null
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "then_": [ "String", "read_only" ],
+                            "else_": [ "String", "no_delete" ]
+                          }
+                        ],
+                        "else_": [ "Null" ]
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_network_interfaces",
+          [
+            "For_object",
+            {
+              "identifiers": [ "nic_name", [ "nic" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "network_interfaces" ]
+                ]
+              ],
+              "key_output": [ "Id", "nic_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "private_ip" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "nic" ], [ "A_string", "private_ip" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "enable_accelerated_networking" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "nic" ],
+                        [ "A_string", "enable_accelerated_networking" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnet_id" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "network_resource_ids"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nic" ],
+                                        [ "A_string", "network_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "subnets" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "nic" ],
+                                [ "A_string", "subnet_name" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "resource_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "lock_mode" ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Gt",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "For_tuple",
+                                    {
+                                      "identifiers": [ "group", [] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "nic" ],
+                                          [ "A_string", "lock_groups" ]
+                                        ]
+                                      ],
+                                      "output": [ "Id", "group" ],
+                                      "cond": [
+                                        "Fun_call",
+                                        [
+                                          "contains",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "keys",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "locked_groups"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "group" ]
+                                          ]
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "then_": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Fun_call",
+                              [
+                                "anytrue",
+                                [
+                                  [
+                                    "For_tuple",
+                                    {
+                                      "identifiers": [ "group", [] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "nic" ],
+                                          [ "A_string", "lock_groups" ]
+                                        ]
+                                      ],
+                                      "output": [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "contains",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "keys",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "locked_groups"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Id", "group" ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "locked_groups"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Id", "group" ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string", "read_only"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Bool", false ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "cond": null
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "then_": [ "String", "read_only" ],
+                            "else_": [ "String", "no_delete" ]
+                          }
+                        ],
+                        "else_": [ "Null" ]
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_machine_os_disk",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "disk_size_gb" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "virtual_machine_set_specs" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "os_disk" ]
+                      ]
+                    ],
+                    [ "A_string", "disk_size_gb" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "storage_account_type" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "virtual_machine_set_specs" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "os_disk" ]
+                      ]
+                    ],
+                    [ "A_string", "storage_account_type" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "load_balancer",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "load_balancer" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "load_balancer" ]
+                      ]
+                    ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "internal_frontend" ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "load_balancer" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "internal_frontend" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [ "Null" ],
+                              "else_": [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "subnet_id" ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Idx",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "local" ],
+                                                        [
+                                                          "A_string",
+                                                          "network_resource_ids"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Attr",
+                                                                  [
+                                                                    [
+                                                                    "Id",
+                                                                    "each"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "value"
+                                                                    ]
+                                                                  ]
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "load_balancer"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "internal_frontend"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "network_name"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "subnets" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "each" ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "load_balancer"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "internal_frontend"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "subnet_name" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "resource_id" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    [ "Bare", "private_ip_address" ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "each" ],
+                                                    [ "A_string", "value" ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string", "load_balancer"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string", "internal_frontend"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "private_ip_address" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [
+          "Lit",
+          "azurerm_network_interface_application_security_group_association"
+        ],
+        [ "Lit", "asg_associations" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "vm_nic", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "flatten",
+                  [
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "vm_set_name", [ "vm_set" ] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "module" ],
+                            [ "A_string", "virtual_machine_sets" ]
+                          ]
+                        ],
+                        "output": [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "vm_index", [ "vm" ] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "vm_set" ],
+                                    [ "A_string", "resources" ]
+                                  ]
+                                ],
+                                [ "A_string", "virtual_machines" ]
+                              ]
+                            ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "nic_name", [ "nic" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "vm" ],
+                                    [ "A_string", "network_interfaces" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "vm_set_name" ],
+                                      [ "Id", "vm_set_name" ]
+                                    ],
+                                    [
+                                      [ "Bare", "vm_index" ],
+                                      [ "Id", "vm_index" ]
+                                    ],
+                                    [
+                                      [ "Bare", "nic_name" ],
+                                      [ "Id", "nic_name" ]
+                                    ],
+                                    [
+                                      [ "Bare", "nic_id" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "nic" ],
+                                          [ "A_string", "resource_id" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "key" ],
+                                      [
+                                        "Template",
+                                        [
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [ "Id", "vm_set_name" ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ],
+                                          [ "Literal", "_" ],
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [ "Id", "vm_index" ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ],
+                                          [ "Literal", "_" ],
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [ "Id", "nic_name" ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "vm_nic" ], [ "A_string", "key" ] ]
+              ],
+              "value_output": [ "Id", "vm_nic" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "network_interface_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "nic_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "application_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_application_security_group" ],
+                      [ "A_string", "application_security_group" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "vm_set_name" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

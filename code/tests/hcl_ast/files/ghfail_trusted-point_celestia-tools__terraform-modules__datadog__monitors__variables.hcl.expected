@@ -1,0 +1,1026 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "environment" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Deployment environment of the Celestia Bridge being monitored. Common values include 'mainnet', 'testnet', or custom environment names. Default is set to 'testnet'."
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "testnet" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "service" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Type of service within the the Celestia Network that is being monitored. For instance, 'bridge' represents a node that connects the data availability layer and the consensus layer. Default is set to 'bridge'."
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "validator" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "evaluation_delay" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The delay, in seconds, before evaluating the metric to account for data ingestion latency. Helps ensure data completeness for accurate monitoring."
+          ]
+        ],
+        [ "Attribute", "default", [ "Int", 300 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "notify_no_data" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enables alerts for 'no data' events, indicating possible issues with data reporting or collection from the Sui validator."
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "no_data_timeframe" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Duration, in minutes, to wait before alerting on a 'no data' condition, signaling potential interruptions in data flow or metric collection."
+          ]
+        ],
+        [ "Attribute", "default", [ "Int", 15 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "notification_preset_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Configures the detail level in monitor notifications. Options: 'show_all', 'hide_query', 'hide_handles', 'hide_all'. Tailors notifications to include essential information."
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "hide_handles" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "renotify_interval" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Interval, in minutes, between re-notifications for unresolved issues, ensuring timely follow-ups on critical Sui validator performance metrics."
+          ]
+        ],
+        [ "Attribute", "default", [ "Int", 15 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "renotify_occurrences" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Specifies the maximum number of re-notification messages for unresolved alerts, controlling alert frequency on ongoing issues."
+          ]
+        ],
+        [ "Attribute", "default", [ "Int", 2 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "renotify_statuses" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Defines the alert statuses (e.g., 'alert', 'warn', 'no data') that trigger re-notifications, allowing for targeted follow-ups on specific conditions."
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [ "String", "alert" ],
+              [ "String", "warn" ],
+              [ "String", "no data" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "status", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "renotify_statuses" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [ "String", "alert" ],
+                                    [ "String", "warn" ],
+                                    [ "String", "no data" ]
+                                  ]
+                                ],
+                                [ "Id", "status" ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Each status in 'renotify_statuses' must be one of the following values: 'alert', 'warn', 'no data'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "notification_targets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [ "map", [ [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ] ] ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A map specifying notification targets for different alert thresholds. It allows defining custom notification channels for 'critical' and 'warning' alerts, ensuring appropriate alert routing. Each channel should be specified with a unique identifier, prefixed with '@'. Format: {'critical': ['@channel1', '@user'], 'warning': ['@channel2']}."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "notification_targets" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "Tuple",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "tomap",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "notification_targets"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "alltrue",
+                                  [
+                                    [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "key", [ "value" ] ],
+                                        "input": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "notification_targets"
+                                            ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Log_and",
+                                          [
+                                            [
+                                              "Log_and",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "contains",
+                                                    [
+                                                      [
+                                                        "Tuple",
+                                                        [
+                                                          [
+                                                            "String",
+                                                            "critical"
+                                                          ],
+                                                          [
+                                                            "String",
+                                                            "warning"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Id", "key" ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "can",
+                                                    [
+                                                      [
+                                                        "Fun_call",
+                                                        [
+                                                          "toset",
+                                                          [
+                                                            [ "Id", "value" ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "alltrue",
+                                                [
+                                                  [
+                                                    "For_tuple",
+                                                    {
+                                                      "identifiers": [
+                                                        "target", []
+                                                      ],
+                                                      "input": [
+                                                        "Id", "value"
+                                                      ],
+                                                      "output": [
+                                                        "Fun_call",
+                                                        [
+                                                          "regex",
+                                                          [
+                                                            [
+                                                              "String",
+                                                              "^@[0-9a-zA-Z-_]+$"
+                                                            ],
+                                                            [
+                                                              "Id", "target"
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      "cond": null
+                                                    }
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The 'notification_targets' map must include only 'critical' and 'warning' keys with lists of notification channel identifiers, each starting with '@'. Ensure the map is not empty and all identifiers are correctly formatted."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A list of tags to be associated with the Datadog monitors. Tags are key-value pairs that help in categorizing and filtering monitors across different environments, teams, or service types, enhancing manageability and visibility."
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "tags" ] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "tag", [] ],
+                              "input": [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "tags" ] ]
+                              ],
+                              "output": [
+                                "Fun_call",
+                                [
+                                  "regex",
+                                  [
+                                    [
+                                      "String",
+                                      "^[^:]+:[^:]+( [^:]+:[^:]+)*$"
+                                    ],
+                                    [ "Id", "tag" ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "(Optional) attribute 'tags' of 'monitor' must be of the type list with string attributes, matching the format 'key:value' (e.g., 'environment:production')."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "runtime_counter_is_stuck_enabled" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enables monitoring for the runtime counter on the bridge node."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "true" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "runtime_counter_is_stuck_message" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Customizable notification message the runtime counter monitor."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "runtime_counter_is_stuck_escalation_message" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A message to include with a re-notification for the runtime counter monitor escalation."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "runtime_counter_is_stuck_aggregator" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Aggregation method for evaluating runtime counter over the specified timeframe, crucial for identifying performance trends. Valid options are 'min', 'max', 'avg'."
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "avg" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "min" ],
+                          [ "String", "max" ],
+                          [ "String", "avg" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string", "runtime_counter_is_stuck_aggregator"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The 'runtime_counter_is_stuck_aggregator' must be one of the following values: 'min', 'max', 'avg'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "runtime_counter_is_stuck_timeframe" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Time window for assessing runtime counter, setting the scope for performance evaluation of the bridge node. Valid options are 'last_1m', 'last_5m', 'last_10m', 'last_15m', 'last_30m', 'last_1h', 'last_2h', 'last_4h', 'last_1d'."
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "last_5m" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "last_1m" ],
+                          [ "String", "last_5m" ],
+                          [ "String", "last_10m" ],
+                          [ "String", "last_15m" ],
+                          [ "String", "last_30m" ],
+                          [ "String", "last_1h" ],
+                          [ "String", "last_2h" ],
+                          [ "String", "last_4h" ],
+                          [ "String", "last_1d" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string", "runtime_counter_is_stuck_timeframe"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The 'runtime_counter_is_stuck_timeframe' must be one of the following values: 'last_1m', 'last_5m', 'last_10m', 'last_15m', 'last_30m', 'last_1h', 'last_2h', 'last_4h', 'last_1d'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "runtime_counter_is_stuck_threshold_critical" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Critical alert threshold for the runtime counter, beyond which the bridge node's performance is considered severely impacted."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [
+        [ "Lit", "runtime_counter_is_stuck_threshold_critical_recovery" ]
+      ],
+      "body": [
+        [ "Attribute", "default", [ "Int", 1 ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Critical alert recovery threshold for the runtime counter. When the runtime counter is stuck beyond this threshold, the bridge node's performance is considered severely impacted, triggering recovery measures."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "low_header_sync_rate_enabled" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Turns on monitoring for low headers synchronization rate."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "true" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "low_header_sync_rate_message" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Allows for a custom alert message when the headers synchronization rate falls below expected levels, aiding in prompt issue identification."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "low_header_sync_rate_escalation_message" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A custom message to include with a re-notification for the low headers synchronization rate monitor escalation."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "low_header_sync_rate_aggregator" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Aggregator function (e.g., 'avg') for calculating the headers synchronization rate"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "avg" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "min" ],
+                          [ "String", "max" ],
+                          [ "String", "avg" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "low_header_sync_rate_aggregator" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The 'low_header_sync_rate_aggregator' must be one of the following values: 'min', 'max', 'avg'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "low_header_sync_rate_timeframe" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "Observation period for headers synchronization rate."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "last_5m" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "last_1m" ],
+                          [ "String", "last_5m" ],
+                          [ "String", "last_10m" ],
+                          [ "String", "last_15m" ],
+                          [ "String", "last_30m" ],
+                          [ "String", "last_1h" ],
+                          [ "String", "last_2h" ],
+                          [ "String", "last_4h" ],
+                          [ "String", "last_1d" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "low_header_sync_rate_timeframe" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The 'low_header_sync_rate_timeframe' must be one of the following values: 'last_1m', 'last_5m', 'last_10m', 'last_15m', 'last_30m', 'last_1h', 'last_2h', 'last_4h', 'last_1d'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "low_header_sync_rate_shift_timeframe" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Specifies the comparison timeframe for assessing changes in the header synchronization rate, aiding in trend analysis and anomaly detection."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "last_10m" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "low_header_sync_rate_threshold_critical" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Critical threshold for headers synchronization rate, in certificates per second, below which the validator's activity is considered alarmingly low."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [
+        [ "Lit", "low_header_sync_rate_threshold_critical_recovery" ]
+      ],
+      "body": [
+        [ "Attribute", "default", [ "Float", 0.1 ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Critical alert recovery threshold for the headers synchronization rate. When the headers synchronization rate falls below this threshold, indicating potential issues with synchronization, recovery measures are triggered to ensure optimal performance of the bridge node."
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,620 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "ordered_endpoints",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "sort",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "name", [ "config" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "final_computed_endpoints" ]
+                            ]
+                          ],
+                          "output": [ "Id", "name" ],
+                          "cond": [
+                            "Attr",
+                            [
+                              [ "Id", "config" ],
+                              [ "A_string", "enable_alerts" ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "sort",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "name", [ "config" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "final_computed_endpoints" ]
+                            ]
+                          ],
+                          "output": [ "Id", "name" ],
+                          "cond": [
+                            "Not",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "config" ],
+                                [ "A_string", "enable_alerts" ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "heatmap_widgets",
+          [
+            "For_object",
+            {
+              "identifiers": [ "name", [ "config" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "final_computed_endpoints" ]
+                ]
+              ],
+              "key_output": [ "Id", "name" ],
+              "value_output": [
+                "Template_heredoc",
+                [
+                  "EOT",
+                  [
+                    [
+                      "Literal",
+                      "\n        \"title\": \"Latency (exponential view): "
+                    ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "service" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [ "Id", "name" ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " in " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "\",\n        \"xyChart\": {\n          \"chartOptions\": {\n            \"mode\": \"COLOR\"\n          },\n          \"dataSets\": [\n            {\n              \"minAlignmentPeriod\": \"60s\",\n              \"plotType\": \"HEATMAP\",\n              \"targetAxis\": \"Y1\",\n              \"timeSeriesQuery\": {\n                \"timeSeriesFilter\": {\n                  \"aggregation\": {\n                    \"alignmentPeriod\": \"60s\",\n                    \"crossSeriesReducer\": \"REDUCE_SUM\",\n                    \"perSeriesAligner\": \"ALIGN_DELTA\"\n                  },\n                \"filter\": \"metric.type=\\\"logging.googleapis.com/user/"
+                    ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "google_logging_metric" ],
+                                    [ "A_string", "latency_metric" ]
+                                  ]
+                                ],
+                                [ "Id", "name" ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "\\\" AND resource.type=\\\"l7_lb_rule\\\"\"\n                }\n              }\n            }\n          ],\n          "
+                    ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Attr",
+                              [
+                                [ "Id", "config" ],
+                                [ "A_string", "enable_alerts" ]
+                              ]
+                            ],
+                            "then_": [
+                              "Template_heredoc",
+                              [
+                                "EOTnested",
+                                [
+                                  [
+                                    "Literal",
+                                    "\n          \"thresholds\": [\n            {\n              \"label\": \"alert threshold\",\n              \"targetAxis\": \"Y1\",\n              \"value\": "
+                                  ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Div",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "config" ],
+                                              [
+                                                "A_string",
+                                                "alert_threshold_milliseconds"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Int", 1000 ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [
+                                    "Literal",
+                                    "\n            }\n          ],\n"
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "else_": [ "String", "\"thresholds\": []," ]
+                          }
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "\n          \"timeshiftDuration\": \"0s\",\n          \"yAxis\": {\n            \"label\": \"y1Axis\",\n            \"scale\": \"LINEAR\"\n          }\n        }\n"
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "alert_widgets",
+          [
+            "For_object",
+            {
+              "identifiers": [ "name", [ "config" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "final_computed_endpoints" ]
+                ]
+              ],
+              "key_output": [ "Id", "name" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Attr",
+                    [ [ "Id", "config" ], [ "A_string", "enable_alerts" ] ]
+                  ],
+                  "then_": [
+                    "Template_heredoc",
+                    [
+                      "EOT",
+                      [
+                        [
+                          "Literal",
+                          "\n        \"alertChart\": {\n          \"name\": \""
+                        ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Id",
+                                          "google_monitoring_alert_policy"
+                                        ],
+                                        [ "A_string", "latency_alert" ]
+                                      ]
+                                    ],
+                                    [ "Id", "name" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\"\n        }\n" ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Template_heredoc",
+                    [
+                      "EOT",
+                      [
+                        [
+                          "Literal",
+                          "\n        \"text\": {\n          \"content\": \"If you'd like to add an alert targeting this endpoint (`"
+                        ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Fun_call",
+                              [
+                                "replace",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "computed_regex" ]
+                                    ]
+                                  ],
+                                  [ "String", "\\" ],
+                                  [ "String", "\\\\" ]
+                                ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "`), you can do so wherever " ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "service" ] ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "-" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "environment" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [
+                          "Literal",
+                          "'s [latency-tracking](https://github.com/broadinstitute/terraform-shared/tree/master/terraform-modules/stackdriver/latency-tracking) module is instantiated.\",\n          \"format\": \"MARKDOWN\"\n        },\n        \"title\": \"No latency alert configured for "
+                        ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "service" ] ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", " " ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [ "Id", "name" ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", " in " ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "environment" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "\"\n" ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "widgets",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "name", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "ordered_endpoints" ] ]
+              ],
+              "output": [
+                "Template_heredoc",
+                [
+                  "EOT",
+                  [
+                    [ "Literal", "\n      {\n" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "heatmap_widgets" ]
+                              ]
+                            ],
+                            [ "Id", "name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "\n      },\n      {\n" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "alert_widgets" ]
+                              ]
+                            ],
+                            [ "Id", "name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "\n      }\n" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "dashboard",
+          [
+            "Template_heredoc",
+            [
+              "EOT",
+              [
+                [ "Literal", "\n{\n  \"displayName\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "service" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "-" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "-endpoint-latency\",\n  \"gridLayout\": {\n    \"columns\": \"2\",\n    \"widgets\": [\n"
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Fun_call",
+                      [
+                        "join",
+                        [
+                          [ "String", ",\n" ],
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "widgets" ] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\n    ]\n  }\n}\n" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_monitoring_dashboard" ],
+        [ "Lit", "latency_dashboard" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "final_computed_endpoints" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "null_resource" ],
+                  [ "A_string", "pause_after_metric_change" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "null_resource" ],
+                  [ "A_string", "pause_after_alert_change" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "google_project" ] ] ]
+        ],
+        [
+          "Attribute",
+          "dashboard_json",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "dashboard" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

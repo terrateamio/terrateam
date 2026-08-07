@@ -1,0 +1,160 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_resource_group" ], [ "Lit", "Terra-RG-Stan" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "RG-Packer1-Stan" ] ],
+        [ "Attribute", "location", [ "String", "West Europe" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_storage_account" ],
+        [ "Lit", "Terra-StorageAccount1-Stan" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "storageaccountpackerstan" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_resource_group" ],
+                          [ "A_string", "Terra-RG-Stan" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_resource_group" ],
+                          [ "A_string", "Terra-RG-Stan" ]
+                        ]
+                      ],
+                      [ "A_string", "location" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "account_tier", [ "String", "Standard" ] ],
+        [ "Attribute", "account_replication_type", [ "String", "LRS" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_storage_container" ],
+        [ "Lit", "Terra-StorageContainer1-Stan" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "images" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_resource_group" ],
+                          [ "A_string", "Terra-RG-Stan" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_account_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_storage_account" ],
+                          [ "A_string", "Terra-StorageAccount1-Stan" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "container_access_type", [ "String", "private" ] ]
+      ]
+    }
+  ]
+]

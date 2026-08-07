@@ -1,0 +1,20 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Add",
+      [
+        [ "Id", "foo" ],
+        [
+          "Cond",
+          {
+            "if_": [ "Id", "bar" ],
+            "then_": [ "Int", 0 ],
+            "else_": [ "Int", 5 ]
+          }
+        ]
+      ]
+    ]
+  ]
+]

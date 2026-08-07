@@ -1,0 +1,10 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "a" ], [ "Lit", "b" ] ],
+      "body": []
+    }
+  ]
+]

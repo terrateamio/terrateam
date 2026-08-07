@@ -1,0 +1,689 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vcn_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "the ocid of virtual coud network" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "compartment_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute", "description", [ "String", "the ocid of compartment" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "network_security_groups" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "map",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "object",
+                          [
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "direction" ], [ "Id", "string" ]
+                                ],
+                                [
+                                  [ "Bare", "protocol" ], [ "Id", "string" ]
+                                ],
+                                [
+                                  [ "Bare", "ports" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "min" ],
+                                              [ "Id", "number" ]
+                                            ],
+                                            [
+                                              [ "Bare", "max" ],
+                                              [ "Id", "number" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "type" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "optional",
+                                      [
+                                        [ "Id", "string" ],
+                                        [ "String", "CIDR_BLOCK" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "ips" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "optional",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [ "set", [ [ "Id", "string" ] ] ]
+                                        ],
+                                        [ "Tuple", [] ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "nsg_ids" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "optional",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [ "set", [ [ "Id", "string" ] ] ]
+                                        ],
+                                        [ "Tuple", [] ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "service_cidrs" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "optional",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [ "set", [ [ "Id", "string" ] ] ]
+                                        ],
+                                        [ "Tuple", [] ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "group_name", [ "group" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "network_security_groups" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "alltrue",
+                              [
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [
+                                      "rule_name", [ "rule" ]
+                                    ],
+                                    "input": [ "Id", "group" ],
+                                    "output": [
+                                      "Log_or",
+                                      [
+                                        [
+                                          "Log_or",
+                                          [
+                                            [
+                                              "Log_and",
+                                              [
+                                                [
+                                                  "Log_and",
+                                                  [
+                                                    [
+                                                      "Log_and",
+                                                      [
+                                                        [
+                                                          "Equal",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "rule"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "type"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "String",
+                                                              "CIDR_BLOCK"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "Gt",
+                                                          [
+                                                            [
+                                                              "Fun_call",
+                                                              [
+                                                                "length",
+                                                                [
+                                                                  [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "rule"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "ips"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [ "Int", 0 ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Equal",
+                                                      [
+                                                        [
+                                                          "Fun_call",
+                                                          [
+                                                            "length",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Id",
+                                                                    "rule"
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "nsg_ids"
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Int", 0 ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Equal",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "length",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id", "rule"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "service_cidrs"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Int", 0 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Log_and",
+                                              [
+                                                [
+                                                  "Log_and",
+                                                  [
+                                                    [
+                                                      "Log_and",
+                                                      [
+                                                        [
+                                                          "Equal",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "rule"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "type"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "String",
+                                                              "SERVICE_CIDR_BLOCK"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "Gt",
+                                                          [
+                                                            [
+                                                              "Fun_call",
+                                                              [
+                                                                "length",
+                                                                [
+                                                                  [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "rule"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "service_cidrs"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [ "Int", 0 ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Equal",
+                                                      [
+                                                        [
+                                                          "Fun_call",
+                                                          [
+                                                            "length",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Id",
+                                                                    "rule"
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "ips"
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Int", 0 ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Equal",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "length",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id", "rule"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "nsg_ids"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Int", 0 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Log_and",
+                                          [
+                                            [
+                                              "Log_and",
+                                              [
+                                                [
+                                                  "Log_and",
+                                                  [
+                                                    [
+                                                      "Equal",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "rule" ],
+                                                            [
+                                                              "A_string",
+                                                              "type"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "String",
+                                                          "NETWORK_SECURITY_GROUP"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Gt",
+                                                      [
+                                                        [
+                                                          "Fun_call",
+                                                          [
+                                                            "length",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Id",
+                                                                    "rule"
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "nsg_ids"
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Int", 0 ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Equal",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "length",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id", "rule"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "ips"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Int", 0 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "length",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "rule" ],
+                                                          [
+                                                            "A_string",
+                                                            "service_cidrs"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Int", 0 ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\n    if type is \"CIDR_BLOCK\" then `ips` must be set, and `nsg_ids` and `service_cidrs` should not be set,\nif type is \"SERVICE_CIDR_BLOCK\" then `service_cidrs` must be set and `nsg_ids` and `ips` is should not be set,\nif type is \"NETWORK_SECURITY_GROUP\" then `nsg_ids` must be set and `service_cidrs` and `ips` is should not be set\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "group_name", [ "group" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "network_security_groups" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "alltrue",
+                              [
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [
+                                      "rule_name", [ "rule" ]
+                                    ],
+                                    "input": [ "Id", "group" ],
+                                    "output": [
+                                      "Log_or",
+                                      [
+                                        [
+                                          "Equal",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "rule" ],
+                                                [ "A_string", "direction" ]
+                                              ]
+                                            ],
+                                            [ "String", "INGRESS" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Equal",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "rule" ],
+                                                [ "A_string", "direction" ]
+                                              ]
+                                            ],
+                                            [ "String", "EGRESS" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\n    The value of direction must be one of the following:\n    - \"INGRESS\"\n    - \"EGRESS\"\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOL",
+              "\n    map of network security groups, where the key is used as name of the group, and value is a rule configuration\n    Rule Configuration\n    direction: INGRESS or EGRESS\n    protocol : tcp or udp\n    ports    : port object that contain the port ranege. Set both min and max to the same value if no range is needed\n        min: lower port bound \n        max: upper port bound\n    type (optional)          : the type of the nsg rule, default is `CIDR_BLOCK`\n    ips  (optional)          : list of IP addresses for the rule. Set if type is `CIDR_BLOCK`\n    nsg_ids (optional)       : list of network security group ids for the rule. Set if type is `NETWORK_SECURITY_GROUP`\n    service_cidrs (optional) : list of service cidr blocks for the rule. Set if type is `SERVICE_CIDR_BLOCK`\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

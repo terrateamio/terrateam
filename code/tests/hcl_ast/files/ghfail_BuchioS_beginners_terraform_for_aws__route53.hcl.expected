@@ -1,0 +1,402 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_route53_zone" ], [ "Lit", "hoge_net" ] ],
+      "body": [ [ "Attribute", "name", [ "String", "hoge.net" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route53_record" ], [ "Lit", "web" ] ],
+      "body": [
+        [
+          "Attribute",
+          "zone_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_route53_zone" ] ]
+                  ],
+                  [ "A_string", "hoge_net" ]
+                ]
+              ],
+              [ "A_string", "zone_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_route53_zone" ] ]
+                  ],
+                  [ "A_string", "hoge_net" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "A" ] ],
+        [
+          "Block",
+          {
+            "type_": "alias",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "web" ] ] ],
+                    [ "A_string", "dns_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "zone_id",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "web" ] ] ],
+                    [ "A_string", "zone_id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "evaluate_target_health", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route53_zone" ], [ "Lit", "in" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "internal" ] ],
+        [
+          "Block",
+          {
+            "type_": "vpc",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "vpc_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "vpc_region", [ "String", "ap-northeast-1" ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Name" ], [ "String", "Internal DNS Zone" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route53_record" ], [ "Lit", "ap_in" ] ],
+      "body": [
+        [
+          "Attribute",
+          "zone_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_route53_zone" ], [ "A_string", "in" ] ]
+              ],
+              [ "A_string", "zone_id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "ap" ] ],
+        [ "Attribute", "type", [ "String", "A" ] ],
+        [ "Attribute", "ttl", [ "String", "300" ] ],
+        [
+          "Attribute",
+          "records",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_instance" ], [ "A_string", "ap" ] ]
+                  ],
+                  [ "A_string", "private_ip" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route53_record" ], [ "Lit", "aurora_clstr_in" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "zone_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_route53_zone" ], [ "A_string", "in" ] ]
+              ],
+              [ "A_string", "zone_id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "rds" ] ],
+        [ "Attribute", "type", [ "String", "CNAME" ] ],
+        [ "Attribute", "ttl", [ "String", "300" ] ],
+        [
+          "Attribute",
+          "records",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_rds_cluster" ],
+                      [ "A_string", "aurora_clstr" ]
+                    ]
+                  ],
+                  [ "A_string", "endpoint" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route53_record" ], [ "Lit", "aurora_clstr_ro_in" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "zone_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_route53_zone" ], [ "A_string", "in" ] ]
+              ],
+              [ "A_string", "zone_id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "rds-ro" ] ],
+        [ "Attribute", "type", [ "String", "CNAME" ] ],
+        [ "Attribute", "ttl", [ "String", "300" ] ],
+        [
+          "Attribute",
+          "records",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_rds_cluster" ],
+                      [ "A_string", "aurora_clstr" ]
+                    ]
+                  ],
+                  [ "A_string", "reader_endpoint" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route53_record" ], [ "Lit", "cert_validation" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_acm_certificate" ],
+                          [ "A_string", "cert" ]
+                        ]
+                      ],
+                      [ "A_string", "domain_validation_options" ]
+                    ]
+                  ],
+                  [ "A_int", 0 ]
+                ]
+              ],
+              [ "A_string", "resource_record_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_acm_certificate" ],
+                          [ "A_string", "cert" ]
+                        ]
+                      ],
+                      [ "A_string", "domain_validation_options" ]
+                    ]
+                  ],
+                  [ "A_int", 0 ]
+                ]
+              ],
+              [ "A_string", "resource_record_type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "zone_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_route53_zone" ] ]
+                  ],
+                  [ "A_string", "hoge_net" ]
+                ]
+              ],
+              [ "A_string", "zone_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "records",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_acm_certificate" ],
+                              [ "A_string", "cert" ]
+                            ]
+                          ],
+                          [ "A_string", "domain_validation_options" ]
+                        ]
+                      ],
+                      [ "A_int", 0 ]
+                    ]
+                  ],
+                  [ "A_string", "resource_record_value" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "ttl", [ "Int", 60 ] ]
+      ]
+    }
+  ]
+]

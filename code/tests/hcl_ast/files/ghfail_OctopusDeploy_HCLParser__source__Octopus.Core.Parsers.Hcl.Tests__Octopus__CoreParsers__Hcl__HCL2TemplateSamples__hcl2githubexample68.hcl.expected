@@ -1,0 +1,65 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "region" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "The GCP region." ] ],
+        [ "Attribute", "type", [ "String", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "credentials_file" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "The credentials file." ] ],
+        [ "Attribute", "type", [ "String", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "project_id" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "The project id." ] ],
+        [ "Attribute", "type", [ "String", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "gcp_cluster_count" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Count of cluster instances to start." ]
+        ],
+        [ "Attribute", "type", [ "String", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Cluster name for the GCP Cluster." ]
+        ],
+        [ "Attribute", "type", [ "String", "string" ] ]
+      ]
+    }
+  ]
+]

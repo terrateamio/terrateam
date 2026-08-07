@@ -1,0 +1,267 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_public_ip" ], [ "Lit", "public_ip_attacker" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "public-ip-attacker" ] ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rg_location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rg_name" ] ] ]
+        ],
+        [ "Attribute", "allocation_method", [ "String", "Dynamic" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_interface" ], [ "Lit", "nic_attacker" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "nic-attacker" ] ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rg_location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rg_name" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ip_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [ "String", "nic_configuration_attacker" ]
+              ],
+              [
+                "Attribute",
+                "subnet_id",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "subnet" ] ] ]
+              ],
+              [
+                "Attribute",
+                "private_ip_address_allocation",
+                [ "String", "Dynamic" ]
+              ],
+              [
+                "Attribute",
+                "public_ip_address_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "azurerm_public_ip" ],
+                        [ "A_string", "public_ip_attacker" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_interface_security_group_association" ],
+        [ "Lit", "nsg_assoc_attacker" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "network_interface_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_network_interface" ],
+                  [ "A_string", "nic_attacker" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_security_group_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "nsg" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [
+          "Lit",
+          "azurerm_network_interface_application_security_group_association"
+        ],
+        [ "Lit", "asg_assoc_3" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "network_interface_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_network_interface" ],
+                  [ "A_string", "nic_attacker" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "application_security_group_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "asg" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_linux_virtual_machine" ], [ "Lit", "vm_kali" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "vm-kali" ] ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rg_location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "rg_name" ] ] ]
+        ],
+        [ "Attribute", "size", [ "String", "Standard_DS1_v2" ] ],
+        [
+          "Attribute",
+          "network_interface_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_network_interface" ],
+                      [ "A_string", "nic_attacker" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "os_disk",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "os-disk-kali" ] ],
+              [ "Attribute", "caching", [ "String", "ReadWrite" ] ],
+              [
+                "Attribute",
+                "storage_account_type",
+                [ "String", "Standard_LRS" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "source_image_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "source_image_id" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "plan",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "kali" ] ],
+              [ "Attribute", "publisher", [ "String", "kali-linux" ] ],
+              [ "Attribute", "product", [ "String", "kali" ] ]
+            ]
+          }
+        ],
+        [ "Attribute", "computer_name", [ "String", "vm-kali" ] ],
+        [
+          "Block",
+          {
+            "type_": "admin_ssh_key",
+            "labels": [],
+            "body": [
+              [ "Attribute", "username", [ "String", "kali_admin" ] ],
+              [
+                "Attribute",
+                "public_key",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "my_public_ssh_key" ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "admin_username", [ "String", "kali_admin" ] ],
+        [ "Attribute", "admin_password", [ "String", "KaliLinux1234!!!" ] ],
+        [ "Attribute", "disable_password_authentication", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "boot_diagnostics",
+            "labels": [],
+            "body": [ [ "Attribute", "storage_account_uri", [ "Null" ] ] ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,198 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "internal_ip_address_app1c-servers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "srv", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "yandex_compute_instance" ],
+                  [ "A_string", "app1c-server" ]
+                ]
+              ],
+              "output": [
+                "Template",
+                [
+                  [ "Literal", "HOST: " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr", [ [ "Id", "srv" ], [ "A_string", "name" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "; IPin:" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "srv" ],
+                                  [ "A_string", "network_interface" ]
+                                ]
+                              ],
+                              [ "A_int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "ip_address" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "ansible_hosts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "srv", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "yandex_compute_instance" ],
+                  [ "A_string", "app1c-server" ]
+                ]
+              ],
+              "output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "ansible_format_output" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Template",
+                    [
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [ [ "Id", "srv" ], [ "A_string", "hostname" ] ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", " ansible_host=" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "srv" ],
+                                      [ "A_string", "network_interface" ]
+                                    ]
+                                  ],
+                                  [ "A_int", 0 ]
+                                ]
+                              ],
+                              [ "A_string", "nat_ip_address" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Template",
+                    [
+                      [ "Literal", "HOST:" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [ [ "Id", "srv" ], [ "A_string", "hostname" ] ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "; IP:" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "srv" ],
+                                      [ "A_string", "network_interface" ]
+                                    ]
+                                  ],
+                                  [ "A_int", 0 ]
+                                ]
+                              ],
+                              [ "A_string", "nat_ip_address" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

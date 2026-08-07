@@ -1,0 +1,54 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "vm_kali_private_ip" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_linux_virtual_machine" ],
+                  [ "A_string", "vm_kali" ]
+                ]
+              ],
+              [ "A_string", "private_ip_address" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "vm_kali_public_ip" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_linux_virtual_machine" ],
+                  [ "A_string", "vm_kali" ]
+                ]
+              ],
+              [ "A_string", "public_ip_address" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

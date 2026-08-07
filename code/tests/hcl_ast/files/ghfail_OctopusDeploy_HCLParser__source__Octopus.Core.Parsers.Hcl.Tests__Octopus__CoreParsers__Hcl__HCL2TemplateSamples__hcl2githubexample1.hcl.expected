@@ -1,0 +1,957 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_caller_identity" ], [ "Lit", "this" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_region" ], [ "Lit", "this" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "region",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "data" ], [ "A_string", "aws_region" ] ]
+                      ],
+                      [ "A_string", "this" ]
+                    ]
+                  ],
+                  [ "A_string", "name" ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "bucket" ] ] ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [ "Literal", "prep-registration-" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "random_pet" ], [ "A_string", "this" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "bucket" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "nid",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "network_name" ] ]
+                  ],
+                  [ "String", "testnet" ]
+                ]
+              ],
+              "then_": [ "Int", 80 ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "network_name" ] ]
+                      ],
+                      [ "String", "mainnet" ]
+                    ]
+                  ],
+                  "then_": [ "Int", 1 ],
+                  "else_": [ "String", "" ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "url",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "network_name" ] ]
+                  ],
+                  [ "String", "testnet" ]
+                ]
+              ],
+              "then_": [ "String", "https://zicon.net.solidwallet.io" ],
+              "else_": [ "String", "https://ctz.solidwallet.io/api/v3" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ip",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "ip" ] ] ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "aws_eip" ], [ "A_string", "this" ] ]
+                          ],
+                          [ "A_splat" ]
+                        ]
+                      ],
+                      [ "A_string", "public_ip" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "else_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "ip" ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "Name" ],
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "network_name" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "-ip" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_eip" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "ip" ] ] ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "vpc", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [ [ "Attribute", "prevent_destroy", [ "Bool", false ] ] ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_pet" ], [ "Lit", "this" ] ],
+      "body": [ [ "Attribute", "length", [ "Int", 2 ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_s3_bucket" ], [ "Lit", "bucket" ] ],
+      "body": [
+        [
+          "Attribute",
+          "bucket",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "bucket" ] ] ]
+        ],
+        [ "Attribute", "acl", [ "String", "public-read" ] ],
+        [
+          "Block",
+          {
+            "type_": "website",
+            "labels": [],
+            "body": [
+              [ "Attribute", "index_document", [ "String", "index.html" ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [
+                  "Literal",
+                  "\n{\n  \"Id\": \"bucket_policy_site\",\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"bucket_policy_site_main\",\n      \"Action\": [\n        \"s3:GetObject\"\n      ],\n      \"Effect\": \"Allow\",\n      \"Resource\": \"arn:aws:s3:::"
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "local" ], [ "A_string", "bucket" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "/*\",\n      \"Principal\": \"*\"\n    }\n  ]\n}\n"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_s3_bucket_object" ], [ "Lit", "logo_256" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "logo_256" ] ] ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [ "Int", 0 ],
+              "else_": [ "Int", 1 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_s3_bucket" ], [ "A_string", "bucket" ] ]
+              ],
+              [ "A_string", "bucket" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key",
+          [
+            "Fun_call",
+            [
+              "basename",
+              [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "logo_256" ] ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "logo_256" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_s3_bucket_object" ], [ "Lit", "logo_1024" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "logo_1024" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [ "Int", 0 ],
+              "else_": [ "Int", 1 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_s3_bucket" ], [ "A_string", "bucket" ] ]
+              ],
+              [ "A_string", "bucket" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key",
+          [
+            "Fun_call",
+            [
+              "basename",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "logo_1024" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "logo_1024" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_s3_bucket_object" ], [ "Lit", "logo_svg" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "logo_svg" ] ] ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [ "Int", 0 ],
+              "else_": [ "Int", 1 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_s3_bucket" ], [ "A_string", "bucket" ] ]
+              ],
+              [ "A_string", "bucket" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key",
+          [
+            "Fun_call",
+            [
+              "basename",
+              [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "logo_svg" ] ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "logo_svg" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "template_file" ], [ "Lit", "details" ] ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/details.json" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vars",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "logo_256" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "http://" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_s3_bucket" ],
+                                [ "A_string", "bucket" ]
+                              ]
+                            ],
+                            [ "A_string", "website_endpoint" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "basename",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ], [ "A_string", "logo_256" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "logo_1024" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "http://" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_s3_bucket" ],
+                                [ "A_string", "bucket" ]
+                              ]
+                            ],
+                            [ "A_string", "website_endpoint" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "basename",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "logo_1024" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "logo_svg" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "http://" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_s3_bucket" ],
+                                [ "A_string", "bucket" ]
+                              ]
+                            ],
+                            [ "A_string", "website_endpoint" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "basename",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ], [ "A_string", "logo_svg" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "steemit" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "steemit" ] ] ]
+              ],
+              [
+                [ "Bare", "twitter" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "twitter" ] ] ]
+              ],
+              [
+                [ "Bare", "youtube" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "youtube" ] ] ]
+              ],
+              [
+                [ "Bare", "facebook" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "facebook" ] ] ]
+              ],
+              [
+                [ "Bare", "github" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "github" ] ] ]
+              ],
+              [
+                [ "Bare", "reddit" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "reddit" ] ] ]
+              ],
+              [
+                [ "Bare", "keybase" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "keybase" ] ] ]
+              ],
+              [
+                [ "Bare", "telegram" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "telegram" ] ] ]
+              ],
+              [
+                [ "Bare", "wechat" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "wechat" ] ] ]
+              ],
+              [
+                [ "Bare", "country" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "organization_country" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "region" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "organization_city" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "server_type" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "server_type" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "ip" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "ip" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "template_file" ], [ "Lit", "registration" ] ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/registerPRep.json" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vars",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "name" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "organization_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "country" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "organization_country" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "city" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "organization_city" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "email" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "organization_email" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "website" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "organization_website" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "details_endpoint" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "http://" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_s3_bucket" ],
+                                [ "A_string", "bucket" ]
+                              ]
+                            ],
+                            [ "A_string", "website_endpoint" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/details.json" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ip" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "ip" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_s3_bucket" ], [ "A_string", "bucket" ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_s3_bucket_object" ], [ "Lit", "details" ] ],
+      "body": [
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_s3_bucket" ], [ "A_string", "bucket" ] ]
+              ],
+              [ "A_string", "bucket" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "key", [ "String", "details.json" ] ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "template_file" ] ]
+                  ],
+                  [ "A_string", "details" ]
+                ]
+              ],
+              [ "A_string", "rendered" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

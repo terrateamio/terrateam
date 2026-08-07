@@ -1,0 +1,202 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_iam_role" ], [ "Lit", "nlb-manager-role" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "cpln-nlb-manager" ] ],
+        [
+          "Block",
+          {
+            "type_": "inline_policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "name", [ "String", "cpln-nlb-manager-policy" ]
+              ],
+              [
+                "Attribute",
+                "policy",
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "Version" ], [ "String", "2012-10-17" ]
+                          ],
+                          [
+                            [ "Bare", "Statement" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "Action" ],
+                                      [
+                                        "Tuple",
+                                        [
+                                          [ "String", "logs:CreateLogGroup" ],
+                                          [
+                                            "String", "logs:CreateLogStream"
+                                          ],
+                                          [ "String", "logs:PutLogEvents" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "Resource" ],
+                                      [ "String", "arn:aws:logs:*:*:*" ]
+                                    ],
+                                    [
+                                      [ "Bare", "Effect" ],
+                                      [ "String", "Allow" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "Action" ],
+                                      [
+                                        "Tuple",
+                                        [
+                                          [
+                                            "String",
+                                            "cloudwatch:PutMetricData"
+                                          ],
+                                          [
+                                            "String",
+                                            "elasticloadbalancing:RegisterTargets"
+                                          ],
+                                          [
+                                            "String",
+                                            "elasticloadbalancing:DeregisterTargets"
+                                          ],
+                                          [
+                                            "String",
+                                            "elasticloadbalancing:DescribeTargetHealth"
+                                          ],
+                                          [
+                                            "String",
+                                            "ec2:CreateNetworkInterface"
+                                          ],
+                                          [
+                                            "String",
+                                            "ec2:DescribeNetworkInterfaces"
+                                          ],
+                                          [
+                                            "String",
+                                            "ec2:DeleteNetworkInterface"
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "Resource" ],
+                                      [ "String", "*" ]
+                                    ],
+                                    [
+                                      [ "Bare", "Effect" ],
+                                      [ "String", "Allow" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "Version" ], [ "String", "2012-10-17" ] ],
+                    [
+                      [ "Bare", "Statement" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "Action" ],
+                                [ "String", "sts:AssumeRole" ]
+                              ],
+                              [ [ "Bare", "Effect" ], [ "String", "Allow" ] ],
+                              [ [ "Bare", "Sid" ], [ "String", "" ] ],
+                              [
+                                [ "Bare", "Principal" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "Service" ],
+                                      [ "String", "lambda.amazonaws.com" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "arn" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_iam_role" ],
+                  [ "A_string", "nlb-manager-role" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

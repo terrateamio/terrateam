@@ -1,0 +1,775 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "nlb-vpc" ] ],
+      "body": [
+        [
+          "Attribute",
+          "id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-id" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_internet_gateway" ], [ "Lit", "default" ] ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "attachment.vpc-id" ] ],
+              [
+                "Attribute",
+                "values",
+                [
+                  "Tuple",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-id" ] ] ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "nlb-manager-role" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../nlb-manager-role" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_subnet" ], [ "Lit", "lambda-public-subnet" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "public-subnet-cidr" ] ]
+          ]
+        ],
+        [ "Attribute", "map_public_ip_on_launch", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-lambda-public-subnet" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_subnet" ], [ "Lit", "lambda-private-subnets" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "private-subnets" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "CIDR" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "availability-zone" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-lambda-private-subnet-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_eip" ], [ "Lit", "nat-eip" ] ],
+      "body": [
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-lambda-nat-gateway-eip" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_nat_gateway" ], [ "Lit", "lambda-nat-gateway" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "allocation_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_eip" ], [ "A_string", "nat-eip" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_subnet" ],
+                  [ "A_string", "lambda-public-subnet" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-lambda-nat-gateway" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table" ], [ "Lit", "lambda-public-route-table" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-id" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "route",
+            "labels": [],
+            "body": [
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [
+                "Attribute",
+                "gateway_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "aws_internet_gateway" ]
+                          ]
+                        ],
+                        [ "A_string", "default" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-lambda-public-route-table" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table" ], [ "Lit", "lambda-private-route-table" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-id" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "route",
+            "labels": [],
+            "body": [
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [
+                "Attribute",
+                "nat_gateway_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_nat_gateway" ],
+                        [ "A_string", "lambda-nat-gateway" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-lambda-private-route-table" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ],
+        [ "Lit", "lambda-public-route-table-association" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_route_table" ],
+                  [ "A_string", "lambda-public-route-table" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_subnet" ],
+                  [ "A_string", "lambda-public-subnet" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ],
+        [ "Lit", "lambda-private-route-table-association" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Id", "aws_subnet" ],
+              [ "A_string", "lambda-private-subnets" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_route_table" ],
+                  [ "A_string", "lambda-private-route-table" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ], [ "Lit", "lambda-security-group" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "protocol", [ "String", "-1" ] ],
+              [ "Attribute", "to_port", [ "Int", 0 ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ]
+                            ],
+                            [ "A_string", "nlb-vpc" ]
+                          ]
+                        ],
+                        [ "A_string", "cidr_block" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "egress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "protocol", [ "String", "-1" ] ],
+              [ "Attribute", "to_port", [ "Int", 0 ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ],
+              [
+                "Attribute",
+                "ipv6_cidr_blocks",
+                [ "Tuple", [ [ "String", "::/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-lambda-security-group" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lambda_function" ], [ "Lit", "nlb-manager-lambda" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "function_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "nlb-manager-role" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "runtime", [ "String", "go1.x" ] ],
+        [ "Attribute", "handler", [ "String", "main" ] ],
+        [
+          "Block",
+          {
+            "type_": "vpc_config",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "security_group_ids",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_security_group" ],
+                            [ "A_string", "lambda-security-group" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "subnet_ids",
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "s", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "aws_subnet" ],
+                        [ "A_string", "lambda-private-subnets" ]
+                      ]
+                    ],
+                    "output": [
+                      "Attr", [ [ "Id", "s" ], [ "A_string", "id" ] ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "String",
+            "../utilities-go/nlb-dns-target-provider-lambda/main.zip"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "lambda" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Id", "aws_lambda_function" ],
+              [ "A_string", "nlb-manager-lambda" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

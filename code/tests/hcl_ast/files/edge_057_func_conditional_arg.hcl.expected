@@ -1,0 +1,23 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Fun_call",
+      [
+        "coalesce",
+        [
+          [
+            "Cond",
+            {
+              "if_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+              "then_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "b" ] ] ],
+              "else_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "c" ] ] ]
+            }
+          ],
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "d" ] ] ]
+        ]
+      ]
+    ]
+  ]
+]

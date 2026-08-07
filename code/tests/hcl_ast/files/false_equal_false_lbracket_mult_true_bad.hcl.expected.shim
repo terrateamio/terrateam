@@ -1,0 +1,1 @@
+hcl parse: <stdin>:2,1-1: Missing close bracket on splat index; The star for a full splat operator must be immediately followed by a closing bracket ("]").

@@ -1,0 +1,280 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_db_subnet_group" ],
+        [ "Lit", "core_storage_subnet_group" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "core_storage_subnet_group" ] ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_subnet" ],
+                      [ "A_string", "main_vpc_subnet_1" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_subnet" ],
+                      [ "A_string", "main_vpc_subnet_2" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_subnet" ],
+                      [ "A_string", "main_vpc_subnet_3" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ],
+        [ "Lit", "core_storage_security_group" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Core storage Security group" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "main_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "core_storage_sg_rule" ]
+      ],
+      "body": [
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [
+          "Attribute",
+          "from_port",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "core_storage_port" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "to_port",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "core_storage_port" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "local_ips" ] ] ]
+        ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "core_storage_security_group" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Connection from local machine" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_db_instance" ], [ "Lit", "core_storage" ] ],
+      "body": [
+        [ "Attribute", "identifier", [ "String", "celsus-core-storage" ] ],
+        [ "Attribute", "skip_final_snapshot", [ "String", "true" ] ],
+        [ "Attribute", "allocated_storage", [ "Int", 20 ] ],
+        [ "Attribute", "auto_minor_version_upgrade", [ "String", "true" ] ],
+        [ "Attribute", "storage_type", [ "String", "gp2" ] ],
+        [ "Attribute", "engine", [ "String", "postgres" ] ],
+        [ "Attribute", "instance_class", [ "String", "db.t2.micro" ] ],
+        [
+          "Attribute",
+          "db_subnet_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_db_subnet_group" ],
+                  [ "A_string", "core_storage_subnet_group" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "apply_immediately", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "aws_availability_zones" ]
+                        ]
+                      ],
+                      [ "A_string", "available" ]
+                    ]
+                  ],
+                  [ "A_string", "names" ]
+                ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [ "Attribute", "publicly_accessible", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_vpc" ], [ "A_string", "main_vpc" ] ]
+                  ],
+                  [ "A_string", "default_security_group_id" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "core_storage_security_group" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "multi_az", [ "String", "false" ] ],
+        [
+          "Attribute",
+          "username",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "core_storage_username" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "password",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "core_storage_password" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "port",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "core_storage_port" ] ]
+          ]
+        ],
+        [ "Attribute", "copy_tags_to_snapshot", [ "String", "true" ] ],
+        [ "Attribute", "backup_retention_period", [ "String", "7" ] ],
+        [ "Attribute", "backup_window", [ "String", "03:00-06:00" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

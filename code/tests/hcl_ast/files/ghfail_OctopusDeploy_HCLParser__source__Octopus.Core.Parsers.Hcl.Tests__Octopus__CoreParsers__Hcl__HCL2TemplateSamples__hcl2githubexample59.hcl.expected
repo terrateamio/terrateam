@@ -1,0 +1,259 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [ [ "Attribute", "region", [ "String", "eu-west-1" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_caller_identity" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "account_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "aws_caller_identity" ]
+                    ]
+                  ],
+                  [ "A_string", "current" ]
+                ]
+              ],
+              [ "A_string", "account_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Template",
+            [
+              [ "Literal", "tfs3lambda-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "aws_caller_identity" ]
+                            ]
+                          ],
+                          [ "A_string", "current" ]
+                        ]
+                      ],
+                      [ "A_string", "account_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "storage" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./storage" ] ],
+        [
+          "Attribute",
+          "bucket",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "bucket" ] ] ]
+        ],
+        [ "Attribute", "enable_bucket_inventory", [ "Bool", false ] ],
+        [ "Attribute", "enable_lifecycle", [ "Bool", false ] ],
+        [ "Attribute", "force_destroy", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Fun_call",
+                  [
+                    "format",
+                    [
+                      [ "String", "%s_%s" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "project_name" ] ]
+                      ],
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "bucket" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "project_name" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "project_name" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "networking" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./networking" ] ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "project_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_name" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "compute" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./compute" ] ],
+        [
+          "Attribute",
+          "account_id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "account_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "project_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "key_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "key_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "public_key_path",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "public_key_path" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vpc1_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "module" ], [ "A_string", "networking" ] ]
+              ],
+              [ "A_string", "vpc1_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subpub1_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "module" ], [ "A_string", "networking" ] ]
+              ],
+              [ "A_string", "subpub1_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sgpub1_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "module" ], [ "A_string", "networking" ] ]
+              ],
+              [ "A_string", "sgpub1_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "bucket" ] ] ]
+        ],
+        [
+          "Attribute",
+          "bucket_arn",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "storage" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,26 @@
+[
+  [
+    "Block",
+    {
+      "type_": "true",
+      "labels": [],
+      "body": [ [ "Attribute", "x", [ "Int", 1 ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "null",
+      "labels": [ [ "Lit", "lbl" ] ],
+      "body": [ [ "Attribute", "y", [ "Int", 2 ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "false",
+      "labels": [],
+      "body": [ [ "Attribute", "z", [ "Int", 3 ] ] ]
+    }
+  ]
+]

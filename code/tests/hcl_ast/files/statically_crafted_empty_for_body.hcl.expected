@@ -1,0 +1,42 @@
+[
+  [
+    "Attribute",
+    "a",
+    [
+      "Template",
+      [
+        [
+          "For_directive",
+          {
+            "vars": [ "v", null ],
+            "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
+            "body": [],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "b",
+    [
+      "Template",
+      [
+        [ "Literal", "[" ],
+        [
+          "For_directive",
+          {
+            "vars": [ "v", null ],
+            "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
+            "body": [],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", "]" ]
+      ]
+    ]
+  ]
+]

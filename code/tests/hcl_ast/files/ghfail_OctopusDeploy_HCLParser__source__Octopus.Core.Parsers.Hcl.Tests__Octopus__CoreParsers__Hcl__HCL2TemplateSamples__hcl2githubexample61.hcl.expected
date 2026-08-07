@@ -1,0 +1,66 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "access_key" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "secret_key" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "aws_region" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vpc-name" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "security-group-name" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "instance_ami" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ec2-instance-type" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "key-name" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ]
+]

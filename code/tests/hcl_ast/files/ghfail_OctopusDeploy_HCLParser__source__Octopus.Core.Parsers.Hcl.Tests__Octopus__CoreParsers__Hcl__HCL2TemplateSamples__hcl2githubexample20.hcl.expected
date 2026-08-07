@@ -1,0 +1,402 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_sns_topic" ], [ "Lit", "alert_warning" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "alert-warning" ] ],
+        [
+          "Attribute",
+          "kms_master_key_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_kms_key" ], [ "A_string", "cw" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_sns_topic" ], [ "Lit", "alert_critical" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "alert-critical" ] ],
+        [
+          "Attribute",
+          "kms_master_key_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_kms_key" ], [ "A_string", "cw" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_sns_topic_subscription" ], [ "Lit", "topic_warning" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "topic_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_sns_topic" ], [ "A_string", "alert_warning" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "protocol", [ "String", "lambda" ] ],
+        [
+          "Attribute",
+          "endpoint",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_lambda_function" ],
+                  [ "A_string", "notify_slack_sns" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_sns_topic_subscription" ], [ "Lit", "topic_critical" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "topic_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_sns_topic" ], [ "A_string", "alert_critical" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "protocol", [ "String", "lambda" ] ],
+        [
+          "Attribute",
+          "endpoint",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_lambda_function" ],
+                  [ "A_string", "notify_slack_sns" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_sns_topic_policy" ], [ "Lit", "cloudwatch_events_sns" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_sns_topic" ], [ "A_string", "alert_warning" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "cloudwatch_events_sns_topic_policy" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ],
+        [ "Lit", "cloudwatch_events_sns_topic_policy" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "sid", [ "String", "SNS_Default_Policy" ] ],
+              [ "Attribute", "effect", [ "String", "Allow" ] ],
+              [
+                "Attribute",
+                "actions",
+                [
+                  "Tuple",
+                  [
+                    [ "String", "SNS:Subscribe" ],
+                    [ "String", "SNS:SetTopicAttributes" ],
+                    [ "String", "SNS:RemovePermission" ],
+                    [ "String", "SNS:Receive" ],
+                    [ "String", "SNS:Publish" ],
+                    [ "String", "SNS:ListSubscriptionsByTopic" ],
+                    [ "String", "SNS:GetTopicAttributes" ],
+                    [ "String", "SNS:DeleteTopic" ],
+                    [ "String", "SNS:AddPermission" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "StringEquals" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [ "String", "AWS:SourceOwner" ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "data" ],
+                                      [ "A_string", "aws_caller_identity" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "current" ]
+                                ]
+                              ],
+                              [ "A_string", "account_id" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_sns_topic" ],
+                            [ "A_string", "alert_warning" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "principals",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "AWS" ] ],
+                    [
+                      "Attribute",
+                      "identifiers",
+                      [ "Tuple", [ [ "String", "*" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "sid", [ "String", "SNS_Publish_statement" ] ],
+              [ "Attribute", "effect", [ "String", "Allow" ] ],
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sns:Publish" ] ] ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_sns_topic" ],
+                            [ "A_string", "alert_warning" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "principals",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "Service" ] ],
+                    [
+                      "Attribute",
+                      "identifiers",
+                      [ "Tuple", [ [ "String", "events.amazonaws.com" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

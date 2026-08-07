@@ -1,0 +1,1555 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "one_dimension_processed_l7_load_balancers",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "l7_load_balancers_configuration" ]
+                ]
+              ],
+              [ "A_string", "l7_load_balancers" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "provisioned_oci_core_public_ips",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "l7_load_balancers_configuration" ]
+                    ]
+                  ],
+                  [ "A_string", "dependencies" ]
+                ]
+              ],
+              [ "A_string", "public_ips" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "provisioned_subnets",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "l7_load_balancers_configuration" ]
+                    ]
+                  ],
+                  [ "A_string", "dependencies" ]
+                ]
+              ],
+              [ "A_string", "subnets" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "provisioned_network_security_groups",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "l7_load_balancers_configuration" ]
+                    ]
+                  ],
+                  [ "A_string", "dependencies" ]
+                ]
+              ],
+              [ "A_string", "network_security_groups" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "provisioned_l7_lbs",
+          [
+            "For_object",
+            {
+              "identifiers": [ "l7lb_key", [ "l7lb_value" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "oci_load_balancer_load_balancer" ],
+                  [ "A_string", "these" ]
+                ]
+              ],
+              "key_output": [ "Id", "l7lb_key" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "compartment_id" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "l7lb_value" ],
+                        [ "A_string", "compartment_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "defined_tags" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "l7lb_value" ],
+                        [ "A_string", "defined_tags" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "display_name" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "l7lb_value" ],
+                        [ "A_string", "display_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "freeform_tags" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "l7lb_value" ],
+                        [ "A_string", "freeform_tags" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "ip_mode" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "l7lb_value" ], [ "A_string", "ip_mode" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "is_private" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "l7lb_value" ], [ "A_string", "is_private" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "network_security_group_ids" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "l7lb_value" ],
+                        [ "A_string", "network_security_group_ids" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "id" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "l7lb_value" ], [ "A_string", "id" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "network_security_groups" ],
+                    [
+                      "For_object",
+                      {
+                        "identifiers": [ "nsg", [] ],
+                        "input": [
+                          "Fun_call",
+                          [
+                            "flatten",
+                            [
+                              [
+                                "Cond",
+                                {
+                                  "if_": [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "l7lb_value" ],
+                                          [
+                                            "A_string",
+                                            "network_security_group_ids"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  "then_": [
+                                    "For_tuple",
+                                    {
+                                      "identifiers": [ "nsg_id", [] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "l7lb_value" ],
+                                          [
+                                            "A_string",
+                                            "network_security_group_ids"
+                                          ]
+                                        ]
+                                      ],
+                                      "output": [
+                                        "Cond",
+                                        {
+                                          "if_": [
+                                            "Fun_call",
+                                            [
+                                              "contains",
+                                              [
+                                                [
+                                                  "Cond",
+                                                  {
+                                                    "if_": [
+                                                      "Not_equal",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "provisioned_network_security_groups"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Null" ]
+                                                      ]
+                                                    ],
+                                                    "then_": [
+                                                      "For_tuple",
+                                                      {
+                                                        "identifiers": [
+                                                          "nsg_key",
+                                                          [ "nsg_value" ]
+                                                        ],
+                                                        "input": [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "provisioned_network_security_groups"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "output": [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "nsg_value"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "id"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "cond": null
+                                                      }
+                                                    ],
+                                                    "else_": [ "Tuple", [] ]
+                                                  }
+                                                ],
+                                                [ "Id", "nsg_id" ]
+                                              ]
+                                            ]
+                                          ],
+                                          "then_": [
+                                            "Cond",
+                                            {
+                                              "if_": [
+                                                "Not_equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "provisioned_network_security_groups"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ],
+                                              "then_": [
+                                                "For_tuple",
+                                                {
+                                                  "identifiers": [
+                                                    "nsg_key",
+                                                    [ "nsg_value" ]
+                                                  ],
+                                                  "input": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "provisioned_network_security_groups"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "output": [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [
+                                                          "Bare",
+                                                          "display_name"
+                                                        ],
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "nsg_value"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "display_name"
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [ "Bare", "nsg_key" ],
+                                                        [ "Id", "nsg_key" ]
+                                                      ],
+                                                      [
+                                                        [ "Bare", "nsg_id" ],
+                                                        [ "Id", "nsg_id" ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "cond": [
+                                                    "Equal",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Id", "nsg_value"
+                                                          ],
+                                                          [
+                                                            "A_string", "id"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Id", "nsg_id" ]
+                                                    ]
+                                                  ]
+                                                }
+                                              ],
+                                              "else_": [
+                                                "Tuple",
+                                                [
+                                                  [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [
+                                                          "Bare",
+                                                          "display_name"
+                                                        ],
+                                                        [
+                                                          "String",
+                                                          "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [ "Bare", "nsg_key" ],
+                                                        [
+                                                          "String",
+                                                          "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [ "Bare", "nsg_id" ],
+                                                        [ "Id", "nsg_id" ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            }
+                                          ],
+                                          "else_": [
+                                            "Tuple",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [
+                                                      "Bare", "display_name"
+                                                    ],
+                                                    [
+                                                      "String",
+                                                      "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "nsg_key" ],
+                                                    [
+                                                      "String",
+                                                      "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "nsg_id" ],
+                                                    [ "Id", "nsg_id" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        }
+                                      ],
+                                      "cond": null
+                                    }
+                                  ],
+                                  "else_": [ "Tuple", [] ]
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        "key_output": [
+                          "Attr",
+                          [ [ "Id", "nsg" ], [ "A_string", "nsg_id" ] ]
+                        ],
+                        "value_output": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "display_name" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "nsg" ],
+                                  [ "A_string", "display_name" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "nsg_key" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "nsg" ], [ "A_string", "nsg_key" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "nsg_id" ],
+                              [
+                                "Attr",
+                                [ [ "Id", "nsg" ], [ "A_string", "nsg_id" ] ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "reserved_ips" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "l7lb_value" ],
+                        [ "A_string", "reserved_ips" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "shape" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "l7lb_value" ], [ "A_string", "shape" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "shape_details" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "l7lb_value" ],
+                        [ "A_string", "shape_details" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnet_ids" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "l7lb_value" ], [ "A_string", "subnet_ids" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnets" ],
+                    [
+                      "For_object",
+                      {
+                        "identifiers": [ "subnet", [] ],
+                        "input": [
+                          "Fun_call",
+                          [
+                            "flatten",
+                            [
+                              [
+                                "Cond",
+                                {
+                                  "if_": [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "l7lb_value" ],
+                                          [ "A_string", "subnet_ids" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  "then_": [
+                                    "For_tuple",
+                                    {
+                                      "identifiers": [ "subnet_id", [] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "l7lb_value" ],
+                                          [ "A_string", "subnet_ids" ]
+                                        ]
+                                      ],
+                                      "output": [
+                                        "Cond",
+                                        {
+                                          "if_": [
+                                            "Fun_call",
+                                            [
+                                              "contains",
+                                              [
+                                                [
+                                                  "Cond",
+                                                  {
+                                                    "if_": [
+                                                      "Not_equal",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "provisioned_subnets"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Null" ]
+                                                      ]
+                                                    ],
+                                                    "then_": [
+                                                      "For_tuple",
+                                                      {
+                                                        "identifiers": [
+                                                          "subnet_key",
+                                                          [ "subnet_value" ]
+                                                        ],
+                                                        "input": [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "provisioned_subnets"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "output": [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "subnet_value"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "id"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "cond": null
+                                                      }
+                                                    ],
+                                                    "else_": [ "Tuple", [] ]
+                                                  }
+                                                ],
+                                                [ "Id", "subnet_id" ]
+                                              ]
+                                            ]
+                                          ],
+                                          "then_": [
+                                            "Cond",
+                                            {
+                                              "if_": [
+                                                "Not_equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "provisioned_subnets"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ],
+                                              "then_": [
+                                                "For_tuple",
+                                                {
+                                                  "identifiers": [
+                                                    "subnet_key",
+                                                    [ "subnet_value" ]
+                                                  ],
+                                                  "input": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "provisioned_subnets"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "output": [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [
+                                                          "Bare",
+                                                          "display_name"
+                                                        ],
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "subnet_value"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "display_name"
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [
+                                                          "Bare",
+                                                          "subnet_key"
+                                                        ],
+                                                        [
+                                                          "Id", "subnet_key"
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [
+                                                          "Bare", "subnet_id"
+                                                        ],
+                                                        [ "Id", "subnet_id" ]
+                                                      ],
+                                                      [
+                                                        [ "Bare", "vcn_key" ],
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "subnet_value"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "vcn_key"
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [
+                                                          "Bare", "vcn_name"
+                                                        ],
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "subnet_value"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "vcn_name"
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [ "Bare", "vcn_id" ],
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "subnet_value"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "vcn_id"
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "cond": [
+                                                    "Equal",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Id",
+                                                            "subnet_value"
+                                                          ],
+                                                          [
+                                                            "A_string", "id"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Id", "subnet_id" ]
+                                                    ]
+                                                  ]
+                                                }
+                                              ],
+                                              "else_": [
+                                                "Tuple",
+                                                [
+                                                  [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [
+                                                          "Bare",
+                                                          "display_name"
+                                                        ],
+                                                        [
+                                                          "String",
+                                                          "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [
+                                                          "Bare",
+                                                          "subnet_key"
+                                                        ],
+                                                        [
+                                                          "String",
+                                                          "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [
+                                                          "Bare", "subnet_id"
+                                                        ],
+                                                        [ "Id", "subnet_id" ]
+                                                      ],
+                                                      [
+                                                        [ "Bare", "vcn_key" ],
+                                                        [
+                                                          "String",
+                                                          "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [
+                                                          "Bare", "vcn_name"
+                                                        ],
+                                                        [
+                                                          "String",
+                                                          "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [ "Bare", "vcn_id" ],
+                                                        [
+                                                          "String",
+                                                          "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            }
+                                          ],
+                                          "else_": [
+                                            "Tuple",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [
+                                                      "Bare", "display_name"
+                                                    ],
+                                                    [
+                                                      "String",
+                                                      "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "subnet_key" ],
+                                                    [
+                                                      "String",
+                                                      "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "subnet_id" ],
+                                                    [ "Id", "subnet_id" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "vcn_key" ],
+                                                    [
+                                                      "String",
+                                                      "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "vcn_name" ],
+                                                    [
+                                                      "String",
+                                                      "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "vcn_id" ],
+                                                    [
+                                                      "String",
+                                                      "NOT DETERMINED AS NOT CREATED BY THIS AUTOMATION"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        }
+                                      ],
+                                      "cond": null
+                                    }
+                                  ],
+                                  "else_": [ "Tuple", [] ]
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        "key_output": [
+                          "Attr",
+                          [ [ "Id", "subnet" ], [ "A_string", "subnet_id" ] ]
+                        ],
+                        "value_output": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "display_name" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "subnet" ],
+                                  [ "A_string", "display_name" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "subnet_key" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "subnet" ],
+                                  [ "A_string", "subnet_key" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "subnet_id" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "subnet" ],
+                                  [ "A_string", "subnet_id" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "vcn_key" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "subnet" ],
+                                  [ "A_string", "vcn_key" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "vcn_name" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "subnet" ],
+                                  [ "A_string", "vcn_name" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "vcn_id" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "subnet" ],
+                                  [ "A_string", "vcn_id" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ],
+                  [
+                    [ "Bare", "network_configuration_category" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [
+                                  "A_string",
+                                  "one_dimension_processed_l7_load_balancers"
+                                ]
+                              ]
+                            ],
+                            [ "Id", "l7lb_key" ]
+                          ]
+                        ],
+                        [ "A_string", "network_configuration_category" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "security_attributes" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "l7lb_value" ],
+                        [ "A_string", "security_attributes" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "oci_load_balancer_load_balancer" ], [ "Lit", "these" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [
+                        "A_string",
+                        "one_dimension_processed_l7_load_balancers"
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "one_dimension_processed_l7_load_balancers" ]
+                ]
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "compartment_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "compartment_id" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regexall",
+                                [
+                                  [ "String", "^ocid1.*$" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "compartment_id" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "compartment_id" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "compartments_dependency" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "compartment_id" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ]
+                }
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "display_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "shape",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "shape" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "subnet_id", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "subnet_ids" ]
+                ]
+              ],
+              "output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regexall",
+                                [
+                                  [ "String", "^ocid1.*$" ],
+                                  [ "Id", "subnet_id" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [ "Id", "subnet_id" ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "network_dependency" ]
+                                ]
+                              ],
+                              [ "A_string", "subnets" ]
+                            ]
+                          ],
+                          [ "Id", "subnet_id" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "defined_tags",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "defined_tags" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "freeform_tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "cislz_module_tag" ] ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "freeform_tags" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ip_mode",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "ip_mode" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "is_private",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "is_private" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_security_group_ids",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "network_security_group_ids" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "reserved_ips" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "reserved_ips_ids" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "id",
+                      [
+                        "Attr",
+                        [ [ "Id", "reserved_ips" ], [ "A_string", "value" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "shape_details",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "maximum_bandwidth_in_mbps",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "shape_details" ]
+                      ]
+                    ],
+                    [ "A_string", "maximum_bandwidth_in_mbps" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "minimum_bandwidth_in_mbps",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "shape_details" ]
+                      ]
+                    ],
+                    [ "A_string", "minimum_bandwidth_in_mbps" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "security_attributes",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Object", [] ],
+                [
+                  "Ellipsis",
+                  [
+                    "For_tuple",
+                    {
+                      "identifiers": [ "v", [] ],
+                      "input": [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "security" ]
+                                  ]
+                                ],
+                                [ "A_string", "zpr_attributes" ]
+                              ]
+                            ],
+                            [ "Tuple", [] ]
+                          ]
+                        ]
+                      ],
+                      "output": [
+                        "Object",
+                        [
+                          [
+                            [
+                              "Template",
+                              [
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "A_string", "namespace" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", "." ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "A_string", "attr_name" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ".value" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "v" ], [ "A_string", "attr_value" ] ]
+                            ]
+                          ],
+                          [
+                            [
+                              "Template",
+                              [
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "A_string", "namespace" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", "." ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "A_string", "attr_name" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ".mode" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "v" ], [ "A_string", "mode" ] ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "cond": null
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

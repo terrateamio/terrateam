@@ -1,0 +1,580 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "brightbox_load_balancer" ], [ "Lit", "bbx_loadbalancer" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "bbx_lb" ] ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Idx",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "bbx_lb" ] ] ],
+                    [
+                      "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                    ]
+                  ]
+                ],
+                [ "String", "name" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "nodes",
+          [
+            "Tuple",
+            [
+              [
+                "Fun_call",
+                [
+                  "element",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "nodes" ] ] ],
+                    [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "bbx_lb" ] ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "count" ], [ "A_string", "index" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "String", "nodes" ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "certificate_pem",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "join",
+                    [
+                      [ "String", "." ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "join",
+                              [
+                                [ "String", "/" ],
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "path" ],
+                                        [ "A_string", "cwd" ]
+                                      ]
+                                    ],
+                                    [ "String", "certificate" ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [ "A_string", "bbx_lb" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "count" ],
+                                                  [ "A_string", "index" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "String", "certificate_pem" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "String", "pem" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "certificate_private_key",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "join",
+                    [
+                      [ "String", "." ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "join",
+                              [
+                                [ "String", "/" ],
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "path" ],
+                                        [ "A_string", "cwd" ]
+                                      ]
+                                    ],
+                                    [ "String", "certificate" ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [ "A_string", "bbx_lb" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "count" ],
+                                                  [ "A_string", "index" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "String",
+                                            "certificate_private_key"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "String", ".key" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sslv3",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Idx",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "bbx_lb" ] ] ],
+                    [
+                      "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                    ]
+                  ]
+                ],
+                [ "String", "sslv3" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "buffer_size",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Idx",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "bbx_lb" ] ] ],
+                    [
+                      "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                    ]
+                  ]
+                ],
+                [ "String", "buffer_size" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "healthcheck" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Fun_call",
+                  [
+                    "lookup",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "bbx_lb" ] ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "String", "healthcheck" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "port",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "healthcheck" ],
+                                [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "port" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "type",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "healthcheck" ],
+                                [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "type" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "request",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "healthcheck" ],
+                                [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "request" ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "interval",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "healthcheck" ],
+                                [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "interval" ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "threshold_up",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "healthcheck" ],
+                                [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "threshold_up" ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "threshold_down",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "healthcheck" ],
+                                [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "threshold_down" ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "listener" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Fun_call",
+                  [
+                    "lookup",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "bbx_lb" ] ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "String", "listener" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "in",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "listener" ], [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "in" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "out",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "listener" ], [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "out" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "protocol",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "listener" ], [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "protocol" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "timeout",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "listener" ], [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "timeout" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

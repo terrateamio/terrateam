@@ -1,0 +1,819 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "local",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "source" ], [ "String", "hashicorp/local" ] ],
+                    [ [ "Bare", "version" ], [ "String", ">=2.0.0" ] ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "local_file" ], [ "Lit", "output_main_file" ] ],
+      "body": [
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/template.tftpl" ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "pairs" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "pairs" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ], [ "A_string", "generated_module_dir" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/main.tf" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "local_file" ], [ "Lit", "output_provider_file" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "provider_file" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ], [ "A_string", "generated_module_dir" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "basename",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "provider_file" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "order",
+          [
+            "Fun_call",
+            [
+              "distinct",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "concat",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "sort",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "p", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "peering_acceptors" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "p" ],
+                                            [ "A_string", "alias" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "+" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "p" ],
+                                            [ "A_string", "partition" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "sort",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "p", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "peering_dialers" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "p" ],
+                                            [ "A_string", "alias" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "+" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "p" ],
+                                            [ "A_string", "partition" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "unclean_pairs",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "a", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "peering_acceptors" ]
+                      ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "d", [] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "peering_dialers" ]
+                          ]
+                        ],
+                        "output": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Log_or",
+                              [
+                                [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "a" ],
+                                        [ "A_string", "alias" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "d" ],
+                                        [ "A_string", "alias" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Log_and",
+                                  [
+                                    [
+                                      "Log_and",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "contains",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string",
+                                                    "peering_acceptors"
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "alias" ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "d" ],
+                                                        [
+                                                          "A_string", "alias"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "partition" ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "d" ],
+                                                        [
+                                                          "A_string",
+                                                          "partition"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "contains",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string",
+                                                    "peering_dialers"
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "alias" ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "a" ],
+                                                        [
+                                                          "A_string", "alias"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "partition" ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "a" ],
+                                                        [
+                                                          "A_string",
+                                                          "partition"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Gt",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "index",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [ "A_string", "order" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Template",
+                                                [
+                                                  [
+                                                    "Interpolation",
+                                                    {
+                                                      "expr": [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "a" ],
+                                                          [
+                                                            "A_string",
+                                                            "alias"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      "strip_before": false,
+                                                      "strip_after": false
+                                                    }
+                                                  ],
+                                                  [ "Literal", "+" ],
+                                                  [
+                                                    "Interpolation",
+                                                    {
+                                                      "expr": [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "a" ],
+                                                          [
+                                                            "A_string",
+                                                            "partition"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      "strip_before": false,
+                                                      "strip_after": false
+                                                    }
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "index",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [ "A_string", "order" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Template",
+                                                [
+                                                  [
+                                                    "Interpolation",
+                                                    {
+                                                      "expr": [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "d" ],
+                                                          [
+                                                            "A_string",
+                                                            "alias"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      "strip_before": false,
+                                                      "strip_after": false
+                                                    }
+                                                  ],
+                                                  [ "Literal", "+" ],
+                                                  [
+                                                    "Interpolation",
+                                                    {
+                                                      "expr": [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "d" ],
+                                                          [
+                                                            "A_string",
+                                                            "partition"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      "strip_before": false,
+                                                      "strip_after": false
+                                                    }
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "then_": [ "Object", [] ],
+                            "else_": [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "acceptor" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "a" ], [ "A_string", "alias" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "acceptor_partition" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "a" ],
+                                      [ "A_string", "partition" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "acceptor_name" ],
+                                  [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "a" ],
+                                              [ "A_string", "partition" ]
+                                            ]
+                                          ],
+                                          [ "String", "" ]
+                                        ]
+                                      ],
+                                      "then_": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "a" ],
+                                          [ "A_string", "alias" ]
+                                        ]
+                                      ],
+                                      "else_": [
+                                        "Template",
+                                        [
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "a" ],
+                                                  [ "A_string", "alias" ]
+                                                ]
+                                              ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ],
+                                          [ "Literal", "-" ],
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "a" ],
+                                                  [ "A_string", "partition" ]
+                                                ]
+                                              ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ]
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "dialer" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "d" ], [ "A_string", "alias" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "dialer_partition" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "d" ],
+                                      [ "A_string", "partition" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "dialer_name" ],
+                                  [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "d" ],
+                                              [ "A_string", "partition" ]
+                                            ]
+                                          ],
+                                          [ "String", "" ]
+                                        ]
+                                      ],
+                                      "then_": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "d" ],
+                                          [ "A_string", "alias" ]
+                                        ]
+                                      ],
+                                      "else_": [
+                                        "Template",
+                                        [
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "d" ],
+                                                  [ "A_string", "alias" ]
+                                                ]
+                                              ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ],
+                                          [ "Literal", "-" ],
+                                          [
+                                            "Interpolation",
+                                            {
+                                              "expr": [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "d" ],
+                                                  [ "A_string", "partition" ]
+                                                ]
+                                              ],
+                                              "strip_before": false,
+                                              "strip_after": false
+                                            }
+                                          ]
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ]
+                          }
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_pairs",
+          [
+            "Fun_call",
+            [
+              "setsubtract",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "distinct",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "unclean_pairs" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [ "Tuple", [ [ "Object", [] ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "pairs",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "cluster_pairs" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,1 @@
+hcl parse: <stdin>:2,15-17: Invalid escape sequence; The symbol "q" is not a valid escape sequence selector.

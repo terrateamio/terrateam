@@ -1,0 +1,82 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Template",
+      [
+        [ "Literal", "a" ],
+        [
+          "Interpolation",
+          {
+            "expr": [ "Id", "b" ],
+            "strip_before": true,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", " c" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "y",
+    [
+      "Template",
+      [
+        [ "Literal", "d " ],
+        [
+          "Interpolation",
+          {
+            "expr": [ "Id", "e" ],
+            "strip_before": false,
+            "strip_after": true
+          }
+        ],
+        [ "Literal", "f" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "z",
+    [
+      "Template",
+      [
+        [ "Literal", "g" ],
+        [
+          "If_directive",
+          {
+            "cond": [ "Id", "h" ],
+            "then_": [ [ "Literal", "i" ] ],
+            "else_": null,
+            "strip_before": true,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", " j" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "w",
+    [
+      "Template",
+      [
+        [ "Literal", "k " ],
+        [
+          "If_directive",
+          {
+            "cond": [ "Id", "l" ],
+            "then_": [ [ "Literal", "m" ] ],
+            "else_": null,
+            "strip_before": false,
+            "strip_after": true
+          }
+        ],
+        [ "Literal", " n" ]
+      ]
+    ]
+  ]
+]

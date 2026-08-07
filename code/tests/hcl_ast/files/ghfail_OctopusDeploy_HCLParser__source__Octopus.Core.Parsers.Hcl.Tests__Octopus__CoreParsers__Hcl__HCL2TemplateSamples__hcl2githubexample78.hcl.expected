@@ -1,0 +1,484 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "monitor_enabled",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Log_and",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "enabled" ] ]
+                          ],
+                          [
+                            "Gt",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "recipients" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "then_": [ "Int", 1 ],
+                      "else_": [ "Int", 0 ]
+                    }
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "datadog_timeboard" ], [ "Lit", "sqs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "title",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "product_domain" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " - " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "queue_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " - " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " - SQS" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "A generated timeboard for SQS" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "template_variable",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "default",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "queue_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "name", [ "String", "queue_name" ] ],
+              [ "Attribute", "prefix", [ "String", "queuename" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "template_variable",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "default",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "name", [ "String", "environment" ] ],
+              [ "Attribute", "prefix", [ "String", "environment" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "graph",
+            "labels": [],
+            "body": [
+              [ "Attribute", "title", [ "String", "Sent Message Size" ] ],
+              [ "Attribute", "viz", [ "String", "timeseries" ] ],
+              [ "Attribute", "autoscale", [ "Bool", true ] ],
+              [
+                "Block",
+                {
+                  "type_": "request",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "q",
+                      [
+                        "String",
+                        "avg:aws.sqs.sent_message_size{$queue_name, $environment} by {queuename}"
+                      ]
+                    ],
+                    [ "Attribute", "type", [ "String", "line" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "graph",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "title",
+                [ "String", "Approximate Age of Oldest Message" ]
+              ],
+              [ "Attribute", "viz", [ "String", "timeseries" ] ],
+              [ "Attribute", "autoscale", [ "Bool", true ] ],
+              [
+                "Block",
+                {
+                  "type_": "request",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "q",
+                      [
+                        "String",
+                        "avg:aws.sqs.approximate_age_of_oldest_message{$queue_name, $environment} by {queuename}"
+                      ]
+                    ],
+                    [ "Attribute", "type", [ "String", "line" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "graph",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "title",
+                [ "String", "Approximate Number of Messages Delayed" ]
+              ],
+              [ "Attribute", "viz", [ "String", "timeseries" ] ],
+              [ "Attribute", "autoscale", [ "Bool", true ] ],
+              [
+                "Block",
+                {
+                  "type_": "request",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "q",
+                      [
+                        "String",
+                        "avg:aws.sqs.approximate_number_of_messages_delayed{$queue_name, $environment} by {queuename}"
+                      ]
+                    ],
+                    [ "Attribute", "type", [ "String", "line" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "graph",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "title",
+                [ "String", "Approximate Number of Messages Not Visible" ]
+              ],
+              [ "Attribute", "viz", [ "String", "timeseries" ] ],
+              [ "Attribute", "autoscale", [ "Bool", true ] ],
+              [
+                "Block",
+                {
+                  "type_": "request",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "q",
+                      [
+                        "String",
+                        "avg:aws.sqs.approximate_number_of_messages_not_visible{$queue_name, $environment} by {queuename}"
+                      ]
+                    ],
+                    [ "Attribute", "type", [ "String", "line" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "graph",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "title",
+                [ "String", "Approximate Number of Messages Visible" ]
+              ],
+              [ "Attribute", "viz", [ "String", "timeseries" ] ],
+              [ "Attribute", "autoscale", [ "Bool", true ] ],
+              [
+                "Block",
+                {
+                  "type_": "request",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "q",
+                      [
+                        "String",
+                        "avg:aws.sqs.approximate_number_of_messages_visible{$queue_name, $environment} by {queuename}"
+                      ]
+                    ],
+                    [ "Attribute", "type", [ "String", "line" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "graph",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "title",
+                [ "String", "Number of Empty Receives" ]
+              ],
+              [ "Attribute", "viz", [ "String", "timeseries" ] ],
+              [ "Attribute", "autoscale", [ "Bool", true ] ],
+              [
+                "Block",
+                {
+                  "type_": "request",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "q",
+                      [
+                        "String",
+                        "avg:aws.sqs.number_of_empty_receives{$queue_name, $environment} by {queuename}"
+                      ]
+                    ],
+                    [ "Attribute", "type", [ "String", "line" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "graph",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "title",
+                [ "String", "Number of Messages Deleted" ]
+              ],
+              [ "Attribute", "viz", [ "String", "timeseries" ] ],
+              [ "Attribute", "autoscale", [ "Bool", true ] ],
+              [
+                "Block",
+                {
+                  "type_": "request",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "q",
+                      [
+                        "String",
+                        "avg:aws.sqs.number_of_messages_deleted{$queue_name, $environment} by {queuename}"
+                      ]
+                    ],
+                    [ "Attribute", "type", [ "String", "line" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "graph",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "title",
+                [ "String", "Number of Messages Received" ]
+              ],
+              [ "Attribute", "viz", [ "String", "timeseries" ] ],
+              [ "Attribute", "autoscale", [ "Bool", true ] ],
+              [
+                "Block",
+                {
+                  "type_": "request",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "q",
+                      [
+                        "String",
+                        "avg:aws.sqs.number_of_messages_received{$queue_name, $environment} by {queuename}"
+                      ]
+                    ],
+                    [ "Attribute", "type", [ "String", "line" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "graph",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "title", [ "String", "Number of Messages Sent" ]
+              ],
+              [ "Attribute", "viz", [ "String", "timeseries" ] ],
+              [ "Attribute", "autoscale", [ "Bool", true ] ],
+              [
+                "Block",
+                {
+                  "type_": "request",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "q",
+                      [
+                        "String",
+                        "avg:aws.sqs.number_of_messages_sent{$queue_name, $environment} by {queuename}"
+                      ]
+                    ],
+                    [ "Attribute", "type", [ "String", "line" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

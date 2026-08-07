@@ -1,0 +1,16 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "a", [ "String", "quote: \"" ] ],
+        [ "Attribute", "b", [ "String", "backslash: \\" ] ],
+        [ "Attribute", "c", [ "String", "newline: \n" ] ],
+        [ "Attribute", "d", [ "String", "return: \r" ] ],
+        [ "Attribute", "e", [ "String", "tab: \t" ] ]
+      ]
+    }
+  ]
+]

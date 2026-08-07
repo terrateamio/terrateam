@@ -1,0 +1,29 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "a" ], [ "Lit", "b" ] ],
+      "body": [
+        [ "Attribute", "x", [ "Int", 1 ] ],
+        [
+          "Block",
+          {
+            "type_": "nested",
+            "labels": [],
+            "body": [ [ "Attribute", "y", [ "Int", 2 ] ] ]
+          }
+        ],
+        [ "Attribute", "z", [ "Int", 3 ] ],
+        [
+          "Block",
+          {
+            "type_": "another",
+            "labels": [],
+            "body": [ [ "Attribute", "w", [ "Int", 4 ] ] ]
+          }
+        ]
+      ]
+    }
+  ]
+]

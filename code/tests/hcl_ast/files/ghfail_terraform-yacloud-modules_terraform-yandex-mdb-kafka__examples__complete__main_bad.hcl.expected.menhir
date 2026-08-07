@@ -1,0 +1,529 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "yandex_client_config" ], [ "Lit", "client" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "iam_accounts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [
+            "String",
+            "git::https://github.com/terraform-yacloud-modules/terraform-yandex-iam.git//modules/iam-account?ref=v1.0.0"
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "iam" ] ],
+        [
+          "Attribute", "folder_roles", [ "Tuple", [ [ "String", "admin" ] ] ]
+        ],
+        [ "Attribute", "cloud_roles", [ "Tuple", [] ] ],
+        [ "Attribute", "enable_static_access_key", [ "Bool", false ] ],
+        [ "Attribute", "enable_api_key", [ "Bool", false ] ],
+        [ "Attribute", "enable_account_key", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "network" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [
+            "String",
+            "git::https://github.com/terraform-yacloud-modules/terraform-yandex-vpc.git?ref=v1.0.0"
+          ]
+        ],
+        [
+          "Attribute",
+          "folder_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "yandex_client_config" ]
+                    ]
+                  ],
+                  [ "A_string", "client" ]
+                ]
+              ],
+              [ "A_string", "folder_id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "blank_name", [ "String", "kafka-vpc-nat-gateway" ] ],
+        [
+          "Attribute",
+          "labels",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "repo" ],
+                [
+                  "String", "terraform-yacloud-modules/terraform-yandex-vpc"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "azs",
+          [
+            "Tuple",
+            [
+              [ "String", "ru-central1-a" ],
+              [ "String", "ru-central1-b" ],
+              [ "String", "ru-central1-d" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_subnets",
+          [
+            "Tuple",
+            [
+              [ "Tuple", [ [ "String", "10.3.0.0/24" ] ] ],
+              [ "Tuple", [ [ "String", "10.4.0.0/24" ] ] ],
+              [ "Tuple", [ [ "String", "10.5.0.0/24" ] ] ]
+            ]
+          ]
+        ],
+        [ "Attribute", "create_vpc", [ "Bool", true ] ],
+        [ "Attribute", "create_nat_gateway", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kafka" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../" ] ],
+        [
+          "Attribute", "cluster_name", [ "String", "example-kafka-cluster" ]
+        ],
+        [
+          "Attribute",
+          "cluster_description",
+          [ "String", "An example Kafka cluster" ]
+        ],
+        [
+          "Attribute",
+          "folder_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "yandex_client_config" ]
+                    ]
+                  ],
+                  [ "A_string", "client" ]
+                ]
+              ],
+              [ "A_string", "folder_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [
+            "Object",
+            [
+              [ [ "Bare", "environment" ], [ "String", "production" ] ],
+              [ [ "Bare", "team" ], [ "String", "devops" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "network" ] ] ],
+              [ "A_string", "vpc_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "module" ], [ "A_string", "network" ] ]
+                      ],
+                      [ "A_string", "private_subnets_ids" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "module" ], [ "A_string", "network" ] ]
+                      ],
+                      [ "A_string", "private_subnets_ids" ]
+                    ]
+                  ],
+                  [ "Int", 1 ]
+                ]
+              ],
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "module" ], [ "A_string", "network" ] ]
+                      ],
+                      [ "A_string", "private_subnets_ids" ]
+                    ]
+                  ],
+                  [ "Int", 2 ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "environment", [ "String", "PRODUCTION" ] ],
+        [ "Attribute", "kafka_version", [ "String", "3.7" ] ],
+        [ "Attribute", "brokers_count", [ "Int", 3 ] ],
+        [
+          "Attribute",
+          "zones",
+          [
+            "Tuple",
+            [
+              [ "String", "ru-central1-a" ],
+              [ "String", "ru-central1-b" ],
+              [ "String", "ru-central1-d" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "assign_public_ip", [ "Bool", false ] ],
+        [ "Attribute", "schema_registry", [ "Bool", true ] ],
+        [ "Attribute", "unmanaged_topics", [ "Bool", true ] ],
+        [ "Attribute", "kafka_resource_preset_id", [ "String", "s2.micro" ] ],
+        [ "Attribute", "kafka_disk_size", [ "Int", 100 ] ],
+        [ "Attribute", "kafka_disk_type_id", [ "String", "network-ssd" ] ],
+        [
+          "Attribute",
+          "kafka_compression_type",
+          [ "String", "COMPRESSION_TYPE_GZIP" ]
+        ],
+        [ "Attribute", "kafka_log_flush_interval_messages", [ "Int", 1000 ] ],
+        [ "Attribute", "kafka_log_flush_interval_ms", [ "Int", 1000 ] ],
+        [
+          "Attribute",
+          "kafka_log_flush_scheduler_interval_ms",
+          [ "Int", 1000 ]
+        ],
+        [ "Attribute", "kafka_log_segment_bytes", [ "Int", 104857600 ] ],
+        [ "Attribute", "kafka_log_preallocate", [ "Bool", true ] ],
+        [ "Attribute", "kafka_log_retention_bytes", [ "Int", 1073741824 ] ],
+        [ "Attribute", "kafka_log_retention_hours", [ "Int", 168 ] ],
+        [ "Attribute", "kafka_log_retention_minutes", [ "Int", 10080 ] ],
+        [ "Attribute", "kafka_log_retention_ms", [ "Int", 86400000 ] ],
+        [ "Attribute", "kafka_replica_fetch_max_bytes", [ "Int", 1048576 ] ],
+        [
+          "Attribute",
+          "kafka_ssl_cipher_suites",
+          [
+            "Tuple",
+            [
+              [ "String", "TLS_DHE_RSA_WITH_AES_128_CBC_SHA" ],
+              [ "String", "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "kafka_offsets_retention_minutes", [ "Int", 10080 ] ],
+        [ "Attribute", "kafka_num_partitions", [ "Int", 100 ] ],
+        [ "Attribute", "kafka_default_replication_factor", [ "Int", 2 ] ],
+        [ "Attribute", "kafka_message_max_bytes", [ "Int", 1048576 ] ],
+        [
+          "Attribute",
+          "kafka_sasl_enabled_mechanisms",
+          [ "Tuple", [ [ "String", "SASL_MECHANISM_SCRAM_SHA_512" ] ] ]
+        ],
+        [ "Attribute", "kraft_resource_preset_id", [ "String", "s2.micro" ] ],
+        [ "Attribute", "kraft_disk_size", [ "Int", 100 ] ],
+        [ "Attribute", "kraft_disk_type_id", [ "String", "network-ssd" ] ],
+        [ "Attribute", "security_group_ids", [ "Tuple", [] ] ],
+        [ "Attribute", "host_group_ids", [ "Tuple", [] ] ],
+        [ "Attribute", "data_transfer_access", [ "Bool", true ] ],
+        [ "Attribute", "deletion_protection", [ "Bool", false ] ],
+        [ "Attribute", "maintenance_window_type", [ "String", "WEEKLY" ] ],
+        [ "Attribute", "maintenance_window_day", [ "String", "SAT" ] ],
+        [ "Attribute", "maintenance_window_hour", [ "Int", 3 ] ],
+        [ "Attribute", "rest_api_enabled", [ "Bool", true ] ],
+        [ "Attribute", "kafka_ui_enabled", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "disk_size_autoscaling",
+          [
+            "Object",
+            [
+              [ [ "Bare", "disk_size_limit" ], [ "Int", 200 ] ],
+              [ [ "Bare", "planned_usage_threshold" ], [ "Int", 80 ] ],
+              [ [ "Bare", "emergency_usage_threshold" ], [ "Int", 90 ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "topics",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "String", "topic1" ] ],
+                  [ [ "Bare", "partitions" ], [ "Int", 2 ] ],
+                  [ [ "Bare", "replication_factor" ], [ "Int", 2 ] ],
+                  [
+                    [ "Bare", "config" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "cleanup_policy" ],
+                          [ "String", "CLEANUP_POLICY_DELETE" ]
+                        ],
+                        [
+                          [ "Bare", "compression_type" ],
+                          [ "String", "COMPRESSION_TYPE_PRODUCER" ]
+                        ],
+                        [
+                          [ "Bare", "delete_retention_ms" ],
+                          [ "Int", 86400000 ]
+                        ],
+                        [
+                          [ "Bare", "file_delete_delay_ms" ],
+                          [ "Int", 60000 ]
+                        ],
+                        [
+                          [ "Bare", "flush_messages" ],
+                          [ "Float", 9.223372036854776e+18 ]
+                        ],
+                        [
+                          [ "Bare", "flush_ms" ],
+                          [ "Float", 9.223372036854776e+18 ]
+                        ],
+                        [ [ "Bare", "min_compaction_lag_ms" ], [ "Int", 0 ] ],
+                        [
+                          [ "Bare", "retention_bytes" ],
+                          [ "Minus", [ "Int", 1 ] ]
+                        ],
+                        [ [ "Bare", "retention_ms" ], [ "Int", 604800000 ] ],
+                        [
+                          [ "Bare", "max_message_bytes" ], [ "Int", 1048588 ]
+                        ],
+                        [ [ "Bare", "min_insync_replicas" ], [ "Int", 1 ] ],
+                        [
+                          [ "Bare", "segment_bytes" ], [ "Int", 1073741824 ]
+                        ],
+                        [ [ "Bare", "preallocate" ], [ "Bool", true ] ],
+                        [
+                          [ "Bare", "message_timestamp_type" ],
+                          [ "String", "MESSAGE_TIMESTAMP_TYPE_CREATE_TIME" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "String", "topic2" ] ],
+                  [ [ "Bare", "partitions" ], [ "Int", 1 ] ],
+                  [ [ "Bare", "replication_factor" ], [ "Int", 1 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "users",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "String", "user1" ] ],
+                  [ [ "Bare", "password" ], [ "String", "password1" ] ],
+                  [
+                    [ "Bare", "permissions" ],
+                    [
+                      "Tuple",
+                      [
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "topic_name" ],
+                              [ "String", "topic1" ]
+                            ],
+                            [
+                              [ "Bare", "role" ],
+                              [ "String", "ACCESS_ROLE_CONSUMER" ]
+                            ],
+                            [
+                              [ "Bare", "allow_hosts" ],
+                              [ "Tuple", [ [ "String", "*" ] ] ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "topic_name" ],
+                              [ "String", "topic2" ]
+                            ],
+                            [
+                              [ "Bare", "role" ],
+                              [ "String", "ACCESS_ROLE_PRODUCER" ]
+                            ],
+                            [
+                              [ "Bare", "allow_hosts" ],
+                              [ "Tuple", [ [ "String", "*" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "String", "user2" ] ],
+                  [ [ "Bare", "password" ], [ "String", "password2" ] ],
+                  [
+                    [ "Bare", "permissions" ],
+                    [
+                      "Tuple",
+                      [
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "topic_name" ],
+                              [ "String", "topic1" ]
+                            ],
+                            [
+                              [ "Bare", "role" ],
+                              [ "String", "ACCESS_ROLE_PRODUCER" ]
+                            ],
+                            [
+                              [ "Bare", "allow_hosts" ],
+                              [ "Tuple", [ [ "String", "*" ] ] ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "topic_name" ],
+                              [ "String", "topic2" ]
+                            ],
+                            [
+                              [ "Bare", "role" ],
+                              [ "String", "ACCESS_ROLE_CONSUMER" ]
+                            ],
+                            [
+                              [ "Bare", "allow_hosts" ],
+                              [ "Tuple", [ [ "String", "*" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "iam_accounts" ] ]
+              ],
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "network" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "timeouts",
+          [
+            "Object",
+            [
+              [ [ "Bare", "create" ], [ "String", "40m" ] ],
+              [ [ "Bare", "update" ], [ "String", "40m" ] ],
+              [ [ "Bare", "delete" ], [ "String", "40m" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

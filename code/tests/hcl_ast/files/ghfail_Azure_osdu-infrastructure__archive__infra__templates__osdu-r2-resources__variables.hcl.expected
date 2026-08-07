@@ -1,0 +1,966 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "prefix" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "An identifier used to construct the names of all resources in this template."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "randomization_level" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Number of additional random characters to include in resource names to insulate against unexpected resource name collisions."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 8 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "resource_group_location" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The Azure region where all resources in this template should be created."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "app_services" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Descriptions of the app services to be deployed. Service level config settings can be provided with the required attribute app_settings"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "app_name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "image" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "linux_fx_version" ],
+                            [ "Id", "string" ]
+                          ],
+                          [
+                            [ "Bare", "app_command_line" ],
+                            [ "Id", "string" ]
+                          ],
+                          [
+                            [ "Bare", "app_settings" ],
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "function_apps" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Descriptions of the function apps to be deployed. This template supports function app containers when the image attribute for a configuration entry is provided."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "function_name" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "app_settings" ],
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "app_service_settings" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Map of app settings that will be applied across all provisioned app services."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "scaling_rules" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The scaling rules for the app service plan. Schema defined here: https://www.terraform.io/docs/providers/azurerm/r/monitor_autoscale_setting.html#rule. Note, the appropriate resource ID will be auto-inflated by the template"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "metric_trigger" ],
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "metric_name" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "time_grain" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "statistic" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "time_window" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "time_aggregation" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "operator" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "threshold" ],
+                                        [ "Id", "number" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "scale_action" ],
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "direction" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "type" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "cooldown" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "value" ],
+                                        [ "Id", "number" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "metric_trigger" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "metric_name" ],
+                          [ "String", "CpuPercentage" ]
+                        ],
+                        [ [ "Bare", "time_grain" ], [ "String", "PT1M" ] ],
+                        [ [ "Bare", "statistic" ], [ "String", "Average" ] ],
+                        [ [ "Bare", "time_window" ], [ "String", "PT5M" ] ],
+                        [
+                          [ "Bare", "time_aggregation" ],
+                          [ "String", "Average" ]
+                        ],
+                        [
+                          [ "Bare", "operator" ], [ "String", "GreaterThan" ]
+                        ],
+                        [ [ "Bare", "threshold" ], [ "Int", 70 ] ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "scale_action" ],
+                    [
+                      "Object",
+                      [
+                        [ [ "Bare", "direction" ], [ "String", "Increase" ] ],
+                        [ [ "Bare", "type" ], [ "String", "ChangeCount" ] ],
+                        [ [ "Bare", "value" ], [ "Int", 1 ] ],
+                        [ [ "Bare", "cooldown" ], [ "String", "PT10M" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "metric_trigger" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "metric_name" ],
+                          [ "String", "CpuPercentage" ]
+                        ],
+                        [ [ "Bare", "time_grain" ], [ "String", "PT1M" ] ],
+                        [ [ "Bare", "statistic" ], [ "String", "Average" ] ],
+                        [ [ "Bare", "time_window" ], [ "String", "PT5M" ] ],
+                        [
+                          [ "Bare", "time_aggregation" ],
+                          [ "String", "Average" ]
+                        ],
+                        [ [ "Bare", "operator" ], [ "String", "LessThan" ] ],
+                        [ [ "Bare", "threshold" ], [ "Int", 25 ] ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "scale_action" ],
+                    [
+                      "Object",
+                      [
+                        [ [ "Bare", "direction" ], [ "String", "Decrease" ] ],
+                        [ [ "Bare", "type" ], [ "String", "ChangeCount" ] ],
+                        [ [ "Bare", "value" ], [ "Int", 1 ] ],
+                        [ [ "Bare", "cooldown" ], [ "String", "PT1M" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "service_plan_size" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The size of the service plan instance." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "P3v2" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "service_plan_tier" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The tier under which the service plan is created." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "PremiumV2" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "auth_suffix" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "A name to be appended to all azure ad applications." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "easy-auth" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "container_registry_sku" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "The container registry SKU. ie. 'Standard' 'Premium'"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "Standard" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "storage_containers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The list of storage container names to create. Names must be unique per storage account."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cosmosdb_replica_location" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The name of the Azure region to host replicated data. i.e. 'East US' 'East US 2'. More locations can be found at https://azure.microsoft.com/en-us/global-infrastructure/locations/"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cosmosdb_automatic_failover" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Determines if automatic failover is enabled for CosmosDB."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cosmos_databases" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The list of Cosmos DB SQL Databases." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "throughput" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cosmos_sql_collections" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The list of cosmos collection names to create. Names must be unique per cosmos instance."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "database_name" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "partition_key_path" ],
+                            [ "Id", "string" ]
+                          ],
+                          [ [ "Bare", "throughput" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "elasticsearch_username" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "username for elasticsearch cluster" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "elasticsearch_password" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "password for elasticsearch cluster" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "elasticsearch_endpoint" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "endpoint for elasticsearch cluster" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "sb_sku" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "Standard" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The SKU of the namespace. The options are: `Basic`, `Standard`, `Premium`."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "sb_topics" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "default_message_ttl" ],
+                            [ "Id", "string" ]
+                          ],
+                          [
+                            [ "Bare", "enable_partitioning" ],
+                            [ "Id", "bool" ]
+                          ],
+                          [
+                            [ "Bare", "requires_duplicate_detection" ],
+                            [ "Id", "bool" ]
+                          ],
+                          [
+                            [ "Bare", "support_ordering" ], [ "Id", "bool" ]
+                          ],
+                          [
+                            [ "Bare", "authorization_rules" ],
+                            [
+                              "Fun_call",
+                              [
+                                "list",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "policy_name" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [ "Bare", "claims" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "object",
+                                                  [
+                                                    [
+                                                      "Object",
+                                                      [
+                                                        [
+                                                          [
+                                                            "Bare", "listen"
+                                                          ],
+                                                          [ "Id", "bool" ]
+                                                        ],
+                                                        [
+                                                          [
+                                                            "Bare", "manage"
+                                                          ],
+                                                          [ "Id", "bool" ]
+                                                        ],
+                                                        [
+                                                          [ "Bare", "send" ],
+                                                          [ "Id", "bool" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "subscriptions" ],
+                            [
+                              "Fun_call",
+                              [
+                                "list",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "name" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare", "max_delivery_count"
+                                              ],
+                                              [ "Id", "number" ]
+                                            ],
+                                            [
+                                              [ "Bare", "lock_duration" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [ "Bare", "forward_to" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "dead_lettering_on_message_expiration"
+                                              ],
+                                              [ "Id", "bool" ]
+                                            ],
+                                            [
+                                              [ "Bare", "filter_type" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [ "Bare", "sql_filter" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [ "Bare", "action" ],
+                                              [ "Id", "string" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "String", "storage_topic" ] ],
+                  [
+                    [ "Bare", "default_message_ttl" ], [ "String", "PT30M" ]
+                  ],
+                  [ [ "Bare", "enable_partitioning" ], [ "Bool", true ] ],
+                  [
+                    [ "Bare", "requires_duplicate_detection" ],
+                    [ "Bool", true ]
+                  ],
+                  [ [ "Bare", "support_ordering" ], [ "Bool", true ] ],
+                  [
+                    [ "Bare", "authorization_rules" ],
+                    [
+                      "Tuple",
+                      [
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "policy_name" ],
+                              [ "String", "storage_policy" ]
+                            ],
+                            [
+                              [ "Bare", "claims" ],
+                              [
+                                "Object",
+                                [
+                                  [ [ "Bare", "listen" ], [ "Bool", true ] ],
+                                  [ [ "Bare", "send" ], [ "Bool", false ] ],
+                                  [ [ "Bare", "manage" ], [ "Bool", false ] ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subscriptions" ],
+                    [
+                      "Tuple",
+                      [
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "name" ],
+                              [ "String", "storage_sub_1" ]
+                            ],
+                            [
+                              [ "Bare", "max_delivery_count" ], [ "Int", 1 ]
+                            ],
+                            [
+                              [ "Bare", "lock_duration" ],
+                              [ "String", "PT5M" ]
+                            ],
+                            [ [ "Bare", "forward_to" ], [ "String", "" ] ],
+                            [
+                              [
+                                "Bare",
+                                "dead_lettering_on_message_expiration"
+                              ],
+                              [ "Bool", true ]
+                            ],
+                            [
+                              [ "Bare", "filter_type" ],
+                              [ "String", "SqlFilter" ]
+                            ],
+                            [
+                              [ "Bare", "sql_filter" ],
+                              [ "String", "color = 'red'" ]
+                            ],
+                            [ [ "Bare", "action" ], [ "String", "" ] ]
+                          ]
+                        ],
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "name" ],
+                              [ "String", "storage_sub_2" ]
+                            ],
+                            [
+                              [ "Bare", "max_delivery_count" ], [ "Int", 1 ]
+                            ],
+                            [
+                              [ "Bare", "lock_duration" ],
+                              [ "String", "PT5M" ]
+                            ],
+                            [ [ "Bare", "forward_to" ], [ "String", "" ] ],
+                            [
+                              [
+                                "Bare",
+                                "dead_lettering_on_message_expiration"
+                              ],
+                              [ "Bool", true ]
+                            ],
+                            [
+                              [ "Bare", "filter_type" ],
+                              [ "String", "SqlFilter" ]
+                            ],
+                            [
+                              [ "Bare", "sql_filter" ],
+                              [ "String", "color = 'blue'" ]
+                            ],
+                            [ [ "Bare", "action" ], [ "String", "" ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

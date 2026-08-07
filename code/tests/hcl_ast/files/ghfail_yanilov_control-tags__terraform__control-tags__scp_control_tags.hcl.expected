@@ -1,0 +1,2293 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "invalid",
+          [
+            "Object",
+            [
+              [ [ "Bare", "identity" ], [ "String", "nil" ] ],
+              [ [ "Bare", "ctl_tag_value" ], [ "String", "nil" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stacksets_exec_role_pattern",
+          [ "String", "arn:aws:iam::*:role/stacksets-exec-*" ]
+        ],
+        [
+          "Attribute",
+          "excluded_principal_patterns",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "stacksets_exec_role_pattern" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "human_identity_tag_keys",
+          [ "Tuple", [ [ "String", "aws:SourceIdentity" ] ] ]
+        ],
+        [
+          "Attribute",
+          "sids_map",
+          [
+            "Object",
+            [
+              [ [ "Bare", "ctl_no_grant" ], [ "String", "CT00" ] ],
+              [ [ "Bare", "ctl_outside_grant" ], [ "String", "CT01" ] ],
+              [ [ "Bare", "ctl_lookalike" ], [ "String", "CT02" ] ],
+              [ [ "Bare", "anti_invalid_identity" ], [ "String", "CT03" ] ],
+              [
+                [ "Bare", "anti_impersonate_non_sso" ], [ "String", "CT04" ]
+              ],
+              [ [ "Bare", "anti_impersonate_sso" ], [ "String", "CT05" ] ],
+              [ [ "Bare", "anti_non_human" ], [ "String", "CT06" ] ],
+              [ [ "Bare", "anti_reflexive" ], [ "String", "CT07" ] ],
+              [ [ "Bare", "anti_forge" ], [ "String", "CT08" ] ],
+              [ [ "Bare", "seal_op_no_approval" ], [ "String", "CTRS0" ] ],
+              [ [ "Bare", "seal_op_outside_grant" ], [ "String", "CTRS1" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sid_selector",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "short" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids_map" ] ] ]
+              ],
+              [
+                [ "Bare", "long" ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "k", [ "v" ] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "sids_map" ] ]
+                    ],
+                    "key_output": [ "Id", "k" ],
+                    "value_output": [
+                      "Fun_call",
+                      [
+                        "replace",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "title",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "replace",
+                                    [
+                                      [ "Id", "k" ],
+                                      [ "String", "_" ],
+                                      [ "String", " " ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "String", " " ],
+                          [ "String", "" ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "none" ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "k", [ "v" ] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "sids_map" ] ]
+                    ],
+                    "key_output": [ "Id", "k" ],
+                    "value_output": [ "Null" ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sids",
+          [
+            "Idx",
+            [
+              [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "sid_selector" ] ]
+              ],
+              [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "emit_scp_sids" ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ], [ "Lit", "control_tags" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids" ] ] ],
+                    [ "A_string", "ctl_no_grant" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [ "Attribute", "actions", [ "Tuple", [ [ "String", "*" ] ] ] ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "ForAnyValue:StringLike" ]
+                    ],
+                    [ "Attribute", "variable", [ "String", "aws:TagKeys" ] ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "control_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "*" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "Null" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:PrincipalTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "grant_area_tag_key" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [ "Tuple", [ [ "String", "true" ] ] ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "ArnNotLike" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [ "String", "aws:PrincipalArn" ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "excluded_principal_patterns" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids" ] ] ],
+                    [ "A_string", "ctl_outside_grant" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [ "Attribute", "actions", [ "Tuple", [ [ "String", "*" ] ] ] ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "ForAnyValue:StringLike" ]
+                    ],
+                    [ "Attribute", "variable", [ "String", "aws:TagKeys" ] ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "control_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "*" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "ForAnyValue:StringNotLike" ]
+                    ],
+                    [ "Attribute", "variable", [ "String", "aws:TagKeys" ] ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Fun_call",
+                        [
+                          "concat",
+                          [
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Template",
+                                  [
+                                    [ "Literal", "${aws:PrincipalTag/" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "grant_area_tag_key"
+                                            ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", ", '" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [ "A_string", "invalid" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "ctl_tag_value" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "'}" ]
+                                  ]
+                                ],
+                                [
+                                  "Template",
+                                  [
+                                    [ "Literal", "${aws:PrincipalTag/" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "grant_area_tag_key"
+                                            ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", ", '" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [ "A_string", "invalid" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "ctl_tag_value" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "'}/*" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "well_known_tag_keys" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "ArnNotLike" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [ "String", "aws:PrincipalArn" ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "excluded_principal_patterns" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids" ] ] ],
+                    [ "A_string", "ctl_lookalike" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [ "Attribute", "actions", [ "Tuple", [ [ "String", "*" ] ] ] ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "ForAnyValue:StringLike" ]
+                    ],
+                    [ "Attribute", "variable", [ "String", "aws:TagKeys" ] ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [
+                            "A_string",
+                            "disallowed_control_prefix_lookalikes"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ],
+        [ "Lit", "multiparty_approval" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids" ] ] ],
+                    [ "A_string", "anti_invalid_identity" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sts:SetSourceIdentity" ] ] ]
+              ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "StringEquals" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [ "String", "sts:SourceIdentity" ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "invalid" ]
+                                ]
+                              ],
+                              [ "A_string", "identity" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids" ] ] ],
+                    [ "A_string", "anti_impersonate_non_sso" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sts:AssumeRole*" ] ] ]
+              ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "Null" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [ "String", "sts:SourceIdentity" ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [ "Tuple", [ [ "String", "false" ] ] ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "StringNotEqualsIfExists" ]
+                    ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:PrincipalTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "identity_broker_tag_key" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [ "Tuple", [ [ "String", "true" ] ] ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "ArnNotLike" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [ "String", "aws:PrincipalArn" ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "String",
+                            "arn:aws:iam::*:role/aws-reserved/sso.amazonaws.com/*"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids" ] ] ],
+                    [ "A_string", "anti_impersonate_sso" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sts:AssumeRole*" ] ] ]
+              ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "Null" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [ "String", "sts:SourceIdentity" ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [ "Tuple", [ [ "String", "false" ] ] ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "StringNotLikeIfExists" ]
+                    ],
+                    [ "Attribute", "variable", [ "String", "aws:userid" ] ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "*:${sts:SourceIdentity, '" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "invalid" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "identity" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "'}" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "ArnLike" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [ "String", "aws:PrincipalArn" ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "String",
+                            "arn:aws:iam::*:role/aws-reserved/sso.amazonaws.com/*"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids" ] ] ],
+                    [ "A_string", "anti_non_human" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [
+                "Attribute",
+                "not_actions",
+                [ "Tuple", [ [ "String", "iam:Untag*" ] ] ]
+              ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "ForAnyValue:StringLike" ]
+                    ],
+                    [ "Attribute", "variable", [ "String", "aws:TagKeys" ] ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "mpa_tag_key" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "/*" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "Null" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [ "String", "aws:SourceIdentity" ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [ "Tuple", [ [ "String", "true" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids" ] ] ],
+                    [ "A_string", "anti_reflexive" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [ "Attribute", "actions", [ "Tuple", [ [ "String", "*" ] ] ] ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "Null" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:RequestTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "approval_ticket_tag_key" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [ "Tuple", [ [ "String", "false" ] ] ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute", "test", [ "String", "StringLikeIfExists" ]
+                    ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:RequestTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "approval_ticket_tag_key" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "tag_key", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "human_identity_tag_keys" ]
+                            ]
+                          ],
+                          "output": [
+                            "Template",
+                            [
+                              [ "Literal", "*/for/${" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "tag_key" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ", '" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "invalid" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "identity" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "'}" ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids" ] ] ],
+                    [ "A_string", "anti_forge" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [ "Attribute", "actions", [ "Tuple", [ [ "String", "*" ] ] ] ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "Null" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:RequestTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "approval_ticket_tag_key" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [ "Tuple", [ [ "String", "false" ] ] ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "StringNotLikeIfExists" ]
+                    ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:RequestTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "approval_ticket_tag_key" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "tag_key", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "human_identity_tag_keys" ]
+                            ]
+                          ],
+                          "output": [
+                            "Template",
+                            [
+                              [ "Literal", "by/${" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "tag_key" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ", '" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "invalid" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "identity" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "'}/*" ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ],
+        [ "Lit", "trusted_stacksets_exec" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "sid", [ "String", "CFTSSE" ] ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [
+                "Attribute",
+                "not_actions",
+                [
+                  "Tuple",
+                  [ [ "String", "iam:Get*" ], [ "String", "iam:List*" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "stacksets_exec_role_pattern" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "entangled_seal_tags",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "resource_seal_kind_tag_key" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "resource_seal_grant_tag_key" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "builtin_resource_seal_kinds",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "total" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "sid" ], [ "String", "CTRSKB0" ] ],
+                    [
+                      [ "Bare", "actions" ],
+                      [ "Tuple", [ [ "String", "*" ] ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "trust_relay" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "sid" ], [ "String", "CTRSKB1" ] ],
+                    [
+                      [ "Bare", "not_actions" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "iam:Get*" ],
+                          [ "String", "iam:List*" ],
+                          [ "String", "sts:*" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ],
+        [ "Lit", "resource_seals_core" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids" ] ] ],
+                    [ "A_string", "seal_op_no_approval" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [ "Attribute", "actions", [ "Tuple", [ [ "String", "*" ] ] ] ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "ForAnyValue:StringLike" ]
+                    ],
+                    [ "Attribute", "variable", [ "String", "aws:TagKeys" ] ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "resource_seal_tag_key" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "/*" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "StringNotLikeIfExists" ]
+                    ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:PrincipalTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "approval_ticket_tag_key" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "tag_key", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "human_identity_tag_keys" ]
+                            ]
+                          ],
+                          "output": [
+                            "Template",
+                            [
+                              [ "Literal", "*/for/${" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "tag_key" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ", '" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "invalid" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "identity" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "'}" ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "sids" ] ] ],
+                    [ "A_string", "seal_op_outside_grant" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [ "Attribute", "actions", [ "Tuple", [ [ "String", "*" ] ] ] ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "Null" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:RequestTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [
+                                    "A_string", "resource_seal_grant_tag_key"
+                                  ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [ "Tuple", [ [ "String", "false" ] ] ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "StringNotLikeIfExists" ]
+                    ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:RequestTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [
+                                    "A_string", "resource_seal_grant_tag_key"
+                                  ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "${aws:PrincipalTag/" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "grant_area_tag_key" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ", '" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "invalid" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "ctl_tag_value" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "'}" ]
+                            ]
+                          ],
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "${aws:PrincipalTag/" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "grant_area_tag_key" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ", '" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "invalid" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "ctl_tag_value" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "'}/*" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ],
+        [ "Lit", "resource_seals_kinds" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "builtin_resource_seal_kinds" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "sid",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "sid" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [
+                "Attribute",
+                "actions",
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "actions" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "not_actions",
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "not_actions" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "test", [ "String", "StringEquals" ] ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:ResourceTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [
+                                    "A_string", "resource_seal_kind_tag_key"
+                                  ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "StringNotLikeIfExists" ]
+                    ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:PrincipalTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "approval_ticket_tag_key" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "tag_key", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "human_identity_tag_keys" ]
+                            ]
+                          ],
+                          "output": [
+                            "Template",
+                            [
+                              [ "Literal", "*/for/${" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "tag_key" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ", '" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "invalid" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "identity" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "'}" ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ], [ "Lit", "unified" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "source_policy_documents",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_iam_policy_document" ]
+                              ]
+                            ],
+                            [ "A_string", "control_tags" ]
+                          ]
+                        ],
+                        [ "A_string", "json" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_iam_policy_document" ]
+                              ]
+                            ],
+                            [ "A_string", "multiparty_approval" ]
+                          ]
+                        ],
+                        [ "A_string", "json" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_iam_policy_document" ]
+                              ]
+                            ],
+                            [ "A_string", "trusted_stacksets_exec" ]
+                          ]
+                        ],
+                        [ "A_string", "json" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_iam_policy_document" ]
+                              ]
+                            ],
+                            [ "A_string", "resource_seals_core" ]
+                          ]
+                        ],
+                        [ "A_string", "json" ]
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "_", [ "doc" ] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "aws_iam_policy_document" ]
+                          ]
+                        ],
+                        [ "A_string", "resource_seals_kinds" ]
+                      ]
+                    ],
+                    "output": [
+                      "Attr", [ [ "Id", "doc" ], [ "A_string", "json" ] ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_organizations_policy" ], [ "Lit", "control_tags" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "control_tags" ] ],
+        [ "Attribute", "type", [ "String", "SERVICE_CONTROL_POLICY" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Scalable tag-based integrity and multi-party approval."
+          ]
+        ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "unified" ]
+                ]
+              ],
+              [ "A_string", "minified_json" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_organizations_policy_attachment" ],
+        [ "Lit", "control_tags" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "flatten",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "values",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "deployment_targets" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudformation_stack_set" ],
+                  [ "A_string", "mirror_role" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_organizations_policy" ],
+                  [ "A_string", "control_tags" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "target_id",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

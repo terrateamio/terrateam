@@ -1,0 +1,32 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "example" ], [ "Lit", "test" ] ],
+      "body": [
+        [
+          "Attribute",
+          "filtered",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "x", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "items" ] ]
+              ],
+              "output": [ "Id", "x" ],
+              "cond": [
+                "Log_and",
+                [
+                  [ "Attr", [ [ "Id", "x" ], [ "A_string", "enabled" ] ] ],
+                  [ "Attr", [ [ "Id", "x" ], [ "A_string", "visible" ] ] ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

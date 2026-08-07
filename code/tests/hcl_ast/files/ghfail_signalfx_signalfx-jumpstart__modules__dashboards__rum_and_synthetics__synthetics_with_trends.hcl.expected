@@ -1,0 +1,1837 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_text_chart" ],
+        [ "Lit", "synthetics_with_trends_0" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "markdown",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n<table width=\"100%\" rules=\"none\">\n<tbody><tr>\n<td align=\"left\" bgcolor=\"#ed0080\" height=\"80px\">\n<font size=\"5\" color=\"#ffffff\">Splunk Real Browser Metrics</font>\n</td>\n</tr>\n<tr>\n<td align=\"left\" bgcolor=\"#d53a70\" height=\"40px\">\n<font size=\"3\" color=\"#ffffff\">Metrics from Transactional and Single URL Real Browser Tests (DNS, Connect, SSL, TTFB, Total Time etc.)</font>\n</td>\n</tr>\n</tbody></table>\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", " " ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "synthetics_with_trends_1" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Metric" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Average DNS Response Time" ]
+        ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 3 ] ],
+        [ "Attribute", "name", [ "String", "DNS" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('synthetics.real_browser.first_request_dns_time_ms', extrapolation='last_value').mean().publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "synthetics_with_trends_2" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Metric" ] ],
+        [ "Attribute", "description", [ "String", "Average Connect Time" ] ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 3 ] ],
+        [ "Attribute", "name", [ "String", "Connect" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('synthetics.real_browser.first_request_connect_time_ms', extrapolation='last_value').mean().publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "synthetics_with_trends_3" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Metric" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Average SSL Response Time" ]
+        ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 3 ] ],
+        [ "Attribute", "name", [ "String", "SSL Time" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('synthetics.real_browser.first_request_ssl_time_ms', extrapolation='last_value').mean().publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ],
+        [ "Lit", "synthetics_with_trends_4" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 3 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "DNS average (blue), % week-on-week growth (brown)" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "name", [ "String", "DNS - Trend" ] ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('synthetics.real_browser.first_request_dns_time_ms').mean().publish(label='A')\nB = (A).mean().timeshift('1d').publish(label='B', enable=False)\nC = ((A-B)/B).scale(100).publish(label='C')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 604800 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [ [ "Attribute", "label", [ "String", "Time" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "axis_right",
+            "labels": [],
+            "body": [
+              [ "Attribute", "label", [ "String", "WoW Growth (%)" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "DNS" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "right" ] ],
+              [ "Attribute", "color", [ "String", "purple" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Week on Week Growth (%)" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ],
+        [ "Lit", "synthetics_with_trends_5" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 3 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Connect Time (blue), % week-on-week growth (brown)" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "name", [ "String", "Connect - Trend" ] ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('synthetics.real_browser.first_request_connect_time_ms', extrapolation='last_value').mean().publish(label='A')\nB = (A).mean().timeshift('1d').publish(label='B', enable=False)\nC = ((A-B)/B).scale(100).publish(label='C')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 604800 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [ [ "Attribute", "label", [ "String", "Time" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "axis_right",
+            "labels": [],
+            "body": [
+              [ "Attribute", "label", [ "String", "WoW Growth (%)" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "Connect" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "right" ] ],
+              [ "Attribute", "color", [ "String", "purple" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Week on Week Growth (%)" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ],
+        [ "Lit", "synthetics_with_trends_6" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 3 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Average SSL (blue), % week-on-week growth (brown)" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "name", [ "String", "SSL - Trend" ] ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('synthetics.real_browser.first_request_ssl_time_ms').mean().publish(label='A')\nB = (A).mean().timeshift('1d').publish(label='B', enable=False)\nC = ((A-B)/B).scale(100).publish(label='C')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 604800 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [ [ "Attribute", "label", [ "String", "Time" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "axis_right",
+            "labels": [],
+            "body": [
+              [ "Attribute", "label", [ "String", "WoW Growth (%)" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "SSL" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "right" ] ],
+              [ "Attribute", "color", [ "String", "purple" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Week on Week Growth (%)" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_text_chart" ],
+        [ "Lit", "synthetics_with_trends_7" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "markdown",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nThe chart above shows DNS time.\n        \nMetric(s):\n<code>synthetics.real_browser.first_request_dns_time_ms</code>\n        \nTime required to resolve the domain name into an IP address.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "DNS - Info" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_text_chart" ],
+        [ "Lit", "synthetics_with_trends_8" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "markdown",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nThe chart above shows TCP Connect Time.\n        \nMetric(s):\n<code>synthetics.real_browser.first_request_connect_time_ms</code>\n        \nThe time required to establish the TCP connection with the IP address of the resolved domain name.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "TCP Connect Time - Info" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_text_chart" ],
+        [ "Lit", "synthetics_with_trends_9" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "markdown",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nThe chart above shows average SSL time.\n        \nMetric(s):\n<code>synthetics.real_browser.first_request_ssl_time_ms</code>\n        \nThe time it took to establish the SSL handshake with the primary URL.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "SSL - Info" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "synthetics_with_trends_10" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Average Time To First Byte" ]
+        ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 3 ] ],
+        [ "Attribute", "name", [ "String", "TTFB" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('synthetics.real_browser.first_byte_time_ms', extrapolation='last_value').mean().publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lime_green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 750 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 750 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 3.4028234663852886e+38 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "synthetics_with_trends_11" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [ "Attribute", "description", [ "String", "Average Total Time" ] ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 3 ] ],
+        [ "Attribute", "name", [ "String", "Fully Loaded Time" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('synthetics.real_browser.fully_loaded_time_ms', extrapolation='last_value').mean().publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lime_green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 2 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 2 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 3.4028234663852886e+38 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "synthetics_with_trends_12" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Average Bytes Downloaded" ]
+        ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 3 ] ],
+        [ "Attribute", "name", [ "String", "Total Content Size" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('synthetics.real_browser.content_bytes', extrapolation='last_value').mean().publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lime_green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 2000000 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 2000000 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 3.4028234663852886e+38 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Byte" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ],
+        [ "Lit", "synthetics_with_trends_13" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 3 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "TTFB Time (blue), % week-on-week growth (brown)" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "name", [ "String", "TTFB - Trend" ] ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('synthetics.real_browser.first_byte_time_ms').mean().publish(label='A')\nB = (A).mean().timeshift('1d').publish(label='B', enable=False)\nC = ((A-B)/B).scale(100).publish(label='C')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 604800 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [ [ "Attribute", "label", [ "String", "Time" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "axis_right",
+            "labels": [],
+            "body": [
+              [ "Attribute", "label", [ "String", "WoW Growth (%)" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "TTFB" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "right" ] ],
+              [ "Attribute", "color", [ "String", "purple" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Week on Week Growth (%)" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ],
+        [ "Lit", "synthetics_with_trends_14" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 3 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Average Total Time (blue), % week-on-week growth (brown)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "name", [ "String", "Fully Loaded Time - Trend" ] ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('synthetics.real_browser.fully_loaded_time_ms').mean().publish(label='A')\nB = (A).mean().timeshift('1d').publish(label='B', enable=False)\nC = ((A-B)/B).scale(100).publish(label='C')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", true ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 86400 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [ "Attribute", "high_watermark", [ "Int", 2000 ] ],
+              [
+                "Attribute",
+                "high_watermark_label",
+                [ "String", "Recommended Fully Loaded Time" ]
+              ],
+              [ "Attribute", "label", [ "String", "Time" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "axis_right",
+            "labels": [],
+            "body": [
+              [ "Attribute", "label", [ "String", "WoW Growth (%)" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "display_name", [ "String", "Total Time" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "right" ] ],
+              [ "Attribute", "color", [ "String", "purple" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Week on Week Growth (%)" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ],
+        [ "Lit", "synthetics_with_trends_15" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 3 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Bytes Downloaded (blue), % Change Over Previous Day (%) (brown)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "name", [ "String", "Total Content Size - Trend" ] ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('synthetics.real_browser.content_bytes').mean().publish(label='A')\nB = (A).mean().timeshift('1d').publish(label='B', enable=False)\nC = ((A-B)/B).scale(100).publish(label='C')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 604800 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [ [ "Attribute", "label", [ "String", "Bytes" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "axis_right",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "label",
+                [ "String", "Change Over Previous Day (%)" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Bytes Downloaded" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Byte" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "right" ] ],
+              [ "Attribute", "color", [ "String", "purple" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Change Over Previous Day (%)" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_unit", [ "String", "Byte" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_text_chart" ],
+        [ "Lit", "synthetics_with_trends_16" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "markdown",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nThe chart above shows TTFB.\n        \nMetric(s):\n<code>synthetics.real_browser.first_byte_time_ms</code>\n        \nThe time it took from the request being issued to receiving the first byte of data from the primary URL for the test(s). This is calculated as DNS + Connect + SSL + Send + Wait. For tests where the primary URL has a redirect chain, TTFB is calculated as the sum of the TTFB for each domain in the redirect chain.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "TTFB - Info" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_text_chart" ],
+        [ "Lit", "synthetics_with_trends_17" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "markdown",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nThe chart above shows Total Time.\n        \nMetric(s):\n<code>synthetics.real_browser.fully_loaded_time_ms</code>\n        \nThe total time it took for the test to complete.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "Total Time - Info" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_text_chart" ],
+        [ "Lit", "synthetics_with_trends_18" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "markdown",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nThe chart above shows Bytes downloaded.\n        \nMetric(s):\n<code>synthetics.real_browser.content_bytes</code>\n        \nThe file size in bytes of the response received for the primary URL of the test(s).\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "Bytes Downloaded - Info" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_dashboard" ], [ "Lit", "synthetics_with_trends" ]
+      ],
+      "body": [
+        [ "Attribute", "charts_resolution", [ "String", "default" ] ],
+        [
+          "Attribute",
+          "dashboard_group",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "signalfx_dashboard_group" ],
+                  [ "A_string", "rumandsynthetics" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "Synthetics with Trends" ] ],
+        [ "Attribute", "time_range", [ "String", "-1w" ] ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "synthetics_with_trends_3" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "synthetics_with_trends_15" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 5 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "synthetics_with_trends_1" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "synthetics_with_trends_13" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 5 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_text_chart" ],
+                        [ "A_string", "synthetics_with_trends_17" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 6 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "synthetics_with_trends_5" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_text_chart" ],
+                        [ "A_string", "synthetics_with_trends_0" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 12 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "synthetics_with_trends_12" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_text_chart" ],
+                        [ "A_string", "synthetics_with_trends_16" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 6 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "synthetics_with_trends_4" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "synthetics_with_trends_11" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_text_chart" ],
+                        [ "A_string", "synthetics_with_trends_18" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 6 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "synthetics_with_trends_6" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_text_chart" ],
+                        [ "A_string", "synthetics_with_trends_9" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_text_chart" ],
+                        [ "A_string", "synthetics_with_trends_7" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "synthetics_with_trends_14" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 5 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "synthetics_with_trends_2" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_text_chart" ],
+                        [ "A_string", "synthetics_with_trends_8" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "synthetics_with_trends_10" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "variable",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alias", [ "String", "Check" ] ],
+              [ "Attribute", "apply_if_exist", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "check" ] ],
+              [ "Attribute", "replace_only", [ "Bool", false ] ],
+              [ "Attribute", "restricted_suggestions", [ "Bool", false ] ],
+              [ "Attribute", "value_required", [ "Bool", false ] ],
+              [ "Attribute", "values", [ "Tuple", [] ] ],
+              [ "Attribute", "values_suggested", [ "Tuple", [] ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "variable",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alias", [ "String", "Country" ] ],
+              [ "Attribute", "apply_if_exist", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "country" ] ],
+              [ "Attribute", "replace_only", [ "Bool", false ] ],
+              [ "Attribute", "restricted_suggestions", [ "Bool", false ] ],
+              [ "Attribute", "value_required", [ "Bool", false ] ],
+              [ "Attribute", "values", [ "Tuple", [] ] ],
+              [ "Attribute", "values_suggested", [ "Tuple", [] ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

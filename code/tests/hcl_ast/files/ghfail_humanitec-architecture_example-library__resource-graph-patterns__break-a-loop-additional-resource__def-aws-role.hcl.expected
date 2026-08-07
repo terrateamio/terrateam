@@ -1,0 +1,112 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ],
+        [ "Lit", "example-aws-role" ]
+      ],
+      "body": [
+        [ "Attribute", "driver_type", [ "String", "humanitec/template" ] ],
+        [ "Attribute", "id", [ "String", "example-aws-role" ] ],
+        [ "Attribute", "name", [ "String", "example-aws-role" ] ],
+        [ "Attribute", "type", [ "String", "aws-role" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "role_arn" ],
+                            [
+                              "String",
+                              "${resources['config.sa-name-role-id'].outputs.role_arn}"
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "sa_name" ],
+                            [
+                              "String",
+                              "${resources['config.sa-name-role-id'].outputs.sa_name}"
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "templates" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "outputs" ],
+                                  [
+                                    "String",
+                                    "arn: {{ .drivers.role_arn }}\n"
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition_criteria" ],
+        [ "Lit", "example-aws-role_criteria_0" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "resource" ],
+                      [ "A_string", "humanitec_resource_definition" ]
+                    ]
+                  ],
+                  [ "A_string", "example-aws-role" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_id",
+          [ "String", "example-break-a-loop-additional-resource" ]
+        ]
+      ]
+    }
+  ]
+]

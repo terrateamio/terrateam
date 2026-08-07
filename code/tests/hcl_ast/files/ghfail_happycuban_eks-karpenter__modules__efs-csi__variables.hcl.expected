@@ -1,0 +1,1355 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "region" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "AWS region where the EFS file system will be created."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-z]{2}-[a-z]+-[0-9]$" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Region must be a valid AWS region format (e.g., us-east-1, eu-west-1, ap-southeast-2)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "env" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Environment for the EFS CSI driver (dev, sta, pro, tes)."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "dev" ],
+                          [ "String", "sta" ],
+                          [ "String", "pro" ],
+                          [ "String", "tes" ]
+                        ]
+                      ],
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "env" ] ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String", "Environment must be one of: dev, sta, pro, tes."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Name of the EKS cluster." ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Gte",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "cluster_name" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 1 ]
+                          ]
+                        ],
+                        [
+                          "Lte",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "cluster_name" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 100 ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "regex",
+                              [
+                                [
+                                  "String",
+                                  "^[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9]$"
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "cluster_name" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Cluster name must be 1-100 characters, start with a letter, end with alphanumeric, and contain only letters, numbers, and hyphens."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "efs_csi_kms" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "KMS key ARN for EFS encryption. If not provided, AWS managed key will be used."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "efs_csi_kms" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "regex",
+                              [
+                                [
+                                  "String",
+                                  "^arn:aws:kms:[a-z0-9-]+:[0-9]+:key/[a-f0-9-]+$"
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "efs_csi_kms" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "KMS key ARN must be a valid AWS KMS key ARN format or null."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vpc_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "VPC ID where the EFS file system will be created." ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^vpc-[a-f0-9]{8}([a-f0-9]{9})?$" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "vpc_id" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "VPC ID must be a valid AWS VPC ID format (vpc-xxxxxxxx or vpc-xxxxxxxxxxxxxxxxx)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "List of subnet IDs for EFS mount targets. Minimum 2 subnets recommended for high availability."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "subnet_ids" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 1 ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "subnet_id", [] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "subnet_ids" ]
+                                ]
+                              ],
+                              "output": [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^subnet-[a-f0-9]{8}([a-f0-9]{9})?$"
+                                          ],
+                                          [ "Id", "subnet_id" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Subnet IDs must be valid AWS subnet ID format and at least one subnet must be provided. Format: subnet-xxxxxxxx or subnet-xxxxxxxxxxxxxxxxx."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "performance_mode" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Performance mode for EFS (generalPurpose or maxIO)." ]
+        ],
+        [ "Attribute", "default", [ "String", "generalPurpose" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "generalPurpose" ],
+                          [ "String", "maxIO" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "performance_mode" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Performance mode must be either 'generalPurpose' or 'maxIO'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "throughput_mode" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Throughput mode for EFS (bursting or provisioned)." ]
+        ],
+        [ "Attribute", "default", [ "String", "bursting" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "bursting" ],
+                          [ "String", "provisioned" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "throughput_mode" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Throughput mode must be either 'bursting' or 'provisioned'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "provisioned_throughput_in_mibps" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Provisioned throughput in MiB/s. Only applicable when throughput_mode is 'provisioned'."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "provisioned_throughput_in_mibps" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Gte",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string",
+                                  "provisioned_throughput_in_mibps"
+                                ]
+                              ]
+                            ],
+                            [ "Int", 1 ]
+                          ]
+                        ],
+                        [
+                          "Lte",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string",
+                                  "provisioned_throughput_in_mibps"
+                                ]
+                              ]
+                            ],
+                            [ "Int", 1024 ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Provisioned throughput must be between 1 and 1024 MiB/s or null."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "create_default_storage_class" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Whether to create a default EFS storage class." ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "storage_class_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Name for the EFS storage class." ]
+        ],
+        [ "Attribute", "default", [ "String", "efs-default" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Gte",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "storage_class_name" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 1 ]
+                          ]
+                        ],
+                        [
+                          "Lte",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "storage_class_name" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 253 ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "regex",
+                              [
+                                [
+                                  "String",
+                                  "^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$"
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "storage_class_name" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Storage class name must be 1-253 characters, start/end with alphanumeric, and contain only lowercase letters, numbers, periods, and hyphens."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "access_points" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "path" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "creation_info" ],
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "owner_gid" ],
+                                        [ "Id", "number" ]
+                                      ],
+                                      [
+                                        [ "Bare", "owner_uid" ],
+                                        [ "Id", "number" ]
+                                      ],
+                                      [
+                                        [ "Bare", "permissions" ],
+                                        [ "Id", "string" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "posix_user" ],
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "gid" ], [ "Id", "number" ]
+                                      ],
+                                      [
+                                        [ "Bare", "uid" ], [ "Id", "number" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "List of EFS access points to create." ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "ap", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "access_points" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Log_and",
+                                            [
+                                              [
+                                                "Log_and",
+                                                [
+                                                  [
+                                                    "Log_and",
+                                                    [
+                                                      [
+                                                        "Log_and",
+                                                        [
+                                                          [
+                                                            "Log_and",
+                                                            [
+                                                              [
+                                                                "Fun_call",
+                                                                [
+                                                                  "can",
+                                                                  [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "regex",
+                                                                    [
+                                                                    [
+                                                                    "String",
+                                                                    "^/.*$"
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "ap"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "path"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "Fun_call",
+                                                                [
+                                                                  "can",
+                                                                  [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "regex",
+                                                                    [
+                                                                    [
+                                                                    "String",
+                                                                    "^[0-7]{3,4}$"
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "ap"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "creation_info"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "permissions"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "Gte",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "ap"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "creation_info"
+                                                                    ]
+                                                                    ]
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "owner_gid"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [ "Int", 0 ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "Lte",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Id",
+                                                                    "ap"
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "creation_info"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "owner_gid"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "Int", 4294967294
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Gte",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "ap" ],
+                                                              [
+                                                                "A_string",
+                                                                "creation_info"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "owner_uid"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Int", 0 ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Lte",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "ap" ],
+                                                          [
+                                                            "A_string",
+                                                            "creation_info"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "owner_uid"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Int", 4294967294 ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Gte",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "ap" ],
+                                                      [
+                                                        "A_string",
+                                                        "posix_user"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "gid" ]
+                                                ]
+                                              ],
+                                              [ "Int", 0 ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Lte",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "ap" ],
+                                                  [
+                                                    "A_string", "posix_user"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "A_string", "gid" ]
+                                            ]
+                                          ],
+                                          [ "Int", 4294967294 ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Gte",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "ap" ],
+                                              [ "A_string", "posix_user" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "uid" ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Lte",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "ap" ],
+                                          [ "A_string", "posix_user" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "uid" ]
+                                    ]
+                                  ],
+                                  [ "Int", 4294967294 ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Access points must have valid paths (starting with /), octal permissions (3-4 digits), and valid UID/GID values (0-4294967294)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Additional tags to apply to EFS resources." ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "tags" ] ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Lte",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "length", [ [ "Id", "k" ] ] ]
+                                  ],
+                                  [ "Int", 128 ]
+                                ]
+                              ],
+                              [
+                                "Lte",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "length", [ [ "Id", "v" ] ] ]
+                                  ],
+                                  [ "Int", 256 ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Tag keys must be ≤128 characters and values ≤256 characters."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,3910 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "oci_identity_domain" ], [ "Lit", "grp_domain" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "identity_domain_groups_configuration" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Not_equal",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "identity_domain_groups_configuration"
+                              ]
+                            ]
+                          ],
+                          [ "String", "groups" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "identity_domain_groups_configuration"
+                          ]
+                        ]
+                      ],
+                      [ "String", "groups" ]
+                    ]
+                  ],
+                  "else_": [ "Object", [] ]
+                }
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "domain_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "identity_domain_id" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regexall",
+                                [
+                                  [ "String", "^ocid1.*$" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "identity_domain_id" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "identity_domain_id" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Fun_call",
+                        [
+                          "contains",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "keys",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "identity_domains_dependency"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "identity_domain_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "then_": [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [
+                                    "A_string", "identity_domains_dependency"
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "identity_domain_id" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "else_": [ "String", "__VOID__" ]
+                    }
+                  ]
+                }
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regexall",
+                                [
+                                  [ "String", "^ocid1.*$" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "identity_domain_groups_configuration"
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string",
+                                        "default_identity_domain_id"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "identity_domain_groups_configuration"
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "default_identity_domain_id" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Fun_call",
+                        [
+                          "contains",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "keys",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "identity_domains_dependency"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "identity_domain_groups_configuration"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "default_identity_domain_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "then_": [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [
+                                    "A_string", "identity_domains_dependency"
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "identity_domain_groups_configuration"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "A_string", "default_identity_domain_id"
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "else_": [ "String", "__VOID__" ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "identity_domains_members",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "g" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [
+                              "A_string",
+                              "identity_domain_groups_configuration"
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "groups" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Fun_call",
+                [
+                  "coalesce",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "g" ], [ "A_string", "identity_domain_id" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [
+                              "A_string",
+                              "identity_domain_groups_configuration"
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "default_identity_domain_id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "value_output": [
+                "Ellipsis",
+                [ "Attr", [ [ "Id", "g" ], [ "A_string", "members" ] ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "identity_domains_members_flattened",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "g" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "identity_domains_members" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "toset",
+                  [ [ "Fun_call", [ "flatten", [ [ "Id", "g" ] ] ] ] ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "identity_domains",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "k", [ "g" ] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [
+                                    "A_string",
+                                    "identity_domain_groups_configuration"
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "groups" ]
+                            ]
+                          ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ],
+                    "key_output": [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "g" ],
+                              [ "A_string", "identity_domain_id" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [
+                                    "A_string",
+                                    "identity_domain_groups_configuration"
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "default_identity_domain_id" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "value_output": [
+                      "Ellipsis",
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "url" ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "oci_identity_domain" ],
+                                        [ "A_string", "these" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "coalesce",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "g" ],
+                                              [
+                                                "A_string",
+                                                "identity_domain_id"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string",
+                                                    "identity_domain_groups_configuration"
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "default_identity_domain_id"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "url" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "members" ],
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "identity_domains_members_flattened"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "coalesce",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "g" ],
+                                          [
+                                            "A_string", "identity_domain_id"
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "identity_domain_groups_configuration"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "default_identity_domain_id"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": [
+                      "Log_and",
+                      [
+                        [
+                          "Gt",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "g" ],
+                                      [ "A_string", "members" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [
+                          "Log_and",
+                          [
+                            [
+                              "Equal",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "length",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "regexall",
+                                          [
+                                            [ "String", "^ocid1.*$" ],
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "coalesce",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "g" ],
+                                                      [
+                                                        "A_string",
+                                                        "identity_domain_id"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "var" ],
+                                                          [
+                                                            "A_string",
+                                                            "identity_domain_groups_configuration"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "default_identity_domain_id"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [
+                              "Not",
+                              [
+                                "Fun_call",
+                                [
+                                  "contains",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "keys",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "coalesce",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string",
+                                                      "identity_domains_dependency"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Object", [] ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "coalesce",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "g" ],
+                                              [
+                                                "A_string",
+                                                "identity_domain_id"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string",
+                                                    "identity_domain_groups_configuration"
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "default_identity_domain_id"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "k", [ "g" ] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [
+                                    "A_string",
+                                    "identity_domain_groups_configuration"
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "groups" ]
+                            ]
+                          ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ],
+                    "key_output": [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "g" ],
+                              [ "A_string", "identity_domain_id" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [
+                                    "A_string",
+                                    "identity_domain_groups_configuration"
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "default_identity_domain_id" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "value_output": [
+                      "Ellipsis",
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "url" ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "data" ],
+                                            [
+                                              "A_string",
+                                              "oci_identity_domain"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "grp_domain" ]
+                                      ]
+                                    ],
+                                    [ "Id", "k" ]
+                                  ]
+                                ],
+                                [ "A_string", "url" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "members" ],
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "identity_domains_members_flattened"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "coalesce",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "g" ],
+                                          [
+                                            "A_string", "identity_domain_id"
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "identity_domain_groups_configuration"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "default_identity_domain_id"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": [
+                      "Log_and",
+                      [
+                        [
+                          "Gt",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "g" ],
+                                      [ "A_string", "members" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [
+                          "Log_or",
+                          [
+                            [
+                              "Gt",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "length",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "regexall",
+                                          [
+                                            [ "String", "^ocid1.*$" ],
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "coalesce",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "g" ],
+                                                      [
+                                                        "A_string",
+                                                        "identity_domain_id"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "var" ],
+                                                          [
+                                                            "A_string",
+                                                            "identity_domain_groups_configuration"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "default_identity_domain_id"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "contains",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "keys",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "coalesce",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string",
+                                                    "identity_domains_dependency"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Object", [] ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "coalesce",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "g" ],
+                                            [
+                                              "A_string",
+                                              "identity_domain_id"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "identity_domain_groups_configuration"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "default_identity_domain_id"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "oci_identity_domains_users" ], [ "Lit", "these" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "identity_domains" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "idcs_endpoint",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "url" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "user_filter",
+          [
+            "Template",
+            [
+              [ "Literal", "active eq true " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Gt",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "length",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "Int", 0 ]
+                                      ]
+                                    ],
+                                    [ "A_string", "members" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ],
+                      "then_": [
+                        "Template",
+                        [
+                          [ "Literal", "and (userName eq \"" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Fun_call",
+                                [
+                                  "join",
+                                  [
+                                    [ "String", "\" or userName eq \"" ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "each" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [ "Int", 0 ]
+                                          ]
+                                        ],
+                                        [ "A_string", "members" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "\")" ]
+                        ]
+                      ],
+                      "else_": [ "String", "" ]
+                    }
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "attributes", [ "String", "user_name,id" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "users",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "g" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [
+                              "A_string",
+                              "identity_domain_groups_configuration"
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "groups" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "u", [] ],
+                  "input": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [
+                                    "A_string", "oci_identity_domains_users"
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "these" ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "g" ],
+                                    [ "A_string", "identity_domain_id" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string",
+                                          "identity_domain_groups_configuration"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "A_string",
+                                      "default_identity_domain_id"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "users" ]
+                    ]
+                  ],
+                  "key_output": [
+                    "Attr", [ [ "Id", "u" ], [ "A_string", "user_name" ] ]
+                  ],
+                  "value_output": [
+                    "Ellipsis",
+                    [ "Attr", [ [ "Id", "u" ], [ "A_string", "id" ] ] ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "cond": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "g" ], [ "A_string", "members" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "oci_identity_domains_group" ], [ "Lit", "these" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "identity_domain_groups_configuration" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "identity_domain_groups_configuration"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "A_string",
+                                  "ignore_external_membership_updates"
+                                ]
+                              ]
+                            ],
+                            [ "Bool", true ]
+                          ]
+                        ]
+                      ],
+                      [ "Bool", true ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "identity_domain_groups_configuration"
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "groups" ]
+                    ]
+                  ],
+                  "else_": [ "Object", [] ]
+                }
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [ "Attribute", "ignore_changes", [ "Id", "all" ] ],
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Gt",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "members" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          "then_": [
+                            "Equal",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "setsubtract",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "toset",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "each" ],
+                                                        [
+                                                          "A_string", "value"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "A_string", "members" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "toset",
+                                              [
+                                                [
+                                                  "For_tuple",
+                                                  {
+                                                    "identifiers": [
+                                                      "m", []
+                                                    ],
+                                                    "input": [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "each" ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "members"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    "output": [ "Id", "m" ],
+                                                    "cond": [
+                                                      "Fun_call",
+                                                      [
+                                                        "contains",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "keys",
+                                                              [
+                                                                [
+                                                                  "Idx",
+                                                                  [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "local"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "users"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "each"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "key"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [ "Id", "m" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  }
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          "else_": [ "Bool", true ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Gt",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "members" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          "then_": [
+                            "Template",
+                            [
+                              [
+                                "Literal",
+                                "VALIDATION FAILURE: following provided usernames in \"members\" attribute of group \""
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ], [ "A_string", "key" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Literal",
+                                "\" do not exist or are not active\": "
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Fun_call",
+                                    [
+                                      "join",
+                                      [
+                                        [ "String", ", " ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "setsubtract",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "toset",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "each" ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "members"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "toset",
+                                                  [
+                                                    [
+                                                      "For_tuple",
+                                                      {
+                                                        "identifiers": [
+                                                          "m", []
+                                                        ],
+                                                        "input": [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "each"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "value"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "members"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "output": [
+                                                          "Id", "m"
+                                                        ],
+                                                        "cond": [
+                                                          "Fun_call",
+                                                          [
+                                                            "contains",
+                                                            [
+                                                              [
+                                                                "Fun_call",
+                                                                [
+                                                                  "keys",
+                                                                  [
+                                                                    [
+                                                                    "Idx",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "local"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "users"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "each"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "key"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [ "Id", "m" ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      }
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Literal",
+                                ". Please either correct their spelling or activate them."
+                              ]
+                            ]
+                          ],
+                          "else_": [ "String", "" ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute", "attribute_sets", [ "Tuple", [ [ "String", "all" ] ] ]
+        ],
+        [
+          "Attribute",
+          "idcs_endpoint",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "identity_domain_id" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "contains",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "keys",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "oci_identity_domain" ],
+                                  [ "A_string", "these" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "identity_domain_id" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "oci_identity_domain" ],
+                              [ "A_string", "these" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "identity_domain_id" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "oci_identity_domain" ]
+                                ]
+                              ],
+                              [ "A_string", "grp_domain" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ]
+                }
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "contains",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "keys",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "oci_identity_domain" ],
+                                  [ "A_string", "these" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string",
+                                  "identity_domain_groups_configuration"
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "default_identity_domain_id" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "oci_identity_domain" ],
+                              [ "A_string", "these" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [
+                                    "A_string",
+                                    "identity_domain_groups_configuration"
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "default_identity_domain_id" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "oci_identity_domain" ]
+                                ]
+                              ],
+                              [ "A_string", "grp_domain" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "schemas",
+          [
+            "Tuple",
+            [
+              [ "String", "urn:ietf:params:scim:schemas:core:2.0:Group" ],
+              [
+                "String",
+                "urn:ietf:params:scim:schemas:oracle:idcs:extension:requestable:Group"
+              ],
+              [
+                "String",
+                "urn:ietf:params:scim:schemas:oracle:idcs:extension:OCITags"
+              ],
+              [
+                "String",
+                "urn:ietf:params:scim:schemas:oracle:idcs:extension:group:Group"
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "urnietfparamsscimschemasoracleidcsextensiongroup_group",
+            "labels": [],
+            "body": [
+              [ "Attribute", "creation_mechanism", [ "String", "api" ] ],
+              [
+                "Attribute",
+                "description",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "description" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "members" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Gt",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "members" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "members" ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "member" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "User" ] ],
+                    [
+                      "Attribute",
+                      "value",
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "users" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ], [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "member" ], [ "A_string", "value" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "urnietfparamsscimschemasoracleidcsextension_oci_tags",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "defined_tags" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "defined_tags" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "defined_tags" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "identity_domain_groups_configuration"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "default_defined_tags" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "identity_domain_groups_configuration"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "default_defined_tags" ]
+                                ]
+                              ],
+                              "else_": [ "Object", [] ]
+                            }
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "key",
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "split",
+                                    [
+                                      [ "String", "." ],
+                                      [
+                                        "Idx",
+                                        [
+                                          [ "Id", "defined_tags" ],
+                                          [ "String", "key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 1 ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "namespace",
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "split",
+                                    [
+                                      [ "String", "." ],
+                                      [
+                                        "Idx",
+                                        [
+                                          [ "Id", "defined_tags" ],
+                                          [ "String", "key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "value",
+                            [
+                              "Fun_call",
+                              [
+                                "trimspace",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [ "Id", "defined_tags" ],
+                                      [ "String", "value" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "freeform_tags" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "freeform_tags" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Fun_call",
+                            [
+                              "merge",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "cislz_module_tag" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "freeform_tags" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "else_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "identity_domain_groups_configuration"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "default_freeform_tags" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Fun_call",
+                                [
+                                  "merge",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "cislz_module_tag" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "identity_domain_groups_configuration"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string", "default_freeform_tags"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "else_": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "cislz_module_tag" ]
+                                ]
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "key",
+                            [
+                              "Idx",
+                              [
+                                [ "Id", "freeform_tags" ],
+                                [ "String", "key" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "value",
+                            [
+                              "Fun_call",
+                              [
+                                "trimspace",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [ "Id", "freeform_tags" ],
+                                      [ "String", "value" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "urnietfparamsscimschemasoracleidcsextensionrequestable_group",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "requestable",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "requestable" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "oci_identity_domains_group" ],
+        [ "Lit", "these_with_external_membership_updates" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "identity_domain_groups_configuration" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "identity_domain_groups_configuration"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "A_string",
+                                  "ignore_external_membership_updates"
+                                ]
+                              ]
+                            ],
+                            [ "Bool", true ]
+                          ]
+                        ]
+                      ],
+                      [ "Bool", false ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "identity_domain_groups_configuration"
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "groups" ]
+                    ]
+                  ],
+                  "else_": [ "Object", [] ]
+                }
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Gt",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "members" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          "then_": [
+                            "Equal",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "setsubtract",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "toset",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "each" ],
+                                                        [
+                                                          "A_string", "value"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "A_string", "members" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "toset",
+                                              [
+                                                [
+                                                  "For_tuple",
+                                                  {
+                                                    "identifiers": [
+                                                      "m", []
+                                                    ],
+                                                    "input": [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "each" ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "members"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    "output": [ "Id", "m" ],
+                                                    "cond": [
+                                                      "Fun_call",
+                                                      [
+                                                        "contains",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "keys",
+                                                              [
+                                                                [
+                                                                  "Idx",
+                                                                  [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "local"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "users"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "each"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "key"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [ "Id", "m" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  }
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          "else_": [ "Bool", true ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Gt",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "members" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          "then_": [
+                            "Template",
+                            [
+                              [
+                                "Literal",
+                                "VALIDATION FAILURE: following provided usernames in \"members\" attribute of group \""
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ], [ "A_string", "key" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Literal",
+                                "\" do not exist or are not active\": "
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Fun_call",
+                                    [
+                                      "join",
+                                      [
+                                        [ "String", ", " ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "setsubtract",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "toset",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "each" ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "members"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "toset",
+                                                  [
+                                                    [
+                                                      "For_tuple",
+                                                      {
+                                                        "identifiers": [
+                                                          "m", []
+                                                        ],
+                                                        "input": [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "each"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "value"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "members"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "output": [
+                                                          "Id", "m"
+                                                        ],
+                                                        "cond": [
+                                                          "Fun_call",
+                                                          [
+                                                            "contains",
+                                                            [
+                                                              [
+                                                                "Fun_call",
+                                                                [
+                                                                  "keys",
+                                                                  [
+                                                                    [
+                                                                    "Idx",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "local"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "users"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "each"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "key"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [ "Id", "m" ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      }
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Literal",
+                                ". Please either correct their spelling or activate them."
+                              ]
+                            ]
+                          ],
+                          "else_": [ "String", "" ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute", "attribute_sets", [ "Tuple", [ [ "String", "all" ] ] ]
+        ],
+        [
+          "Attribute",
+          "idcs_endpoint",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "identity_domain_id" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "contains",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "keys",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "oci_identity_domain" ],
+                                  [ "A_string", "these" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "identity_domain_id" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "oci_identity_domain" ],
+                              [ "A_string", "these" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "identity_domain_id" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "oci_identity_domain" ]
+                                ]
+                              ],
+                              [ "A_string", "grp_domain" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ]
+                }
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "contains",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "keys",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "oci_identity_domain" ],
+                                  [ "A_string", "these" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string",
+                                  "identity_domain_groups_configuration"
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "default_identity_domain_id" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "oci_identity_domain" ],
+                              [ "A_string", "these" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [
+                                    "A_string",
+                                    "identity_domain_groups_configuration"
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "default_identity_domain_id" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "oci_identity_domain" ]
+                                ]
+                              ],
+                              [ "A_string", "grp_domain" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "schemas",
+          [
+            "Tuple",
+            [
+              [ "String", "urn:ietf:params:scim:schemas:core:2.0:Group" ],
+              [
+                "String",
+                "urn:ietf:params:scim:schemas:oracle:idcs:extension:requestable:Group"
+              ],
+              [
+                "String",
+                "urn:ietf:params:scim:schemas:oracle:idcs:extension:OCITags"
+              ],
+              [
+                "String",
+                "urn:ietf:params:scim:schemas:oracle:idcs:extension:group:Group"
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "urnietfparamsscimschemasoracleidcsextensiongroup_group",
+            "labels": [],
+            "body": [
+              [ "Attribute", "creation_mechanism", [ "String", "api" ] ],
+              [
+                "Attribute",
+                "description",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "description" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "members" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Gt",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "members" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "members" ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "member" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "User" ] ],
+                    [
+                      "Attribute",
+                      "value",
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "users" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ], [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "member" ], [ "A_string", "value" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "urnietfparamsscimschemasoracleidcsextension_oci_tags",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "defined_tags" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "defined_tags" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "defined_tags" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "identity_domain_groups_configuration"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "default_defined_tags" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "identity_domain_groups_configuration"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "default_defined_tags" ]
+                                ]
+                              ],
+                              "else_": [ "Object", [] ]
+                            }
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "key",
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "split",
+                                    [
+                                      [ "String", "." ],
+                                      [
+                                        "Idx",
+                                        [
+                                          [ "Id", "defined_tags" ],
+                                          [ "String", "key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 1 ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "namespace",
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "split",
+                                    [
+                                      [ "String", "." ],
+                                      [
+                                        "Idx",
+                                        [
+                                          [ "Id", "defined_tags" ],
+                                          [ "String", "key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "value",
+                            [
+                              "Fun_call",
+                              [
+                                "trimspace",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [ "Id", "defined_tags" ],
+                                      [ "String", "value" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "freeform_tags" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "freeform_tags" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Fun_call",
+                            [
+                              "merge",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "cislz_module_tag" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "freeform_tags" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "else_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "identity_domain_groups_configuration"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "default_freeform_tags" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Fun_call",
+                                [
+                                  "merge",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "cislz_module_tag" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "identity_domain_groups_configuration"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string", "default_freeform_tags"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "else_": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "cislz_module_tag" ]
+                                ]
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "key",
+                            [
+                              "Idx",
+                              [
+                                [ "Id", "freeform_tags" ],
+                                [ "String", "key" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "value",
+                            [
+                              "Fun_call",
+                              [
+                                "trimspace",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [ "Id", "freeform_tags" ],
+                                      [ "String", "value" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "urnietfparamsscimschemasoracleidcsextensionrequestable_group",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "requestable",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "requestable" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

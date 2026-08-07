@@ -98,4 +98,10 @@ EOT
 
     Baz
   EOT
+  interp_multiline = <<-EOT
+    ${
+bar
+    }
+    baz
+  EOT
 }

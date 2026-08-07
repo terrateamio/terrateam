@@ -1,0 +1,1096 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "oci_identity_availability_domains" ], [ "Lit", "all" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "compartment_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "tenancy_id" ] ]
+                  ],
+                  [ "String", "unknown" ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "tenancy_id" ] ]
+              ],
+              "else_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "compartment_id" ] ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "ads",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "oci_identity_availability_domains" ]
+                    ]
+                  ],
+                  [ "A_string", "all" ]
+                ]
+              ],
+              [ "A_string", "availability_domains" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ad_numbers_to_names",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [ "Attr", [ [ "Id", "local" ], [ "A_string", "ads" ] ] ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "For_object",
+                {
+                  "identifiers": [ "ad", [] ],
+                  "input": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "ads" ] ]
+                  ],
+                  "key_output": [
+                    "Fun_call",
+                    [
+                      "parseint",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "substr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "ad" ], [ "A_string", "name" ] ]
+                              ],
+                              [ "Minus", [ "Int", 1 ] ],
+                              [ "Minus", [ "Int", 1 ] ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 10 ]
+                      ]
+                    ]
+                  ],
+                  "value_output": [
+                    "Attr", [ [ "Id", "ad" ], [ "A_string", "name" ] ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "else_": [
+                "Object",
+                [
+                  [ [ "Expr", [ "Minus", [ "Int", 1 ] ] ], [ "String", "" ] ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ad_numbers",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [ "Attr", [ [ "Id", "local" ], [ "A_string", "ads" ] ] ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "sort",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "keys",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "ad_numbers_to_names" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Tuple", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "create_iam_worker_policy",
+          [
+            "Fun_call",
+            [
+              "anytrue",
+              [
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "create_iam_worker_policy" ]
+                          ]
+                        ],
+                        [ "String", "always" ]
+                      ]
+                    ],
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Log_and",
+                          [
+                            [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string", "create_iam_worker_policy"
+                                    ]
+                                  ]
+                                ],
+                                [ "String", "auto" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "create_cluster" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "anytrue",
+                            [
+                              [
+                                "For_tuple",
+                                {
+                                  "identifiers": [ "k", [ "v" ] ],
+                                  "input": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "worker_pools" ]
+                                    ]
+                                  ],
+                                  "output": [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "tobool",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "lookup",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [ "String", "create" ],
+                                                  [ "Bool", true ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Not_equal",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "lookup",
+                                              [
+                                                [ "Id", "v" ],
+                                                [ "String", "mode" ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string",
+                                                      "worker_pool_mode"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "String", "node-pool" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "cond": null
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "create_iam_autoscaler_policy",
+          [
+            "Fun_call",
+            [
+              "anytrue",
+              [
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "create_iam_autoscaler_policy" ]
+                          ]
+                        ],
+                        [ "String", "always" ]
+                      ]
+                    ],
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Log_and",
+                          [
+                            [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "create_iam_autoscaler_policy"
+                                    ]
+                                  ]
+                                ],
+                                [ "String", "auto" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "create_cluster" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "anytrue",
+                            [
+                              [
+                                "For_tuple",
+                                {
+                                  "identifiers": [ "k", [ "v" ] ],
+                                  "input": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "worker_pools" ]
+                                    ]
+                                  ],
+                                  "output": [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "tobool",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "lookup",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [ "String", "create" ],
+                                                  [ "Bool", true ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "tobool",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "lookup",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [
+                                                    "String",
+                                                    "allow_autoscaler"
+                                                  ],
+                                                  [ "Bool", false ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "cond": null
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "create_iam_operator_policy",
+          [
+            "Fun_call",
+            [
+              "anytrue",
+              [
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "create_iam_operator_policy" ]
+                          ]
+                        ],
+                        [ "String", "always" ]
+                      ]
+                    ],
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "create_iam_operator_policy" ]
+                              ]
+                            ],
+                            [ "String", "auto" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "operator_enabled" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "create_iam_kms_policy",
+          [
+            "Fun_call",
+            [
+              "anytrue",
+              [
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "create_iam_kms_policy" ]
+                          ]
+                        ],
+                        [ "String", "always" ]
+                      ]
+                    ],
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "create_iam_kms_policy" ]
+                              ]
+                            ],
+                            [ "String", "auto" ]
+                          ]
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "anytrue",
+                            [
+                              [
+                                "Tuple",
+                                [
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "coalesce",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "cluster_kms_key_id"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "String", "none" ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "String", "none" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default_policy_name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [ "String", "oke-cluster-%v" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "state_id" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "prerequisites_policy_name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [ "String", "oke-cluster-prerequisites-%v" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "state_id" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "iam_cluster_prerequisites" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./modules/iam" ] ],
+        [
+          "Attribute",
+          "compartment_id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "compartment_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "state_id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "state_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tenancy_id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tenancy_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cluster_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "create_iam_resources",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "create_iam_resources" ] ]
+          ]
+        ],
+        [ "Attribute", "create_iam_autoscaler_policy", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "create_iam_kms_policy",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "create_iam_kms_policy" ] ]
+          ]
+        ],
+        [ "Attribute", "create_iam_operator_policy", [ "Bool", false ] ],
+        [ "Attribute", "create_iam_worker_policy", [ "Bool", false ] ],
+        [ "Attribute", "create_iam_cluster_policy", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "policy_name",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ], [ "A_string", "prerequisites_policy_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "create_iam_tag_namespace",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "create_iam_tag_namespace" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "create_iam_defined_tags",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "create_iam_defined_tags" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "defined_tags",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "iam_defined_tags" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "freeform_tags",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "iam_freeform_tags" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tag_namespace",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tag_namespace" ] ] ]
+        ],
+        [
+          "Attribute",
+          "use_defined_tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "use_defined_tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cluster_kms_key_id",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_kms_key_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "operator_volume_kms_key_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "operator_volume_kms_key_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_volume_kms_key_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "worker_volume_kms_key_id" ] ]
+          ]
+        ],
+        [ "Attribute", "autoscaler_compartments", [ "Tuple", [] ] ],
+        [ "Attribute", "worker_compartments", [ "Tuple", [] ] ],
+        [ "Attribute", "enable_ipv6", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "network_compartment_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "network_compartment_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "providers",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Expr",
+                  [ "Attr", [ [ "Id", "oci" ], [ "A_string", "home" ] ] ]
+                ],
+                [ "Attr", [ [ "Id", "oci" ], [ "A_string", "home" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "iam" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./modules/iam" ] ],
+        [
+          "Attribute",
+          "compartment_id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "compartment_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "state_id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "state_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tenancy_id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tenancy_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cluster_id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "cluster_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "create_iam_resources",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "create_iam_resources" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "create_iam_autoscaler_policy",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "create_iam_autoscaler_policy" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "create_iam_kms_policy", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "create_iam_operator_policy",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ], [ "A_string", "create_iam_operator_policy" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "create_iam_worker_policy",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "create_iam_worker_policy" ] ]
+          ]
+        ],
+        [ "Attribute", "create_iam_cluster_policy", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "policy_name",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "default_policy_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "create_iam_tag_namespace",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "create_iam_tag_namespace" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "create_iam_defined_tags",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "create_iam_defined_tags" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "defined_tags",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "iam_defined_tags" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "freeform_tags",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "iam_freeform_tags" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tag_namespace",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tag_namespace" ] ] ]
+        ],
+        [
+          "Attribute",
+          "use_defined_tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "use_defined_tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cluster_kms_key_id",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_kms_key_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "operator_volume_kms_key_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "operator_volume_kms_key_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_volume_kms_key_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "worker_volume_kms_key_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "autoscaler_compartments",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "autoscaler_compartments" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_compartments",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "worker_compartments" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_ipv6",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "enable_ipv6" ] ] ]
+        ],
+        [
+          "Attribute",
+          "network_compartment_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "network_compartment_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "providers",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Expr",
+                  [ "Attr", [ [ "Id", "oci" ], [ "A_string", "home" ] ] ]
+                ],
+                [ "Attr", [ [ "Id", "oci" ], [ "A_string", "home" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "availability_domains" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Availability domains for tenancy & region" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "ad_numbers_to_names" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "dynamic_group_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Cluster IAM dynamic group IDs" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "module" ],
+                              [ "A_string", "iam_cluster_prerequisites" ]
+                            ]
+                          ],
+                          [ "A_string", "dynamic_group_ids" ]
+                        ]
+                      ],
+                      [ "Tuple", [] ]
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "module" ], [ "A_string", "iam" ] ]
+                          ],
+                          [ "A_string", "dynamic_group_ids" ]
+                        ]
+                      ],
+                      [ "Tuple", [] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "policy_statements" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Cluster IAM policy statements" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "module" ],
+                              [ "A_string", "iam_cluster_prerequisites" ]
+                            ]
+                          ],
+                          [ "A_string", "policy_statements" ]
+                        ]
+                      ],
+                      [ "Tuple", [] ]
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "module" ], [ "A_string", "iam" ] ]
+                          ],
+                          [ "A_string", "policy_statements" ]
+                        ]
+                      ],
+                      [ "Tuple", [] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

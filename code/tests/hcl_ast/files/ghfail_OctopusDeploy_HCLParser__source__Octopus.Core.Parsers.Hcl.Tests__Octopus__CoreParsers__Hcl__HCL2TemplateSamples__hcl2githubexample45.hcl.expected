@@ -1,0 +1,258 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_s3_bucket" ], [ "Lit", "airflow_workbucket" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "db_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-workbucket" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "force_destroy", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "aws_region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ], [ "Lit", "db_security_group" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "db_security_group" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Security group for target database" ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 80 ] ],
+              [ "Attribute", "to_port", [ "Int", 80 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "description", [ "String", "HTTP" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 443 ] ],
+              [ "Attribute", "to_port", [ "Int", 443 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "description", [ "String", "HTTPS" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 22 ] ],
+              [ "Attribute", "to_port", [ "Int", 22 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "description", [ "String", "SSH" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 5432 ] ],
+              [ "Attribute", "to_port", [ "Int", 5432 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "description", [ "String", "postgresql-tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "egress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 0 ] ],
+              [ "Attribute", "protocol", [ "String", "-1" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [ "Attribute", "create_before_destroy", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_db_instance" ], [ "Lit", "db_database" ] ],
+      "body": [
+        [
+          "Attribute",
+          "identifier",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "db_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-db" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "instance_class",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "db_instance_type" ] ] ]
+        ],
+        [ "Attribute", "engine", [ "String", "postgres" ] ],
+        [ "Attribute", "engine_version", [ "String", "11.5" ] ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "db_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "username",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "db_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "password",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "db_password" ] ] ]
+        ],
+        [ "Attribute", "storage_type", [ "String", "gp2" ] ],
+        [ "Attribute", "backup_retention_period", [ "Int", 7 ] ],
+        [ "Attribute", "multi_az", [ "Bool", false ] ],
+        [ "Attribute", "publicly_accessible", [ "Bool", true ] ],
+        [ "Attribute", "apply_immediately", [ "Bool", true ] ],
+        [ "Attribute", "skip_final_snapshot", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_security_group" ],
+                              [ "A_string", "db_security_group" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "port", [ "Int", 5432 ] ],
+        [ "Attribute", "allocated_storage", [ "Int", 20 ] ]
+      ]
+    }
+  ]
+]

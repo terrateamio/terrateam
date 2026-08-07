@@ -1,0 +1,1331 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_client_config" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "access_restriction_description",
+          [ "String", "blocking public traffic to app service" ]
+        ],
+        [
+          "Attribute",
+          "access_restriction_name",
+          [ "String", "vnet_restriction" ]
+        ],
+        [
+          "Attribute",
+          "app_names",
+          [
+            "Fun_call",
+            [
+              "keys",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "app_service_config" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_configs",
+          [
+            "Fun_call",
+            [
+              "values",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "app_service_config" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_linux_fx_versions",
+          [
+            "For_object",
+            {
+              "identifiers": [ "app_name", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "app_names" ] ]
+              ],
+              "key_output": [ "Id", "app_name" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "app_service_config" ]
+                                ]
+                              ],
+                              [ "Id", "app_name" ]
+                            ]
+                          ],
+                          [ "A_string", "image" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "app_service_config" ]
+                            ]
+                          ],
+                          [ "Id", "app_name" ]
+                        ]
+                      ],
+                      [ "A_string", "linux_fx_version" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Equal",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "app_service_config" ]
+                                    ]
+                                  ],
+                                  [ "Id", "app_name" ]
+                                ]
+                              ],
+                              [ "A_string", "image" ]
+                            ]
+                          ],
+                          [ "String", "" ]
+                        ]
+                      ],
+                      "then_": [ "String", "DOCKER" ],
+                      "else_": [
+                        "Fun_call",
+                        [
+                          "format",
+                          [
+                            [ "String", "DOCKER|%s/%s" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "docker_registry_server_url" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "app_service_config" ]
+                                      ]
+                                    ],
+                                    [ "Id", "app_name" ]
+                                  ]
+                                ],
+                                [ "A_string", "image" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "static_app_settings",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "DOCKER_REGISTRY_SERVER_URL" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "docker_registry_server_url" ]
+                          ]
+                        ],
+                        [ "String", "" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "format",
+                        [
+                          [ "String", "https://%s" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "docker_registry_server_url" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "String", "" ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "WEBSITES_ENABLE_APP_SERVICE_STORAGE" ],
+                [ "Bool", false ]
+              ],
+              [
+                [ "Bare", "DOCKER_REGISTRY_SERVER_USERNAME" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "docker_registry_server_username" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "DOCKER_REGISTRY_SERVER_PASSWORD" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "docker_registry_server_password" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "APPLICATIONINSIGHTS_CONNECTION_STRING" ],
+                [
+                  "Fun_call",
+                  [
+                    "format",
+                    [
+                      [ "String", "InstrumentationKey=%s" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "app_insights_instrumentation_key" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ApplicationInsightsAgent_EXTENSION_VERSION" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "app_insights_version" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "KEYVAULT_URI" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "vault_uri" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_service_settings",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "tomap",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "static_app_settings" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "app_service_settings" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "appsvc" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "service_plan_resource_group_name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "azurerm_app_service_plan" ], [ "Lit", "appsvc" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "service_plan_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "appsvc" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_app_service" ], [ "Lit", "appsvc" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [ "String", "%s-%s" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "app_service_name_prefix" ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "lower",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ], [ "A_string", "app_names" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "appsvc" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "appsvc" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_service_plan_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_app_service_plan" ]
+                    ]
+                  ],
+                  [ "A_string", "appsvc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_tags" ] ] ]
+        ],
+        [ "Attribute", "https_only", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "app_names" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_settings",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "app_service_settings" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "app_service_config" ]
+                          ]
+                        ],
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "app_names" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "app_settings" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "site_config",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "linux_fx_version",
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "app_linux_fx_versions" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "app_names" ] ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "always_on",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "site_config_always_on" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "virtual_network_name",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "vnet_name" ] ] ]
+              ],
+              [
+                "Attribute",
+                "app_command_line",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "app_service_config" ]
+                          ]
+                        ],
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "app_names" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "app_command_line" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "identity",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "SystemAssigned" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Idx", [ [ "Id", "site_config" ], [ "Int", 0 ] ] ],
+                        [ "A_string", "linux_fx_version" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Idx", [ [ "Id", "site_config" ], [ "Int", 0 ] ] ],
+                        [ "A_string", "app_command_line" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "create_before_destroy", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_app_service_slot" ],
+        [ "Lit", "appsvc_staging_slot" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "staging" ] ],
+        [
+          "Attribute",
+          "app_service_name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [ "String", "%s-%s" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "app_service_name_prefix" ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "lower",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ], [ "A_string", "app_names" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "app_names" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "appsvc" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "appsvc" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_service_plan_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_app_service_plan" ]
+                    ]
+                  ],
+                  [ "A_string", "appsvc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_app_service" ], [ "A_string", "appsvc" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_settings",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "app_service_settings" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "app_service_config" ]
+                          ]
+                        ],
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "app_names" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "app_settings" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "site_config",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "linux_fx_version",
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "app_linux_fx_versions" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "app_names" ] ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "always_on",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "site_config_always_on" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "virtual_network_name",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "vnet_name" ] ] ]
+              ],
+              [
+                "Attribute",
+                "app_command_line",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "app_service_config" ]
+                          ]
+                        ],
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "app_names" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "app_command_line" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "identity",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "SystemAssigned" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Idx", [ [ "Id", "site_config" ], [ "Int", 0 ] ] ],
+                        [ "A_string", "linux_fx_version" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Idx", [ [ "Id", "site_config" ], [ "Int", 0 ] ] ],
+                        [ "A_string", "app_command_line" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "create_before_destroy", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_app_service" ], [ "Lit", "all" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "azurerm_app_service" ], [ "A_string", "appsvc" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_app_service" ],
+                      [ "A_string", "appsvc" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "appsvc" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_app_service" ], [ "A_string", "appsvc" ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_template_deployment" ],
+        [ "Lit", "access_restriction" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "access_restriction" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "uses_vnet" ] ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "length",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "app_names" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "appsvc" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "service_name" ],
+                [
+                  "Fun_call",
+                  [
+                    "format",
+                    [
+                      [ "String", "%s-%s" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "app_service_name_prefix" ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "lower",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "app_names" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "count" ],
+                                    [ "A_string", "index" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "vnet_subnet_id" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "vnet_subnet_id" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "access_restriction_name" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "access_restriction_name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "access_restriction_description" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "access_restriction_description" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "deployment_mode", [ "String", "Incremental" ] ],
+        [
+          "Attribute",
+          "template_body",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/azuredeploy.json" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "azurerm_app_service" ]
+                    ]
+                  ],
+                  [ "A_string", "all" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

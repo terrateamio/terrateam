@@ -1,0 +1,1234 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "http" ], [ "Lit", "agent_ip" ] ],
+      "body": [
+        [ "Attribute", "url", [ "String", "http://ipv4.icanhazip.com" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "domain_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "lower",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "lower",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "domain" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "min_disk_size_per_tags",
+          [ "Object", [ [ [ "Quoted", "mgmt" ], [ "Int", 20 ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "instances",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Ellipsis",
+                  [
+                    "Fun_call",
+                    [
+                      "flatten",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "prefix", [ "attrs" ] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "instances" ]
+                              ]
+                            ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "i", [] ],
+                                "input": [
+                                  "Fun_call",
+                                  [
+                                    "range",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "lookup",
+                                          [
+                                            [ "Id", "attrs" ],
+                                            [ "String", "count" ],
+                                            [ "Int", 1 ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Object",
+                                  [
+                                    [
+                                      [
+                                        "Computed",
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "format",
+                                            [
+                                              [ "String", "%s%d" ],
+                                              [ "Id", "prefix" ],
+                                              [
+                                                "Add",
+                                                [
+                                                  [ "Id", "i" ], [ "Int", 1 ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "merge",
+                                          [
+                                            [
+                                              "Object",
+                                              [
+                                                [
+                                                  [ "Bare", "image" ],
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "var" ],
+                                                      [ "A_string", "image" ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Object",
+                                              [
+                                                [
+                                                  [ "Bare", "disk_size" ],
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "max",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "var" ],
+                                                            [
+                                                              "A_string",
+                                                              "min_disk_size"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "Ellipsis",
+                                                          [
+                                                            "For_tuple",
+                                                            {
+                                                              "identifiers": [
+                                                                "tag", []
+                                                              ],
+                                                              "input": [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Id",
+                                                                    "attrs"
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "tags"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              "output": [
+                                                                "Fun_call",
+                                                                [
+                                                                  "lookup",
+                                                                  [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "local"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "min_disk_size_per_tags"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "tag"
+                                                                    ],
+                                                                    [
+                                                                    "Int", 0
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              "cond": null
+                                                            }
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "For_object",
+                                              {
+                                                "identifiers": [
+                                                  "attr", [ "value" ]
+                                                ],
+                                                "input": [ "Id", "attrs" ],
+                                                "key_output": [
+                                                  "Id", "attr"
+                                                ],
+                                                "value_output": [
+                                                  "Id", "value"
+                                                ],
+                                                "cond": [
+                                                  "Not",
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "contains",
+                                                      [
+                                                        [
+                                                          "Tuple",
+                                                          [
+                                                            [
+                                                              "String",
+                                                              "count"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Id", "attr" ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              }
+                                            ],
+                                            [
+                                              "Object",
+                                              [
+                                                [
+                                                  [ "Bare", "prefix" ],
+                                                  [ "Id", "prefix" ]
+                                                ],
+                                                [
+                                                  [ "Bare", "specs" ],
+                                                  [
+                                                    "For_object",
+                                                    {
+                                                      "identifiers": [
+                                                        "attr", [ "value" ]
+                                                      ],
+                                                      "input": [
+                                                        "Id", "attrs"
+                                                      ],
+                                                      "key_output": [
+                                                        "Id", "attr"
+                                                      ],
+                                                      "value_output": [
+                                                        "Id", "value"
+                                                      ],
+                                                      "cond": [
+                                                        "Not",
+                                                        [
+                                                          "Fun_call",
+                                                          [
+                                                            "contains",
+                                                            [
+                                                              [
+                                                                "Tuple",
+                                                                [
+                                                                  [
+                                                                    "String",
+                                                                    "count"
+                                                                  ],
+                                                                  [
+                                                                    "String",
+                                                                    "tags"
+                                                                  ],
+                                                                  [
+                                                                    "String",
+                                                                    "image"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "Id", "attr"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    }
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "instances_to_build",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "values" ] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "instances" ] ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [ "Id", "values" ],
+              "cond": [
+                "Log_or",
+                [
+                  [
+                    "Not",
+                    [
+                      "Fun_call",
+                      [
+                        "contains",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "values" ], [ "A_string", "tags" ] ]
+                          ],
+                          [ "String", "pool" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "contains",
+                      [
+                        [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "pool" ] ]
+                        ],
+                        [ "Id", "key" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "instance_per_volume",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Ellipsis",
+                  [
+                    "For_tuple",
+                    {
+                      "identifiers": [ "ki", [ "vi" ] ],
+                      "input": [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "volumes" ] ]
+                      ],
+                      "output": [
+                        "For_object",
+                        {
+                          "identifiers": [ "kj", [ "vj" ] ],
+                          "input": [ "Id", "vi" ],
+                          "key_output": [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "ki" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "-" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "kj" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ],
+                          "value_output": [
+                            "Fun_call",
+                            [
+                              "merge",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "instances" ],
+                                      [
+                                        "For_tuple",
+                                        {
+                                          "identifiers": [
+                                            "x", [ "values" ]
+                                          ],
+                                          "input": [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "instances_to_build"
+                                              ]
+                                            ]
+                                          ],
+                                          "output": [ "Id", "x" ],
+                                          "cond": [
+                                            "Fun_call",
+                                            [
+                                              "contains",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "values" ],
+                                                    [ "A_string", "tags" ]
+                                                  ]
+                                                ],
+                                                [ "Id", "ki" ]
+                                              ]
+                                            ]
+                                          ]
+                                        }
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Id", "vj" ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ],
+                      "cond": null
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "volumes",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Ellipsis",
+                  [
+                    "For_tuple",
+                    {
+                      "identifiers": [ "key", [ "values" ] ],
+                      "input": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "instance_per_volume" ]
+                        ]
+                      ],
+                      "output": [
+                        "For_object",
+                        {
+                          "identifiers": [ "instance", [] ],
+                          "input": [
+                            "Idx",
+                            [ [ "Id", "values" ], [ "String", "instances" ] ]
+                          ],
+                          "key_output": [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "instance" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "-" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "key" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ],
+                          "value_output": [
+                            "Fun_call",
+                            [
+                              "merge",
+                              [
+                                [
+                                  "For_object",
+                                  {
+                                    "identifiers": [ "key", [ "value" ] ],
+                                    "input": [ "Id", "values" ],
+                                    "key_output": [ "Id", "key" ],
+                                    "value_output": [ "Id", "value" ],
+                                    "cond": [
+                                      "Not_equal",
+                                      [
+                                        [ "Id", "key" ],
+                                        [ "String", "instances" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "instance" ],
+                                      [ "Id", "instance" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ],
+                      "cond": null
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "volume_per_instance",
+          [
+            "Fun_call",
+            [
+              "transpose",
+              [
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "key", [ "value" ] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "instance_per_volume" ]
+                      ]
+                    ],
+                    "key_output": [ "Id", "key" ],
+                    "value_output": [
+                      "Idx", [ [ "Id", "value" ], [ "String", "instances" ] ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "agent_ip",
+          [
+            "Fun_call",
+            [
+              "chomp",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "data" ], [ "A_string", "http" ] ]
+                        ],
+                        [ "A_string", "agent_ip" ]
+                      ]
+                    ],
+                    [ "A_string", "response_body" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bastion_tags",
+          [
+            "Fun_call",
+            [
+              "distinct",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "concat",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "bastion_tags" ] ]
+                      ],
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "rule", [ "values" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "firewall_rules" ]
+                            ]
+                          ],
+                          "output": [
+                            "Attr",
+                            [ [ "Id", "values" ], [ "A_string", "tag" ] ]
+                          ],
+                          "cond": [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "values" ],
+                                              [ "A_string", "ethertype" ]
+                                            ]
+                                          ],
+                                          [ "String", "IPv4" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Lte",
+                                        [
+                                          [ "Int", 22 ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "values" ],
+                                              [ "A_string", "from_port" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Lte",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "values" ],
+                                          [ "A_string", "to_port" ]
+                                        ]
+                                      ],
+                                      [ "Int", 22 ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "alltrue",
+                                  [
+                                    [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "i", [ "v" ] ],
+                                        "input": [
+                                          "Fun_call",
+                                          [
+                                            "split",
+                                            [
+                                              [ "String", "." ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [ "A_string", "agent_ip" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Log_and",
+                                          [
+                                            [
+                                              "Lte",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "tonumber",
+                                                    [
+                                                      [
+                                                        "Idx",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "split",
+                                                              [
+                                                                [
+                                                                  "String",
+                                                                  "."
+                                                                ],
+                                                                [
+                                                                  "Cond",
+                                                                  {
+                                                                    "if_": [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "strcontains",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "values"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "cidr"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    "/"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "then_": [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "cidrhost",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "values"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "cidr"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Int", 0
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "else_": [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "values"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "cidr"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  }
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [ "Id", "i" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "tonumber",
+                                                    [ [ "Id", "v" ] ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Gte",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "tonumber",
+                                                    [
+                                                      [
+                                                        "Idx",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "split",
+                                                              [
+                                                                [
+                                                                  "String",
+                                                                  "."
+                                                                ],
+                                                                [
+                                                                  "Cond",
+                                                                  {
+                                                                    "if_": [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "strcontains",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "values"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "cidr"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "String",
+                                                                    "/"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "then_": [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "cidrhost",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "values"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "cidr"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Minus",
+                                                                    [
+                                                                    "Int", 1
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "else_": [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "values"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "cidr"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  }
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [ "Id", "i" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "tonumber",
+                                                    [ [ "Id", "v" ] ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "check",
+      "labels": [ [ "Lit", "disk_space_per_tag" ] ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "assert",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "inst", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "instances" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "tag", [] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "inst" ],
+                                        [ "A_string", "tags" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Lte",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "lookup",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "min_disk_size_per_tags"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "tag" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string",
+                                                    "min_disk_size"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "inst" ],
+                                            [ "A_string", "disk_size" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Template",
+                  [
+                    [
+                      "Literal",
+                      "At least one instance's disk_size is smaller than what is recommended given its set of tags.\nMininum disk size per tags: "
+                    ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "jsonencode",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "min_disk_size_per_tags" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "assert",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "inst", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ], [ "A_string", "instances" ]
+                            ]
+                          ],
+                          "output": [
+                            "Lte",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "min_disk_size" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "inst" ],
+                                  [ "A_string", "disk_size" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Template",
+                  [
+                    [
+                      "Literal",
+                      "At least one instance's disk_size is smaller than what is recommended by the cloud provider.\nMinimum disk size for provider: "
+                    ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "min_disk_size" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

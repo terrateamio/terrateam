@@ -1,0 +1,21 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Template",
+      [
+        [ "Literal", "prefix " ],
+        [
+          "Interpolation",
+          {
+            "expr": [ "Add", [ [ "Int", 1 ], [ "Int", 2 ] ] ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", " suffix" ]
+      ]
+    ]
+  ]
+]

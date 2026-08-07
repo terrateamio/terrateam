@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,16-16: Missing close bracket on index; The index operator must end with a closing bracket ("]").

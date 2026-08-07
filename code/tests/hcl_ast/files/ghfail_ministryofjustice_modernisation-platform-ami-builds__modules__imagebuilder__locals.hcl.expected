@@ -1,0 +1,858 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "team_ami_base_name",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", "_" ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "team_name" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "ami_base_name" ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ami_name",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", "_" ],
+                [
+                  "Fun_call",
+                  [
+                    "flatten",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "team_ami_base_name" ]
+                            ]
+                          ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "release_or_patch" ]
+                                    ]
+                                  ],
+                                  [ "String", "" ]
+                                ]
+                              ],
+                              "then_": [ "Tuple", [] ],
+                              "else_": [
+                                "Tuple",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "release_or_patch" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ],
+                          [ "String", "{{ imagebuilder:buildDate }}" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "account_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "aws_caller_identity" ]
+                    ]
+                  ],
+                  [ "A_string", "current" ]
+                ]
+              ],
+              [ "A_string", "account_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kms_key_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_kms_key" ] ]
+                  ],
+                  [ "A_string", "hmpps_ebs_encryption_cmk" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "core_shared_services",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "repo_tfstate" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "terraform_remote_state" ]
+                          ]
+                        ],
+                        [ "A_string", "core_shared_services_production" ]
+                      ]
+                    ],
+                    [ "A_string", "outputs" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "imagebuilder_mp_tfstate" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "terraform_remote_state" ]
+                          ]
+                        ],
+                        [ "A_string", "imagebuilder_mp" ]
+                      ]
+                    ],
+                    [ "A_string", "outputs" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "components_custom_data",
+          [
+            "For_object",
+            {
+              "identifiers": [ "component", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "components_custom" ] ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "component" ], [ "A_string", "path" ] ]
+              ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regexall",
+                                [
+                                  [ "String", ".*tftpl" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "component" ],
+                                      [ "A_string", "path" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "templatefile",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "component" ], [ "A_string", "path" ] ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "component_template_args" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Fun_call",
+                    [
+                      "file",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "component" ], [ "A_string", "path" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "components_custom_yaml",
+          [
+            "For_object",
+            {
+              "identifiers": [ "component_filename", [ "data" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ], [ "A_string", "components_custom_data" ]
+                ]
+              ],
+              "key_output": [
+                "Fun_call",
+                [ "basename", [ [ "Id", "component_filename" ] ] ]
+              ],
+              "value_output": [
+                "Object",
+                [
+                  [ [ "Bare", "raw" ], [ "Id", "data" ] ],
+                  [
+                    [ "Bare", "yaml" ],
+                    [
+                      "Fun_call",
+                      [
+                        "yamldecode",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "replace",
+                              [
+                                [ "Id", "data" ],
+                                [ "String", "!Ref " ],
+                                [ "String", "" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "components_custom_versions",
+          [
+            "For_object",
+            {
+              "identifiers": [ "component_filename", [ "data" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ], [ "A_string", "components_custom_yaml" ]
+                ]
+              ],
+              "key_output": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "yaml" ] ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "-version" ]
+                ]
+              ],
+              "value_output": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "data" ], [ "A_string", "yaml" ] ]
+                              ],
+                              [ "A_string", "parameters" ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ],
+                      [ "A_string", "Version" ]
+                    ]
+                  ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "components_aws_versions",
+          [
+            "For_object",
+            {
+              "identifiers": [ "component_aws", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "components_aws" ] ]
+              ],
+              "key_output": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [ "Id", "component_aws" ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "-version" ]
+                ]
+              ],
+              "value_output": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "aws_imagebuilder_component" ]
+                            ]
+                          ],
+                          [ "A_string", "this" ]
+                        ]
+                      ],
+                      [ "Id", "component_aws" ]
+                    ]
+                  ],
+                  [ "A_string", "version" ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "component_version_tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "components_custom_versions" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "components_aws_versions" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default_tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "image-pipeline" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "team_ami_base_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "image-recipe" ],
+                [
+                  "Fun_call",
+                  [
+                    "join",
+                    [
+                      [ "String", "/" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "team_ami_base_name" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "configuration_version" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "infrastructure-configuration" ],
+                [
+                  "Fun_call",
+                  [
+                    "join",
+                    [
+                      [ "String", "/" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "team_ami_base_name" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "configuration_version" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "release-or-patch" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "release_or_patch" ]
+                          ]
+                        ],
+                        [ "String", "" ]
+                      ]
+                    ],
+                    "then_": [ "String", "n/a" ],
+                    "else_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "release_or_patch" ] ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "default_tags" ] ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "component_version_tags" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ami_tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "ami_name" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "environment_management",
+          [
+            "Fun_call",
+            [
+              "jsondecode",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [
+                              "A_string", "aws_secretsmanager_secret_version"
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "environment_management" ]
+                      ]
+                    ],
+                    [ "A_string", "secret_string" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "account_ids_lookup",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ], [ "A_string", "environment_management" ]
+                ]
+              ],
+              [ "A_string", "account_ids" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ami_parent_id",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "account_ids_lookup" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "parent_image" ] ]
+                        ],
+                        [ "A_string", "owner" ]
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "parent_image" ] ]
+                    ],
+                    [ "A_string", "owner" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ami_parent_arn",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Template",
+                  [
+                    [ "Literal", "arn:aws:imagebuilder:" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", ":" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "ami_parent_id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", ":image/" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "parent_image" ]
+                              ]
+                            ],
+                            [ "A_string", "arn_resource_id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "accounts_to_distribute_ami",
+          [
+            "Fun_call",
+            [
+              "distinct",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "flatten",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "account_to_distribute_ami"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Tuple",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "account_to_distribute_ami"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "else_": [ "Tuple", [] ]
+                            }
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "accounts_to_distribute_ami" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

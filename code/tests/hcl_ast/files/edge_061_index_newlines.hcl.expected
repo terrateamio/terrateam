@@ -1,0 +1,12 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Idx",
+      [
+        [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ], [ "Int", 0 ]
+      ]
+    ]
+  ]
+]

@@ -1,0 +1,2161 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_text_chart" ], [ "Lit", "rum_and_synthetics_0" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "markdown",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n<table width=\"100%\" height=\"100%\" rules=\"none\"><tr><td valign=\"middle\" align=\"center\" bgcolor=\"#ab006b\">\n<font size=\"6\" color=\"white\"> Real-User and Synthetics Test Data </font>\n</td></tr></table>\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "Web Vitals" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "rum_and_synthetics_1" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "description", [ "String", "p75" ] ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "Real-User Page Load Latency" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('rum.page_view.time.ns.p75', filter=filter('app', '*') and filter('sf_environment', '*')).percentile(pct=75, by=['app', 'sf_environment']).publish(label='A', enable=False)\nB = (A/1000000000).publish(label='B')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Real-User Latency in Seconds" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "sec" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "rum.page_view.time.ns.p75 - P75 by app,sf_environment"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "rum_and_synthetics_2" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "description", [ "String", "p75" ] ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [
+          "Attribute", "name", [ "String", "Synthetics - Page Load Latency" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nC = data('synthetics.real_browser.dom_load_time_ms', filter=filter('check', 'RUM-splunk-shop-checkout')).percentile(pct=90, by=['check']).publish(label='C', enable=False)\nE = (C/1000).publish(label='E')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "C/1000" ] ],
+              [ "Attribute", "label", [ "String", "E" ] ],
+              [ "Attribute", "value_suffix", [ "String", "sec" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "synthetics.real_browser.dom_load_time_ms - P90 by check"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "rum_and_synthetics_3" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "LCP time RUM" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('rum.webvitals_lcp.time.ns.p75', filter=filter('app', '*') and filter('sf_environment', '*')).percentile(pct=75).publish(label='A', enable=False)\nB = (A/1000000000).publish(label='B')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Linear" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lime_green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 2.5 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 4 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 6.5 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "vivid_yellow" ] ],
+              [ "Attribute", "gt", [ "Float", 2.5 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "LCP in Seconds" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "sec" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "rum.webvitals_lcp.time.ns.p75 - P75" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "rum_and_synthetics_4" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "LCP - Synthetics Baseline" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('synthetics.real_browser.largest_contentful_paint_time_ms', filter=filter('check', 'Homepage-Desktop')).percentile(pct=90, by=['check']).publish(label='A', enable=False)\nB = (A/1000).publish(label='B')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Linear" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lime_green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 2.5 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 4 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 6.5 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "vivid_yellow" ] ],
+              [ "Attribute", "gt", [ "Float", 2.5 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "LCP in Seconds" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "sec" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "synthetics.real_browser.largest_contentful_paint_time_ms - P90 by check"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "rum_and_synthetics_5" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "description", [ "String", "p75" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "minimum_resolution", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "Page Load Latency" ] ],
+        [
+          "Attribute",
+          "on_chart_legend_dimension",
+          [ "String", "plot_label" ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('rum.page_view.time.ns.p75', filter=filter('app', '*') and filter('sf_environment', '*')).percentile(pct=75, by=['app', 'sf_environment']).publish(label='A', enable=False)\nB = (A/1000000000).publish(label='B')\nC = data('synthetics.real_browser.dom_load_time_ms', filter=filter('check', 'RUM-splunk-shop-checkout')).percentile(pct=90, by=['check']).publish(label='C', enable=False)\nD = (C/1000).publish(label='D')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [ [ "Attribute", "label", [ "String", "seconds" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Real-User Latency in Seconds" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Synthetics Baseline" ]
+              ],
+              [ "Attribute", "label", [ "String", "D" ] ],
+              [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "rum.page_view.time.ns.p75 - P75 by app,sf_environment"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "synthetics.real_browser.dom_load_time_ms - P90 by check"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "rum_and_synthetics_6" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "minimum_resolution", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "LCP (Real-User and Synthetics Baseline)" ]
+        ],
+        [
+          "Attribute",
+          "on_chart_legend_dimension",
+          [ "String", "plot_label" ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('rum.webvitals_lcp.time.ns.p75', filter=filter('app', '*') and filter('sf_environment', '*')).percentile(pct=75, by=['app', 'sf_environment']).publish(label='A', enable=False)\nB = (A/1000000000).publish(label='B')\nC = data('synthetics.real_browser.largest_contentful_paint_time_ms', filter=filter('check', 'O11y-Store')).percentile(pct=75, by=['check']).publish(label='C', enable=False)\nD = (C/1000).publish(label='D')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [ [ "Attribute", "label", [ "String", "seconds" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "rum.webvitals_lcp.time.ns.p75 - P75 by app,sf_environment"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "synthetics.real_browser.largest_contentful_paint_time_ms - P75 by check"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Synthetics Baseline for LCP in Seconds" ]
+              ],
+              [ "Attribute", "label", [ "String", "D" ] ],
+              [ "Attribute", "plot_type", [ "String", "LineChart" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "iris" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Real-User LCP in Seconds" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "rum_and_synthetics_7" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "minimum_resolution", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "Website Traffic" ] ],
+        [ "Attribute", "on_chart_legend_dimension", [ "String", "app" ] ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('rum.page_view.count', filter=filter('app', '*')).sum(by=['app']).publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "rum.page_view.count - Sum by app" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "rum_and_synthetics_8" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "FID Score" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('rum.webvitals_fid.time.ns.p75', filter=filter('app', '*') and filter('sf_environment', '*')).percentile(pct=75).publish(label='A', enable=False)\nB = (A/1000000).publish(label='B')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Linear" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lime_green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 100 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 300 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 400 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "vivid_yellow" ] ],
+              [ "Attribute", "gt", [ "Int", 100 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 300 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "FID in milliseconds" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "ms" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "rum.webvitals_fid.time.ns.p75 - P75" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "rum_and_synthetics_9" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "CLS Score RUM" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('rum.webvitals_cls.score.p75', filter=filter('app', '*') and filter('sf_environment', '*')).percentile(pct=75).publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Linear" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lime_green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 0.1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Float", 0.25 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 0.5 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "vivid_yellow" ] ],
+              [ "Attribute", "gt", [ "Float", 0.1 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 0.25 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "rum.webvitals_cls.score.p75 - P75" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "rum_and_synthetics_10" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Grouped by app and environment" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "minimum_resolution", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Javascript errors per page view (Average)" ]
+        ],
+        [ "Attribute", "on_chart_legend_dimension", [ "String", "app" ] ],
+        [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('rum.client_error.count', filter=filter('app', '*') and filter('sf_environment', '*')).sum(by=['app', 'sf_environment']).publish(label='A', enable=False)\nB = data('rum.page_view.count', filter=filter('app', '*') and filter('sf_environment', '*')).sum(by=['app', 'sf_environment']).publish(label='B', enable=False)\nC = (A/B).publish(label='C')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 518400 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "display_name", [ "String", "A/B" ] ],
+              [ "Attribute", "label", [ "String", "C" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "rum.client_error.count - Sum by app,sf_environment"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String", "rum.page_view.count - Sum by app,sf_environment"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "rum_and_synthetics_11" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "minimum_resolution", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "HTTP Error Rate" ] ],
+        [ "Attribute", "on_chart_legend_dimension", [ "String", "app" ] ],
+        [ "Attribute", "plot_type", [ "String", "AreaChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('rum.resource_request.count', filter=filter('app', '*') and filter('sf_environment', '*')).sum(by=['app', 'sf_environment']).publish(label='A', enable=False)\nC = data('rum.resource_request.count', filter=filter('app', '*') and filter('sf_environment', '*') and filter('sf_error', 'true')).sum(by=['app', 'sf_environment']).publish(label='C', enable=False)\nD = (100*C/A).publish(label='D')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [ "Attribute", "label", [ "String", "Percentage (%)" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "display_name", [ "String", "100*C/A" ] ],
+              [ "Attribute", "label", [ "String", "D" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "rum.resource_request.count - Sum by app,sf_environment"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "rum.resource_request.count - Sum by app,sf_environment"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_text_chart" ], [ "Lit", "rum_and_synthetics_12" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "markdown",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n<table width=\"100%\" height=\"100%\" rules=\"none\"><tr><td valign=\"middle\" align=\"center\" bgcolor=\"#111\">\n<font size=\"6\" color=\"white\"> Web Vitals </font>\n</td></tr></table>\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "Web Vitals" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "rum_and_synthetics_13" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "synthetics.real_browser.total_blocking_time_ms" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('synthetics.real_browser.total_blocking_time_ms', filter=filter('check', 'RUM-splunk-shop-checkout')).publish(label='A', enable=False)\nB = (A/1000).publish(label='B')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A/1000" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String", "synthetics.real_browser.total_blocking_time_ms"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "rum_and_synthetics_14" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "description", [ "String", "p75" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "minimum_resolution", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "FID/TBT" ] ],
+        [ "Attribute", "on_chart_legend_dimension", [ "String", "app" ] ],
+        [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('rum.webvitals_fid.time.ns.p75', filter=filter('app', '*') and filter('sf_environment', '*')).percentile(pct=75, by=['app', 'sf_environment']).publish(label='A', enable=False)\nB = (A/1000000).publish(label='B')\nC = data('synthetics.real_browser.total_blocking_time_ms', filter=filter('check', 'BTubalinal-O11Y-Store')).percentile(pct=90, by=['check']).above(0).publish(label='C', enable=False)\nD = (C/1000).publish(label='D')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [ "Attribute", "label", [ "String", "milliseconds" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "rum.webvitals_fid.time.ns.p75 - P75 by app,sf_environment"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "synthetics.real_browser.total_blocking_time_ms - P90 by check - Exclude x <= 0"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "iris" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Real-User Latency in ms" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "right" ] ],
+              [ "Attribute", "color", [ "String", "purple" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Synthetics Baseline" ]
+              ],
+              [ "Attribute", "label", [ "String", "D" ] ],
+              [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+              [ "Attribute", "value_unit", [ "String", "Second" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ],
+        [ "Lit", "rum_and_synthetics_15" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [ "Attribute", "is_timestamp_hidden", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "CLS Score" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "String",
+            "A = data('rum.webvitals_cls.score.p75', filter=filter('app', '*') and filter('sf_environment', '*')).percentile(pct=75).publish(label='A')"
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Linear" ] ],
+        [ "Attribute", "show_spark_line", [ "Bool", false ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lime_green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 0.1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Float", 0.25 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 0.5 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "vivid_yellow" ] ],
+              [ "Attribute", "gt", [ "Float", 0.1 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 0.25 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "rum.webvitals_cls.score.p75 - P75" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "rum_and_synthetics_16" ]
+      ],
+      "body": [
+        [ "Attribute", "axes_include_zero", [ "Bool", false ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "description", [ "String", "Baseline (P75)" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "minimum_resolution", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "Synthetics | Page Load Time" ] ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('synthetics.real_browser.dom_load_time_ms', filter=filter('check', 'RUM-splunk-shop-checkout')).percentile(pct=75, by=['check']).publish(label='A', enable=False)\nB = (A/1000).publish(label='B')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "show_data_markers", [ "Bool", false ] ],
+        [ "Attribute", "show_event_lines", [ "Bool", false ] ],
+        [ "Attribute", "stacked", [ "Bool", false ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "red" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "display_name", [ "String", "A/1000" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "synthetics.real_browser.dom_load_time_ms - P75 by check"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "rum_and_synthetics_17" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 0 ] ],
+        [ "Attribute", "name", [ "String", "TBT - Synthetics" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('synthetics.real_browser.total_blocking_time_ms').percentile(pct=90, by=['check']).publish(label='A', enable=False)\nB = (A).publish(label='B')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Linear" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lime_green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 2.5 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 4 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 6.5 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "vivid_yellow" ] ],
+              [ "Attribute", "gt", [ "Float", 2.5 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 4 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "TBT in ms" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "sec" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [
+                  "String",
+                  "synthetics.real_browser.total_blocking_time_ms - P90 by check"
+                ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_dashboard" ], [ "Lit", "rum_and_synthetics" ]
+      ],
+      "body": [
+        [ "Attribute", "charts_resolution", [ "String", "default" ] ],
+        [
+          "Attribute",
+          "dashboard_group",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "signalfx_dashboard_group" ],
+                  [ "A_string", "rumandsynthetics" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "Synthetics and RUM" ] ],
+        [ "Attribute", "time_range", [ "String", "-1w" ] ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "rum_and_synthetics_17" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 7 ] ],
+              [ "Attribute", "width", [ "Int", 6 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "rum_and_synthetics_4" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 9 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "rum_and_synthetics_6" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 6 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "rum_and_synthetics_1" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "rum_and_synthetics_2" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_text_chart" ],
+                        [ "A_string", "rum_and_synthetics_0" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 12 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "rum_and_synthetics_15" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 6 ] ],
+              [ "Attribute", "width", [ "Int", 6 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "rum_and_synthetics_14" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 6 ] ],
+              [ "Attribute", "width", [ "Int", 6 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "rum_and_synthetics_13" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 5 ] ],
+              [ "Attribute", "width", [ "Int", 6 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "rum_and_synthetics_3" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "rum_and_synthetics_9" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 9 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "rum_and_synthetics_11" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 6 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "rum_and_synthetics_5" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 6 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "rum_and_synthetics_7" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 6 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_text_chart" ],
+                        [ "A_string", "rum_and_synthetics_12" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 5 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "rum_and_synthetics_8" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "rum_and_synthetics_10" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 6 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "rum_and_synthetics_16" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ],
+              [ "Attribute", "row", [ "Int", 7 ] ],
+              [ "Attribute", "width", [ "Int", 6 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "variable",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "alias", [ "String", "Application Name (app)" ]
+              ],
+              [ "Attribute", "apply_if_exist", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "app" ] ],
+              [ "Attribute", "replace_only", [ "Bool", false ] ],
+              [ "Attribute", "restricted_suggestions", [ "Bool", false ] ],
+              [ "Attribute", "value_required", [ "Bool", false ] ],
+              [ "Attribute", "values", [ "Tuple", [] ] ],
+              [ "Attribute", "values_suggested", [ "Tuple", [] ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "variable",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alias",
+                [ "String", "Environment (environment)" ]
+              ],
+              [ "Attribute", "apply_if_exist", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_environment" ] ],
+              [ "Attribute", "replace_only", [ "Bool", true ] ],
+              [ "Attribute", "restricted_suggestions", [ "Bool", false ] ],
+              [ "Attribute", "value_required", [ "Bool", false ] ],
+              [ "Attribute", "values", [ "Tuple", [] ] ],
+              [ "Attribute", "values_suggested", [ "Tuple", [] ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

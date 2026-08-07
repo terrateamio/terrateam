@@ -1,0 +1,196 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [
+        [ "Attribute", "alias", [ "String", "us-east-1" ] ],
+        [ "Attribute", "region", [ "String", "us-east-1" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_acm_certificate" ], [ "Lit", "main_certificate" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "provider",
+          [ "Attr", [ [ "Id", "aws" ], [ "A_string", "us-east-1" ] ] ]
+        ],
+        [ "Attribute", "domain", [ "String", "*.isnan.eu" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_route53_zone" ], [ "Lit", "primary" ] ],
+      "body": [ [ "Attribute", "name", [ "String", "isnan.eu." ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route53_record" ], [ "Lit", "web_client_ipv4" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "zone_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_route53_zone" ] ]
+                  ],
+                  [ "A_string", "primary" ]
+                ]
+              ],
+              [ "A_string", "zone_id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "celsus.isnan.eu" ] ],
+        [ "Attribute", "type", [ "String", "A" ] ],
+        [
+          "Block",
+          {
+            "type_": "alias",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "zone_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_cloudfront_distribution" ],
+                        [ "A_string", "web_app_distribution" ]
+                      ]
+                    ],
+                    [ "A_string", "hosted_zone_id" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute", "evaluate_target_health", [ "String", "false" ]
+              ],
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_cloudfront_distribution" ],
+                        [ "A_string", "web_app_distribution" ]
+                      ]
+                    ],
+                    [ "A_string", "domain_name" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route53_record" ], [ "Lit", "web_client_ipv6" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "zone_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_route53_zone" ] ]
+                  ],
+                  [ "A_string", "primary" ]
+                ]
+              ],
+              [ "A_string", "zone_id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "celsus.isnan.eu" ] ],
+        [ "Attribute", "type", [ "String", "AAAA" ] ],
+        [
+          "Block",
+          {
+            "type_": "alias",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "zone_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_cloudfront_distribution" ],
+                        [ "A_string", "web_app_distribution" ]
+                      ]
+                    ],
+                    [ "A_string", "hosted_zone_id" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute", "evaluate_target_health", [ "String", "false" ]
+              ],
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_cloudfront_distribution" ],
+                        [ "A_string", "web_app_distribution" ]
+                      ]
+                    ],
+                    [ "A_string", "domain_name" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

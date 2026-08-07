@@ -1,0 +1,3201 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "lambda_environments",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "development" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "condition" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "is-development" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "s3_bucket" ],
+                      [ "String", "moj-infrastructure-dev" ]
+                    ],
+                    [
+                      [ "Bare", "account_key" ],
+                      [ "String", "ppud-development" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "preproduction" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "condition" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "is-preproduction" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "s3_bucket" ],
+                      [ "String", "moj-infrastructure-uat" ]
+                    ],
+                    [
+                      [ "Bare", "account_key" ],
+                      [ "String", "ppud-preproduction" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "production" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "condition" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "is-production" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "s3_bucket" ],
+                      [ "String", "moj-infrastructure" ]
+                    ],
+                    [
+                      [ "Bare", "account_key" ],
+                      [ "String", "ppud-production" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lambda_functions",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "check_certificate_expiration" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to check certificate expiration date and send a reminder for any under 30 days."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ],
+                      [ "String", "get_certificate_expiry" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "preproduction" ],
+                          [ "String", "production" ]
+                        ]
+                      ]
+                    ],
+                    [ [ "Bare", "runtime" ], [ "String", "python3.13" ] ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [
+                                  "String",
+                                  "lambda.alarms.cloudwatch.amazonaws.com"
+                                ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "alarm:*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "environment" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "variables" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "EXPIRY_DAYS" ],
+                                  [ "String", "30" ]
+                                ],
+                                [
+                                  [ "Bare", "SNS_TOPIC_ARN" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "development" ],
+                                        [
+                                          "Template",
+                                          [
+                                            [
+                                              "Literal",
+                                              "arn:aws:sns:eu-west-2:"
+                                            ],
+                                            [
+                                              "Interpolation",
+                                              {
+                                                "expr": [
+                                                  "Idx",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "environment_management"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "account_ids"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "String",
+                                                      "ppud-development"
+                                                    ]
+                                                  ]
+                                                ],
+                                                "strip_before": false,
+                                                "strip_after": false
+                                              }
+                                            ],
+                                            [
+                                              "Literal",
+                                              ":ppud-dev-cw-alerts"
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "preproduction" ],
+                                        [
+                                          "Template",
+                                          [
+                                            [
+                                              "Literal",
+                                              "arn:aws:sns:eu-west-2:"
+                                            ],
+                                            [
+                                              "Interpolation",
+                                              {
+                                                "expr": [
+                                                  "Idx",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "environment_management"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "account_ids"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "String",
+                                                      "ppud-preproduction"
+                                                    ]
+                                                  ]
+                                                ],
+                                                "strip_before": false,
+                                                "strip_after": false
+                                              }
+                                            ],
+                                            [
+                                              "Literal",
+                                              ":ppud-uat-cw-alerts"
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "production" ],
+                                        [
+                                          "Template",
+                                          [
+                                            [
+                                              "Literal",
+                                              "arn:aws:sns:eu-west-2:"
+                                            ],
+                                            [
+                                              "Interpolation",
+                                              {
+                                                "expr": [
+                                                  "Idx",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "environment_management"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "account_ids"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "String",
+                                                      "ppud-production"
+                                                    ]
+                                                  ]
+                                                ],
+                                                "strip_before": false,
+                                                "strip_after": false
+                                              }
+                                            ],
+                                            [
+                                              "Literal",
+                                              ":ppud-prod-cw-alerts"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "terminate_cpu_process" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to terminate an application process due to high CPU utilisation on an EC2 instance."
+                      ]
+                    ],
+                    [ [ "Bare", "role_key" ], [ "String", "invoke_ssm" ] ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "preproduction" ],
+                          [ "String", "production" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [
+                                  "String",
+                                  "lambda.alarms.cloudwatch.amazonaws.com"
+                                ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "alarm:*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "send_cpu_notification" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to send an email notification when triggered by high CPU utilisation on an EC2 instance."
+                      ]
+                    ],
+                    [ [ "Bare", "role_key" ], [ "String", "invoke_ssm" ] ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "preproduction" ],
+                          [ "String", "production" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [
+                                  "String",
+                                  "lambda.alarms.cloudwatch.amazonaws.com"
+                                ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "alarm:*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "send_cpu_graph" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to retrieve, graph and email CPU utilisation on an EC2 instance."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_cloudwatch" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "production" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "layers" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "numpy" ],
+                          [ "String", "pillow" ],
+                          [ "String", "matplotlib" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "prod" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "wam_waf_analysis" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to analyse WAM WAF ACL traffic and email a report."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_cloudwatch" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "preproduction" ],
+                          [ "String", "production" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "layers" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "numpy" ],
+                          [ "String", "pillow" ],
+                          [ "String", "requests" ],
+                          [ "String", "matplotlib" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "securityhub_critical_report" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to email a summary of critical CVEs found in AWS Security Hub."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ],
+                      [ "String", "get_securityhub_data" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "preproduction" ],
+                          [ "String", "production" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "securityhub.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "securityhub_monthly_report" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to email a summary of all AWS Security Hub CVEs created, resolved and suppressed in a given month."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ],
+                      [ "String", "get_securityhub_data" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "preproduction" ],
+                          [ "String", "production" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "securityhub.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ses_logging" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to allow logging of outgoing emails via SES."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_ses_logging" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "preproduction" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "sns.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_resource" ],
+                                [ "String", "ses_logging" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "disable_cpu_alarm" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to disable Cloudwatch CPU alerts."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_cloudwatch" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "enable_cpu_alarm" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String", "Function to enable Cloudwatch CPU alerts."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_cloudwatch" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ppud_email_report" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to analyse, graph and email the email usage on the smtp mail relays."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_cloudwatch" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "layers" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "numpy" ],
+                          [ "String", "pillow" ],
+                          [ "String", "matplotlib" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ppud_elb_count_report" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to retrieve, graph and email the utilisation of the PPUD ELB."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_cloudwatch" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "layers" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "numpy" ],
+                          [ "String", "pillow" ],
+                          [ "String", "matplotlib" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "wam_elb_count_report" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to retrieve, graph and email the utilisation of the WAM ELB."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_cloudwatch" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "layers" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "numpy" ],
+                          [ "String", "pillow" ],
+                          [ "String", "matplotlib" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ppud_elb_get_trt_data" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to retrieve PPUD ELB target response time data from Cloudwatch and send it to S3."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_elb_metrics" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ppud_elb_calculate_trt_data" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to retrieve PPUD ELB target response time data from S3, calculate the monthly average target response time and email a report to end users."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_elb_metrics" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ppud_elb_graph_trt_data" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to retrieve PPUD ELB daily target response time data from Cloudwatch, graph it and email it to end users."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_cloudwatch" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "layers" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "numpy" ],
+                          [ "String", "pillow" ],
+                          [ "String", "matplotlib" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "wam_elb_graph_trt_data" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to retrieve WAM ELB daily target response time data from Cloudwatch, graph it and email it to end users."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_cloudwatch" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "layers" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "numpy" ],
+                          [ "String", "pillow" ],
+                          [ "String", "matplotlib" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ppud_elb_get_uptime_data" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to retrieve PPUD ELB uptime data from Cloudwatch and send it to S3."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_elb_metrics" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ppud_elb_calculate_uptime_data" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to retrieve PPUD ELB uptime data from S3, calculate the monthly average uptime and email a report to end users."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_elb_metrics" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ssm_patch_notification" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to send email notification when SSM patching completes."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ],
+                      [ "String", "ssm_patch_notification" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "preproduction" ],
+                          [ "String", "production" ]
+                        ]
+                      ]
+                    ],
+                    [ [ "Bare", "runtime" ], [ "String", "python3.13" ] ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "events.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "disk_info_report" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to retrieve, format and email a report on the disk utilisation of all Windows EC2 instances."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_cloudwatch" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "layers" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "numpy" ],
+                          [ "String", "pillow" ],
+                          [ "String", "matplotlib" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "wam_web_traffic_analysis" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to analyse IIS logs from S3, format the data and output a report in Excel to S3."
+                      ]
+                    ],
+                    [ [ "Bare", "timeout" ], [ "Int", 900 ] ],
+                    [ [ "Bare", "memory_size" ], [ "Int", 1024 ] ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_cloudwatch" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "layers" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "beautifulsoup" ],
+                          [ "String", "xlsxwriter" ],
+                          [ "String", "requests" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_config" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "production" ], [ "Bool", true ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "sync_ssm_to_waf" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to synchronize ssm parameter store with WAF ip sets."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "sync_ssm_to_waf" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "preproduction" ],
+                          [ "String", "production" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "events.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "check_elb_trt_alarm" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to check alarm state of High-Target-Response-Time-WAM-ELB alarm and generate subsequent alerts."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ],
+                      [ "String", "check_elb_trt_alarm" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [ "Tuple", [ [ "String", "production" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "suppress_securityhub_findings" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to suppress security hub findings with a Compliance Status of NOT_AVAILABLE."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ],
+                      [ "String", "suppress_sechub_findings" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "preproduction" ],
+                          [ "String", "production" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "securityhub.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "waf_web_acl_bot_analysis" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "description" ],
+                      [
+                        "String",
+                        "Function to analyse WAM WAF Web ACL rule AWSManagedRulesBotControlRuleSet for bot traffic and email a report."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "role_key" ], [ "String", "get_waf_web_acl" ]
+                    ],
+                    [
+                      [ "Bare", "environments" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "development" ],
+                          [ "String", "preproduction" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "permissions" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "principal" ],
+                                [ "String", "cloudwatch.amazonaws.com" ]
+                              ],
+                              [
+                                [ "Bare", "source_arn_suffix" ],
+                                [ "String", "*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lambda_instances",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "func_name", [ "func_config" ] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "lambda_functions" ]
+                      ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "env", [] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "func_config" ],
+                            [ "A_string", "environments" ]
+                          ]
+                        ],
+                        "output": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "key" ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [ "Id", "func_name" ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [ "Literal", "_" ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [ "Id", "env" ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "func_name" ], [ "Id", "func_name" ]
+                            ],
+                            [ [ "Bare", "env" ], [ "Id", "env" ] ],
+                            [ [ "Bare", "config" ], [ "Id", "func_config" ] ],
+                            [
+                              [ "Bare", "env_config" ],
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "lambda_environments" ]
+                                    ]
+                                  ],
+                                  [ "Id", "env" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "lambda_environments" ]
+                                  ]
+                                ],
+                                [ "Id", "env" ]
+                              ]
+                            ],
+                            [ "A_string", "condition" ]
+                          ]
+                        ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lambda_instances_map",
+          [
+            "For_object",
+            {
+              "identifiers": [ "instance", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "lambda_instances" ] ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "instance" ], [ "A_string", "key" ] ]
+              ],
+              "value_output": [ "Id", "instance" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "lambda_defaults",
+          [
+            "Object",
+            [
+              [ [ "Bare", "runtime" ], [ "String", "python3.12" ] ],
+              [ [ "Bare", "timeout" ], [ "Int", 300 ] ],
+              [ [ "Bare", "reserved_concurrent_executions" ], [ "Int", 5 ] ],
+              [ [ "Bare", "tracing_mode" ], [ "String", "Active" ] ],
+              [ [ "Bare", "log_retention_days" ], [ "Int", 30 ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dlq_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_sqs_queue" ] ]
+                  ],
+                  [ "A_string", "lambda_function_dead_letter_queue" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "klayers_account_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_ssm_parameter" ] ]
+                  ],
+                  [ "A_string", "klayers_account" ]
+                ]
+              ],
+              [ "A_string", "value" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "layer_arns",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "numpy" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "arn:aws:lambda:eu-west-2:" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "klayers_account_id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", ":layer:Klayers-p312-numpy:8" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "pillow" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "arn:aws:lambda:eu-west-2:" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "klayers_account_id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", ":layer:Klayers-p312-pillow:1" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lambda_function" ], [ "Lit", "lambda_functions" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "lambda_instances_map" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "config" ]
+                ]
+              ],
+              [ "A_string", "description" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "s3_bucket",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "env_config" ]
+                ]
+              ],
+              [ "A_string", "s3_bucket" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "s3_key",
+          [
+            "Template",
+            [
+              [ "Literal", "lambda/functions/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "func_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "env" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".zip" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "function_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "func_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "env" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_iam_role" ],
+                      [ "A_string", "lambda_role_v2" ]
+                    ]
+                  ],
+                  [
+                    "Template",
+                    [
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "config" ]
+                                ]
+                              ],
+                              [ "A_string", "role_key" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "_" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "env" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "handler",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "func_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "env" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".lambda_handler" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "runtime",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "lambda_defaults" ] ]
+              ],
+              [ "A_string", "runtime" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "timeout",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "config" ]
+                      ]
+                    ],
+                    [ "A_string", "timeout" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "lambda_defaults" ]
+                      ]
+                    ],
+                    [ "A_string", "timeout" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "reserved_concurrent_executions",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "lambda_defaults" ] ]
+              ],
+              [ "A_string", "reserved_concurrent_executions" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "memory_size",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "config" ]
+                      ]
+                    ],
+                    [ "A_string", "memory_size" ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dead_letter_config",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "target_arn",
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "dlq_arn" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "tracing_config",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "mode",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "lambda_defaults" ]
+                      ]
+                    ],
+                    [ "A_string", "tracing_mode" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "layers",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "config" ]
+                              ]
+                            ],
+                            [ "A_string", "layers" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "For_tuple",
+                {
+                  "identifiers": [ "layer", [] ],
+                  "input": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "config" ]
+                        ]
+                      ],
+                      [ "A_string", "layers" ]
+                    ]
+                  ],
+                  "output": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Fun_call",
+                        [
+                          "contains",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "keys",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "lambda_layers" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Id", "layer" ]
+                          ]
+                        ]
+                      ],
+                      "then_": [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "aws_lambda_layer_version" ],
+                                  [ "A_string", "lambda_layers" ]
+                                ]
+                              ],
+                              [ "Id", "layer" ]
+                            ]
+                          ],
+                          [ "A_string", "arn" ]
+                        ]
+                      ],
+                      "else_": [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "keys",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "layer_arns" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Id", "layer" ]
+                              ]
+                            ]
+                          ],
+                          "then_": [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "layer_arns" ]
+                                ]
+                              ],
+                              [ "Id", "layer" ]
+                            ]
+                          ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    }
+                  ],
+                  "cond": null
+                }
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "vpc_config" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "env" ]
+                          ]
+                        ],
+                        [ "String", "production" ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "Int", 1 ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "subnet_ids",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "data" ],
+                                      [ "A_string", "aws_subnet" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "private_subnets_b" ]
+                                ]
+                              ],
+                              [ "A_string", "id" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "security_group_ids",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "aws_security_group" ],
+                                      [ "A_string", "PPUD-Mail-Server" ]
+                                    ]
+                                  ],
+                                  [ "Int", 0 ]
+                                ]
+                              ],
+                              [ "A_string", "id" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "environment" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "config" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "environment" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "config" ]
+                              ]
+                            ],
+                            [ "A_string", "environment" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "variables",
+                      [
+                        "Fun_call",
+                        [
+                          "merge",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "environment" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "variables" ]
+                              ]
+                            ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "SNS_TOPIC_ARN" ],
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "environment" ],
+                                                  [ "A_string", "value" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "variables" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "SNS_TOPIC_ARN" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "env" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Function" ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "func_name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Environment" ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "env" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lambda_permission" ], [ "Lit", "lambda_permissions" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "lambda_instances_map" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "v" ], [ "A_string", "config" ] ]
+                            ],
+                            [ "A_string", "permissions" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [ "Attribute", "statement_id", [ "String", "AllowInvocation" ] ],
+        [ "Attribute", "action", [ "String", "lambda:InvokeFunction" ] ],
+        [
+          "Attribute",
+          "function_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_lambda_function" ],
+                      [ "A_string", "lambda_functions" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "function_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "principal",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "config" ]
+                        ]
+                      ],
+                      [ "A_string", "permissions" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "principal" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source_arn",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "permissions" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "source_arn_resource" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [ "Literal", "arn:aws:sns:eu-west-2:" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "environment_management" ]
+                                ]
+                              ],
+                              [ "A_string", "account_ids" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "env_config" ]
+                                ]
+                              ],
+                              [ "A_string", "account_key" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", ":" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "config" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "permissions" ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "source_arn_resource" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "_" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "env" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [
+                "Template",
+                [
+                  [ "Literal", "arn:aws:cloudwatch:eu-west-2:" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "environment_management" ]
+                                ]
+                              ],
+                              [ "A_string", "account_ids" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "env_config" ]
+                                ]
+                              ],
+                              [ "A_string", "account_key" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", ":" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "config" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "permissions" ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "source_arn_suffix" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_group" ], [ "Lit", "lambda_log_groups" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "lambda_instances_map" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "/aws/lambda/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "func_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "env" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "retention_in_days",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "lambda_defaults" ] ]
+              ],
+              [ "A_string", "log_retention_days" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

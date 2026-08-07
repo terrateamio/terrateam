@@ -1,0 +1,755 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_action_group" ], [ "Lit", "mag1" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Monitor action group" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "rg1" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "short_name", [ "String", "mag" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "notification_email",
+          [ "String", "nikos.tsirmirakis@winopsdba.com" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "budget_forecast_notifications",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "80.0" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "operator" ],
+                      [ "String", "GreaterThanOrEqualTo" ]
+                    ],
+                    [
+                      [ "Bare", "contact_emails" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "notification_email" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "90.0" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "operator" ],
+                      [ "String", "GreaterThanOrEqualTo" ]
+                    ],
+                    [
+                      [ "Bare", "contact_emails" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "notification_email" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "100.0" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "operator" ],
+                      [ "String", "GreaterThanOrEqualTo" ]
+                    ],
+                    [
+                      [ "Bare", "contact_emails" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "notification_email" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "120.0" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "operator" ],
+                      [ "String", "GreaterThanOrEqualTo" ]
+                    ],
+                    [
+                      [ "Bare", "contact_emails" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "notification_email" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_consumption_budget_resource_group" ],
+        [ "Lit", "cbrgf" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_resource_group" ],
+                          [ "A_string", "rg1" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-m-forecast-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "budget_amount" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "rg1" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "amount",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "budget_amount" ] ] ]
+        ],
+        [ "Attribute", "time_grain", [ "String", "Monthly" ] ],
+        [
+          "Block",
+          {
+            "type_": "time_period",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "start_date",
+                [ "String", "2023-10-01T00:00:00Z" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "dimension",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "name", [ "String", "ResourceId" ] ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "azurerm_monitor_action_group" ],
+                                  [ "A_string", "mag1" ]
+                                ]
+                              ],
+                              [ "A_string", "id" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "notification" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "budget_forecast_notifications" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "enabled", [ "Bool", true ] ],
+                    [
+                      "Attribute",
+                      "threshold",
+                      [
+                        "Attr",
+                        [ [ "Id", "notification" ], [ "A_string", "key" ] ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "threshold_type",
+                      [ "String", "Forecasted" ]
+                    ],
+                    [
+                      "Attribute",
+                      "operator",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "notification" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "operator" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "contact_emails",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "notification" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "contact_emails" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "contact_groups",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "azurerm_monitor_action_group" ],
+                                  [ "A_string", "mag1" ]
+                                ]
+                              ],
+                              [ "A_string", "id" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "contact_roles",
+                      [ "Tuple", [ [ "String", "Owner" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "budget_actual_notifications",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "80.0" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "operator" ],
+                      [ "String", "GreaterThanOrEqualTo" ]
+                    ],
+                    [
+                      [ "Bare", "contact_emails" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "notification_email" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "90.0" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "operator" ],
+                      [ "String", "GreaterThanOrEqualTo" ]
+                    ],
+                    [
+                      [ "Bare", "contact_emails" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "notification_email" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "100.0" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "operator" ],
+                      [ "String", "GreaterThanOrEqualTo" ]
+                    ],
+                    [
+                      [ "Bare", "contact_emails" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "notification_email" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "120.0" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "operator" ],
+                      [ "String", "GreaterThanOrEqualTo" ]
+                    ],
+                    [
+                      [ "Bare", "contact_emails" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "notification_email" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_consumption_budget_resource_group" ],
+        [ "Lit", "cbrga" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_resource_group" ],
+                          [ "A_string", "rg1" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-m-actual-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "budget_amount" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "rg1" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "amount",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "budget_amount" ] ] ]
+        ],
+        [ "Attribute", "time_grain", [ "String", "Monthly" ] ],
+        [
+          "Block",
+          {
+            "type_": "time_period",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "start_date",
+                [ "String", "2023-10-01T00:00:00Z" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "dimension",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "name", [ "String", "ResourceId" ] ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "azurerm_monitor_action_group" ],
+                                  [ "A_string", "mag1" ]
+                                ]
+                              ],
+                              [ "A_string", "id" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "notification" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "budget_actual_notifications" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "enabled", [ "Bool", true ] ],
+                    [
+                      "Attribute",
+                      "threshold",
+                      [
+                        "Attr",
+                        [ [ "Id", "notification" ], [ "A_string", "key" ] ]
+                      ]
+                    ],
+                    [ "Attribute", "threshold_type", [ "String", "Actual" ] ],
+                    [
+                      "Attribute",
+                      "operator",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "notification" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "operator" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "contact_emails",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "notification" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "contact_emails" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "contact_groups",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "azurerm_monitor_action_group" ],
+                                  [ "A_string", "mag1" ]
+                                ]
+                              ],
+                              [ "A_string", "id" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "contact_roles",
+                      [ "Tuple", [ [ "String", "Owner" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

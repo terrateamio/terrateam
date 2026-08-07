@@ -1,0 +1,621 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ], [ "Lit", "covidportal" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sts:AssumeRole" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "principals",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "Service" ] ],
+                    [
+                      "Attribute",
+                      "identifiers",
+                      [
+                        "Tuple", [ [ "String", "ecs-tasks.amazonaws.com" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ],
+        [ "Lit", "covidportal_secrets_manager" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "effect", [ "String", "Allow" ] ],
+              [
+                "Attribute",
+                "actions",
+                [
+                  "Tuple", [ [ "String", "secretsmanager:GetSecretValue" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret" ],
+                            [ "A_string", "server_database_url" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "api_authorization" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "api_endpoint" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "default_from_email" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "invitation_email_template_id_en" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "invitation_email_template_id_fr" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [
+                              "A_string",
+                              "password_reset_email_template_id_en"
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [
+                              "A_string",
+                              "password_reset_email_template_id_fr"
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "django_admins" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "django_secret_key" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "email_host" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "email_host_user" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "email_host_password" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "freshdesk_api_endpoint" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "freshdesk_api_key" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "freshdesk_product_id" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "new_relic_license_key" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "notify_api_key" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_secretsmanager_secret_version" ],
+                            [ "A_string", "notify_template_id" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_policy" ], [ "Lit", "covidportal_secrets_manager" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "covidportalSecretsManagerKeyRetrieval" ]
+        ],
+        [ "Attribute", "path", [ "String", "/" ] ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "covidportal_secrets_manager" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_iam_role" ], [ "Lit", "covidportal" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "ecs_covid_portal_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy_attachment" ],
+        [ "Lit", "ecs_task_execution_covid_portal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_arn",
+          [
+            "String",
+            "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy_attachment" ],
+        [ "Lit", "secrets_manager_covid_portal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_iam_policy" ],
+                  [ "A_string", "covidportal_secrets_manager" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_iam_role" ], [ "Lit", "codedeploy" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "codedeploy" ] ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "assume_role_policy_codedeploy" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "path", [ "String", "/" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ],
+        [ "Lit", "assume_role_policy_codedeploy" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sts:AssumeRole" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "principals",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "Service" ] ],
+                    [
+                      "Attribute",
+                      "identifiers",
+                      [
+                        "Tuple", [ [ "String", "codedeploy.amazonaws.com" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy_attachment" ], [ "Lit", "codedeploy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "codedeploy" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_arn",
+          [ "String", "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS" ]
+        ]
+      ]
+    }
+  ]
+]

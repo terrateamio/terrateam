@@ -1,0 +1,18 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "str", [ "String", "hello" ] ],
+        [ "Attribute", "num", [ "Int", 42 ] ],
+        [ "Attribute", "float", [ "Float", 3.14 ] ],
+        [ "Attribute", "flag", [ "Bool", true ] ],
+        [ "Attribute", "flag2", [ "Bool", false ] ],
+        [ "Attribute", "empty", [ "Null" ] ],
+        [ "Attribute", "doc", [ "Heredoc", [ "EOT", "\nheredoc\n" ] ] ]
+      ]
+    }
+  ]
+]
