@@ -80,20 +80,12 @@ jobs:
         with:
           fetch-tags: true
 
-      - name: Generate terrateamio packages token
-        id: terrateamio-token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ secrets.TERRATEAMIO_PACKAGES_APP_ID }}
-          private-key: ${{ secrets.TERRATEAMIO_PACKAGES_APP_PRIVATE_KEY }}
-          owner: terrateamio
-
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: x-access-token
-          password: ${{ steps.terrateamio-token.outputs.token }}
+          password: ${{ secrets.TERRATEAMIO_PACKAGES_TOKEN }}
 
       - name: Set base image
         run: |
@@ -159,14 +151,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate terrateamio packages token
-        id: terrateamio-token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ secrets.TERRATEAMIO_PACKAGES_APP_ID }}
-          private-key: ${{ secrets.TERRATEAMIO_PACKAGES_APP_PRIVATE_KEY }}
-          owner: terrateamio
-
       - name: Set is latest version tag
         id: is-latest-version-tag
         run: |
@@ -179,7 +163,7 @@ jobs:
         with:
           registry: ghcr.io
           username: x-access-token
-          password: ${{ steps.terrateamio-token.outputs.token }}
+          password: ${{ secrets.TERRATEAMIO_PACKAGES_TOKEN }}
 
       - name: Create and push multi-arch manifest
         run: |
