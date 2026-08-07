@@ -76,9 +76,18 @@ module S = struct
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
     let compact = CCList.exists (fun { compact; _ } -> compact) els in
+    (* Only the elements that are themselves oversized lose their step output. Previously any single
+       oversized element forced the compact view on the whole comment, so a large plan diff on one
+       dirspace erased the error text on every other one (#1540). *)
+    let compacted_dirspaces =
+      CCList.filter_map
+        (fun { compact; dirspace; _ } -> if compact then Some dirspace else None)
+        els
+    in
     let body =
       Publisher_tools.create_run_output
         ~view:(if compact then `Compact else `Full)
+        ~compacted_dirspaces
         ~summary
         ~pull_number
         ~dirspace_run_urls
@@ -103,6 +112,7 @@ module S = struct
         let body =
           Publisher_tools.create_run_output
             ~view:`Compact
+            ~compacted_dirspaces:(CCList.map (fun { dirspace; _ } -> dirspace) els)
             ~summary
             ~pull_number
             ~dirspace_run_urls
@@ -127,6 +137,7 @@ module S = struct
             let body =
               Publisher_tools.create_run_output
                 ~view:`Compact
+                ~compacted_dirspaces:(CCList.map (fun { dirspace; _ } -> dirspace) els)
                 ~summary
                 ~pull_number
                 ~dirspace_run_urls
@@ -154,9 +165,18 @@ module S = struct
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
     let compact = CCList.exists (fun { compact; _ } -> compact) els in
+    (* Only the elements that are themselves oversized lose their step output. Previously any single
+       oversized element forced the compact view on the whole comment, so a large plan diff on one
+       dirspace erased the error text on every other one (#1540). *)
+    let compacted_dirspaces =
+      CCList.filter_map
+        (fun { compact; dirspace; _ } -> if compact then Some dirspace else None)
+        els
+    in
     let body =
       Publisher_tools.create_run_output
         ~view:(if compact then `Compact else `Full)
+        ~compacted_dirspaces
         ~summary
         ~pull_number
         ~dirspace_run_urls

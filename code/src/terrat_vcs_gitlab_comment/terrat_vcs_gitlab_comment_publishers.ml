@@ -7,11 +7,31 @@ module Tmpl = Terrat_vcs_gitlab_comment_templates.Tmpl
 module Ui = Terrat_vcs_gitlab_comment_ui.Ui
 module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
 
+(* How much of a FAILING step's output to keep when a comment has to shrink. Terraform and its
+   providers emit the error at the END of the output, so the tail is the part worth keeping. *)
+let failing_output_budget = 4000
+
+let tail_of ~max_bytes s =
+  if CCString.length s <= max_bytes then s
+  else
+    let cut = CCString.length s - max_bytes in
+    (* Resume at a line boundary so the kept text does not start mid-line. *)
+    let start =
+      match CCString.find ~start:cut ~sub:"\n" s with
+      | -1 -> cut
+      | i -> i + 1
+    in
+    "[... earlier output trimmed to fit the comment ...]\n"
+    ^ CCString.sub s start (CCString.length s - start)
+
 module Output = struct
   type t = {
     cmd : string option;
     name : string;
     raw : bool;
+    (* False once compaction has taken this step's output away. The template renders a placeholder
+       instead of [text]. *)
+    show_output : bool;
     success : bool;
     text : string;
     text_decorator : string option;
@@ -21,21 +41,45 @@ module Output = struct
   let make ?cmd ?text_decorator ?(raw = false) ~name ~success ~text ~visible_on () =
     (* If name looks like <namespace>/<action> then remove the namespace *)
     let name = CCOption.map_or ~default:name snd (CCString.Split.right ~by:"/" name) in
-    { cmd; name; raw; success; text; text_decorator; visible_on }
+    { cmd; name; raw; show_output = true; success; text; text_decorator; visible_on }
 
-  let to_kv { cmd; name; raw; success; text; text_decorator; visible_on = _ } =
+  let to_kv { cmd; name; raw; show_output; success; text; text_decorator; visible_on = _ } =
     `Assoc
       (CCList.flatten
          [
            [
              ("name", `String name);
              ("text", `String text);
+             ("show_output", `Bool show_output);
              ("success", `Bool success);
              ("raw", `Bool raw);
              ("text_decorator", `String (CCOption.get_or ~default:"" text_decorator));
            ];
            CCOption.map_or ~default:[] (fun cmd -> [ ("cmd", `String cmd) ]) cmd;
          ])
+
+  (* Compaction in priority order. A comment that is too long has to lose something, and the last
+     thing it should lose is the output saying why the run failed -- dropping every step's output
+     wholesale is what made a 403 from a provider unreadable (#1540).
+
+     A succeeding step's output is confirmation, not information, so it goes first. A failing step
+     keeps its output, trimmed to the tail. *)
+  let compact outputs =
+    CCList.map
+      (fun ({
+              cmd = _;
+              name = _;
+              raw = _;
+              show_output = _;
+              success;
+              text;
+              text_decorator = _;
+              visible_on = _;
+            } as o)
+         ->
+        if success then { o with show_output = false; text = "" }
+        else { o with text = tail_of ~max_bytes:failing_output_budget text })
+      outputs
 
   let filter ~overall_success =
     CCList.filter (fun { visible_on; _ } ->
@@ -305,6 +349,7 @@ end
 module Publisher_tools = struct
   let create_run_output
       ~view
+      ~compacted_dirspaces
       ~summary
       ~pull_number
       ~dirspace_run_urls
@@ -319,6 +364,12 @@ module Publisher_tools = struct
       work_manifest =
     let module Wm = Terrat_work_manifest3 in
     let module O = Terrat_api_components.Workflow_step_output in
+    let compact_if cond outputs = if cond then Output.compact outputs else outputs in
+    (* Per-dirspace, so one oversized plan diff cannot blank the error text on every OTHER dirspace
+       in the same comment (#1540). *)
+    let is_compacted dirspace =
+      CCList.exists (fun d -> Terrat_dirspace.compare d dirspace = 0) compacted_dirspaces
+    in
     let hooks_pre =
       CCList.Assoc.get ~eq:Scope.equal (Scope.Run { flow = "hooks"; subflow = "pre" }) by_scope
     in
@@ -431,6 +482,7 @@ module Publisher_tools = struct
                    |> CCOption.get_or ~default:[]
                    |> output_of_steps
                    |> Output.filter ~overall_success
+                   |> compact_if (view = `Compact)
                    |> kv_of_outputs) );
                ( "post_hooks",
                  `List
@@ -438,6 +490,7 @@ module Publisher_tools = struct
                    |> CCOption.get_or ~default:[]
                    |> output_of_steps
                    |> Output.filter ~overall_success
+                   |> compact_if (view = `Compact)
                    |> kv_of_outputs) );
                ("compact_view", `Bool (view = `Compact));
                ("compact_dirspaces", `Bool (CCList.length dirspaces > 5));
@@ -467,8 +520,11 @@ module Publisher_tools = struct
                                  ("success", `Bool success);
                                  ( "steps",
                                    `List
-                                     (kv_of_outputs
-                                        (Output.filter ~overall_success (output_of_steps steps))) );
+                                     (steps
+                                     |> output_of_steps
+                                     |> Output.filter ~overall_success
+                                     |> compact_if (is_compacted dirspace)
+                                     |> kv_of_outputs) );
                                  ("has_changes", `Bool has_changes);
                                  ("run_url", run_url);
                                ];
