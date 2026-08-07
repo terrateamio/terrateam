@@ -213,6 +213,9 @@ jobs:
     needs: [set-version-tag, release-notify, create-multi-arch-manifest]
     if: ${{ needs.create-multi-arch-manifest.outputs.is_latest_version_tag == 'true' }}
     uses: ./.github/workflows/deploy.yml
+    permissions:
+      contents: read
+      id-token: write
     with:
       environment: ${{ github.event.inputs.environment || 'production' }}
       VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
