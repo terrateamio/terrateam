@@ -1,0 +1,469 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [
+        [
+          "Attribute",
+          "profile",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "aws-profile" ] ] ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "aws-region" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "my_vpc" ] ],
+      "body": [ [ "Attribute", "cidr_block", [ "String", "10.0.0.0/26" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "public" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "my_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "cidr_block", [ "String", "10.0.0.0/28" ] ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "aws-availability-zone" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_internet_gateway" ], [ "Lit", "iw" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "my_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route_table" ], [ "Lit", "public_rt" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "my_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "route",
+            "labels": [],
+            "body": [
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [
+                "Attribute",
+                "gateway_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_internet_gateway" ],
+                        [ "A_string", "iw" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ],
+        [ "Lit", "public_route_assoc" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "aws_subnet" ], [ "A_string", "public" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_route_table" ], [ "A_string", "public_rt" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_security_group" ], [ "Lit", "allow_ssh" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "allow_ssh" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "my_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 22 ] ],
+              [ "Attribute", "to_port", [ "Int", 22 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "egress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 0 ] ],
+              [ "Attribute", "protocol", [ "String", "-1" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ], [ "Lit", "http_ingress" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "allow_http_ingress" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "my_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 80 ] ],
+              [ "Attribute", "to_port", [ "Int", 80 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ], [ "Lit", "https_ingress" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "allow_https_ingress" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "my_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 443 ] ],
+              [ "Attribute", "to_port", [ "Int", 443 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "ec2_server" ] ],
+      "body": [
+        [
+          "Attribute",
+          "ami",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "ami_image" ] ] ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "aws-availability-zone" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "instance_type",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "instance_type" ] ] ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "aws_subnet" ], [ "A_string", "public" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "associate_public_ip_address", [ "String", "true" ] ],
+        [ "Attribute", "key_name", [ "String", "admin-key" ] ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "allow_ssh" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "http_ingress" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "https_ingress" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_eip" ], [ "Lit", "meet_ip" ] ],
+      "body": [
+        [ "Attribute", "vpc", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "instance",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_instance" ], [ "A_string", "ec2_server" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_internet_gateway" ], [ "A_string", "iw" ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route53_record" ], [ "Lit", "jitsi" ] ],
+      "body": [
+        [
+          "Attribute",
+          "zone_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "zone_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "notebooks_domain_name" ] ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "A" ] ],
+        [ "Attribute", "ttl", [ "String", "300" ] ],
+        [
+          "Attribute",
+          "records",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_eip" ], [ "A_string", "meet_ip" ] ]
+                  ],
+                  [ "A_string", "public_ip" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

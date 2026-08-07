@@ -1,0 +1,26 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "a" ], [ "Lit", "b" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "c" ], [ "Lit", "d" ] ],
+      "body": [ [ "Attribute", "x", [ "Int", 1 ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "e" ], [ "Lit", "f" ] ],
+      "body": []
+    }
+  ]
+]

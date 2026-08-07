@@ -1,0 +1,3 @@
+x = (
+  var.instances[*].id
+)

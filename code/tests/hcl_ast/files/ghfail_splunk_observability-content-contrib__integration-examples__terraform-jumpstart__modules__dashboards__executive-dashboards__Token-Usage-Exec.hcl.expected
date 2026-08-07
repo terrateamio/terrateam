@@ -1,0 +1,2217 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_dashboard" ], [ "Lit", "TOKEN-USAGE-EXEC" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "signalfx_dashboard" ], [ "A_string", "Logs-Exec" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "charts_resolution", [ "String", "default" ] ],
+        [
+          "Attribute",
+          "dashboard_group",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "signalfx_dashboard_group" ],
+                  [ "A_string", "exec_dashboard_group" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "Token Usage - Exec" ] ],
+        [ "Attribute", "time_range", [ "String", "-15w" ] ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "TOKEN-USAGE-EXEC_1" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "TOKEN-USAGE-EXEC_2" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 6 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "TOKEN-USAGE-EXEC_3" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "TOKEN-USAGE-EXEC_0" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "TOKEN-USAGE-EXEC_4" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "TOKEN-USAGE-EXEC_7" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "TOKEN-USAGE-EXEC_8" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "TOKEN-USAGE-EXEC_6" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 9 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "TOKEN-USAGE-EXEC_5" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "TOKEN-USAGE-EXEC_9" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "TOKEN-USAGE-EXEC_10" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 9 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "variable",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alias", [ "String", "Environment" ] ],
+              [ "Attribute", "apply_if_exist", [ "Bool", false ] ],
+              [
+                "Attribute",
+                "description",
+                [ "String", "APM Environment Name" ]
+              ],
+              [ "Attribute", "property", [ "String", "sf_environment" ] ],
+              [ "Attribute", "replace_only", [ "Bool", true ] ],
+              [ "Attribute", "restricted_suggestions", [ "Bool", false ] ],
+              [ "Attribute", "value_required", [ "Bool", true ] ],
+              [ "Attribute", "values", [ "Tuple", [ [ "String", "*" ] ] ] ],
+              [ "Attribute", "values_suggested", [ "Tuple", [] ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "variable",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alias", [ "String", "tokenName" ] ],
+              [ "Attribute", "apply_if_exist", [ "Bool", false ] ],
+              [ "Attribute", "description", [ "String", "Token Name" ] ],
+              [ "Attribute", "property", [ "String", "tokenName" ] ],
+              [ "Attribute", "replace_only", [ "Bool", true ] ],
+              [ "Attribute", "restricted_suggestions", [ "Bool", false ] ],
+              [ "Attribute", "value_required", [ "Bool", true ] ],
+              [ "Attribute", "values", [ "Tuple", [ [ "String", "*" ] ] ] ],
+              [ "Attribute", "values_suggested", [ "Tuple", [] ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "TOKEN-USAGE-EXEC_0" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Metric" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Token Usage Change Top and Bottom 5 (12 Week Comparison of 7 Day Means)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Token Usage Rate 12 Week Comparison" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('sf.org.numBundledMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='A', enable=False)\nB = data('sf.org.numBundledMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).timeshift('12w').mean(over='7d').publish(label='B', enable=False)\n        \nAA = data('sf.org.numCustomMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='AA', enable=False)\nA1 = data('sf.org.numCustomMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).timeshift('12w').mean(over='7d').publish(label='A1', enable=False)\n        \nAB = data('sf.org.numSyntheticsMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='AB', enable=False)\nA2 = data('sf.org.numSyntheticsMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).timeshift('12w').mean(over='7d').publish(label='A2', enable=False)\n        \nAC = data('sf.org.numApmBundledMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='AC', enable=False)\nA3 = data('sf.org.numApmBundledMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).timeshift('12w').mean(over='7d').publish(label='A3', enable=False)\n        \nAD = data('sf.org.numResourceMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='AD', enable=False)\nA4 = data('sf.org.numResourceMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).timeshift('12w').mean(over='7d').publish(label='A4', enable=False)\n        \nsyntheticsTotal = (AB.sum() if AB.count() > 0 else 0).publish(label='synthetics', enable=False)\nsyntheticsTotal12w = (A2.sum() if A2.count() > 0 else 0).publish(label='synthetics', enable=False)\n        \ntotal = (A + AA + syntheticsTotal + AC + AD).publish(label='total', enable=False)\ntotal12w = (B + A1 + syntheticsTotal12w + A3 + A4).publish(label='total', enable=False)\n        \n        \ntopChange = (((total-total12w)/total12w)*100).mean(by=['tokenName']).mean(over='7d').top(count=5).publish(label='topChange', enable=True)\nbottomChange = (((total-total12w)/total12w)*100).mean(by=['tokenName']).mean(over='7d').bottom(count=5).publish(label='bottomChange', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "refresh_interval", [ "Int", 3600 ] ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "tokenName" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A1" ] ],
+              [ "Attribute", "label", [ "String", "A1" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A2" ] ],
+              [ "Attribute", "label", [ "String", "A2" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A3" ] ],
+              [ "Attribute", "label", [ "String", "A3" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A4" ] ],
+              [ "Attribute", "label", [ "String", "A4" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "bottomChange" ] ],
+              [ "Attribute", "label", [ "String", "bottomChange" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "sf.org.numApmBundledMetricsByToken" ]
+              ],
+              [ "Attribute", "label", [ "String", "AC" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "sf.org.numCustomMetricsByToken" ]
+              ],
+              [ "Attribute", "label", [ "String", "AA" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "sf.org.numResourceMetricsByToken" ]
+              ],
+              [ "Attribute", "label", [ "String", "AD" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "sf.org.numSyntheticsMetricsByToken" ]
+              ],
+              [ "Attribute", "label", [ "String", "AB" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "synthetics" ] ],
+              [ "Attribute", "label", [ "String", "synthetics" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "topChange" ] ],
+              [ "Attribute", "label", [ "String", "topChange" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total" ] ],
+              [ "Attribute", "label", [ "String", "total" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Token Usage (-4w)" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "Token Usage" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "TOKEN-USAGE-EXEC_1" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Token Usage Rate (MTS) 4 & 12 Week Comparisons Using  1 Day Sums"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Token Usage Rate (MTS) (4 & 12 week comparisons)" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nC = data('sf.org.numBundledMetricsByToken', rollup='sum').sum(over='1d').sum().publish(label='C')\nD = data('sf.org.numBundledMetricsByToken', rollup='sum').sum(over='1d').sum().timeshift('4w').publish(label='D', enable=False)\nE = data('sf.org.numBundledMetricsByToken', rollup='sum').sum(over='1d').sum().timeshift('12w').publish(label='E', enable=False)\nF = (((C-D)/C)*100).publish(label='F')\nG = (((C-E)/C)*100).publish(label='G')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Radial" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "aquamarine" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Minus", [ "Int", 100 ] ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [ "Attribute", "gt", [ "Int", 0 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 100 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "% 12 week Change" ]
+              ],
+              [ "Attribute", "label", [ "String", "G" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "% 4 week Change" ]
+              ],
+              [ "Attribute", "label", [ "String", "F" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "-12w" ] ],
+              [ "Attribute", "label", [ "String", "E" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "-4w" ] ],
+              [ "Attribute", "label", [ "String", "D" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "Today" ] ],
+              [ "Attribute", "label", [ "String", "C" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "TOKEN-USAGE-EXEC_2" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Mean MTS usage by Token Name Using 7 Day Means" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Mean MTS usage(7d) by Token Name" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('sf.org.numBundledMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='A', enable=False)\n        \nAA = data('sf.org.numCustomMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='AA', enable=False)\n        \nAB = data('sf.org.numSyntheticsMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='AB', enable=False)\n        \nAC = data('sf.org.numApmBundledMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='AC', enable=False)\n        \nAD = data('sf.org.numResourceMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='AD', enable=False)\n        \nsyntheticsTotal = (AB.sum() if AB.count() > 0 else 0).publish(label='synthetics', enable=False)\n        \ntotal = (A + AA + syntheticsTotal + AC + AD).publish(label='total', enable=True)\n        \n"
+            ]
+          ]
+        ],
+        [ "Attribute", "refresh_interval", [ "Int", 3600 ] ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "gt", [ "Int", 1 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 3.4028234663852886e+38 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "tokenName" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "AA" ] ],
+              [ "Attribute", "label", [ "String", "AA" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "AB" ] ],
+              [ "Attribute", "label", [ "String", "AB" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "AC" ] ],
+              [ "Attribute", "label", [ "String", "AC" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "AD" ] ],
+              [ "Attribute", "label", [ "String", "AD" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "synthetics" ] ],
+              [ "Attribute", "label", [ "String", "synthetics" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total" ] ],
+              [ "Attribute", "label", [ "String", "total" ] ],
+              [ "Attribute", "value_suffix", [ "String", "MTS" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "TOKEN-USAGE-EXEC_3" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Bundled Metrics By Token (MTS) 4 Week Comparisons (7 Day Means)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Bundled Metrics By Token (MTS) 4 Week Comparisons" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('sf.org.numBundledMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='A', enable=False)\nB = data('sf.org.numBundledMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).timeshift('4w').mean(over='7d').publish(label='B', enable=False)\n        \nbundledTotal = (A.sum() if A.count() > 0 else 0).publish(label='bundledTotal', enable=False)\nbundledTotal4w = (B.sum() if B.count() > 0 else 0).publish(label='bundledTotal4w', enable=False)\n        \ntopChange = (((A-B)/B)*100).mean(by=['tokenName']).mean(over='7d').publish(label='topChange', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Sparkline" ] ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "aquamarine" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [ "Attribute", "gt", [ "Int", 0 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 3.4028234663852886e+38 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "tokenName" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "bundledTotal" ] ],
+              [ "Attribute", "label", [ "String", "bundledTotal" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "bundledTotal4w" ] ],
+              [ "Attribute", "label", [ "String", "bundledTotal4w" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "topChange" ] ],
+              [ "Attribute", "label", [ "String", "topChange" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "TOKEN-USAGE-EXEC_4" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Custom Metrics By Token (MTS) 4 Week Comparisons (7 Day Means)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Custom Metrics By Token (MTS) 4 Week Comparisons" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('sf.org.numCustomMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='A', enable=False)\nB = data('sf.org.numCustomMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).timeshift('4w').mean(over='7d').publish(label='B', enable=False)\n        \ntotal = (A.sum() if A.count() > 0 else 0).publish(label='total', enable=False)\ntotal4w = (B.sum() if B.count() > 0 else 0).publish(label='total4w', enable=False)\n        \ntopChange = (((A-B)/B)*100).mean(by=['tokenName']).mean(over='7d').publish(label='topChange', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Sparkline" ] ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "aquamarine" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [ "Attribute", "gt", [ "Int", 0 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 3.4028234663852886e+38 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "tokenName" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "topChange" ] ],
+              [ "Attribute", "label", [ "String", "topChange" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total" ] ],
+              [ "Attribute", "label", [ "String", "total" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total4w" ] ],
+              [ "Attribute", "label", [ "String", "total4w" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "TOKEN-USAGE-EXEC_5" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Resource Metrics By Token (MTS) 4 Week Comparisons (7 Day Means)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Resource Metrics By Token (MTS) 4 Week Comparisons" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('sf.org.numResourceMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='A', enable=False)\nB = data('sf.org.numResourceMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).timeshift('4w').mean(over='7d').publish(label='B', enable=False)\n        \ntotal = (A.sum() if A.count() > 0 else 0).publish(label='total', enable=False)\ntotal4w = (B.sum() if B.count() > 0 else 0).publish(label='total4w', enable=False)\n        \ntopChange = (((A-B)/B)*100).mean(by=['tokenName']).mean(over='7d').publish(label='topChange', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Sparkline" ] ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "aquamarine" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [ "Attribute", "gt", [ "Int", 0 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 3.4028234663852886e+38 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "tokenName" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "topChange" ] ],
+              [ "Attribute", "label", [ "String", "topChange" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total" ] ],
+              [ "Attribute", "label", [ "String", "total" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total4w" ] ],
+              [ "Attribute", "label", [ "String", "total4w" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "TOKEN-USAGE-EXEC_6" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "APM Bundled Metrics By Token (MTS) 4 Week Comparisons (7 Day Means)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "String", "APM Bundled Metrics By Token (MTS) 4 Week Comparisons"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('sf.org.numApmBundledMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='A', enable=False)\nB = data('sf.org.numApmBundledMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).timeshift('4w').mean(over='7d').publish(label='B', enable=False)\n        \ntotal = (A.sum() if A.count() > 0 else 0).publish(label='total', enable=False)\ntotal4w = (B.sum() if B.count() > 0 else 0).publish(label='total4w', enable=False)\n        \ntopChange = (((A-B)/B)*100).mean(by=['tokenName']).mean(over='7d').publish(label='topChange', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Sparkline" ] ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "aquamarine" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [ "Attribute", "gt", [ "Int", 0 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 3.4028234663852886e+38 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "tokenName" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "topChange" ] ],
+              [ "Attribute", "label", [ "String", "topChange" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total" ] ],
+              [ "Attribute", "label", [ "String", "total" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total4w" ] ],
+              [ "Attribute", "label", [ "String", "total4w" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "TOKEN-USAGE-EXEC_7" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "High Resolution Metrics By Token (MTS) 4 Week Comparisons (7 Day Means)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "String",
+            "High Resolution Metrics By Token (MTS) 4 Week Comparisons"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('sf.org.numHighResolutionMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='A', enable=False)\nB = data('sf.org.numHighResolutionMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).timeshift('4w').mean(over='7d').publish(label='B', enable=False)\n        \ntotal = (A.sum() if A.count() > 0 else 0).publish(label='total', enable=False)\ntotal4w = (B.sum() if B.count() > 0 else 0).publish(label='total4w', enable=False)\n        \ntopChange = (((A-B)/B)*100).mean(by=['tokenName']).mean(over='7d').publish(label='topChange', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Sparkline" ] ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "aquamarine" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [ "Attribute", "gt", [ "Int", 0 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 3.4028234663852886e+38 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "tokenName" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "topChange" ] ],
+              [ "Attribute", "label", [ "String", "topChange" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total" ] ],
+              [ "Attribute", "label", [ "String", "total" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total4w" ] ],
+              [ "Attribute", "label", [ "String", "total4w" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "TOKEN-USAGE-EXEC_8" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Synthetics Metrics By Token (MTS) 4 Week Comparisons (7 Day Means)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "String", "Synthetics Metrics By Token (MTS) 4 Week Comparisons"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('sf.org.numSyntheticsMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).mean(over='7d').publish(label='A', enable=False)\nB = data('sf.org.numSyntheticsMetricsByToken', filter=filter('tokenName', '*')).sum(by=['tokenName']).timeshift('4w').mean(over='7d').publish(label='B', enable=False)\n        \ntotal = (A.sum() if A.count() > 0 else 0).publish(label='total', enable=False)\ntotal4w = (B.sum() if B.count() > 0 else 0).publish(label='total4w', enable=False)\n        \ntopChange = (((A-B)/B)*100).mean(by=['tokenName']).mean(over='7d').publish(label='topChange', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Sparkline" ] ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "aquamarine" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [ "Attribute", "gt", [ "Int", 0 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Float", 3.4028234663852886e+38 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "tokenName" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "topChange" ] ],
+              [ "Attribute", "label", [ "String", "topChange" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total" ] ],
+              [ "Attribute", "label", [ "String", "total" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "total4w" ] ],
+              [ "Attribute", "label", [ "String", "total4w" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "TOKEN-USAGE-EXEC_9" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Metric" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Logs Received per Day by Token 4 Week Comparison (7 Day Mean)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Logs Received per Day by Token 4 Week Comparison" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('sf.org.numLogsReceivedByToken').sum(by=['tokenName']).mean(over='7d').sum(over='1d').publish(label='A', enable=False)\nB = data('sf.org.numLogsReceivedByToken').sum(by=['tokenName']).timeshift('4w').mean(over='7d').sum(over='1d').publish(label='B', enable=False)\nC = (((A-B)/B)*100).mean(by=['tokenName']).mean(over='7d').fill(0).top(5).publish(label='C')\nD = (((A-B)/B)*100).mean(by=['tokenName']).mean(over='7d').fill(0).bottom(5).publish(label='D')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Sparkline" ] ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "tokenName" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "C" ] ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "D" ] ],
+              [ "Attribute", "label", [ "String", "D" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "TOKEN-USAGE-EXEC_10" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Metric" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Profiling Logs Received per Day by Token 4 Week Comparisons (7 Day Means)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "String",
+            "Profiling Logs Received per Day by Token 4 Week Comparisons"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('sf.org.profiling.numLogsReceivedByToken').sum(by=['tokenName']).mean(over='7d').sum(over='1d').publish(label='A', enable=False)\nB = data('sf.org.profiling.numLogsReceivedByToken').sum(by=['tokenName']).timeshift('4w').mean(over='7d').sum(over='1d').publish(label='B', enable=False)\nC = (((A-B)/B)*100).mean(by=['tokenName']).mean(over='7d').fill(0).top(5).publish(label='C')\nD = (((A-B)/B)*100).mean(by=['tokenName']).mean(over='7d').fill(0).bottom(5).publish(label='D')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Sparkline" ] ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "timezone", [ "String", "UTC" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "tokenName" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "A" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "B" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "C" ] ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "D" ] ],
+              [ "Attribute", "label", [ "String", "D" ] ],
+              [ "Attribute", "value_suffix", [ "String", "% change" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

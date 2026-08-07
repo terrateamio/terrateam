@@ -1,0 +1,228 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ], [ "Lit", "aws-s3" ]
+      ],
+      "body": [
+        [ "Attribute", "driver_type", [ "String", "humanitec/container" ] ],
+        [ "Attribute", "id", [ "String", "aws-s3" ] ],
+        [ "Attribute", "name", [ "String", "aws-s3" ] ],
+        [ "Attribute", "type", [ "String", "s3" ] ],
+        [
+          "Attribute", "driver_account", [ "String", "my-aws-cloud-account" ]
+        ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "job" ],
+                            [
+                              "String",
+                              "${resources['config.runner'].outputs.job}"
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "cluster" ],
+                            [
+                              "String",
+                              "${resources['config.runner'].outputs.cluster}"
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "credentials_config" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "environment" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Quoted", "AWS_ACCESS_KEY_ID" ],
+                                        [ "String", "AccessKeyId" ]
+                                      ],
+                                      [
+                                        [ "Quoted", "AWS_SECRET_ACCESS_KEY" ],
+                                        [ "String", "SecretAccessKey" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "source" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "ref" ],
+                                  [ "String", "refs/heads/main" ]
+                                ],
+                                [
+                                  [ "Quoted", "url" ],
+                                  [
+                                    "String",
+                                    "git@github.com:my-org/my-repo.git"
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "files" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "terraform.tfvars.json" ],
+                                  [
+                                    "String",
+                                    "{\"REGION\": \"eu-west-3\", \"BUCKET\": \"${context.app.id}-${context.env.id}\"}\n"
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "backend.tf" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\nterraform {\n  backend \"s3\" {\n    bucket = \"my-s3-to-store-tf-state\"\n    key = \"$${context.res.guresid}/state/terraform.tfstate\"\n    region = \"eu-west-3\"\n  }\n}\n"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "secret_refs" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "cluster" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "agent_url" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Quoted", "value" ],
+                                        [
+                                          "String",
+                                          "${resources['config.runner'].outputs.agent_url}"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "source" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "ssh_key" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Quoted", "store" ],
+                                        [ "String", "my-secret-store" ]
+                                      ],
+                                      [
+                                        [ "Quoted", "ref" ],
+                                        [
+                                          "String", "my-path-to-git-ssh-key"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition_criteria" ],
+        [ "Lit", "aws-s3_criteria_0" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "resource" ],
+                      [ "A_string", "humanitec_resource_definition" ]
+                    ]
+                  ],
+                  [ "A_string", "aws-s3" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "env_type", [ "String", "development" ] ]
+      ]
+    }
+  ]
+]

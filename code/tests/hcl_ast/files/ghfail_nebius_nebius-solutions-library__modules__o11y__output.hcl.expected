@@ -1,0 +1,471 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "nebius_application_status" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "loki" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "o11y" ] ]
+                            ],
+                            [ "A_string", "loki" ]
+                          ]
+                        ],
+                        [ "A_string", "enabled" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Id",
+                                  "nebius_applications_v1alpha1_k8s_release"
+                                ],
+                                [ "A_string", "loki" ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [ "A_string", "status" ]
+                      ]
+                    ],
+                    "else_": [ "Null" ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "prometheus" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "o11y" ] ]
+                            ],
+                            [ "A_string", "prometheus" ]
+                          ]
+                        ],
+                        [ "A_string", "enabled" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Id",
+                                  "nebius_applications_v1alpha1_k8s_release"
+                                ],
+                                [ "A_string", "prometheus" ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [ "A_string", "status" ]
+                      ]
+                    ],
+                    "else_": [ "Null" ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "k8s_apps_status" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "app" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "kubernetes_resource" ]
+                    ]
+                  ],
+                  [ "A_string", "o11y" ]
+                ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [ "Attr", [ [ "Id", "app" ], [ "A_string", "kind" ] ] ],
+                      [ "String", "Deployment" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Div",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "app" ], [ "A_string", "object" ] ]
+                              ],
+                              [ "A_string", "status" ]
+                            ]
+                          ],
+                          [ "A_string", "availableReplicas" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "app" ], [ "A_string", "object" ] ]
+                              ],
+                              [ "A_string", "status" ]
+                            ]
+                          ],
+                          [ "A_string", "replicas" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Div",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "app" ], [ "A_string", "object" ] ]
+                              ],
+                              [ "A_string", "status" ]
+                            ]
+                          ],
+                          [ "A_string", "numberAvailable" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "app" ], [ "A_string", "object" ] ]
+                              ],
+                              [ "A_string", "status" ]
+                            ]
+                          ],
+                          [ "A_string", "desiredNumberScheduled" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "prometheus_grafana_password" ] ],
+      "body": [
+        [ "Attribute", "sensitive", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "o11y" ] ] ],
+                      [ "A_string", "prometheus" ]
+                    ]
+                  ],
+                  [ "A_string", "enabled" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "random_password" ],
+                          [ "A_string", "grafana" ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [ "A_string", "result" ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "nebius_grafana_password" ] ],
+      "body": [
+        [ "Attribute", "sensitive", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "o11y" ] ] ],
+                      [ "A_string", "grafana" ]
+                    ]
+                  ],
+                  [ "A_string", "enabled" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "random_password" ],
+                          [ "A_string", "grafana_password" ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [ "A_string", "result" ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "grafana_service_account" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Grafana service account information" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "o11y" ] ]
+                          ],
+                          [ "A_string", "grafana" ]
+                        ]
+                      ],
+                      [ "A_string", "enabled" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "k8s_node_group_sa_enabled" ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "id" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "k8s_node_group_sa_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "access_key_id" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "nebius_iam_v2_access_key" ],
+                                    [ "A_string", "grafana_key" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "status" ]
+                          ]
+                        ],
+                        [ "A_string", "aws_access_key_id" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "secret_access_key" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "nebius_iam_v2_access_key" ],
+                                    [ "A_string", "grafana_key" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "status" ]
+                          ]
+                        ],
+                        [ "A_string", "secret" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "access_token" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "grafana_access_token" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ]
+]

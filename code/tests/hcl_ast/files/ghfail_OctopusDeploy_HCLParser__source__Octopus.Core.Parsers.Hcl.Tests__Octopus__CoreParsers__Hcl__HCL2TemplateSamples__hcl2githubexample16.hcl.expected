@@ -1,0 +1,408 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_string" ], [ "Lit", "random" ] ],
+      "body": [
+        [ "Attribute", "length", [ "Int", 6 ] ],
+        [ "Attribute", "special", [ "Bool", false ] ],
+        [ "Attribute", "upper", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_db_subnet_group" ], [ "Lit", "covidportal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "rds_db_subnet_group_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_subnet" ],
+                      [ "A_string", "covidportal_private" ]
+                    ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "rds_db_subnet_group_name" ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_rds_cluster_instance" ],
+        [ "Lit", "covidportal_server_instances" ]
+      ],
+      "body": [
+        [ "Attribute", "count", [ "Int", 2 ] ],
+        [ "Attribute", "engine", [ "String", "aurora-postgresql" ] ],
+        [
+          "Attribute",
+          "identifier",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "rds_server_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-instance-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_identifier",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_rds_cluster" ],
+                  [ "A_string", "covidportal_server" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "instance_class",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "rds_server_instance_class" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "db_subnet_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_db_subnet_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "performance_insights_enabled", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "rds_server_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-instance" ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_rds_cluster" ], [ "Lit", "covidportal_server" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "cluster_identifier",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "rds_server_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-cluster" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "engine", [ "String", "aurora-postgresql" ] ],
+        [
+          "Attribute",
+          "database_name",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "rds_server_db_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "final_snapshot_identifier",
+          [
+            "Template",
+            [
+              [ "Literal", "server-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "random_string" ], [ "A_string", "random" ]
+                        ]
+                      ],
+                      [ "A_string", "result" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "master_username",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "rds_server_db_user" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "master_password",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "rds_server_db_password" ] ]
+          ]
+        ],
+        [ "Attribute", "backup_retention_period", [ "Int", 5 ] ],
+        [
+          "Attribute", "preferred_backup_window", [ "String", "07:00-09:00" ]
+        ],
+        [
+          "Attribute",
+          "db_subnet_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_db_subnet_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "storage_encrypted", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "covidportal_database" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "rds_server_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-cluster" ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [ "Tuple", [ [ "Id", "snapshot_identifier" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

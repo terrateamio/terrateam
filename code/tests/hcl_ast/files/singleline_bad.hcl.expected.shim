@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,14-15: Unexpected comma after argument; Argument definitions must be separated by newlines, not commas. An argument definition must end with a newline.

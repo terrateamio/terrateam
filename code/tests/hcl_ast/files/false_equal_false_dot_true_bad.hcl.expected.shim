@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,11-12: Invalid attribute name; An attribute name is required after a dot.

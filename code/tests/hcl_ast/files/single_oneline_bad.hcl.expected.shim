@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,14-15: Invalid single-argument block definition; Single-line block syntax can include only one argument definition. To define multiple arguments, use the multi-line block syntax with one argument definition per line., and 4 other diagnostic(s)

@@ -1,0 +1,2042 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A list of subnets to place the EKS cluster and workers within."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "any" ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vpc_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "VPC where the cluster and workers will be deployed." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "docker_storage_size" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Int", 100 ] ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "EBS Volume size in Gib that the ECS Instance uses for Docker images and metadata"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "map_accounts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Additional AWS account numbers to add to the aws-auth configmap. See examples/eks_test_fixture/variables.tf for example format."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "map_roles" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Additional IAM roles to add to the aws-auth configmap. Consider switching to owner_roles and read_only_roles."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "rolearn" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "username" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "groups" ],
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "owner_roles" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "List of IAM roles that should be added to the aws-auth configmap with system:masters group."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "read_only_roles" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "List of IAM roles that should be added to the aws-auth configmap with read-only access."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "map_users" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Additional IAM users to add to the aws-auth configmap. See examples/eks_test_fixture/variables.tf for example format."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "userarn" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "username" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "groups" ],
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Use this to set the eks cluster name directly. NOTE: if the `cluster_name` is not specified, you will not be able to use Karpenter."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "iam_cluster_name_prefix" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Optional prefix for the cluster IAM role name. If both `cluster_name` and `iam_cluster_name_prefix` are specified, use the value of `iam_cluster_name_prefix` as the cluster IAM role prefix; for all other cases use the `cluster_name` as a prefix."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_enabled_log_types" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A list of the desired control plane logging to enable. For more information, see Amazon EKS Control Plane Logging documentation (https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "any" ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_version" ] ],
+      "body": [
+        [ "Attribute", "default", [ "String", "1.30" ] ],
+        [ "Attribute", "description", [ "String", "EKS cluster version" ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "project" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "service" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "env" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "owner" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "managedBy" ], [ "Id", "string" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Typically fogg's var.tags" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ami_release_version" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "AMI release version" ] ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "fargate_profiles" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Map of Fargate Profile definitions to create" ]
+        ],
+        [ "Attribute", "type", [ "Id", "any" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "node_groups" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "size" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "number" ], [ "Int", 1 ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "capacity_type" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "String", "SPOT" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "architecture" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "ami_type" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [ "Bare", "instance_types" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "ami_type" ],
+                                        [
+                                          "String", "AL2023_ARM_64_STANDARD"
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "instance_types" ],
+                                        [
+                                          "Tuple",
+                                          [ [ "String", "t4g.large" ] ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "taints" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "map",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "object",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "key" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "value" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "effect" ],
+                                                    [ "Id", "string" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "labels" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "force_update_version" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", true ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Map of node groups for this cluster. Make sure the instance_type correctly matches the architecture."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "node_groups" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "capacity_type" ]
+                                    ]
+                                  ],
+                                  [ "String", "SPOT" ]
+                                ]
+                              ],
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "capacity_type" ]
+                                    ]
+                                  ],
+                                  [ "String", "ON_DEMAND" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String", "capacity_type must be either SPOT or ON_DEMAND."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "node_groups" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Log_or",
+                                [
+                                  [
+                                    "Log_or",
+                                    [
+                                      [
+                                        "Log_or",
+                                        [
+                                          [
+                                            "Log_or",
+                                            [
+                                              [
+                                                "Log_or",
+                                                [
+                                                  [
+                                                    "Log_or",
+                                                    [
+                                                      [
+                                                        "Log_or",
+                                                        [
+                                                          [
+                                                            "Equal",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id", "v"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "architecture"
+                                                                    ]
+                                                                    ]
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "ami_type"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "String",
+                                                                "AL2023_ARM_64_STANDARD"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "Equal",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id", "v"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "architecture"
+                                                                    ]
+                                                                    ]
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "ami_type"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "String",
+                                                                "AL2023_ARM_64_NVIDIA"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "Equal",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Id", "v"
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "architecture"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "ami_type"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "String",
+                                                            "AL2023_x86_64_STANDARD"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Equal",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "v" ],
+                                                              [
+                                                                "A_string",
+                                                                "architecture"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "ami_type"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "String",
+                                                        "AL2023_x86_64_NEURON"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "v" ],
+                                                          [
+                                                            "A_string",
+                                                            "architecture"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "ami_type"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "String",
+                                                    "AL2023_x86_64_NVIDIA"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "v" ],
+                                                      [
+                                                        "A_string",
+                                                        "architecture"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "ami_type" ]
+                                                ]
+                                              ],
+                                              [
+                                                "String",
+                                                "BOTTLEROCKET_x86_64"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [
+                                                    "A_string",
+                                                    "architecture"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "A_string", "ami_type" ]
+                                            ]
+                                          ],
+                                          [ "String", "BOTTLEROCKET_ARM_64" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "v" ],
+                                              [ "A_string", "architecture" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "ami_type" ]
+                                        ]
+                                      ],
+                                      [
+                                        "String",
+                                        "BOTTLEROCKET_x86_64_NVIDIA"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "v" ],
+                                          [ "A_string", "architecture" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "ami_type" ]
+                                    ]
+                                  ],
+                                  [ "String", "BOTTLEROCKET_ARM_64_NVIDIA" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "AMI architecture must be supported (AL2 is end of life)."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "node_groups" ]
+                            ]
+                          ],
+                          "output": [
+                            "Gt",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [ "A_string", "architecture" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "instance_types" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "architecture instance_types must be a non-empty list."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "authorized_github_repos" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Map of Github owner and repo identifiers that will be used to create a role for Github Actions to assume. Maps might look like {owner = [\"reponame1\", \"reponame2\"]}"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [ "map", [ [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ] ] ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "authorized_aws_accounts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The map of authorized AWS accounts to assume the created role."
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "placement_group_strategy" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Placement group strategy for the EKS cluster (`cluster`, `partition` or `spread` are supported). Defaults to `partition` strategy."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "partition" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Log_or",
+                      [
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "placement_group_strategy" ]
+                              ]
+                            ],
+                            [ "String", "cluster" ]
+                          ]
+                        ],
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "placement_group_strategy" ]
+                              ]
+                            ],
+                            [ "String", "partition" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "placement_group_strategy" ]
+                          ]
+                        ],
+                        [ "String", "spread" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "placement_group_strategy must be either cluster or partition or spread."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "addons" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Map of addon definitions to create" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "enable_guardduty" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_aws_load_balancer_controller" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_metrics_server" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_cert_manager" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_aws_for_fluentbit" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_external_dns" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_karpenter" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_default_karpenter_nodepool" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_default_karpenter_nodeclass" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_aws_efs_csi_driver" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_argocd" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_aws_cloudwatch_metrics" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_external_secrets" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_fargate_fluentbit" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_ingress_nginx" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_kube_prometheus_stack" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_crossplane" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "fluentbit_exclude_paths" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ],
+                            [ "Tuple", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "aws_for_fluentbit_cw_log_group" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Id", "any" ],
+                            [
+                              "Object",
+                              [
+                                [ [ "Bare", "create" ], [ "Bool", true ] ],
+                                [ [ "Bare", "retention" ], [ "Int", 7 ] ],
+                                [
+                                  [ "Bare", "use_name_prefix" ],
+                                  [ "Bool", false ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "external_secrets_config" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Id", "any" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "service_account_name" ],
+                                  [ "String", "external-secrets-sa" ]
+                                ],
+                                [
+                                  [ "Bare", "namespace" ],
+                                  [ "String", "external-secrets" ]
+                                ],
+                                [ [ "Bare", "wait" ], [ "Bool", true ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "external_secrets_secrets_manager_arns" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "String",
+                                  "arn:aws:secretsmanager:*:*:secret:/argus/*"
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "argocd_config" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "any" ], [ "Object", [] ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "argocd_child_config" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "enabled" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "bool" ],
+                                              [ "Bool", true ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [
+                                          "Bare",
+                                          "root_argo_aws_account_id_to_role"
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "map",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ],
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [
+                                                      "Quoted",
+                                                      "533267185808"
+                                                    ],
+                                                    [
+                                                      "String",
+                                                      "argo_root_core_platform_infra_prod_eks"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Quoted",
+                                                      "471112759938"
+                                                    ],
+                                                    [
+                                                      "String",
+                                                      "argo_root_core_platform_infra_dev_eks"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "karpenter_config" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Id", "any" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "chart_version" ],
+                                  [ "String", "1.6.1" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "karpenter_nodepool_spec" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "any" ], [ "Null" ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_karpenter_capacity_reservation" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "karpenter_capacity_reservation" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "ec2_node_class_name" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "string" ],
+                                              [ "String", "odcr" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "selector_terms" ],
+                                        [
+                                          "Fun_call",
+                                          [ "list", [ [ "Id", "any" ] ] ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "external_dns_config" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "chart_version" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "string" ],
+                                              [ "String", "1.18.0" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "image_tag" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "string" ],
+                                              [ "String", "v0.19.0" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "policy" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "string" ],
+                                              [ "String", "upsert-only" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "sources" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ],
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [ "String", "service" ],
+                                                  [ "String", "ingress" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "cert_manager_route53_hosted_zone_arns" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "String", "arn:aws:route53:::hostedzone/*"
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "cert_manager_config" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "any" ], [ "Object", [] ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "addons_data" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Map of data addons to config to create" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "enable_kubecost" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_jupyterhub" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "jupyterhub_helm_config" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "callback_url" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "client_id" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "client_secret" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "authorize_url" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "token_url" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "allowed_groups" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [
+                                          "Bare",
+                                          "jupyter_single_user_sa_name"
+                                        ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "issuer" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "secret_name" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "storage_class_name" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "admin_groups" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "additional_server_image" ],
+                                        [ "Id", "string" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "callback_url" ],
+                                  [ "String", "" ]
+                                ],
+                                [ [ "Bare", "client_id" ], [ "String", "" ] ],
+                                [
+                                  [ "Bare", "client_secret" ],
+                                  [ "String", "" ]
+                                ],
+                                [
+                                  [ "Bare", "authorize_url" ],
+                                  [ "String", "" ]
+                                ],
+                                [ [ "Bare", "token_url" ], [ "String", "" ] ],
+                                [
+                                  [ "Bare", "allowed_groups" ],
+                                  [ "String", "" ]
+                                ],
+                                [
+                                  [ "Bare", "jupyter_single_user_sa_name" ],
+                                  [ "String", "" ]
+                                ],
+                                [ [ "Bare", "issuer" ], [ "String", "" ] ],
+                                [
+                                  [ "Bare", "secret_name" ], [ "String", "" ]
+                                ],
+                                [
+                                  [ "Bare", "storage_class_name" ],
+                                  [ "String", "" ]
+                                ],
+                                [
+                                  [ "Bare", "admin_groups" ],
+                                  [ "String", "" ]
+                                ],
+                                [
+                                  [ "Bare", "additional_server_image" ],
+                                  [ "String", "" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "identity_provider_configurations" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "client_id" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "groups_claim" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "groups_prefix" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "identity_provider_config_name" ],
+                            [ "Id", "string" ]
+                          ],
+                          [ [ "Bare", "issuer_url" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "required_claims" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "username_claim" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "username_prefix" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Set of EKS Identity Provider Configurations for non-AWS access to the EKS cluster. The key and the name should only have letters/numbers, hyphens, and underscores. Direct reference from this link: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_identity_provider_config"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_audit_s3_ingest" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Whether you want to send the EKS Audit to an s3 bucket in czi-logs."
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "logs_bucket_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "name of the bucket that will hold the cloudwatch logs"
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "czi-eks-cloudwatch-logs" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "aws_org_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The org ID this cluster will be in. May be used in assume roles and pathfinding."
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "o-56v5gp5fcu" ] ]
+      ]
+    }
+  ]
+]

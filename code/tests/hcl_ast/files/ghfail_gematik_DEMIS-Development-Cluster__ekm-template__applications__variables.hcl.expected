@@ -1,0 +1,1638 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "target_namespace" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The namespace to deploy the application to" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "demis" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "external_chart_path" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The path to the stage-dependent Helm Chart Values." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Gt",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "external_chart_path" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 0 ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The path to the stage-dependent Helm Chart Values must be defined"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "deployment_information" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Structure holding deployment information for the Helm Charts"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "chart-name" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "image-tag" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "deployment-strategy" ],
+                            [ "Id", "string" ]
+                          ],
+                          [ [ "Bare", "enabled" ], [ "Id", "bool" ] ],
+                          [
+                            [ "Bare", "main" ],
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "version" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "weight" ],
+                                        [ "Id", "number" ]
+                                      ],
+                                      [
+                                        [ "Bare", "profiles" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "canary" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "version" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "weight" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "profiles" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "service", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "deployment_information" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [ "Bool", true ],
+                              [
+                                "Log_or",
+                                [
+                                  [
+                                    "Not",
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "service" ],
+                                        [ "A_string", "enabled" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "can",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "regex",
+                                            [
+                                              [
+                                                "String",
+                                                "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "service" ],
+                                                      [ "A_string", "main" ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "version" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Service Configuration is not valid. Please recheck service versions syntax."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "service", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "deployment_information" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [ "Bool", true ],
+                              [
+                                "Log_or",
+                                [
+                                  [
+                                    "Not",
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "service" ],
+                                        [ "A_string", "enabled" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "contains",
+                                      [
+                                        [
+                                          "Tuple",
+                                          [
+                                            [ "String", "canary" ],
+                                            [ "String", "update" ],
+                                            [ "String", "replace" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "service" ],
+                                            [
+                                              "A_string",
+                                              "deployment-strategy"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Service Configuration is not valid. Please recheck deployment-strategy. Only canary, update and replace is valid."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "service", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "deployment_information" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [ "Bool", true ],
+                              [
+                                "Log_or",
+                                [
+                                  [
+                                    "Log_or",
+                                    [
+                                      [
+                                        "Not",
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "service" ],
+                                            [ "A_string", "enabled" ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "service" ],
+                                                  [ "A_string", "canary" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "version" ]
+                                            ]
+                                          ],
+                                          [ "Null" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "can",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "regex",
+                                            [
+                                              [
+                                                "String",
+                                                "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "service" ],
+                                                      [
+                                                        "A_string", "canary"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "version" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Service Configuration is not valid. Please recheck service canary syntax."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "name", [ "service" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "deployment_information" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [ "Bool", true ],
+                              [
+                                "Log_or",
+                                [
+                                  [
+                                    "Log_or",
+                                    [
+                                      [
+                                        "Not",
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "service" ],
+                                            [ "A_string", "enabled" ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Not",
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "contains",
+                                            [
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [
+                                                    "String", "istio-routing"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "name" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "can",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "deployment_information"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "String", "istio-routing" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Service Configuration is not valid. Istio routing chart is not defined."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "resource_definitions" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Defines a list of definition of resources that belong to a service"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "resource_block" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "istio_proxy_resources" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "limits" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "cpu"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "memory"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "requests" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "cpu"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "memory"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "replicas" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Gt",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "resource_definitions" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "key", [ "value" ] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "resource_definitions" ]
+                                ]
+                              ],
+                              "output": [
+                                "Not_equal",
+                                [ [ "Id", "value" ], [ "Object", [] ] ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Service should contain valid resource definitions. No Replicas or resource block defined"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "istio_proxy_default_resources" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Default values for istio proxy resource requests and limits"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "limits" ],
+                      [
+                        "Fun_call",
+                        [
+                          "object",
+                          [
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "cpu" ],
+                                  [
+                                    "Fun_call",
+                                    [ "optional", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ],
+                                [ [ "Bare", "memory" ], [ "Id", "string" ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "requests" ],
+                      [
+                        "Fun_call",
+                        [
+                          "object",
+                          [
+                            [
+                              "Object",
+                              [
+                                [ [ "Bare", "cpu" ], [ "Id", "string" ] ],
+                                [ [ "Bare", "memory" ], [ "Id", "string" ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "pull_secrets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The list of pull secrets to be used for downloading Docker Images"
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "docker_registry" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The docker registry to use for the application" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "helm_repository" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The helm repository to use for the application" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "helm_repository_username" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The username for the helm repository" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "helm_repository_password" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The password for the helm repository" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "istio_enabled" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enable istio for the application" ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "feature_flags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [ "map", [ [ "Fun_call", [ "map", [ [ "Id", "bool" ] ] ] ] ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Defines a list of feature flags to be bound in services"
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "config_options" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [ "map", [ [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ] ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Defines a list of ops flags to be bound in services" ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "timeout_retry_overrides" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Defines retry and timeout configurations per service. Each definition must include a service name and can optionally include timeout and retry settings."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "service" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "timeout" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "retries" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "enable" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "bool" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "attempts" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "number" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "perTryTimeout" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "retryOn" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Gt",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "timeout_retry_overrides" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "conf", [] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "timeout_retry_overrides" ]
+                                ]
+                              ],
+                              "output": [
+                                "Gt",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "length",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "conf" ],
+                                            [ "A_string", "service" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Int", 0 ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "Service name must not be empty" ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "core_hostname" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The URL to access the DEMIS Core API" ]
+        ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "portal_hostname" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The URL for accessing the DEMIS Notification Portal over Telematikinfrastruktur (TI)"
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "portal" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Gt",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "portal_hostname" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 0 ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The Portal hostname for access over Telematikinfrastruktur (TI) must be defined"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "meldung_hostname" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The URL for accessing the DEMIS Notification Portal over Internet"
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "meldung" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Gt",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "meldung_hostname" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 0 ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The Portal hostname for access over Internet must be defined"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_gateway" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Defines the Istio Cluster Gateway to be used" ]
+        ],
+        [ "Attribute", "default", [ "String", "mesh/demis-core-gateway" ] ],
+        [ "Attribute", "nullable", [ "Bool", true ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "cluster_gateway" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Gt",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "cluster_gateway" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Istio Cluster Gateway Name must be a valid string"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "debug_enabled" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Defines if the backend Java Services must be started in Debug Mode"
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "context_path" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The context path for reaching the DEMIS Services externally"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "reset_values" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Reset the values to the ones built into the chart. This will override any custom values and reuse_values settings."
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ]
+]

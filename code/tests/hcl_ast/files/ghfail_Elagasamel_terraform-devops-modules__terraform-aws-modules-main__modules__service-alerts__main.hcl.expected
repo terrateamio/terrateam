@@ -1,0 +1,2173 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "dimensions",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "ClusterName" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                ]
+              ],
+              [
+                [ "Quoted", "PodName" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ] ]
+              ],
+              [
+                [ "Quoted", "Namespace" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "namespace" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cpu",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [
+                  "Literal",
+                  "\n      {\n        \"type\": \"metric\",\n        \"x\": 0,\n        \"y\": 0,\n        \"width\": 12,\n        \"height\": 6,\n        \"properties\": {\n          \"metrics\": [\n            [\"ContainerInsights\", \"pod_cpu_utilization\", \"ClusterName\", \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\", \"PodName\", \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\", \"Namespace\", \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "namespace" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\"]\n          ],\n          \"period\": " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "cpu_period" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", ",\n          \"stat\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "cpu_statistic" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n          \"region\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "dashboard_region" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n          \"title\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " CPU_Utilization\"\n          }\n      }\n" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "memory",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [
+                  "Literal",
+                  "\n      {\n        \"type\": \"metric\",\n        \"x\": 0,\n        \"y\": 0,\n        \"width\": 12,\n        \"height\": 6,\n        \"properties\": {\n          \"metrics\": [\n              [\"ContainerInsights\", \"pod_memory_utilization\", \"ClusterName\", \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\", \"PodName\", \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\", \"Namespace\", \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "namespace" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\"]\n          ],\n          \"period\": " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "memory_period" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", ",\n          \"stat\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "memory_statistic" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n          \"region\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "dashboard_region" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n          \"title\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal", " Memory_Utilization\"\n          }\n      }\n"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [
+                  "Literal",
+                  "\n    {\n        \"type\": \"metric\",\n        \"x\": 0,\n        \"y\": 0,\n        \"width\": 12,\n        \"height\": 6,\n        \"properties\": {\n          \"metrics\": [\n              [\"ContainerInsights\", \"pod_network_tx_bytes\", \"ClusterName\", \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\", \"PodName\",\"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\", \"Namespace\",\"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "namespace" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "\"],\n              [\"ContainerInsights\", \"pod_network_rx_bytes\", \"ClusterName\", \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\", \"PodName\",\"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\", \"Namespace\",\"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "namespace" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\"]\n          ],\n          \"period\": " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "network_period" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", ",\n          \"stat\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "network_statistic" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n          \"region\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "dashboard_region" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n          \"title\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal", " Netowrk_Utilization\"\n          }\n      }\n"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "restart",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [
+                  "Literal",
+                  "\n      {\n        \"type\": \"metric\",\n        \"x\": 0,\n        \"y\": 0,\n        \"width\": 12,\n        \"height\": 6,\n        \"properties\": {\n          \"metrics\": [\n              [\"ContainerInsights\", \"pod_number_of_container_restarts\", \"ClusterName\", \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\", \"PodName\",\"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\", \"Namespace\",\"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "namespace" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\"]\n          ],\n          \"period\": " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "restart_period" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", ",\n          \"stat\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "restart_statistic" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n          \"region\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "dashboard_region" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n          \"title\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " Restarts\"\n          }\n      }\n" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "error",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [
+                  "Literal",
+                  "\n      {\n        \"type\": \"metric\",\n        \"x\": 0,\n        \"y\": 0,\n        \"width\": 12,\n        \"height\": 6,\n        \"properties\": {\n          \"metrics\": [\n              [\"LogGroupFilter\", \"errorfilter\"]\n          ],\n          \"period\": "
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "error_period" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", ",\n          \"stat\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "error_statistic" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n          \"region\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "dashboard_region" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\",\n          \"title\": \"" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", " Error_Count\"\n          }\n      }\n" ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "null", [ "String", "" ] ],
+        [ "Attribute", "comma", [ "String", "," ] ],
+        [
+          "Attribute",
+          "cpu_dashboard",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "enable_cpu_threshold" ] ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "cpu" ] ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "null" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "add_comma_memory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "comma" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "memory" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "memory_dashboard",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "enable_memory_threshold" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "enable_cpu_threshold" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "add_comma_memory" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "memory" ] ]
+                          ]
+                        }
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "null" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "add_comma_network",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "comma" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "network" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_dashboard",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "enable_network_threshold" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "enable_memory_threshold" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "add_comma_network" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "enable_cpu_threshold"
+                                          ]
+                                        ]
+                                      ],
+                                      "then_": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "add_comma_network" ]
+                                        ]
+                                      ],
+                                      "else_": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "network" ]
+                                        ]
+                                      ]
+                                    }
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        }
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "null" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "add_comma_restart",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "comma" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "restart" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "restart_dashboard",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "enable_restart_threshold" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "enable_network_threshold" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "add_comma_restart" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "enable_memory_threshold" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "add_comma_restart" ]
+                                ]
+                              ],
+                              "else_": [
+                                "Cond",
+                                {
+                                  "if_": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "enable_cpu_threshold" ]
+                                    ]
+                                  ],
+                                  "then_": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "add_comma_restart" ]
+                                    ]
+                                  ],
+                                  "else_": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "restart" ]
+                                    ]
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "null" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "add_comma_error",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "comma" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "error" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "error_dashboard",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "enable_error_filter" ] ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "enable_restart_threshold" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "add_comma_error" ]
+                            ]
+                          ],
+                          "else_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "enable_network_threshold" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "add_comma_error" ]
+                                ]
+                              ],
+                              "else_": [
+                                "Cond",
+                                {
+                                  "if_": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string", "enable_memory_threshold"
+                                      ]
+                                    ]
+                                  ],
+                                  "then_": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "add_comma_error" ]
+                                    ]
+                                  ],
+                                  "else_": [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "enable_cpu_threshold"
+                                          ]
+                                        ]
+                                      ],
+                                      "then_": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "add_comma_error" ]
+                                        ]
+                                      ],
+                                      "else_": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "error" ]
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "null" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "dashboard_body1",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [ "Literal", "\n  {\n    \"widgets\": [\n      " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "cpu_dashboard" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\n      " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "memory_dashboard" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\n      " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "network_dashboard" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\n      " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "restart_dashboard" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\n      " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "error_dashboard" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\n    ]\n  }\n" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_dashboard" ],
+        [ "Lit", "error_metric_include2" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "create_dashboard" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "dashboard_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "env" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-dashboard" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dashboard_body",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "dashboard_body1" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "cloudwatchalarm_cpu" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "enable_cpu_threshold" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "source", [ "String", "../cloudwatch-alarm-notify" ] ],
+        [
+          "Attribute",
+          "alarm_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "env" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_cpu_utilization" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanOrEqualToThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "period",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cpu_period" ] ] ]
+        ],
+        [ "Attribute", "namespace", [ "String", "ContainerInsights" ] ],
+        [
+          "Attribute",
+          "unit",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cpu_unit" ] ] ]
+        ],
+        [ "Attribute", "metric_name", [ "String", "pod_cpu_utilization" ] ],
+        [
+          "Attribute",
+          "statistic",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cpu_statistic" ] ] ]
+        ],
+        [
+          "Attribute",
+          "threshold",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cpu_threshold" ] ] ]
+        ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "dimensions",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "dimensions" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_hook_url",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_hook_url" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_channel",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_channel" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_username",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cloudwatch_log_group_retention_in_days",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "cloudwatch_log_group_retention_in_days" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_email_address_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_email_address_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_phone_number_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_phone_number_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sms_message_body",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "sms_message_body" ] ] ]
+        ],
+        [
+          "Attribute",
+          "opsgenie_endpoint",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "opsgenie_endpoints" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "cloudwatchalarm_memory" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "enable_memory_threshold" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "source", [ "String", "../cloudwatch-alarm-notify" ] ],
+        [
+          "Attribute",
+          "alarm_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "env" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_memory_utilization" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanOrEqualToThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "period",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "memory_period" ] ] ]
+        ],
+        [ "Attribute", "namespace", [ "String", "ContainerInsights" ] ],
+        [
+          "Attribute",
+          "unit",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "memory_unit" ] ] ]
+        ],
+        [
+          "Attribute", "metric_name", [ "String", "pod_memory_utilization" ]
+        ],
+        [
+          "Attribute",
+          "statistic",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "memory_statistic" ] ] ]
+        ],
+        [
+          "Attribute",
+          "threshold",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "memory_threshold" ] ] ]
+        ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "dimensions",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "dimensions" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_hook_url",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_hook_url" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_channel",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_channel" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_username",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cloudwatch_log_group_retention_in_days",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "cloudwatch_log_group_retention_in_days" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_email_address_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_email_address_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_phone_number_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_phone_number_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sms_message_body",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "sms_message_body" ] ] ]
+        ],
+        [
+          "Attribute",
+          "opsgenie_endpoint",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "opsgenie_endpoints" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "cloudwatch_log_metric_filter" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "enable_error_filter" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "source", [ "String", "../cloudwatch-log-metric" ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "env" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filter_pattern",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "error_filter_pattern" ] ]
+          ]
+        ],
+        [ "Attribute", "create_log_group", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "log_group_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "log_group_name" ] ] ]
+        ],
+        [ "Attribute", "metric_name", [ "String", "errorfilter" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "cloudwatchalarm_error" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "enable_error_filter" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "source", [ "String", "../cloudwatch-alarm-notify" ] ],
+        [
+          "Attribute",
+          "alarm_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "env" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_error_utilization" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanOrEqualToThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "period",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "error_period" ] ] ]
+        ],
+        [ "Attribute", "namespace", [ "String", "LogGroupFilter" ] ],
+        [
+          "Attribute",
+          "unit",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "error_unit" ] ] ]
+        ],
+        [ "Attribute", "metric_name", [ "String", "errorfilter" ] ],
+        [
+          "Attribute",
+          "statistic",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "error_statistic" ] ] ]
+        ],
+        [
+          "Attribute",
+          "threshold",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "error_threshold" ] ] ]
+        ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "dimensions",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "dimensions" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_hook_url",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_hook_url" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_channel",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_channel" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_username",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cloudwatch_log_group_retention_in_days",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "cloudwatch_log_group_retention_in_days" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_email_address_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_email_address_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_phone_number_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_phone_number_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sms_message_body",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "sms_message_body" ] ] ]
+        ],
+        [
+          "Attribute",
+          "opsgenie_endpoint",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "opsgenie_endpoints" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "cloudwatchalarm_network_tx" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "enable_network_threshold" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "source", [ "String", "../cloudwatch-alarm-notify" ] ],
+        [
+          "Attribute",
+          "alarm_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "env" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_network_tx_utilization" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanOrEqualToThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "period",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "network_period" ] ] ]
+        ],
+        [ "Attribute", "namespace", [ "String", "ContainerInsights" ] ],
+        [
+          "Attribute",
+          "unit",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "network_unit" ] ] ]
+        ],
+        [ "Attribute", "metric_name", [ "String", "pod_network_tx_bytes" ] ],
+        [
+          "Attribute",
+          "statistic",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "network_statistic" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "threshold",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "network_threshold" ] ]
+          ]
+        ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "dimensions",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "dimensions" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_hook_url",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_hook_url" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_channel",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_channel" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_username",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cloudwatch_log_group_retention_in_days",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "cloudwatch_log_group_retention_in_days" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_email_address_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_email_address_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_phone_number_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_phone_number_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sms_message_body",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "sms_message_body" ] ] ]
+        ],
+        [
+          "Attribute",
+          "opsgenie_endpoint",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "opsgenie_endpoints" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "cloudwatchalarm_network_rx" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "enable_network_threshold" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "source", [ "String", "../cloudwatch-alarm-notify" ] ],
+        [
+          "Attribute",
+          "alarm_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "env" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_network_rx_utilization" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanOrEqualToThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "period",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "network_period" ] ] ]
+        ],
+        [ "Attribute", "namespace", [ "String", "ContainerInsights" ] ],
+        [
+          "Attribute",
+          "unit",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "network_unit" ] ] ]
+        ],
+        [ "Attribute", "metric_name", [ "String", "pod_network_rx_bytes" ] ],
+        [
+          "Attribute",
+          "statistic",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "network_statistic" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "threshold",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "network_threshold" ] ]
+          ]
+        ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "dimensions",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "dimensions" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_hook_url",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_hook_url" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_channel",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_channel" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_username",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cloudwatch_log_group_retention_in_days",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "cloudwatch_log_group_retention_in_days" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_email_address_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_email_address_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_phone_number_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_phone_number_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sms_message_body",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "sms_message_body" ] ] ]
+        ],
+        [
+          "Attribute",
+          "opsgenie_endpoint",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "opsgenie_endpoints" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "cloudwatchalarm_restart_count" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "enable_restart_threshold" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "source", [ "String", "../cloudwatch-alarm-notify" ] ],
+        [
+          "Attribute",
+          "alarm_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "env" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "pod_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_restart_count" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "period",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "restart_period" ] ] ]
+        ],
+        [ "Attribute", "namespace", [ "String", "ContainerInsights" ] ],
+        [
+          "Attribute",
+          "unit",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "restart_unit" ] ] ]
+        ],
+        [
+          "Attribute",
+          "metric_name",
+          [ "String", "pod_number_of_container_restarts" ]
+        ],
+        [
+          "Attribute",
+          "statistic",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "restart_statistic" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "threshold",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "restart_threshold" ] ]
+          ]
+        ],
+        [ "Attribute", "treat_missing_data", [ "String", "breaching" ] ],
+        [
+          "Attribute",
+          "dimensions",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "dimensions" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_hook_url",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_hook_url" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_channel",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_channel" ] ] ]
+        ],
+        [
+          "Attribute",
+          "slack_username",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "slack_username" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cloudwatch_log_group_retention_in_days",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "cloudwatch_log_group_retention_in_days" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_email_address_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_email_address_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sns_subscription_phone_number_list",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "sns_subscription_phone_number_list" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sms_message_body",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "sms_message_body" ] ] ]
+        ],
+        [
+          "Attribute",
+          "opsgenie_endpoint",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "opsgenie_endpoints" ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

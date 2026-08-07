@@ -1,0 +1,1819 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_dashboard" ], [ "Lit", "APM_IMM-Exec" ]
+      ],
+      "body": [
+        [ "Attribute", "charts_resolution", [ "String", "default" ] ],
+        [
+          "Attribute",
+          "dashboard_group",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "signalfx_dashboard_group" ],
+                  [ "A_string", "exec_dashboard_group" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "APM / IMM - Exec" ] ],
+        [ "Attribute", "time_range", [ "String", "-12w" ] ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "APM_IMM-Exec_2" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "APM_IMM-Exec_7" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 9 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "APM_IMM-Exec_0" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "APM_IMM-Exec_5" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "APM_IMM-Exec_3" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 9 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "APM_IMM-Exec_4" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "APM_IMM-Exec_6" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 6 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_list_chart" ],
+                        [ "A_string", "APM_IMM-Exec_1" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 3 ] ],
+              [ "Attribute", "height", [ "Int", 2 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 3 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "variable",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alias", [ "String", "Environment" ] ],
+              [ "Attribute", "apply_if_exist", [ "Bool", false ] ],
+              [
+                "Attribute",
+                "description",
+                [ "String", "APM Environment Name" ]
+              ],
+              [ "Attribute", "property", [ "String", "sf_environment" ] ],
+              [ "Attribute", "replace_only", [ "Bool", true ] ],
+              [ "Attribute", "restricted_suggestions", [ "Bool", false ] ],
+              [ "Attribute", "value_required", [ "Bool", true ] ],
+              [ "Attribute", "values", [ "Tuple", [ [ "String", "*" ] ] ] ],
+              [ "Attribute", "values_suggested", [ "Tuple", [] ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "variable",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alias", [ "String", "Service" ] ],
+              [ "Attribute", "apply_if_exist", [ "Bool", false ] ],
+              [
+                "Attribute", "description", [ "String", "APM Service Name" ]
+              ],
+              [ "Attribute", "property", [ "String", "sf_service" ] ],
+              [ "Attribute", "replace_only", [ "Bool", true ] ],
+              [ "Attribute", "restricted_suggestions", [ "Bool", false ] ],
+              [ "Attribute", "value_required", [ "Bool", true ] ],
+              [ "Attribute", "values", [ "Tuple", [ [ "String", "*" ] ] ] ],
+              [ "Attribute", "values_suggested", [ "Tuple", [] ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "APM_IMM-Exec_0" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Metric" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "Traffic Change Top and Bottom 5 (12 week comparison)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Request rate 12 week comparison" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('service.request.count', filter=filter('sf_environment', '*') and filter('sf_service', '*'), rollup='rate').sum(by=['sf_service']).mean(over='7d').publish(label='A', enable=False)\nB = data('service.request.count', filter=filter('sf_environment', '*') and filter('sf_service', '*'), rollup='rate').sum(by=['sf_service']).timeshift('12w').mean(over='7d').publish(label='B', enable=False)\nC = (((A-B)/B)*100).mean(by=['sf_service']).mean(over='7d').top(count=5).publish(label='C')\nD = (((A-B)/B)*100).mean(by=['sf_service']).mean(over='7d').bottom(count=5).publish(label='D')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "refresh_interval", [ "Int", 3600 ] ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "sort_by", [ "String", "-value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "brown" ] ],
+              [ "Attribute", "display_name", [ "String", "% Change" ] ],
+              [ "Attribute", "label", [ "String", "D" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [ "Attribute", "display_name", [ "String", "% Change" ] ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "Requests" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "requests/m" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "Requests(-4w)" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "requests/m" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "APM_IMM-Exec_1" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [ "Attribute", "description", [ "String", "Requests compared" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Total Request (4 & 12 week comparisons)" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nC = data('service.request.count', filter=(not filter('sf_dimensionalized', '*')) and filter('sf_environment', '*') and filter('sf_service', '*'), rollup='rate').sum(over='1d').sum().publish(label='C')\nD = data('service.request.count', filter=(not filter('sf_dimensionalized', '*')) and filter('sf_environment', '*') and filter('sf_service', '*'), rollup='rate').sum(over='1d').sum().timeshift('4w').publish(label='D', enable=False)\nE = data('service.request.count', filter=(not filter('sf_dimensionalized', '*')) and filter('sf_environment', '*') and filter('sf_service', '*'), rollup='rate').sum(over='1d').sum().timeshift('12w').publish(label='E', enable=False)\nF = (((C-D)/C)*100).publish(label='F')\nG = (((C-E)/C)*100).publish(label='G')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Radial" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "aquamarine" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Minus", [ "Int", 100 ] ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [ "Attribute", "gt", [ "Int", 0 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 100 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "% 12 week Change" ]
+              ],
+              [ "Attribute", "label", [ "String", "G" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "% 4 week Change" ]
+              ],
+              [ "Attribute", "label", [ "String", "F" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "-12w" ] ],
+              [ "Attribute", "label", [ "String", "E" ] ],
+              [ "Attribute", "value_suffix", [ "String", "requests/m" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "-4w" ] ],
+              [ "Attribute", "label", [ "String", "D" ] ],
+              [ "Attribute", "value_suffix", [ "String", "requests/m" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "Today" ] ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_suffix", [ "String", " " ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "APM_IMM-Exec_2" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Metric" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Latency (P90) Top and Bottom 5 (12 week comparison)" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Latency (P90) 12 week comparison" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\ndef weighted_duration(base, p, filter_, groupby):\n    error_durations     = data(base + '.duration.ns.' + p, filter=filter_ and filter('sf_error', 'true'),  rollup='max').mean(by=groupby, allow_missing=['sf_httpMethod'])\n    non_error_durations = data(base + '.duration.ns.' + p, filter=filter_ and filter('sf_error', 'false'), rollup='max').mean(by=groupby, allow_missing=['sf_httpMethod'])\n        \n    error_counts     = data(base + '.count', filter=filter_ and filter('sf_error', 'true'),  rollup='sum').sum(by=groupby, allow_missing=['sf_httpMethod'])\n    non_error_counts = data(base + '.count', filter=filter_ and filter('sf_error', 'false'), rollup='sum').sum(by=groupby, allow_missing=['sf_httpMethod'])\n        \n    error_weight     = (error_durations * error_counts).sum(over='1m')\n    non_error_weight = (non_error_durations * non_error_counts).sum(over='1m')\n        \n    total_weight = combine((error_weight if error_weight is not None else 0) + (non_error_weight if non_error_weight is not None else 0))\n    total = combine((error_counts if error_counts is not None else 0) + (non_error_counts if non_error_counts is not None else 0)).sum(over='1m')\n    return (total_weight / total)\n        \nfilter_ = filter('sf_environment', '*') and filter('sf_service', '*') and not filter('sf_dimensionalized', '*')\ngroupby = ['sf_service', 'sf_environment']\nweighted_duration('service.request', 'p90', filter_, groupby).mean()\n        \nA = weighted_duration('service.request', 'p90', filter_, groupby).mean(by=['sf_service']).mean(over='7d').publish(label='A', enable=False)\nB = weighted_duration('service.request', 'p90', filter_, groupby).mean(by=['sf_service']).timeshift('12w').mean(over='7d').publish(label='B', enable=False)\nC = (((A-B)/B)*100).mean(by=['sf_service']).mean(over='7d').top(count=5).publish(label='C')\nD = (((A-B)/B)*100).mean(by=['sf_service']).mean(over='7d').bottom(count=5).publish(label='D')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "refresh_interval", [ "Int", 3600 ] ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "sort_by", [ "String", "+value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "aquamarine" ] ],
+              [ "Attribute", "display_name", [ "String", "% Change" ] ],
+              [ "Attribute", "label", [ "String", "D" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [ "Attribute", "display_name", [ "String", "% Change" ] ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "Requests" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "requests/m" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "Requests(-4w)" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "requests/m" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "APM_IMM-Exec_3" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute", "description", [ "String", "Latency (P90) Compared" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Latency (P90) (4 & 12 week comparisons)" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\ndef weighted_duration(base, p, filter_, groupby):\n    error_durations     = data(base + '.duration.ns.' + p, filter=filter_ and filter('sf_error', 'true'),  rollup='max').mean(by=groupby, allow_missing=['sf_httpMethod'])\n    non_error_durations = data(base + '.duration.ns.' + p, filter=filter_ and filter('sf_error', 'false'), rollup='max').mean(by=groupby, allow_missing=['sf_httpMethod'])\n        \n    error_counts     = data(base + '.count', filter=filter_ and filter('sf_error', 'true'),  rollup='sum').sum(by=groupby, allow_missing=['sf_httpMethod'])\n    non_error_counts = data(base + '.count', filter=filter_ and filter('sf_error', 'false'), rollup='sum').sum(by=groupby, allow_missing=['sf_httpMethod'])\n        \n    error_weight     = (error_durations * error_counts).sum(over='1m')\n    non_error_weight = (non_error_durations * non_error_counts).sum(over='1m')\n        \n    total_weight = combine((error_weight if error_weight is not None else 0) + (non_error_weight if non_error_weight is not None else 0))\n    total = combine((error_counts if error_counts is not None else 0) + (non_error_counts if non_error_counts is not None else 0)).sum(over='1m')\n    return (total_weight / total)\n        \nfilter_ = filter('sf_environment', '*') and filter('sf_service', '*') and not filter('sf_dimensionalized', '*')\ngroupby = ['sf_service', 'sf_environment']\nweighted_duration('service.request', 'p90', filter_, groupby)\n        \nC = weighted_duration('service.request', 'p90', filter_, groupby).mean(over='1d').mean().scale(0.00000001).publish(label='C')\nD = weighted_duration('service.request', 'p90', filter_, groupby).mean(over='1d').mean().scale(0.00000001).timeshift('4w').publish(label='D', enable=False)\nE = weighted_duration('service.request', 'p90', filter_, groupby).mean(over='1d').mean().scale(0.00000001).timeshift('12w').publish(label='E', enable=False)\nF = (((C-D)/C)*100).publish(label='F')\nG = (((C-E)/C)*100).publish(label='G')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Radial" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Minus", [ "Int", 100 ] ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 0 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 100 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "% 12 week Change" ]
+              ],
+              [ "Attribute", "label", [ "String", "G" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "% 4 week Change" ]
+              ],
+              [ "Attribute", "label", [ "String", "F" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "-12w" ] ],
+              [ "Attribute", "label", [ "String", "E" ] ],
+              [ "Attribute", "value_suffix", [ "String", "requests/m" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "-4w" ] ],
+              [ "Attribute", "label", [ "String", "D" ] ],
+              [ "Attribute", "value_suffix", [ "String", "requests/m" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "lilac" ] ],
+              [ "Attribute", "display_name", [ "String", "Today" ] ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "APM_IMM-Exec_4" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Metric" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Error rate Top and Bottom 5 (12 week comparison)" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", true ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute", "name", [ "String", "Error rate 12 week comparison" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nfilter_ = filter('sf_environment', '*') and filter('sf_service', '*') and (not filter('sf_dimensionalized', '*'))\nA = data('service.request.count', filter=filter_ and filter('sf_error', 'true'), rollup='delta').sum(by=['sf_environment', 'sf_service']).mean(over='7d').publish(label='A', enable=False)\nB = data('service.request.count', filter=filter_, rollup='delta').sum(by=['sf_environment', 'sf_service']).mean(over='7d').publish(label='B', enable=False)\nC = combine(100*((A if A is not None else 0) / B)).publish(label='C', enable=False)\nD = combine(100*((A if A is not None else 0) / B)).timeshift('12w').publish(label='D', enable=False)\n        \nE = (((C-D)/D)*100).mean(by=['sf_service']).mean(over='7d').top(count=5).publish(label='% Change')\nF = (((C-D)/D)*100).mean(by=['sf_service']).mean(over='7d').bottom(count=5).publish(label='% Change')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "sort_by", [ "String", "+value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "sf_service" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "% Change" ] ],
+              [ "Attribute", "label", [ "String", "% Change" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "D" ] ],
+              [ "Attribute", "label", [ "String", "D" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "Errors" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "Requests" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "pink" ] ],
+              [ "Attribute", "display_name", [ "String", "Error rate" ] ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "APM_IMM-Exec_5" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [ "Attribute", "description", [ "String", "Error rate compared" ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", true ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Error rate (4 & 12 week comparisons)" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nfilter_ = filter('sf_environment', '*') and filter('sf_service', '*') and (not filter('sf_dimensionalized', '*'))\nA = data('service.request.count', filter=filter_ and filter('sf_error', 'true'), rollup='delta').sum(by=['sf_environment', 'sf_service']).mean(over='1d').publish(label='A', enable=False)\nB = data('service.request.count', filter=filter_, rollup='delta').sum(by=['sf_environment', 'sf_service']).mean(over='1d').publish(label='B', enable=False)\nC = combine(100*((A if A is not None else 0) / B)).mean().publish(label='Today')\nD = combine(100*((A if A is not None else 0) / B)).mean().timeshift('4w').publish(label='4w', enable=False)\nE = combine(100*((A if A is not None else 0) / B)).mean().timeshift('12w').publish(label='12w', enable=False)\n        \nF = (((C-D)/C)*100).publish(label='% 4 week Change')\nG = (((C-E)/C)*100).publish(label='% 12 week Change')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Radial" ] ],
+        [ "Attribute", "sort_by", [ "String", "-sf_metric" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 2 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 10 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 2 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "sf_originatingMetric" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_service" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "sf_environment" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "% 12 week Change" ]
+              ],
+              [ "Attribute", "label", [ "String", "% 12 week Change" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "% 4 week Change" ]
+              ],
+              [ "Attribute", "label", [ "String", "% 4 week Change" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "12w" ] ],
+              [ "Attribute", "label", [ "String", "12w" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "4w" ] ],
+              [ "Attribute", "label", [ "String", "4w" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "Errors" ] ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "Requests" ] ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "Today" ] ],
+              [ "Attribute", "label", [ "String", "Today" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "APM_IMM-Exec_6" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Metric" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Service Saturation of CPU/MEM/DISK Top and Bottom 5 (12 week comparison)"
+          ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 1 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Host saturation 12 week comparison" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nf = filter('sf_environment', '*') and filter('sf_service', '*')\nA = data('cpu.utilization', filter=f).mean(by='sf_service').publish(label='A', enable=False)\nB = data('memory.utilization', filter=f).mean(by='sf_service').publish(label='B', enable=False)\nC = data('disk.summary_utilization', filter=f).mean(by='sf_service').publish(label='C', enable=False)\nD = max(A, B, C).publish(label='Saturation', enable=False)\nE = max(A, B, C).timeshift('12w').publish(label='Saturation-12w', enable=False)\n        \nG = (((E-D)/D)*100).mean(over='7d').top(count=5).publish(label='% Change')\nH = (((E-D)/D)*100).mean(over='7d').bottom(count=5).publish(label='% Change')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "None" ] ],
+        [ "Attribute", "sort_by", [ "String", "+value" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "cloud.account.id" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute",
+                "property",
+                [ "String", "cloud.availability_zone" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "cloud.platform" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "cloud.provider" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "gcp_id" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "host" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "host.id" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "host.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "host.type" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "k8s.cluster.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "k8s.node.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "kubernetes_cluster" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "kubernetes_node" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "kubernetes_node_uid" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "metric_source" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "os.type" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "sf_service" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "% Change" ] ],
+              [ "Attribute", "label", [ "String", "% Change" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "Saturation" ] ],
+              [ "Attribute", "label", [ "String", "Saturation" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "Saturation-12w" ] ],
+              [ "Attribute", "label", [ "String", "Saturation-12w" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "cpu.utilization" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "disk.summary_utilization" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "memory.utilization" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_list_chart" ], [ "Lit", "APM_IMM-Exec_7" ]
+      ],
+      "body": [
+        [ "Attribute", "color_by", [ "String", "Scale" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Service Saturation of mean CPU/MEM/DISK compared" ]
+        ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [ "Attribute", "hide_missing_values", [ "Bool", false ] ],
+        [ "Attribute", "max_delay", [ "Int", 0 ] ],
+        [ "Attribute", "max_precision", [ "Int", 1 ] ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "Host saturation (4 & 12 week comparisons)" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nf = filter('sf_environment', '*') and filter('sf_service', '*')\nA = data('cpu.utilization', filter=f).mean(by='sf_service').publish(label='A', enable=False)\nB = data('memory.utilization', filter=f).mean(by='sf_service').publish(label='B', enable=False)\nC = data('disk.summary_utilization', filter=f).mean(by='sf_service').publish(label='C', enable=False)\nD = max(A, B, C).mean().publish(label='Today')\nE = max(A, B, C).mean().timeshift('4w').publish(label='% 4', enable=False)\nG = max(A, B, C).mean().timeshift('12w').publish(label='% 12', enable=False)\nH = (((D-E)/D)*100).publish(label='% 4 week Change')\nI = (((D-G)/D)*100).publish(label='% 12 week Change')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "secondary_visualization", [ "String", "Radial" ] ],
+        [ "Attribute", "sort_by", [ "String", "-sf_metric" ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "red" ] ],
+              [ "Attribute", "gt", [ "Int", 70 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 100 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "green" ] ],
+              [ "Attribute", "gt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "gte", [ "Int", 0 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 50 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "color_scale",
+            "labels": [],
+            "body": [
+              [ "Attribute", "color", [ "String", "yellow" ] ],
+              [ "Attribute", "gt", [ "Int", 50 ] ],
+              [ "Attribute", "gte", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lt", [ "Float", 3.4028234663852886e+38 ] ],
+              [ "Attribute", "lte", [ "Int", 70 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "cloud.account.id" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute",
+                "property",
+                [ "String", "cloud.availability_zone" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "cloud.platform" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "cloud.provider" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "gcp_id" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "host" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "host.id" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "host.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "host.type" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "k8s.cluster.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "k8s.node.name" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "kubernetes_cluster" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [ "Attribute", "property", [ "String", "kubernetes_node" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", false ] ],
+              [
+                "Attribute", "property", [ "String", "kubernetes_node_uid" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "metric_source" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "os.type" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "sf_metric" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "legend_options_fields",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "property", [ "String", "sf_service" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "% 12 week Change" ]
+              ],
+              [ "Attribute", "label", [ "String", "% 12 week Change" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "% 12" ] ],
+              [ "Attribute", "label", [ "String", "% 12" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "% 4 week Change" ]
+              ],
+              [ "Attribute", "label", [ "String", "% 4 week Change" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "% 4" ] ],
+              [ "Attribute", "label", [ "String", "% 4" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "display_name", [ "String", "Today" ] ],
+              [ "Attribute", "label", [ "String", "Today" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "display_name", [ "String", "cpu.utilization" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "disk.summary_utilization" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "memory.utilization" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,664 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "AzureRegion" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "choix de la region Azure" ]
+        ],
+        [ "Attribute", "type", [ "String", "string" ] ],
+        [ "Attribute", "default", [ "String", "West Europe" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_resource_group" ],
+        [ "Lit", "Terra-RG-PackerStan1" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "RG-DeploiementPacker1" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "AzureRegion" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network" ],
+        [ "Lit", "Terra-VNet-PackerStan1" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "VNet-PackerStan1" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_resource_group" ],
+                          [ "A_string", "Terra-RG-PackerStan1" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_space",
+          [ "Tuple", [ [ "String", "10.0.0.0/8" ] ] ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "AzureRegion" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dns_servers",
+          [ "Tuple", [ [ "String", "8.8.8.8" ], [ "String", "10.0.0.5" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_security_group" ],
+        [ "Lit", "Terra-NSG-PackerStan1" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "NSG-PackerStan1" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "AzureRegion" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_resource_group" ],
+                          [ "A_string", "Terra-RG-PackerStan1" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "security_rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "OK-SSH-entrant" ] ],
+              [ "Attribute", "priority", [ "Int", 1200 ] ],
+              [ "Attribute", "direction", [ "String", "Inbound" ] ],
+              [ "Attribute", "access", [ "String", "Allow" ] ],
+              [ "Attribute", "protocol", [ "String", "Tcp" ] ],
+              [ "Attribute", "source_port_range", [ "String", "*" ] ],
+              [ "Attribute", "destination_port_range", [ "String", "22" ] ],
+              [ "Attribute", "source_address_prefix", [ "String", "*" ] ],
+              [
+                "Attribute", "destination_address_prefix", [ "String", "*" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "security_rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "OK-HTTP-entrant" ] ],
+              [ "Attribute", "priority", [ "Int", 1300 ] ],
+              [ "Attribute", "direction", [ "String", "Inbound" ] ],
+              [ "Attribute", "access", [ "String", "Allow" ] ],
+              [ "Attribute", "protocol", [ "String", "Tcp" ] ],
+              [ "Attribute", "source_port_range", [ "String", "*" ] ],
+              [ "Attribute", "destination_port_range", [ "String", "80" ] ],
+              [ "Attribute", "source_address_prefix", [ "String", "*" ] ],
+              [
+                "Attribute", "destination_address_prefix", [ "String", "*" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "security_rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "OK-RDP-entrant" ] ],
+              [ "Attribute", "priority", [ "Int", 1400 ] ],
+              [ "Attribute", "direction", [ "String", "Inbound" ] ],
+              [ "Attribute", "access", [ "String", "Allow" ] ],
+              [ "Attribute", "protocol", [ "String", "Tcp" ] ],
+              [ "Attribute", "source_port_range", [ "String", "*" ] ],
+              [ "Attribute", "destination_port_range", [ "String", "3389" ] ],
+              [ "Attribute", "source_address_prefix", [ "String", "*" ] ],
+              [
+                "Attribute", "destination_address_prefix", [ "String", "*" ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subnet" ], [ "Lit", "Terra-Subnet-PackerStan1" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Subnet-PackerStan1" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_resource_group" ],
+                          [ "A_string", "Terra-RG-PackerStan1" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_virtual_network" ],
+                          [ "A_string", "Terra-VNet-PackerStan1" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "address_prefix", [ "String", "10.0.0.0/16" ] ],
+        [
+          "Attribute",
+          "network_security_group_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_network_security_group" ],
+                          [ "A_string", "Terra-NSG-PackerStan1" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_public_ip" ],
+        [ "Lit", "Terra-PublicIp-PackerStan1" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "PublicIp-PackerStan1" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "AzureRegion" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_resource_group" ],
+                          [ "A_string", "Terra-RG-PackerStan1" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute", "public_ip_address_allocation", [ "String", "static" ]
+        ],
+        [
+          "Attribute", "domain_name_label", [ "String", "publicpackerstan1" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_interface" ],
+        [ "Lit", "Terra-NIC1-PackerStan1" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "NIC1-PackerStan1" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "AzureRegion" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_resource_group" ],
+                          [ "A_string", "Terra-RG-PackerStan1" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ip_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "name", [ "String", "configIPNIC1-PackerStan1" ]
+              ],
+              [
+                "Attribute",
+                "subnet_id",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "azurerm_subnet" ],
+                                [ "A_string", "Terra-Subnet-PackerStan1" ]
+                              ]
+                            ],
+                            [ "A_string", "id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "private_ip_address_allocation",
+                [ "String", "dynamic" ]
+              ],
+              [
+                "Attribute",
+                "public_ip_address_id",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "azurerm_public_ip" ],
+                                [ "A_string", "Terra-PublicIp-PackerStan1" ]
+                              ]
+                            ],
+                            [ "A_string", "id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "IP Publique de la VM" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_public_ip" ],
+                          [ "A_string", "Terra-PublicIp-PackerStan1" ]
+                        ]
+                      ],
+                      [ "A_string", "ip_address" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "FQDN de la VM" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_public_ip" ],
+                          [ "A_string", "Terra-PublicIp-PackerStan1" ]
+                        ]
+                      ],
+                      [ "A_string", "fqdn" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "NICid de la VM" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_network_interface" ],
+                          [ "A_string", "Terra-NIC1-PackerStan1" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

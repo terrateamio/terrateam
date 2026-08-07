@@ -1,0 +1,121 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "bootstrap" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [
+            "String",
+            "git::https://github.com/poseidon/terraform-render-bootstrap.git?ref=157336db92daf1f1b7f09ab2b3ccbe16a4b66c57"
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "api_servers",
+          [
+            "Tuple",
+            [
+              [
+                "Fun_call",
+                [
+                  "format",
+                  [
+                    [ "String", "%s.%s" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                    ],
+                    [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "dns_zone" ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "etcd_servers",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_route53_record" ], [ "A_string", "etcds" ]
+                    ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "fqdn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "asset_dir",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "asset_dir" ] ] ]
+        ],
+        [
+          "Attribute",
+          "networking",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "networking" ] ] ]
+        ],
+        [
+          "Attribute",
+          "network_mtu",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "network_mtu" ] ] ]
+        ],
+        [
+          "Attribute",
+          "pod_cidr",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "pod_cidr" ] ] ]
+        ],
+        [
+          "Attribute",
+          "service_cidr",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "service_cidr" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cluster_domain_suffix",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "cluster_domain_suffix" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_reporting",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "enable_reporting" ] ] ]
+        ],
+        [
+          "Attribute",
+          "enable_aggregation",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "enable_aggregation" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "trusted_certs_dir",
+          [ "String", "/etc/pki/tls/certs" ]
+        ]
+      ]
+    }
+  ]
+]

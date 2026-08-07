@@ -1,0 +1,397 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "grafana",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "source" ], [ "String", "grafana/grafana" ] ],
+                    [ [ "Bare", "version" ], [ "String", "4.27.0" ] ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "grafana" ] ],
+      "body": [
+        [
+          "Attribute",
+          "url",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "grafana_url" ] ] ]
+        ],
+        [
+          "Attribute",
+          "auth",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "my_token" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "grafana_data_source" ], [ "Lit", "my_datasource" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "My OpenTofu Datasource" ] ],
+        [ "Attribute", "type", [ "String", "grafana-testdata-datasource" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "grafana_folder" ], [ "Lit", "dashboard_folder" ]
+      ],
+      "body": [
+        [
+          "Attribute", "title", [ "String", "My Terraform-generated folder" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "grafana_dashboard" ], [ "Lit", "my_dashboard" ] ],
+      "body": [
+        [
+          "Attribute",
+          "folder",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "grafana_folder" ],
+                  [ "A_string", "dashboard_folder" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "config_json",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/my-dashboard.tftpl" ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "mydatasource-uid" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "grafana_data_source" ],
+                              [ "A_string", "my_datasource" ]
+                            ]
+                          ],
+                          [ "A_string", "uid" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "grafana_folder" ], [ "Lit", "alert_folder" ] ],
+      "body": [
+        [ "Attribute", "title", [ "String", "My Alert Rule Folder" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "grafana_contact_point" ], [ "Lit", "default_email" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "grafana-default-email" ] ],
+        [
+          "Block",
+          {
+            "type_": "email",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "addresses",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "my_email" ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "grafana_rule_group" ], [ "Lit", "rule_group_0000" ]
+      ],
+      "body": [
+        [ "Attribute", "org_id", [ "Int", 1 ] ],
+        [ "Attribute", "name", [ "String", "My alert rule" ] ],
+        [
+          "Attribute",
+          "folder_uid",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "grafana_folder" ], [ "A_string", "alert_folder" ]
+                ]
+              ],
+              [ "A_string", "uid" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "interval_seconds", [ "Int", 300 ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "Test data" ] ],
+              [ "Attribute", "condition", [ "String", "C" ] ],
+              [
+                "Block",
+                {
+                  "type_": "data",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "ref_id", [ "String", "A" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "relative_time_range",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "from", [ "Int", 600 ] ],
+                          [ "Attribute", "to", [ "Int", 0 ] ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Attribute",
+                      "datasource_uid",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "grafana_data_source" ],
+                              [ "A_string", "my_datasource" ]
+                            ]
+                          ],
+                          [ "A_string", "uid" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "model",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "{\"datasource\":{\"type\":\"" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "grafana_data_source" ],
+                                      [ "A_string", "my_datasource" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "type" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "\",\"uid\":\"" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "grafana_data_source" ],
+                                      [ "A_string", "my_datasource" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "uid" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [
+                            "Literal",
+                            "\"},\"intervalMs\":1000,\"max\":100,\"maxDataPoints\":43200,\"refId\":\"A\",\"scenarioId\":\"random_walk\",\"seriesCount\":1}"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "data",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "ref_id", [ "String", "B" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "relative_time_range",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "from", [ "Int", 0 ] ],
+                          [ "Attribute", "to", [ "Int", 0 ] ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Attribute", "datasource_uid", [ "String", "__expr__" ]
+                    ],
+                    [
+                      "Attribute",
+                      "model",
+                      [
+                        "String",
+                        "{\"conditions\":[{\"evaluator\":{\"params\":[0,0],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[]},\"reducer\":{\"params\":[],\"type\":\"avg\"},\"type\":\"query\"}],\"datasource\":{\"name\":\"Expression\",\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"A\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"reducer\":\"last\",\"refId\":\"B\",\"type\":\"reduce\"}"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "data",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "ref_id", [ "String", "C" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "relative_time_range",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "from", [ "Int", 600 ] ],
+                          [ "Attribute", "to", [ "Int", 0 ] ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Attribute", "datasource_uid", [ "String", "__expr__" ]
+                    ],
+                    [
+                      "Attribute",
+                      "model",
+                      [
+                        "String",
+                        "{\"conditions\":[{\"evaluator\":{\"params\":[101],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"B\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"C\",\"type\":\"threshold\"}"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [ "Attribute", "no_data_state", [ "String", "NoData" ] ],
+              [ "Attribute", "exec_err_state", [ "String", "Error" ] ],
+              [ "Attribute", "for", [ "String", "5m" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

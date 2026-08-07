@@ -1,0 +1,1128 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "s3_revision_folder",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "ethereum_bucket" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/rev_$TASK_REVISION" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "normalized_host_ip",
+          [ "String", "ip_$(echo $HOST_IP | sed -e 's/\\./_/g')" ]
+        ],
+        [
+          "Attribute",
+          "metadata_commands",
+          [
+            "Tuple",
+            [
+              [ "String", "set -e" ],
+              [ "String", "echo Wait until Node Key is ready ..." ],
+              [
+                "Template",
+                [
+                  [ "Literal", "while [ ! -f \"" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "node_id_file" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "\" ]; do sleep 1; done" ]
+                ]
+              ],
+              [ "String", "yum install jq -y" ],
+              [
+                "String",
+                "export TASK_REVISION=$(curl -s 169.254.170.2/v2/metadata | jq '.Revision' -r)"
+              ],
+              [ "String", "echo \"Task Revision: $TASK_REVISION\"" ],
+              [
+                "Template",
+                [
+                  [ "Literal", "echo $TASK_REVISION > " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "task_revision_file" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              [
+                "Template",
+                [
+                  [
+                    "Literal",
+                    "export HOST_IP=$(curl -s 169.254.170.2/v2/metadata | jq '.Containers[] | select(.Name == \""
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "metadata_container_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    "\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r )"
+                  ]
+                ]
+              ],
+              [ "String", "echo \"Host IP: $HOST_IP\"" ],
+              [
+                "Template",
+                [
+                  [ "Literal", "echo $HOST_IP > " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "host_ip_file" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              [
+                "String",
+                "export TASK_ARN=$(curl -s 169.254.170.2/v2/metadata | jq -r '.TaskARN')"
+              ],
+              [
+                "Template",
+                [
+                  [ "Literal", "aws ecs describe-tasks --cluster " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "ecs_cluster_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    " --tasks $TASK_ARN | jq -r '.tasks[0] | .group' > "
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "service_file" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              [
+                "Template",
+                [
+                  [ "Literal", "mkdir -p " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "hosts_folder" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              [
+                "Template",
+                [
+                  [ "Literal", "mkdir -p " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "node_ids_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              [
+                "Template",
+                [
+                  [ "Literal", "mkdir -p " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "accounts_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              [
+                "Template",
+                [
+                  [ "Literal", "aws s3 cp " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "node_id_file" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", " s3://" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "s3_revision_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "/nodeids/" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "normalized_host_ip" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              [
+                "Template",
+                [
+                  [ "Literal", "aws s3 cp " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "host_ip_file" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", " s3://" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "s3_revision_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "/hosts/" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "normalized_host_ip" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              [
+                "Template",
+                [
+                  [ "Literal", "aws s3 cp " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "account_address_file" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", " s3://" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "s3_revision_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "/accounts/" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "normalized_host_ip" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              [
+                "Template",
+                [
+                  [ "Literal", "count=0; while [ $count -lt " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "number_of_nodes" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", " ]; do count=$(ls " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "hosts_folder" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    " | grep ^ip | wc -l); aws s3 cp --recursive s3://"
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "s3_revision_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "/hosts " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "hosts_folder" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    " > /dev/null 2>&1 | echo \"Wait for other containers to report their IPs ... $count/"
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "number_of_nodes" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "\"; sleep 1; done" ]
+                ]
+              ],
+              [ "String", "echo \"All containers have reported their IPs\"" ],
+              [
+                "Template",
+                [
+                  [ "Literal", "count=0; while [ $count -lt " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "number_of_nodes" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", " ]; do count=$(ls " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "accounts_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    " | grep ^ip | wc -l); aws s3 cp --recursive s3://"
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "s3_revision_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "/accounts " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "accounts_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    " > /dev/null 2>&1 | echo \"Wait for other nodes to report their accounts ... $count/"
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "number_of_nodes" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "\"; sleep 1; done" ]
+                ]
+              ],
+              [ "String", "echo \"All nodes have registered accounts\"" ],
+              [
+                "Template",
+                [
+                  [ "Literal", "count=0; while [ $count -lt " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "number_of_nodes" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", " ]; do count=$(ls " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "node_ids_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    " | grep ^ip | wc -l); aws s3 cp --recursive s3://"
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "s3_revision_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "/nodeids " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "node_ids_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    " > /dev/null 2>&1 | echo \"Wait for other nodes to report their IDs ... $count/"
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "number_of_nodes" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "\"; sleep 1; done" ]
+                ]
+              ],
+              [ "String", "echo \"All nodes have registered their IDs\"" ],
+              [
+                "Template",
+                [
+                  [ "Literal", "alloc=\"\"; for f in `ls " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "accounts_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "`; do address=$(cat " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "accounts_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    "/$f); alloc=\"$alloc,\\\"$address\\\": { \"balance\": \"\\\"1000000000000000000000000000\\\"\"}\"; done"
+                  ]
+                ]
+              ],
+              [
+                "Template",
+                [
+                  [ "Literal", "if [ " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "initial_eth_allocations" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", " -gt 0 ]; then alloc=\"$alloc," ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Fun_call",
+                        [
+                          "replace",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "replace",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "replace",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "replace",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "jsonencode",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "initial_eth_allocations"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "String", "{" ],
+                                              [ "String", "\\\"" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "String", "}" ],
+                                        [
+                                          "String", "000000000000000000\\\"}"
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "," ],
+                                  [
+                                    "String", "000000000000000000\\\"},\\\""
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "String", ":" ],
+                            [ "String", "\\\" : { \\\"balance\\\": \\\"" ]
+                          ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "\"; fi" ]
+                ]
+              ],
+              [ "String", "alloc=\"{${alloc:1}}\"" ],
+              [
+                "String",
+                "extraData=\"\\\"0x0000000000000000000000000000000000000000000000000000000000000000\\\"\""
+              ],
+              [
+                "Template",
+                [
+                  [
+                    "Literal",
+                    "all=\"0x0000000000000000000000000000000000000000000000000000000000000000\"; for f in `ls "
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "accounts_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "`; do address=$(cat " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "accounts_folder" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    "/$f); all=\"$all$(echo $address)\"; done;all=\"$all$(echo 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)\";"
+                  ]
+                ]
+              ],
+              [ "String", "echo clique signer Addresses: $all" ],
+              [ "String", "extraData=\"\\\"$(echo $all)\\\"\"" ],
+              [
+                "Template",
+                [
+                  [ "Literal", "echo '" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Fun_call",
+                        [
+                          "replace",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "jsonencode",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "genesis" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "String", "/\"(true|false|[0-9]+)\"/" ],
+                            [ "String", "$1" ]
+                          ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Literal",
+                    "' | jq \". + { alloc : $alloc, extraData: $extraData } | .config=.config + {clique: {epoch: 30000, period: 1} }\" > "
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "genesis_file" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              [
+                "Template",
+                [
+                  [ "Literal", "cat " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "genesis_file" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              [
+                "Template",
+                [
+                  [ "Literal", "echo \"Done!\" > " ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "metadata_container_status_file" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metadata_container_definition",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "name" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "metadata_container_name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "image" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "aws_cli_docker_image" ] ]
+                ]
+              ],
+              [ [ "Bare", "essential" ], [ "String", "false" ] ],
+              [
+                [ "Bare", "logConfiguration" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "logDriver" ], [ "String", "awslogs" ] ],
+                    [
+                      [ "Bare", "options" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "awslogs-group" ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "aws_cloudwatch_log_group" ],
+                                    [ "A_string", "go_ethereum" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "awslogs-region" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "awslogs-stream-prefix" ],
+                            [ "String", "logs" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "mountPoints" ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "sourceVolume" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "shared_volume_name" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "containerPath" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "shared_volume_container_path" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ [ "Bare", "environments" ], [ "Tuple", [] ] ],
+              [ [ "Bare", "portMappings" ], [ "Tuple", [] ] ],
+              [
+                [ "Bare", "volumesFrom" ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "sourceContainer" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "bootstrap_container_name" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "healthCheck" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "interval" ], [ "Int", 30 ] ],
+                    [ [ "Bare", "retries" ], [ "Int", 10 ] ],
+                    [ [ "Bare", "timeout" ], [ "Int", 60 ] ],
+                    [ [ "Bare", "startPeriod" ], [ "Int", 300 ] ],
+                    [
+                      [ "Bare", "command" ],
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "CMD-SHELL" ],
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "[ -f " ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string",
+                                        "metadata_container_status_file"
+                                      ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", " ];" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "entryPoint" ],
+                [
+                  "Tuple",
+                  [
+                    [ "String", "/bin/sh" ],
+                    [ "String", "-c" ],
+                    [
+                      "Fun_call",
+                      [
+                        "join",
+                        [
+                          [ "String", "\n" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "metadata_commands" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "dockerLabels" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "common_tags" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [ [ "Bare", "cpu" ], [ "Int", 0 ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

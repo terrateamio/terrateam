@@ -1,0 +1,484 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_caller_identity" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_kms_key" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Used to encrypt and decrypt the Terraform State S3 Bucket"
+          ]
+        ],
+        [ "Attribute", "deletion_window_in_days", [ "Int", 10 ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "aws_root_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-kms-teraform-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "aws_region_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Environment" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "aws_environment_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "Source" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "aws_source_name" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [
+                  "Literal",
+                  "\n{\n    \"Id\": \"key-consolepolicy-3\",\n    \"Version\": \"2012-10-17\",\n    \"Statement\": [\n        {\n            \"Sid\": \"Enable IAM User Permissions\",\n            \"Effect\": \"Allow\",\n            \"Principal\": {\n                \"AWS\": \"arn:aws:iam::"
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_caller_identity" ]
+                              ]
+                            ],
+                            [ "A_string", "current" ]
+                          ]
+                        ],
+                        [ "A_string", "account_id" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  ":root\"\n            },\n            \"Action\": \"kms:*\",\n            \"Resource\": \"*\"\n        },\n        {\n            \"Sid\": \"Allow access for Key Administrators\",\n            \"Effect\": \"Allow\",\n            \"Principal\": {\n                \"AWS\": [\n                  \"arn:aws:iam::"
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_caller_identity" ]
+                              ]
+                            ],
+                            [ "A_string", "current" ]
+                          ]
+                        ],
+                        [ "A_string", "account_id" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", ":user/" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "aws_kms_admin" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "\"\n                ]\n            },\n            \"Action\": [\n                \"kms:Create*\",\n                \"kms:Describe*\",\n                \"kms:Enable*\",\n                \"kms:List*\",\n                \"kms:Put*\",\n                \"kms:Update*\",\n                \"kms:Revoke*\",\n                \"kms:Disable*\",\n                \"kms:Get*\",\n                \"kms:Delete*\",\n                \"kms:TagResource\",\n                \"kms:UntagResource\",\n                \"kms:ScheduleKeyDeletion\",\n                \"kms:CancelKeyDeletion\"\n            ],\n            \"Resource\": \"*\"\n        },\n        {\n            \"Sid\": \"Allow use of the key\",\n            \"Effect\": \"Allow\",\n            \"Principal\": {\n                \"AWS\": [\n                  \"arn:aws:iam::"
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_caller_identity" ]
+                              ]
+                            ],
+                            [ "A_string", "current" ]
+                          ]
+                        ],
+                        [ "A_string", "account_id" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", ":user/" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "aws_kms_user" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "\"\n                ]\n            },\n            \"Action\": [\n                \"kms:Encrypt\",\n                \"kms:Decrypt\",\n                \"kms:ReEncrypt*\",\n                \"kms:GenerateDataKey*\",\n                \"kms:DescribeKey\"\n            ],\n            \"Resource\": \"*\"\n        }\n    ]\n}\n"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_kms_alias" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "alias/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "aws_root_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-kms-terraform-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "aws_region_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "target_key_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_kms_key" ], [ "A_string", "this" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_s3_bucket" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "aws_root_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-s3-terraform-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "aws_region_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "acl", [ "String", "private" ] ],
+        [
+          "Block",
+          {
+            "type_": "versioning",
+            "labels": [],
+            "body": [ [ "Attribute", "enabled", [ "Bool", true ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "server_side_encryption_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "rule",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "apply_server_side_encryption_by_default",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "kms_master_key_id",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "aws_kms_key" ],
+                                    [ "A_string", "this" ]
+                                  ]
+                                ],
+                                [ "A_string", "arn" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "sse_algorithm",
+                            [ "String", "aws:kms" ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "aws_root_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-s3-terraform-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "aws_region_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Environment" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "aws_environment_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "Source" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "aws_source_name" ] ]
+                ]
+              ],
+              [ [ "Bare", "Answer" ], [ "String", "42" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_s3_bucket_public_access_block" ], [ "Lit", "this" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "aws_s3_bucket" ], [ "A_string", "this" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "block_public_acls", [ "Bool", true ] ],
+        [ "Attribute", "block_public_policy", [ "Bool", true ] ],
+        [ "Attribute", "ignore_public_acls", [ "Bool", true ] ],
+        [ "Attribute", "restrict_public_buckets", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "backend",
+            "labels": [ [ "Lit", "s3" ] ],
+            "body": [
+              [
+                "Attribute", "bucket", [ "String", "demo-s3-terraform-use1" ]
+              ],
+              [
+                "Attribute",
+                "key",
+                [ "String", "github-actions-example/terraform.tfstate" ]
+              ],
+              [ "Attribute", "region", [ "String", "us-east-1" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

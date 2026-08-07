@@ -1,0 +1,680 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "terraform_remote_state" ], [ "Lit", "workgroups" ]
+      ],
+      "body": [
+        [ "Attribute", "backend", [ "String", "gcs" ] ],
+        [
+          "Attribute",
+          "config",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "bucket" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "terraform_remote_state_bucket" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "prefix" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "terraform_remote_state_prefix" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "workgroups",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "terraform_remote_state" ]
+                        ]
+                      ],
+                      [ "A_string", "workgroups" ]
+                    ]
+                  ],
+                  [ "A_string", "outputs" ]
+                ]
+              ],
+              [ "A_string", "workgroups" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "outputs",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "workgroup_outputs" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "workgroup_ids",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "workgroup", [] ],
+              "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "ids" ] ] ],
+              "output": [ "Id", "workgroup" ],
+              "cond": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "regexall",
+                            [
+                              [ "String", "^workgroup:" ],
+                              [ "Id", "workgroup" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "normalized_workgroups",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "workgroup", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "workgroup_ids" ] ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "slice",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "split",
+                                    [
+                                      [ "String", "/" ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "trimprefix",
+                                          [
+                                            [ "Id", "workgroup" ],
+                                            [ "String", "workgroup:" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Tuple", [ [ "String", "default" ] ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 0 ],
+                    [ "Int", 2 ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "subgroup_ids",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "subgroup", [] ],
+              "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "ids" ] ] ],
+              "output": [ "Id", "subgroup" ],
+              "cond": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "regexall",
+                            [
+                              [ "String", "^subgroup:" ],
+                              [ "Id", "subgroup" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "normalized_subgroups",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "subgroup", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "subgroup_ids" ] ]
+              ],
+              "output": [
+                "Tuple",
+                [
+                  [ "String", "*" ],
+                  [
+                    "Fun_call",
+                    [
+                      "trimprefix",
+                      [ [ "Id", "subgroup" ], [ "String", "subgroup:" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "normalized_ids",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "normalized_workgroups" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "normalized_subgroups" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "expanded_workgroups",
+          [
+            "Fun_call",
+            [
+              "distinct",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "concat",
+                    [
+                      [ "Tuple", [] ],
+                      [
+                        "Ellipsis",
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "workgroup", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "normalized_ids" ]
+                              ]
+                            ],
+                            "output": [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Idx",
+                                      [ [ "Id", "workgroup" ], [ "Int", 0 ] ]
+                                    ],
+                                    [ "String", "*" ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "key", [] ],
+                                    "input": [
+                                      "Fun_call",
+                                      [
+                                        "keys",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [ "A_string", "workgroups" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Tuple",
+                                      [
+                                        [ "Id", "key" ],
+                                        [
+                                          "Idx",
+                                          [
+                                            [ "Id", "workgroup" ],
+                                            [ "Int", 1 ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "else_": [
+                                  "Tuple", [ [ "Id", "workgroup" ] ]
+                                ]
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subgroups_all",
+          [
+            "Fun_call",
+            [
+              "distinct",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "flatten",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "workgroup", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ], [ "A_string", "workgroups" ]
+                            ]
+                          ],
+                          "output": [
+                            "For_tuple",
+                            {
+                              "identifiers": [
+                                "output_type", [ "output_value" ]
+                              ],
+                              "input": [ "Id", "workgroup" ],
+                              "output": [
+                                "Fun_call",
+                                [ "keys", [ [ "Id", "output_value" ] ] ]
+                              ],
+                              "cond": [
+                                "Fun_call",
+                                [
+                                  "contains",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "outputs" ]
+                                      ]
+                                    ],
+                                    [ "Id", "output_type" ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subgroups_test",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "subgroup", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "normalized_subgroups" ] ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "index",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "subgroups_all" ] ]
+                    ],
+                    [ "Idx", [ [ "Id", "subgroup" ], [ "Int", 1 ] ] ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "access",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "outputs" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "distinct",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "flatten",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "workgroup", [] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "expanded_workgroups" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "lookup",
+                                              [
+                                                [
+                                                  "Idx",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "local" ],
+                                                        [
+                                                          "A_string",
+                                                          "workgroups"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [ "Id", "workgroup" ],
+                                                        [ "Int", 0 ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Id", "k" ],
+                                                [ "Object", [] ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Idx",
+                                            [
+                                              [ "Id", "workgroup" ],
+                                              [ "Int", 1 ]
+                                            ]
+                                          ],
+                                          [ "Tuple", [] ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "bigquery_acl_entries",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "sa", [] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "access" ] ]
+                          ],
+                          [ "String", "service_accounts" ],
+                          [ "Tuple", [] ]
+                        ]
+                      ]
+                    ],
+                    "output": [
+                      "Object",
+                      [ [ [ "Bare", "user_by_email" ], [ "Id", "sa" ] ] ]
+                    ],
+                    "cond": null
+                  }
+                ],
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "group", [] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "lookup",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "access" ] ]
+                          ],
+                          [ "String", "google_groups" ],
+                          [ "Tuple", [] ]
+                        ]
+                      ]
+                    ],
+                    "output": [
+                      "Object",
+                      [ [ [ "Bare", "group_by_email" ], [ "Id", "group" ] ] ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bigquery_acls",
+          [
+            "For_object",
+            {
+              "identifiers": [ "output", [ "role" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "roles" ] ]
+              ],
+              "key_output": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [ "Id", "output" ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "_acls" ]
+                ]
+              ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "toset",
+                  [
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "entry", [] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "bigquery_acl_entries" ]
+                          ]
+                        ],
+                        "output": [
+                          "Fun_call",
+                          [
+                            "merge",
+                            [
+                              [ "Id", "entry" ],
+                              [
+                                "Object",
+                                [ [ [ "Bare", "role" ], [ "Id", "role" ] ] ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

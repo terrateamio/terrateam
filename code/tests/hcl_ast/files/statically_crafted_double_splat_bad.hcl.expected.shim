@@ -1,0 +1,1 @@
+hcl parse: <stdin>:2,11-12: Nested splat expression not allowed; A splat expression (*) cannot be used inside another attribute-only splat expression.

@@ -1,0 +1,723 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "policy_assignment_files",
+          [
+            "Fun_call",
+            [
+              "fileset",
+              [
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "policy_path" ] ]
+                ],
+                [ "String", "policy_assignments/*.tmpl.json" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_assignment_objects",
+          [
+            "For_object",
+            {
+              "identifiers": [ "f", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "policy_assignment_files" ]
+                ]
+              ],
+              "key_output": [ "Id", "f" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "jsondecode",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "templatefile",
+                        [
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "policy_path" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "/" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "f" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "template_file_variables" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_assignments",
+          [
+            "For_object",
+            {
+              "identifiers": [ "f", [ "p" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "policy_assignment_objects" ]
+                ]
+              ],
+              "key_output": [ "Id", "f" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [ "Attr", [ [ "Id", "p" ], [ "A_string", "name" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "display_name" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "p" ], [ "A_string", "properties" ]
+                                ]
+                              ],
+                              [ "A_string", "displayName" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "description" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "p" ], [ "A_string", "properties" ]
+                                ]
+                              ],
+                              [ "A_string", "description" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "policy_definition_id" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "p" ], [ "A_string", "properties" ]
+                                ]
+                              ],
+                              [ "A_string", "policyDefinitionId" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "parameters" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "p" ], [ "A_string", "properties" ]
+                                ]
+                              ],
+                              [ "A_string", "parameters" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "not_scopes" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "p" ], [ "A_string", "properties" ]
+                                ]
+                              ],
+                              [ "A_string", "notScopes" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "enforcement_mode" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "p" ], [ "A_string", "properties" ]
+                                ]
+                              ],
+                              [ "A_string", "enforce" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "identity" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "p" ], [ "A_string", "identity" ] ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "override" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "p" ], [ "A_string", "properties" ]
+                                ]
+                              ],
+                              [ "A_string", "override" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "policy_non_compliance_message_enabled" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "p" ], [ "A_string", "properties" ]
+                                ]
+                              ],
+                              [ "A_string", "nonComplianceMessages" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_management_group_policy_assignment" ],
+        [ "Lit", "enterprise_scale" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "policy_assignments" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "management_group_id",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "management_group_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_definition_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "policy_definition_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "description" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "display_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "not_scopes",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "not_scopes" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "parameters" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "jsonencode",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "parameters" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "enforce",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "enforcement_mode" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "overrides" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "For_object",
+                        {
+                          "identifiers": [ "i", [ "override" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "override" ]
+                            ]
+                          ],
+                          "key_output": [ "Id", "i" ],
+                          "value_output": [ "Id", "override" ],
+                          "cond": null
+                        }
+                      ],
+                      [ "Object", [] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "value",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "overrides" ], [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "value" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "selectors" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "For_object",
+                                    {
+                                      "identifiers": [ "i", [ "selector" ] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "overrides" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "selectors" ]
+                                        ]
+                                      ],
+                                      "key_output": [ "Id", "i" ],
+                                      "value_output": [ "Id", "selector" ],
+                                      "cond": null
+                                    }
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "in",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "selectors" ],
+                                            [ "A_string", "in" ]
+                                          ]
+                                        ],
+                                        [ "Tuple", [] ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "not_in",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "selectors" ],
+                                            [ "A_string", "not_in" ]
+                                          ]
+                                        ],
+                                        [ "Tuple", [] ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "identity" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "ik", [ "iv" ] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "identity" ]
+                            ]
+                          ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ],
+                    "key_output": [ "Id", "ik" ],
+                    "value_output": [ "Id", "iv" ],
+                    "cond": [
+                      "Equal",
+                      [
+                        [ "Fun_call", [ "lower", [ [ "Id", "iv" ] ] ] ],
+                        [ "String", "systemassigned" ]
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "SystemAssigned" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_policy_definition" ],
+                  [ "A_string", "enterprise_scale" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_policy_set_definition" ],
+                  [ "A_string", "enterprise_scale" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

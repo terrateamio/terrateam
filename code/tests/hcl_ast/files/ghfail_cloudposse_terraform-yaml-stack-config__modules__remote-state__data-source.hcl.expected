@@ -1,0 +1,343 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "custom_backends",
+          [
+            "Tuple",
+            [
+              [ "String", "none" ],
+              [ "String", "bypass" ],
+              [ "String", "static" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "is_data_source_backend",
+          [
+            "Not",
+            [
+              "Fun_call",
+              [
+                "contains",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "custom_backends" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "backend_type" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "remote_workspace",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "workspace" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "workspace" ] ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "workspace" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ds_backend",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "local" ], [ "A_string", "is_data_source_backend" ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "backend_type" ] ]
+              ],
+              "else_": [ "String", "none" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ds_workspace",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "ds_backend" ] ]
+                  ],
+                  [ "String", "none" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "remote_workspace" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "s3_privileged_backend",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "backend" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "v" ],
+              "cond": [
+                "Not",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "profile" ],
+                          [ "String", "role_arn" ],
+                          [ "String", "assume_role" ],
+                          [ "String", "assume_role_with_web_identity" ]
+                        ]
+                      ],
+                      [ "Id", "k" ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "s3_backend",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "false" ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "backend" ] ] ]
+              ],
+              [
+                [ "Bare", "true" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "s3_privileged_backend" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ds_configurations",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "none" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "path" ],
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "path" ], [ "A_string", "module" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/dummy-remote-state.json" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "remote" ],
+                [
+                  "Fun_call",
+                  [
+                    "merge",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "backend" ] ]
+                      ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "workspaces" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "name" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "remote_workspace" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "s3" ],
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "s3_backend" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "privileged" ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "terraform_remote_state" ], [ "Lit", "data_source" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "bypass" ] ]
+              ],
+              "then_": [ "Int", 0 ],
+              "else_": [ "Int", 1 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "backend",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "ds_backend" ] ]
+                  ],
+                  [ "String", "none" ]
+                ]
+              ],
+              "then_": [ "String", "local" ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "ds_backend" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "workspace",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "ds_workspace" ] ] ]
+        ],
+        [
+          "Attribute",
+          "config",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "ds_configurations" ] ]
+                ],
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "ds_backend" ] ]
+                ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "backend" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "defaults",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "defaults" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

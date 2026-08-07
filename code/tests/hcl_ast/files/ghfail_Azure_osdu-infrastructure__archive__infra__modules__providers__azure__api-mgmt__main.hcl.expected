@@ -1,0 +1,3351 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "rg" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "resource_group_name" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "product_api_associations",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "product", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "products" ] ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "api_name", [] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "product" ], [ "A_string", "apis" ] ]
+                        ],
+                        "output": [
+                          "Tuple",
+                          [
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "product_id" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "product" ],
+                                      [ "A_string", "product_id" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "api_name" ],
+                                  [ "Id", "api_name" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "product_group_associations",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "product", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "products" ] ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "group_name", [] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "product" ], [ "A_string", "groups" ] ]
+                        ],
+                        "output": [
+                          "Tuple",
+                          [
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "product_id" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "product" ],
+                                      [ "A_string", "product_id" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "group_name" ],
+                                  [ "Id", "group_name" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "product_tag_associations",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "product", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "products" ] ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "tag_name", [] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "product" ], [ "A_string", "tags" ] ]
+                        ],
+                        "output": [
+                          "Tuple",
+                          [
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "product_id" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "product" ],
+                                      [ "A_string", "product_id" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "tag_name" ],
+                                  [ "Id", "tag_name" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "product_policy_associations",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "product", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "products" ] ]
+              ],
+              "output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "product_id" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "product" ], [ "A_string", "product_id" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "policy_content" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "product" ], [ "A_string", "policy" ] ]
+                        ],
+                        [ "A_string", "content" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "policy_format" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "product" ], [ "A_string", "policy" ] ]
+                        ],
+                        [ "A_string", "format" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "product" ], [ "A_string", "policy" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "api_tag_associations",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "api", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "tag_name", [] ],
+                        "input": [
+                          "Attr", [ [ "Id", "api" ], [ "A_string", "tags" ] ]
+                        ],
+                        "output": [
+                          "Tuple",
+                          [
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "api_name" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "api" ], [ "A_string", "name" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "tag_name" ],
+                                  [ "Id", "tag_name" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_policy_associations",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "api", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ]
+              ],
+              "output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "api_name" ],
+                    [ "Attr", [ [ "Id", "api" ], [ "A_string", "name" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "policy_content" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "api" ], [ "A_string", "policy" ] ]
+                        ],
+                        [ "A_string", "content" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "policy_format" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "api" ], [ "A_string", "policy" ] ]
+                        ],
+                        [ "A_string", "format" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [ "Attr", [ [ "Id", "api" ], [ "A_string", "policy" ] ] ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "api_operation_policy_associations",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "api", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ]
+                    ],
+                    "output": [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "operation_policy", [] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "api" ],
+                            [ "A_string", "operation_policies" ]
+                          ]
+                        ],
+                        "output": [
+                          "Tuple",
+                          [
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "api_name" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "api" ], [ "A_string", "name" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "operation_id" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "operation_policy" ],
+                                      [ "A_string", "operation_id" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "policy_content" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "operation_policy" ],
+                                      [ "A_string", "content" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "policy_format" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "operation_policy" ],
+                                      [ "A_string", "format" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_policy_is_url",
+          [
+            "Not_equal",
+            [
+              [
+                "Fun_call",
+                [
+                  "replace",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "policy" ] ]
+                        ],
+                        [ "A_string", "format" ]
+                      ]
+                    ],
+                    [ "String", "link" ],
+                    [ "String", "" ]
+                  ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "policy" ] ] ],
+                  [ "A_string", "format" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_api_management" ], [ "Lit", "apim_service" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "apim_service_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "publisher_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "publisher_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "publisher_email",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "publisher_email" ] ] ]
+        ],
+        [
+          "Attribute",
+          "sku_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "sku_tier" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "sku_capacity" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "xml_content",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "service_policy_is_url" ]
+                          ]
+                        ],
+                        [ "Bool", false ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "policy" ] ]
+                        ],
+                        [ "A_string", "content" ]
+                      ]
+                    ],
+                    "else_": [ "Null" ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "xml_link",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "service_policy_is_url" ]
+                          ]
+                        ],
+                        [ "Bool", true ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "policy" ] ]
+                        ],
+                        [ "A_string", "content" ]
+                      ]
+                    ],
+                    "else_": [ "Null" ]
+                  }
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "identity",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "SystemAssigned" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_api_management_property" ],
+        [ "Lit", "named_value" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "named_values" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "named_values" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_management_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "named_values" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "display_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "named_values" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "value" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "secret",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "named_values" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "secret" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "named_values" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "tags" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_api_management_group" ], [ "Lit", "group" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "groups" ] ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "groups" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_management_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "groups" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "display_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "groups" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "description" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "external_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "groups" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "external_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "groups" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_property" ],
+                  [ "A_string", "named_value" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_api_management_api_version_set" ],
+        [ "Lit", "api_version_set" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "api_version_sets" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "api_version_sets" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_management_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "api_version_sets" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "display_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "versioning_scheme",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "api_version_sets" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "versioning_scheme" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "api_version_sets" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "description" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "version_header_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "api_version_sets" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "version_header_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "version_query_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "api_version_sets" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "version_query_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_property" ],
+                  [ "A_string", "named_value" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_api_management_api" ], [ "Lit", "api" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_management_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "revision",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "revision" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "display_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "path",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "path" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "protocols",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "protocols" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "description" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "version",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "version" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "version_set_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "apis" ] ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "existing_version_set_id" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "apis" ] ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "count" ], [ "A_string", "index" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "provisioned_version_set_index" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [ "Null" ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "element",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Id",
+                                  "azurerm_api_management_api_version_set"
+                                ],
+                                [ "A_string", "api_version_set" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "apis" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "count" ],
+                                        [ "A_string", "index" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "A_string", "provisioned_version_set_index"
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ]
+                }
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "apis" ] ] ],
+                      [
+                        "Attr",
+                        [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "existing_version_set_id" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "import",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "content_format",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "apis" ] ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "api_import_file" ]
+                      ]
+                    ],
+                    [ "A_string", "format" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "content_value",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "apis" ] ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "api_import_file" ]
+                      ]
+                    ],
+                    [ "A_string", "content" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_property" ],
+                  [ "A_string", "named_value" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_api_version_set" ],
+                  [ "A_string", "api_version_set" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_api_management_product" ], [ "Lit", "product" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "products" ] ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "product_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "products" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "product_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_management_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "products" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "display_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription_required",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "products" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "subscription_required" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "approval_required",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "products" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "approval_required" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "published",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "products" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "published" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "products" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "description" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_property" ],
+                  [ "A_string", "named_value" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_api_management_backend" ], [ "Lit", "backend" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "backends" ] ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "backends" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_management_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "protocol",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "backends" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "protocol" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "url",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "backends" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "url" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "backends" ] ] ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "description" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_property" ],
+                  [ "A_string", "named_value" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_api_management_product_api" ],
+        [ "Lit", "product_api" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "product_api_associations" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "product_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "product_api_associations" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "product_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "product_api_associations" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "api_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_management_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_product" ],
+                  [ "A_string", "product" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_api" ],
+                  [ "A_string", "api" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_api_management_product_group" ],
+        [ "Lit", "product_group" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "product_group_associations" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "product_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "product_group_associations" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "product_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "group_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "product_group_associations" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "group_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_management_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_product" ],
+                  [ "A_string", "product" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_group" ],
+                  [ "A_string", "group" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_template_deployment" ], [ "Lit", "service_tag" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "service_tag" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "available_tags" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "service_name" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "apim_service_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "tag_name" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "available_tags" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "tag_display_name" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "available_tags" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "display_name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "deployment_mode", [ "String", "Incremental" ] ],
+        [
+          "Attribute",
+          "template_body",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal", "/arm-templates/service-tags.template.json"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_template_deployment" ], [ "Lit", "api_tag" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "api_tag" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "api_tag_associations" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "service_name" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "apim_service_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "api_name" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "api_tag_associations" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "api_name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "tag_name" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "api_tag_associations" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "tag_name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "deployment_mode", [ "String", "Incremental" ] ],
+        [
+          "Attribute",
+          "template_body",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/arm-templates/api-tags.template.json" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_api" ],
+                  [ "A_string", "api" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_template_deployment" ],
+                  [ "A_string", "service_tag" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_template_deployment" ], [ "Lit", "product_tag" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "product_tag" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "product_tag_associations" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "service_name" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "apim_service_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "product_id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "product_tag_associations" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "product_id" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "tag_name" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "product_tag_associations" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "tag_name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "deployment_mode", [ "String", "Incremental" ] ],
+        [
+          "Attribute",
+          "template_body",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal", "/arm-templates/product-tags.template.json"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_product" ],
+                  [ "A_string", "product" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_template_deployment" ],
+                  [ "A_string", "service_tag" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_template_deployment" ], [ "Lit", "api_policy" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "api_policy" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "api_policy_associations" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "service_name" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "apim_service_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "api_name" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "api_policy_associations" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "api_name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "policy_content" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "api_policy_associations" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "policy_content" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "policy_format" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "api_policy_associations" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "policy_format" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "deployment_mode", [ "String", "Incremental" ] ],
+        [
+          "Attribute",
+          "template_body",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/arm-templates/api-policy.template.json" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_api" ],
+                  [ "A_string", "api" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_template_deployment" ], [ "Lit", "product_policy" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "product_policy" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "product_policy_associations" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "service_name" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "apim_service_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "product_id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "product_policy_associations" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "product_id" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "policy_content" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "product_policy_associations" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "policy_content" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "policy_format" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "product_policy_associations" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "policy_format" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "deployment_mode", [ "String", "Incremental" ] ],
+        [
+          "Attribute",
+          "template_body",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "/arm-templates/product-policy.template.json"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_product" ],
+                  [ "A_string", "product" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_template_deployment" ],
+        [ "Lit", "operation_policy" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "operation_policy" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "api_operation_policy_associations" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "service_name" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "apim_service_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "api_name" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [
+                              "A_string", "api_operation_policy_associations"
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "api_name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "operation_id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [
+                              "A_string", "api_operation_policy_associations"
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "operation_id" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "policy_content" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [
+                              "A_string", "api_operation_policy_associations"
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "policy_content" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "policy_format" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [
+                              "A_string", "api_operation_policy_associations"
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "policy_format" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "deployment_mode", [ "String", "Incremental" ] ],
+        [
+          "Attribute",
+          "template_body",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "/arm-templates/operation-policy.template.json"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_api" ],
+                  [ "A_string", "api" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

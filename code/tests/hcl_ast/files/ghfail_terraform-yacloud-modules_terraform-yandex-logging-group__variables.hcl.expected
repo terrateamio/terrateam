@@ -1,0 +1,668 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Name for the Yandex Cloud Logging group" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "can",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "regex",
+                                  [
+                                    [
+                                      "String",
+                                      "^[a-z][a-z0-9-]{0,61}[a-z0-9]$"
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Lte",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ], [ "A_string", "name" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 63 ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Name must be 1-63 characters long, start with a lowercase letter, contain only lowercase letters, numbers, and hyphens, and cannot end with a hyphen."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "folder_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "ID of the folder that the Yandex Cloud Logging group belongs to"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "folder_id" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "regex",
+                              [
+                                [
+                                  "String", "^[a-z][a-z0-9-]{0,61}[a-z0-9]$"
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "folder_id" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Folder ID must be a valid Yandex Cloud folder identifier format."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "retention_period" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Log entries retention period for the Yandex Cloud Logging group"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "retention_period" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "regex",
+                              [
+                                [ "String", "^[1-9][0-9]*[smh]$" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "retention_period" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Retention period must be a string in format like '3600s', '60m', '1h' etc. with positive duration."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "description" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "A description for the Yandex Cloud Logging group" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "description" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "description" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 256 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Description cannot be longer than 256 characters."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "labels" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A set of key/value label pairs to assign to the Yandex Cloud Logging group"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "labels" ] ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "can",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "regex",
+                                            [
+                                              [
+                                                "String",
+                                                "^[a-z][a-z0-9-_]{0,61}[a-z0-9]$"
+                                              ],
+                                              [ "Id", "k" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Lte",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [ "length", [ [ "Id", "k" ] ] ]
+                                      ],
+                                      [ "Int", 63 ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Lte",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "length", [ [ "Id", "v" ] ] ]
+                                  ],
+                                  [ "Int", 63 ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Label keys must be 1-63 characters long, start with a lowercase letter, contain only lowercase letters, numbers, hyphens, and underscores. Values must be up to 63 characters."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "timeouts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Timeout settings for logging group operations (create, read, update, delete)"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "create" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "read" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "update" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "delete" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "timeouts" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "k", [ "v" ] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ], [ "A_string", "timeouts" ]
+                                ]
+                              ],
+                              "output": [
+                                "Log_or",
+                                [
+                                  [ "Equal", [ [ "Id", "v" ], [ "Null" ] ] ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "can",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "regex",
+                                            [
+                                              [
+                                                "String",
+                                                "^[1-9][0-9]*[smh]$"
+                                              ],
+                                              [ "Id", "v" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Timeout values must be positive durations in format like '30m', '1h', '3600s' etc."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "data_stream" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Data Stream associated with the logging group" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "data_stream" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "regex",
+                              [
+                                [
+                                  "String", "^[a-z][a-z0-9-]{0,61}[a-z0-9]$"
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "data_stream" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Data stream must be a valid Yandex Cloud resource identifier format."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

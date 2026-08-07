@@ -1,0 +1,72 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Template",
+      [
+        [ "Literal", "p " ],
+        [
+          "Interpolation",
+          {
+            "expr": [ "Add", [ [ "Int", 1 ], [ "Int", 2 ] ] ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", " s" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "y",
+    [
+      "Template",
+      [
+        [ "Literal", "p " ],
+        [
+          "Interpolation",
+          {
+            "expr": [
+              "Equal",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "b" ] ] ]
+              ]
+            ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", " s" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "z",
+    [
+      "Template",
+      [
+        [ "Literal", "p " ],
+        [
+          "Interpolation",
+          {
+            "expr": [
+              "Cond",
+              {
+                "if_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "c" ] ] ],
+                "then_": [ "Int", 1 ],
+                "else_": [ "Int", 0 ]
+              }
+            ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", " s" ]
+      ]
+    ]
+  ]
+]

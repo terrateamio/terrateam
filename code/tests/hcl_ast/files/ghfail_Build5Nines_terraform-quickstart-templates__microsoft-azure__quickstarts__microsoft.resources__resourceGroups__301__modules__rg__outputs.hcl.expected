@@ -1,0 +1,34 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "rg_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_resource_group" ],
+                      [ "A_string", "b59s_rg" ]
+                    ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

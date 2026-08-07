@@ -1,0 +1,942 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "gateway_manifests_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/namespace/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "mft_kubernetes_namespace" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/gateway" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "gateway_name", [ "String", "external-https" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_managed_ssl_certificate" ],
+        [ "Lit", "external_gateway" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_project_service" ],
+                  [ "A_string", "certificatemanager_googleapis_com" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "unique_identifier_prefix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "mft_kubernetes_namespace" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-external-gateway" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "google_project" ] ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "project_id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "managed",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "domains",
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "endpoint", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "mft_endpoints" ] ]
+                    ],
+                    "output": [
+                      "Attr",
+                      [ [ "Id", "endpoint" ], [ "A_string", "host" ] ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_global_address" ],
+        [ "Lit", "external_gateway_https" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "unique_identifier_prefix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "mft_kubernetes_namespace" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-external-gateway-https" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "google_project" ] ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "project_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "local_file" ], [ "Lit", "gateway_external_https_yaml" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "/templates/gateway/gateway-external-https.tftpl.yaml"
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "address_name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "google_compute_global_address" ],
+                              [ "A_string", "external_gateway_https" ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "gateway_name" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "gateway_name" ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "ssl_certificate_name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Id",
+                                "google_compute_managed_ssl_certificate"
+                              ],
+                              [ "A_string", "external_gateway" ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "gateway_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/gateway-external-https.yaml" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "local_file" ], [ "Lit", "route" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "mft_endpoints" ] ] ]
+        ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "/templates/gateway/http-route-service.tftpl.yaml"
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "gateway_name" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "gateway_name" ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "http_route_name" ],
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "-https" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "hostname" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "host" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "service_name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "service_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "service_port" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "port" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "gateway_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/route-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-https.yaml" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "local_file" ], [ "Lit", "gcp_backend_policy" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "mft_endpoints" ] ] ]
+        ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "/templates/gateway/gcp-backend-policy-iap-service.tftpl.yaml"
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "policy_name" ],
+                      [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                    ],
+                    [
+                      [ "Bare", "service_name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "service_name" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "gateway_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/gcp-backend-policy-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".yaml" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_apply_gateway_manifest" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_apply_namespace_manifest" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../../modules/kubectl_apply" ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifest",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local_file" ],
+                  [ "A_string", "gateway_external_https_yaml" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "mft_kubernetes_namespace" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_apply_route_manifest" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_apply_namespace_manifest" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../../modules/kubectl_apply" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local_file" ], [ "A_string", "gcp_backend_policy" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifest",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local_file" ], [ "A_string", "route" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "mft_kubernetes_namespace" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_apply_gcp_backend_policy_manifest" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_apply_namespace_manifest" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../../modules/kubectl_apply" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local_file" ], [ "A_string", "route" ] ] ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifest",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local_file" ],
+                      [ "A_string", "gcp_backend_policy" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "mft_kubernetes_namespace" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_wait_for_gateway" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_apply_gateway_manifest" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../../modules/kubectl_wait" ]
+        ],
+        [
+          "Attribute",
+          "for",
+          [
+            "String",
+            "jsonpath={.status.conditions[?(@.type==\"networking.gke.io/GatewayHealthy\")].status}=True"
+          ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "mft_kubernetes_namespace" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource",
+          [
+            "Template",
+            [
+              [ "Literal", "gateway/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "gateway_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "timeout", [ "String", "300s" ] ],
+        [ "Attribute", "wait_for_create", [ "Bool", true ] ]
+      ]
+    }
+  ]
+]

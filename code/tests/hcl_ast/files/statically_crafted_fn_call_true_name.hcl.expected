@@ -1,0 +1,5 @@
+[
+  [ "Attribute", "x", [ "Fun_call", [ "true", [ [ "Int", 1 ] ] ] ] ],
+  [ "Attribute", "y", [ "Fun_call", [ "null", [ [ "Int", 2 ] ] ] ] ],
+  [ "Attribute", "z", [ "Fun_call", [ "false", [] ] ] ]
+]

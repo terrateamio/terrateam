@@ -1,0 +1,1825 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "solution_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Solution name for resource naming and discovery" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "length",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "solution_name" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 16 ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "regex",
+                              [
+                                [ "String", "^([a-z0-9])+(?:-[a-z0-9]+)*$" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "solution_name" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Only max. 16 lower-case alphanumeric characters and dashes in between are allowed."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "instance_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Name of the workload (e.g., postgres, redis, custom-app). Used for resource naming and discovery."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "instance_name" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must start with lowercase alphanumeric, contain only lowercase alphanumeric and dashes, and end with alphanumeric."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "docker_image_uri" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Docker image URI to run. Examples: 'postgres:15', 'nginx:latest', '123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.0'"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "security_group_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "List of security group IDs to attach. If empty, a default security group will be created."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_bastion_access" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Allow bidirectional traffic with bastion host on mapped ports"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_ecs_access" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Allow bidirectional traffic with ECS tasks on mapped ports"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_loadbalancer_access" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Allow ingress from load balancer on mapped ports" ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_internal_dns" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Create DNS A records for service discovery via internal hostname. Zone is managed by Terra3 base module."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "internal_dns_workload_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "DNS workload name used for A record creation. Final DNS name will be '{internal_dns_workload_name}.internal.{solution_name}.local' (zone name managed by base module)."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "port_mappings" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "List of port mappings. Each mapping specifies containerPort, hostPort, and protocol."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "containerPort" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "hostPort" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "protocol" ], [ "Id", "string" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "pm", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "port_mappings" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Gt",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "pm" ],
+                                                  [
+                                                    "A_string",
+                                                    "containerPort"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Int", 0 ]
+                                            ]
+                                          ],
+                                          [
+                                            "Lte",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "pm" ],
+                                                  [
+                                                    "A_string",
+                                                    "containerPort"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Int", 65535 ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Gt",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "pm" ],
+                                              [ "A_string", "hostPort" ]
+                                            ]
+                                          ],
+                                          [ "Int", 0 ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Lte",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "pm" ],
+                                          [ "A_string", "hostPort" ]
+                                        ]
+                                      ],
+                                      [ "Int", 65535 ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "contains",
+                                  [
+                                    [
+                                      "Tuple",
+                                      [
+                                        [ "String", "tcp" ],
+                                        [ "String", "udp" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "pm" ],
+                                        [ "A_string", "protocol" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "All ports must be valid (1-65535) and protocol must be 'tcp' or 'udp'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "environment_variables" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Environment variables to pass to the Docker container as a map of key-value pairs."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "map_secrets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Map of environment variable names to secret ARNs. Supports both SSM Parameter Store (arn:aws:ssm:...) and AWS Secrets Manager (arn:aws:secretsmanager:...) secrets. Secrets are fetched at runtime and injected as environment variables."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ebs_volumes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "List of EBS volumes to create and mount to the Docker container."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "device_name" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [ "Id", "string" ],
+                                  [ "String", "/dev/sdf" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "size" ], [ "Id", "number" ] ],
+                          [
+                            [ "Bare", "volume_type" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "String", "gp3" ] ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "mount_path" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "delete_on_termination" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "vol", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "ebs_volumes" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Gt",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "vol" ],
+                                                  [ "A_string", "size" ]
+                                                ]
+                                              ],
+                                              [ "Int", 0 ]
+                                            ]
+                                          ],
+                                          [
+                                            "Lte",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "vol" ],
+                                                  [ "A_string", "size" ]
+                                                ]
+                                              ],
+                                              [ "Int", 16384 ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "contains",
+                                          [
+                                            [
+                                              "Tuple",
+                                              [
+                                                [ "String", "gp2" ],
+                                                [ "String", "gp3" ],
+                                                [ "String", "io1" ],
+                                                [ "String", "io2" ],
+                                                [ "String", "st1" ],
+                                                [ "String", "sc1" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "vol" ],
+                                                [ "A_string", "volume_type" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "vol" ],
+                                          [ "A_string", "mount_path" ]
+                                        ]
+                                      ],
+                                      [ "String", "" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "startswith",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "vol" ],
+                                        [ "A_string", "device_name" ]
+                                      ]
+                                    ],
+                                    [ "String", "/dev/" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Volume size must be 1-16384 GB, volume_type must be valid, mount_path must not be empty, and device_name must start with /dev/."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ebs_volume_availability_zone" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Availability zone for EBS volume creation. Must match the AZ where the EC2 instance will be launched. Required to prevent EBS volume replacement on re-apply."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "instance_type" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "EC2 instance type for the workload. Default is t4g.nano (ARM-based, cost-effective)."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "t4g.nano" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "root_volume_size" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Root EBS volume size in GB for the EC2 instance." ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 50 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gt",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "root_volume_size" ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "root_volume_size" ]
+                          ]
+                        ],
+                        [ "Int", 16384 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Root volume size must be between 1 and 16384 GB."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "root_volume_type" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "Root EBS volume type." ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "gp3" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "gp2" ],
+                          [ "String", "gp3" ],
+                          [ "String", "io1" ],
+                          [ "String", "io2" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "root_volume_type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String", "Root volume type must be gp2, gp3, io1, or io2."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_ecr_access" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Allow EC2 instance to pull Docker images from ECR repositories."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "additional_iam_policy_arns" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "List of additional IAM policy ARNs to attach to the instance role."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "min_healthy_percentage" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Minimum percentage of healthy instances during rolling update (0-100)."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 0 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "min_healthy_percentage" ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "min_healthy_percentage" ]
+                          ]
+                        ],
+                        [ "Int", 100 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Min healthy percentage must be between 0 and 100."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "log_retention_days" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "CloudWatch log retention in days. 0 means never expire."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 7 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "log_retention_days" ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [
+                      "Log_or",
+                      [
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "log_retention_days" ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "contains",
+                            [
+                              [
+                                "Tuple",
+                                [
+                                  [ "Int", 1 ],
+                                  [ "Int", 3 ],
+                                  [ "Int", 5 ],
+                                  [ "Int", 7 ],
+                                  [ "Int", 14 ],
+                                  [ "Int", 30 ],
+                                  [ "Int", 60 ],
+                                  [ "Int", 90 ],
+                                  [ "Int", 120 ],
+                                  [ "Int", 150 ],
+                                  [ "Int", 180 ],
+                                  [ "Int", 365 ],
+                                  [ "Int", 400 ],
+                                  [ "Int", 545 ],
+                                  [ "Int", 731 ],
+                                  [ "Int", 1827 ],
+                                  [ "Int", 3653 ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "log_retention_days" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Log retention must be 0 or one of: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653 days."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Additional tags to apply to all resources." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_backup" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enable automated backups for EBS volumes using AWS Backup service"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "backup_retention_days" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Number of days to retain EBS snapshots in AWS Backup vault"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 7 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "backup_retention_days" ]
+                          ]
+                        ],
+                        [ "Int", 1 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "backup_retention_days" ]
+                          ]
+                        ],
+                        [ "Int", 3650 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Backup retention must be between 1 and 3650 days."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "backup_schedule" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Backup schedule in AWS EventBridge cron format (UTC). Default: daily at 2 AM UTC"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "cron(0 2 ? * * *)" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_load_balancer" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enable ALB integration to expose the service through the load balancer"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "internal_service" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "If true, service is not exposed via ALB (even if enable_load_balancer is true)"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "path_mapping" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "ALB path pattern for routing (e.g., '/postgres/*'). Only used if enable_load_balancer is true"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "/*" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "listener_rule_prio" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "ALB listener rule priority (must be unique across all rules). Only used if enable_load_balancer is true"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 1000 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gt",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "listener_rule_prio" ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [
+                      "Lt",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "listener_rule_prio" ]
+                          ]
+                        ],
+                        [ "Int", 50000 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Listener rule priority must be between 1 and 49999."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "lb_healthcheck_port" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Port for ALB health checks (defaults to hostPort of first port_mapping if enable_load_balancer is true)"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "traffic-port" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "lb_healthcheck_interval" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "ALB health check interval in seconds" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 30 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "lb_healthcheck_interval" ]
+                          ]
+                        ],
+                        [ "Int", 5 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "lb_healthcheck_interval" ]
+                          ]
+                        ],
+                        [ "Int", 300 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Health check interval must be between 5 and 300 seconds."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "lb_healthcheck_timeout" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "ALB health check timeout in seconds" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 5 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "lb_healthcheck_timeout" ]
+                          ]
+                        ],
+                        [ "Int", 2 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "lb_healthcheck_timeout" ]
+                          ]
+                        ],
+                        [ "Int", 120 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Health check timeout must be between 2 and 120 seconds."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "lb_healthcheck_healthy_threshold" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Number of consecutive health checks to mark instance healthy"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 2 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [
+                              "A_string", "lb_healthcheck_healthy_threshold"
+                            ]
+                          ]
+                        ],
+                        [ "Int", 2 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [
+                              "A_string", "lb_healthcheck_healthy_threshold"
+                            ]
+                          ]
+                        ],
+                        [ "Int", 10 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "Healthy threshold must be between 2 and 10." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "lb_healthcheck_unhealthy_threshold" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Number of consecutive health checks to mark instance unhealthy"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 2 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [
+                              "A_string",
+                              "lb_healthcheck_unhealthy_threshold"
+                            ]
+                          ]
+                        ],
+                        [ "Int", 2 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [
+                              "A_string",
+                              "lb_healthcheck_unhealthy_threshold"
+                            ]
+                          ]
+                        ],
+                        [ "Int", 10 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "Unhealthy threshold must be between 2 and 10." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "deregistration_delay" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Time (in seconds) to wait for connections to drain before forcefully closing them"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 30 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "deregistration_delay" ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "deregistration_delay" ]
+                          ]
+                        ],
+                        [ "Int", 3600 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Deregistration delay must be between 0 and 3600 seconds."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "health_check_grace_period" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Time (in seconds) to wait for the instance to become healthy before starting health checks. Increase if SSM Agent takes longer to initialize."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 600 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "health_check_grace_period" ]
+                          ]
+                        ],
+                        [ "Int", 60 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "health_check_grace_period" ]
+                          ]
+                        ],
+                        [ "Int", 3600 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Health check grace period must be between 60 and 3600 seconds."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

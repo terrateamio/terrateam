@@ -1,0 +1,14 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "a", [ "String", "hello world" ] ],
+        [ "Attribute", "b", [ "String", "café" ] ],
+        [ "Attribute", "c", [ "String", "日本語" ] ]
+      ]
+    }
+  ]
+]

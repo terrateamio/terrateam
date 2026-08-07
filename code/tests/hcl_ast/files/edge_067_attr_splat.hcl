@@ -1,0 +1,1 @@
+x = var.items.*.name

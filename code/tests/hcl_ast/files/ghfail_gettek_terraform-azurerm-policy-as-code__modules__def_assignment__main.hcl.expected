@@ -1,0 +1,2314 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "terraform_data" ], [ "Lit", "def_assign_replace_def" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "input",
+          [
+            "Fun_call",
+            [
+              "md5",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "definition" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "terraform_data" ], [ "Lit", "def_assign_replace_param" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "input",
+          [
+            "Fun_call",
+            [
+              "md5",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "parameters" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_management_group_policy_assignment" ],
+        [ "Lit", "def" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "assignment_scope" ] ]
+              ],
+              [ "A_string", "mg" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_definition_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "definition" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "assignment_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "display_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "description" ] ] ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "metadata" ] ] ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "parameters" ] ] ]
+        ],
+        [
+          "Attribute",
+          "management_group_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "assignment_scope" ] ] ]
+        ],
+        [
+          "Attribute",
+          "not_scopes",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "assignment_not_scopes" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enforce",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "assignment_enforcement_mode" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "assignment_location" ] ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "non_compliance_message" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "non_compliance_message" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "content",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "non_compliance_message" ],
+                          [ "A_string", "value" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "identity" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "identity_type" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "type",
+                      [
+                        "Attr",
+                        [ [ "Id", "identity" ], [ "A_string", "value" ] ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "identity_ids",
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "identity_ids" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "resource_selectors" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "resource_selectors" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "name",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "resource_selectors" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "selectors",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "kind",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "resource_selectors" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "selectors" ]
+                                  ]
+                                ],
+                                [ "A_string", "kind" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "in",
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "resource_selectors" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "selectors" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "in" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "not_in",
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "resource_selectors" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "selectors" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "not_in" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "replace_triggered_by",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "terraform_data" ],
+                        [ "A_string", "def_assign_replace_param" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subscription_policy_assignment" ], [ "Lit", "def" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "assignment_scope" ] ]
+              ],
+              [ "A_string", "sub" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_definition_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "definition" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "assignment_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "display_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "description" ] ] ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "metadata" ] ] ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "parameters" ] ] ]
+        ],
+        [
+          "Attribute",
+          "subscription_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "assignment_scope" ] ] ]
+        ],
+        [
+          "Attribute",
+          "not_scopes",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "assignment_not_scopes" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enforce",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "assignment_enforcement_mode" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "assignment_location" ] ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "non_compliance_message" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "non_compliance_message" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "content",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "non_compliance_message" ],
+                          [ "A_string", "value" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "identity" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "identity_type" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "type",
+                      [
+                        "Attr",
+                        [ [ "Id", "identity" ], [ "A_string", "value" ] ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "identity_ids",
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "identity_ids" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "resource_selectors" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "resource_selectors" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "name",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "resource_selectors" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "selectors",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "kind",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "resource_selectors" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "selectors" ]
+                                  ]
+                                ],
+                                [ "A_string", "kind" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "in",
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "resource_selectors" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "selectors" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "in" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "not_in",
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "resource_selectors" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "selectors" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "not_in" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "replace_triggered_by",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "terraform_data" ],
+                        [ "A_string", "def_assign_replace_param" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_resource_group_policy_assignment" ],
+        [ "Lit", "def" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "assignment_scope" ] ]
+              ],
+              [ "A_string", "rg" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_definition_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "definition" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "assignment_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "display_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "description" ] ] ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "metadata" ] ] ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "parameters" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "assignment_scope" ] ] ]
+        ],
+        [
+          "Attribute",
+          "not_scopes",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "assignment_not_scopes" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enforce",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "assignment_enforcement_mode" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "assignment_location" ] ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "non_compliance_message" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "non_compliance_message" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "content",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "non_compliance_message" ],
+                          [ "A_string", "value" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "identity" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "identity_type" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "type",
+                      [
+                        "Attr",
+                        [ [ "Id", "identity" ], [ "A_string", "value" ] ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "identity_ids",
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "identity_ids" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "resource_selectors" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "resource_selectors" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "name",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "resource_selectors" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "selectors",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "kind",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "resource_selectors" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "selectors" ]
+                                  ]
+                                ],
+                                [ "A_string", "kind" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "in",
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "resource_selectors" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "selectors" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "in" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "not_in",
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "resource_selectors" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "selectors" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "not_in" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "replace_triggered_by",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "terraform_data" ],
+                        [ "A_string", "def_assign_replace_param" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_resource_policy_assignment" ], [ "Lit", "def" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "assignment_scope" ] ]
+              ],
+              [ "A_string", "resource" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_definition_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "definition" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "assignment_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "display_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "description" ] ] ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "metadata" ] ] ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "parameters" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "assignment_scope" ] ] ]
+        ],
+        [
+          "Attribute",
+          "not_scopes",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "assignment_not_scopes" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enforce",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "assignment_enforcement_mode" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "assignment_location" ] ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "non_compliance_message" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "non_compliance_message" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "content",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "non_compliance_message" ],
+                          [ "A_string", "value" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "identity" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "identity_type" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "type",
+                      [
+                        "Attr",
+                        [ [ "Id", "identity" ], [ "A_string", "value" ] ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "identity_ids",
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "identity_ids" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "resource_selectors" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "resource_selectors" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "name",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "resource_selectors" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "selectors",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "kind",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "resource_selectors" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "selectors" ]
+                                  ]
+                                ],
+                                [ "A_string", "kind" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "in",
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "resource_selectors" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "selectors" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "in" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "not_in",
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "resource_selectors" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "selectors" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "not_in" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "replace_triggered_by",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "terraform_data" ],
+                        [ "A_string", "def_assign_replace_param" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_role_assignment" ], [ "Lit", "remediation" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "i", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "role_definition_ids" ] ]
+              ],
+              "key_output": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "split",
+                      [
+                        [ "String", "-" ],
+                        [ "Fun_call", [ "basename", [ [ "Id", "i" ] ] ] ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "value_output": [ "Id", "i" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "scope",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "role_assignment_scope" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "assignment_scope" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role_definition_id",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "principal_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "assignment" ] ]
+                      ],
+                      [ "A_string", "identity" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "principal_id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "skip_service_principal_aad_check", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azuread_group_member" ], [ "Lit", "remediation" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "i", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "aad_group_remediation_object_ids" ]
+                ]
+              ],
+              "key_output": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "split",
+                      [
+                        [ "String", "-" ],
+                        [ "Fun_call", [ "basename", [ [ "Id", "i" ] ] ] ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "value_output": [ "Id", "i" ],
+              "cond": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "identity_type" ]
+                              ]
+                            ],
+                            [ "A_string", "type" ]
+                          ]
+                        ],
+                        [ "String", "" ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "SystemAssigned" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "group_object_id",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "member_object_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "assignment" ] ]
+                      ],
+                      [ "A_string", "identity" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "principal_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_management_group_policy_remediation" ],
+        [ "Lit", "rem" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Add",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "create_remediation" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ], [ "A_string", "remediate" ]
+                            ]
+                          ],
+                          [ "A_string", "mg" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 1 ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "lower",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "definition" ] ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "management_group_id",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "remediation_scope" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_assignment_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "assignment" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location_filters",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location_filters" ] ] ]
+        ],
+        [
+          "Attribute",
+          "failure_percentage",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "failure_percentage" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parallel_deployments",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "parallel_deployments" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_count" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "replace_triggered_by",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "terraform_data" ],
+                        [ "A_string", "def_assign_replace_def" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "ignore_changes",
+                [
+                  "Tuple",
+                  [
+                    [ "Id", "parallel_deployments" ],
+                    [ "Id", "resource_count" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subscription_policy_remediation" ],
+        [ "Lit", "rem" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Add",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "create_remediation" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ], [ "A_string", "remediate" ]
+                            ]
+                          ],
+                          [ "A_string", "sub" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 1 ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "lower",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "definition" ] ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription_id",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "remediation_scope" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_assignment_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "assignment" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_discovery_mode",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "resource_discovery_mode" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location_filters",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location_filters" ] ] ]
+        ],
+        [
+          "Attribute",
+          "failure_percentage",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "failure_percentage" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parallel_deployments",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "parallel_deployments" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_count" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "replace_triggered_by",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "terraform_data" ],
+                        [ "A_string", "def_assign_replace_def" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "ignore_changes",
+                [
+                  "Tuple",
+                  [
+                    [ "Id", "parallel_deployments" ],
+                    [ "Id", "resource_count" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_resource_group_policy_remediation" ],
+        [ "Lit", "rem" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Add",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "create_remediation" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ], [ "A_string", "remediate" ]
+                            ]
+                          ],
+                          [ "A_string", "rg" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 1 ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "lower",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "definition" ] ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_id",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "remediation_scope" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_assignment_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "assignment" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_discovery_mode",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "resource_discovery_mode" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location_filters",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location_filters" ] ] ]
+        ],
+        [
+          "Attribute",
+          "failure_percentage",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "failure_percentage" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parallel_deployments",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "parallel_deployments" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_count" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "replace_triggered_by",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "terraform_data" ],
+                        [ "A_string", "def_assign_replace_def" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "ignore_changes",
+                [
+                  "Tuple",
+                  [
+                    [ "Id", "parallel_deployments" ],
+                    [ "Id", "resource_count" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_resource_policy_remediation" ], [ "Lit", "rem" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Add",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "create_remediation" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ], [ "A_string", "remediate" ]
+                            ]
+                          ],
+                          [ "A_string", "resource" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 1 ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "lower",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "definition" ] ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_id",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "remediation_scope" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_assignment_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "assignment" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_discovery_mode",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "resource_discovery_mode" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location_filters",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location_filters" ] ] ]
+        ],
+        [
+          "Attribute",
+          "failure_percentage",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "failure_percentage" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parallel_deployments",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "parallel_deployments" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_count" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "replace_triggered_by",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "terraform_data" ],
+                        [ "A_string", "def_assign_replace_def" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "ignore_changes",
+                [
+                  "Tuple",
+                  [
+                    [ "Id", "parallel_deployments" ],
+                    [ "Id", "resource_count" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

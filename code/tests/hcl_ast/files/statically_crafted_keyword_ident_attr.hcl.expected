@@ -1,0 +1,6 @@
+[
+  [
+    "Attribute", "x", [ "Object", [ [ [ "Bare", "k" ], [ "Id", "for" ] ] ] ]
+  ],
+  [ "Attribute", "y", [ "Object", [ [ [ "Bare", "k" ], [ "Id", "if" ] ] ] ] ]
+]

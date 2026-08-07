@@ -1,0 +1,25 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Idx",
+      [
+        [
+          "Idx",
+          [
+            [
+              "Idx",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "matrix" ] ] ],
+                [ "Int", 0 ]
+              ]
+            ],
+            [ "Int", 1 ]
+          ]
+        ],
+        [ "Int", 2 ]
+      ]
+    ]
+  ]
+]

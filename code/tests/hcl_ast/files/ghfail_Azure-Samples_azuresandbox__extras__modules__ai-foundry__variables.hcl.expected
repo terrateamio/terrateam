@@ -1,0 +1,869 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ai_search_sku" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The sku name of the Azure AI Search service to create. Choose from: Free, Basic, Standard, StorageOptimized. See https://docs.microsoft.com/en-us/azure/search/search-sku-tier"
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "basic" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "free" ],
+                          [ "String", "basic" ],
+                          [ "String", "standard" ],
+                          [ "String", "storageoptimized" ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "lower",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ai_search_sku" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The ai_search_sku must be one of: Free, Basic, Standard, StorageOptimized (case-insensitive)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ai_services_sku" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The sku name of the AI Services sku. Choose from: S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10. See https://docs.microsoft.com/en-us/azure/cognitive-services/cognitive-services-apis-create-account-cli?tabs=multiservice%2Cwindows"
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "S0" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "s0" ],
+                          [ "String", "s1" ],
+                          [ "String", "s2" ],
+                          [ "String", "s3" ],
+                          [ "String", "s4" ],
+                          [ "String", "s5" ],
+                          [ "String", "s6" ],
+                          [ "String", "s7" ],
+                          [ "String", "s8" ],
+                          [ "String", "s9" ],
+                          [ "String", "s10" ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "lower",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ai_services_sku" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The ai_services_sku must be one of: S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10 (case-insensitive)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "container_registry_sku" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The sku name of the Azure Container Registry to create. Choose from: Basic, Standard, Premium. Premium is required for use with AI Studio hubs."
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "Premium" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "basic" ],
+                          [ "String", "standard" ],
+                          [ "String", "premium" ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "lower",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "container_registry_sku" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The container_registry_sku must be one of: Basic, Standard, Premium (case-insensitive)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "key_vault_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The existing key vault where secrets are stored" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9-_()]+/providers/Microsoft.KeyVault/vaults/[a-zA-Z0-9-]+$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "key_vault_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must be a valid Azure Resource ID for a Key Vault. It should follow the format '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "location" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The name of the Azure Region where resources will be provisioned."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-z0-9-]+$" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "location" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must be a valid Azure region name. It should only contain lowercase letters, numbers, and dashes (e.g., 'eastus', 'westus2', 'centralus')."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "private_dns_zones" ] ],
+      "body": [
+        [
+          "Attribute", "type", [ "Fun_call", [ "map", [ [ "Id", "any" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The existing private dns zones defined in the application virtual network."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "resource_group_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The name of the existing resource group for provisioning resources."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-zA-Z0-9._()-]{1,90}$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "resource_group_name" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must conform to Azure resource group naming requirements: it can only contain alphanumeric characters, periods (.), underscores (_), parentheses (()), and hyphens (-), and must be between 1 and 90 characters long."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "storage_account_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The id of the shared storage account." ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9-_()]+/providers/Microsoft.Storage/storageAccounts/[a-zA-Z0-9]{3,24}$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "storage_account_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must be a valid Azure Resource ID for a storage account. It should follow the format '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "storage_file_endpoint" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The endpoint of the Azure Files share." ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^https://[a-zA-Z0-9-]+\\.file\\.core\\.windows\\.net/$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "storage_file_endpoint" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must be a valid Azure Storage File endpoint. It should follow the format 'https://{storageAccountName}.file.core.windows.net/'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "storage_share_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the Azure Files share." ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-z0-9]{3,63}$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "storage_share_name" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The storage_share_name must be between 3 and 63 characters, and can only contain lowercase letters and numbers."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "subnets" ] ],
+      "body": [
+        [
+          "Attribute", "type", [ "Fun_call", [ "map", [ [ "Id", "any" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The existing subnets defined in the application virtual network."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute", "type", [ "Fun_call", [ "map", [ [ "Id", "any" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The tags in map format to be used when creating new resources."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "key", [ "value" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "tags" ] ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^[a-zA-Z0-9._-]{1,512}$"
+                                          ],
+                                          [ "Id", "key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^[a-zA-Z0-9._ -]{0,256}$"
+                                          ],
+                                          [ "Id", "value" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Each tag key must be 1-512 characters long and consist of alphanumeric characters, periods (.), underscores (_), or hyphens (-). Each tag value must be 0-256 characters long and consist of alphanumeric characters, periods (.), underscores (_), spaces, or hyphens (-)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "unique_seed" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A unique seed to be used for generating unique names for resources. This should be a string that is unique to the environment or deployment."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-zA-Z0-9-]{1,64}$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "unique_seed" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must only contain alphanumeric characters and hyphens (-), and must be between 1 and 32 characters long."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "user_object_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The object id of the interactive user." ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "user_object_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The user_object_id must be a valid Entra ID (Azure AD) object ID in GUID format."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,114 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "nlb-arn" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The ARN of the corresponding load balancer" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the target group" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "lambda-arn" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The arn of the corresponding lambda function" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "lambda-name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the corresponding lambda function" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "target" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "FQDN" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "internal-port" ], [ "Id", "number" ] ],
+                    [ [ "Bare", "external-port" ], [ "Id", "number" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The target to which the NLB should serve traffic" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "polling-schedule-expression" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A cron expression that determines how often the lambda function will execute per target group. For formatting information, see this guide: https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html#CronExpressions"
+          ]
+        ]
+      ]
+    }
+  ]
+]

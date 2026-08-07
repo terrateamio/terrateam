@@ -1,0 +1,264 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "forwarding_rule_targets",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "psc_endpoints" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Log_and",
+                    [
+                      [
+                        "Not_equal",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "v" ],
+                              [ "A_string", "producer_cloudsql" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ],
+                      [
+                        "Not_equal",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "v" ],
+                                  [ "A_string", "producer_cloudsql" ]
+                                ]
+                              ],
+                              [ "A_string", "instance_name" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "google_sql_database_instance"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "cloudsql_instance" ]
+                                  ]
+                                ],
+                                [ "Id", "k" ]
+                              ]
+                            ],
+                            [ "A_string", "psc_service_attachment_link" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Log_and",
+                        [
+                          [
+                            "Log_and",
+                            [
+                              [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "producer_alloydb" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "v" ],
+                                          [ "A_string", "producer_alloydb" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "instance_name" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Gt",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "try",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Idx",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "data" ],
+                                                          [
+                                                            "A_string",
+                                                            "google_alloydb_instance"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "alloydb_instance"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Id", "k" ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "psc_instance_config"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Tuple", [] ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "then_": [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "data" ],
+                                                    [
+                                                      "A_string",
+                                                      "google_alloydb_instance"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string",
+                                                  "alloydb_instance"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "k" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "psc_instance_config" ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                [ "A_string", "service_attachment_link" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ],
+                      "else_": [
+                        "Attr", [ [ "Id", "v" ], [ "A_string", "target" ] ]
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

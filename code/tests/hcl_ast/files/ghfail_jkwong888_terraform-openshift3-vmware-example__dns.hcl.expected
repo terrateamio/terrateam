@@ -1,0 +1,905 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "all_ips",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "concat",
+                      [
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Fun_call",
+                                  [
+                                    "list",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "module" ],
+                                              [
+                                                "A_string", "infrastructure"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string", "bastion_private_ip"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "infrastructure" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "master_private_ip" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "infrastructure" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "infra_private_ip" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "infrastructure" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "worker_private_ip" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "infrastructure" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "storage_private_ip" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Fun_call",
+                                  [
+                                    "list",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "module" ],
+                                              [
+                                                "A_string",
+                                                "console_loadbalancer"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "node_private_ip" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Fun_call",
+                                  [
+                                    "list",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "module" ],
+                                              [
+                                                "A_string",
+                                                "app_loadbalancer"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "node_private_ip" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "all_hostnames",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "concat",
+                      [
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Fun_call",
+                                  [
+                                    "list",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "module" ],
+                                              [
+                                                "A_string", "infrastructure"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "bastion_hostname" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "infrastructure" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "master_hostname" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "infrastructure" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "infra_hostname" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "infrastructure" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "worker_hostname" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "infrastructure" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "storage_hostname" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Fun_call",
+                                  [
+                                    "list",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "module" ],
+                                              [
+                                                "A_string",
+                                                "console_loadbalancer"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "node_hostname" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Fun_call",
+                                  [
+                                    "list",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "module" ],
+                                              [
+                                                "A_string",
+                                                "app_loadbalancer"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "node_hostname" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "all_count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Add",
+                    [
+                      [
+                        "Add",
+                        [
+                          [
+                            "Add",
+                            [
+                              [
+                                "Add",
+                                [
+                                  [
+                                    "Add",
+                                    [
+                                      [
+                                        "Add",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "lookup",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [ "A_string", "bastion" ]
+                                                  ]
+                                                ],
+                                                [ "String", "nodes" ],
+                                                [ "String", "1" ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "lookup",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [ "A_string", "master" ]
+                                                  ]
+                                                ],
+                                                [ "String", "nodes" ],
+                                                [ "String", "1" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "lookup",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "infra" ]
+                                              ]
+                                            ],
+                                            [ "String", "nodes" ],
+                                            [ "String", "1" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [ "A_string", "worker" ]
+                                          ]
+                                        ],
+                                        [ "String", "nodes" ],
+                                        [ "String", "3" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "lookup",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "storage" ]
+                                      ]
+                                    ],
+                                    [ "String", "nodes" ],
+                                    [ "String", "3" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Int", 1 ]
+                        ]
+                      ],
+                      [ "Int", 1 ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "etchosts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [
+            "String",
+            "github.com/ibm-cloud-architecture/terraform-dns-etc-hosts.git"
+          ]
+        ],
+        [
+          "Attribute",
+          "dependson",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "module" ],
+                              [ "A_string", "rhnregister" ]
+                            ]
+                          ],
+                          [ "A_string", "registered_resource" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bastion_ip_address",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ],
+                          [ "A_string", "infrastructure" ]
+                        ]
+                      ],
+                      [ "A_string", "bastion_public_ip" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bastion_ssh_user",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "ssh_user" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bastion_ssh_password",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "ssh_password" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bastion_ssh_private_key",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "file",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "ssh_private_key_file" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ssh_user",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "ssh_user" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ssh_password",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "ssh_password" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ssh_private_key",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "tls_private_key" ],
+                          [ "A_string", "installkey" ]
+                        ]
+                      ],
+                      [ "A_string", "private_key_pem" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "node_ips",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "all_ips" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "node_hostnames",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "all_hostnames" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "domain",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "private_domain" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "num_nodes",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "all_count" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

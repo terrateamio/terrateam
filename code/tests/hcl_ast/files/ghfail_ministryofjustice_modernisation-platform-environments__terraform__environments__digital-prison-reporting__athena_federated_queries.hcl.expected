@@ -1,0 +1,2513 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "nomis_host",
+          [
+            "Idx",
+            [
+              [
+                "Fun_call",
+                [
+                  "jsondecode",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [
+                                  "A_string",
+                                  "aws_secretsmanager_secret_version"
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "nomis" ]
+                          ]
+                        ],
+                        [ "A_string", "secret_string" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "String", "endpoint" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "nomis_port",
+          [
+            "Idx",
+            [
+              [
+                "Fun_call",
+                [
+                  "jsondecode",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [
+                                  "A_string",
+                                  "aws_secretsmanager_secret_version"
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "nomis" ]
+                          ]
+                        ],
+                        [ "A_string", "secret_string" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "String", "port" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "nomis_service_name",
+          [
+            "Idx",
+            [
+              [
+                "Fun_call",
+                [
+                  "jsondecode",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [
+                                  "A_string",
+                                  "aws_secretsmanager_secret_version"
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "nomis" ]
+                          ]
+                        ],
+                        [ "A_string", "secret_string" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "String", "db_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "connection_string_nomis",
+          [
+            "Template",
+            [
+              [ "Literal", "oracle://jdbc:oracle:thin:${" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_secretsmanager_secret" ],
+                          [ "A_string", "nomis" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "}@//" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "nomis_host" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ":" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "nomis_port" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "nomis_service_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bodmis_host",
+          [
+            "Idx",
+            [
+              [
+                "Fun_call",
+                [
+                  "jsondecode",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [
+                                  "A_string",
+                                  "aws_secretsmanager_secret_version"
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "bodmis" ]
+                          ]
+                        ],
+                        [ "A_string", "secret_string" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "String", "endpoint" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bodmis_port",
+          [
+            "Idx",
+            [
+              [
+                "Fun_call",
+                [
+                  "jsondecode",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [
+                                  "A_string",
+                                  "aws_secretsmanager_secret_version"
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "bodmis" ]
+                          ]
+                        ],
+                        [ "A_string", "secret_string" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "String", "port" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "bodmis_service_name",
+          [
+            "Idx",
+            [
+              [
+                "Fun_call",
+                [
+                  "jsondecode",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [
+                                  "A_string",
+                                  "aws_secretsmanager_secret_version"
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "bodmis" ]
+                          ]
+                        ],
+                        [ "A_string", "secret_string" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "String", "db_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "connection_string_bodmis",
+          [
+            "Template",
+            [
+              [ "Literal", "oracle://jdbc:oracle:thin:${" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_secretsmanager_secret" ],
+                          [ "A_string", "bodmis" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "}@//" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "bodmis_host" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ":" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "bodmis_port" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "bodmis_service_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "oasys_host",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "oasys" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "endpoint" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "oasys_port",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "oasys" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "port" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "oasys_service_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "oasys" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "db_name" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "connection_string_oasys",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [ "Literal", "oracle://jdbc:oracle:thin:${" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "aws_secretsmanager_secret" ],
+                                  [ "A_string", "oasys" ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "}@//" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "oasys_host" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", ":" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "oasys_port" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "/" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "oasys_service_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "onr_host",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "onr" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "endpoint" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "onr_port",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "onr" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "port" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "onr_service_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "onr" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "db_name" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "connection_string_onr",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [ "Literal", "oracle://jdbc:oracle:thin:${" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "aws_secretsmanager_secret" ],
+                                  [ "A_string", "onr" ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "}@//" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "onr_host" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", ":" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "onr_port" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "/" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "onr_service_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ndelius_host",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "ndelius" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "endpoint" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ndelius_port",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "ndelius" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "port" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ndelius_service_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "ndelius" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "db_name" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "connection_string_ndelius",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [ "Literal", "oracle://jdbc:oracle:thin:${" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "aws_secretsmanager_secret" ],
+                                  [ "A_string", "ndelius" ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "}@//" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "ndelius_host" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", ":" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "ndelius_port" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "/" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "ndelius_service_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ndmis_host",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is_non_prod" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "ndmis" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "endpoint" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ndmis_port",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is_non_prod" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "ndmis" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "port" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ndmis_service_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is_non_prod" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "jsondecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string",
+                                          "aws_secretsmanager_secret_version"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "ndmis" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "secret_string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "db_name" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "connection_string_ndmis",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is_non_prod" ] ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [ "Literal", "oracle://jdbc:oracle:thin:${" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "aws_secretsmanager_secret" ],
+                                  [ "A_string", "ndmis" ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "}@//" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "ndmis_host" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", ":" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "ndmis_port" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "/" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "ndmis_service_name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "dev_federated_query_connections_oracle",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "nomis" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_nomis" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "bodmis" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_bodmis" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ndmis" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_ndmis" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "test_federated_query_connections_oracle",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "nomis" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_nomis" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "bodmis" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_bodmis" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "oasys" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_oasys" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "onr" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_onr" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ndelius" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_ndelius" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ndmis" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_ndmis" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "preproduction_federated_query_connections_oracle",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "nomis" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_nomis" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "bodmis" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_bodmis" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ndmis" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_ndmis" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "production_federated_query_connections_oracle",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "nomis" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_nomis" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "bodmis" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "connection_string_bodmis" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dev_federated_query_credentials_secret_arns_oracle",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "is-development" ] ]
+              ],
+              "then_": [
+                "Tuple",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_secretsmanager_secret" ],
+                          [ "A_string", "nomis" ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_secretsmanager_secret" ],
+                          [ "A_string", "bodmis" ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_secretsmanager_secret" ],
+                              [ "A_string", "ndmis" ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Tuple", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "test_federated_query_credentials_secret_arns_oracle",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [
+                "Tuple",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_secretsmanager_secret" ],
+                          [ "A_string", "nomis" ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_secretsmanager_secret" ],
+                          [ "A_string", "bodmis" ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_secretsmanager_secret" ],
+                              [ "A_string", "oasys" ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_secretsmanager_secret" ],
+                              [ "A_string", "onr" ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_secretsmanager_secret" ],
+                              [ "A_string", "ndelius" ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_secretsmanager_secret" ],
+                              [ "A_string", "ndmis" ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Tuple", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "preproduction_federated_query_credentials_secret_arns_oracle",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "is-preproduction" ] ]
+              ],
+              "then_": [
+                "Tuple",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_secretsmanager_secret" ],
+                          [ "A_string", "nomis" ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_secretsmanager_secret" ],
+                          [ "A_string", "bodmis" ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_secretsmanager_secret" ],
+                              [ "A_string", "ndmis" ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Tuple", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "production_federated_query_credentials_secret_arns_oracle",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_secretsmanager_secret" ],
+                      [ "A_string", "nomis" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_secretsmanager_secret" ],
+                      [ "A_string", "bodmis" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "federated_query_connection_strings_map_oracle",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "is-development" ] ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "dev_federated_query_connections_oracle" ]
+                ]
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [
+                        "A_string", "test_federated_query_connections_oracle"
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "is-preproduction" ]
+                        ]
+                      ],
+                      "then_": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [
+                            "A_string",
+                            "preproduction_federated_query_connections_oracle"
+                          ]
+                        ]
+                      ],
+                      "else_": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [
+                            "A_string",
+                            "production_federated_query_connections_oracle"
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "federated_query_credentials_secret_arns_oracle",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "is-development" ] ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [
+                    "A_string",
+                    "dev_federated_query_credentials_secret_arns_oracle"
+                  ]
+                ]
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [
+                        "A_string",
+                        "test_federated_query_credentials_secret_arns_oracle"
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "is-preproduction" ]
+                        ]
+                      ],
+                      "then_": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [
+                            "A_string",
+                            "preproduction_federated_query_credentials_secret_arns_oracle"
+                          ]
+                        ]
+                      ],
+                      "else_": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [
+                            "A_string",
+                            "production_federated_query_credentials_secret_arns_oracle"
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "athena_federated_query_connector_oracle" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/athena_federated_query_connectors" ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "project" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-athena-federated-query-oracle" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "connector_jar_bucket_key",
+          [
+            "String",
+            "third-party/athena-connectors/athena-oracle-2022.47.1.jar"
+          ]
+        ],
+        [
+          "Attribute",
+          "connector_jar_bucket_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "s3_artifacts_store" ] ]
+              ],
+              [ "A_string", "bucket_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "spill_bucket_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "s3_working_bucket" ] ]
+              ],
+              [ "A_string", "bucket_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "credentials_secret_arns",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [
+                "A_string", "federated_query_credentials_secret_arns_oracle"
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project_prefix",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "project" ] ] ]
+        ],
+        [
+          "Attribute",
+          "account_id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "account_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "account_region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ] ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_subnet" ] ]
+                  ],
+                  [ "A_string", "private_subnets_a" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lambda_memory_allocation_mb",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "federated_query_lambda_memory_mb" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lambda_timeout_seconds",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "federated_query_lambda_timeout_seconds" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lambda_reserved_concurrent_executions",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "federated_query_lambda_concurrent_executions" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lambda_handler",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "lambda_oracle_handler" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "athena_connector_type",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "athena_oracle_connector_type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "connection_strings",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "federated_query_connection_strings_map_oracle" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_athena_data_catalog" ], [ "Lit", "nomis_catalog" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "nomis" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "NOMIS Athena data catalog" ]
+        ],
+        [ "Attribute", "type", [ "String", "LAMBDA" ] ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "function" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ],
+                        [
+                          "A_string",
+                          "athena_federated_query_connector_oracle"
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "lambda_function_arn" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_athena_data_catalog" ], [ "Lit", "bodmis_catalog" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "bodmis" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "BODMIS Athena data catalog" ]
+        ],
+        [ "Attribute", "type", [ "String", "LAMBDA" ] ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "function" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ],
+                        [
+                          "A_string",
+                          "athena_federated_query_connector_oracle"
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "lambda_function_arn" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_athena_data_catalog" ], [ "Lit", "oasys_catalog" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "oasys" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "OASys Athena data catalog" ]
+        ],
+        [ "Attribute", "type", [ "String", "LAMBDA" ] ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "function" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ],
+                        [
+                          "A_string",
+                          "athena_federated_query_connector_oracle"
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "lambda_function_arn" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_athena_data_catalog" ], [ "Lit", "onr_catalog" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "onr" ] ],
+        [
+          "Attribute", "description", [ "String", "ONR Athena data catalog" ]
+        ],
+        [ "Attribute", "type", [ "String", "LAMBDA" ] ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "function" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ],
+                        [
+                          "A_string",
+                          "athena_federated_query_connector_oracle"
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "lambda_function_arn" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_athena_data_catalog" ], [ "Lit", "ndelius_catalog" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is-test" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "ndelius" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "nDelius Athena data catalog" ]
+        ],
+        [ "Attribute", "type", [ "String", "LAMBDA" ] ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "function" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ],
+                        [
+                          "A_string",
+                          "athena_federated_query_connector_oracle"
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "lambda_function_arn" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_athena_data_catalog" ], [ "Lit", "ndmis_catalog" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "is_non_prod" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "ndmis" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "ndmis Athena data catalog" ]
+        ],
+        [ "Attribute", "type", [ "String", "LAMBDA" ] ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "function" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ],
+                        [
+                          "A_string",
+                          "athena_federated_query_connector_oracle"
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "lambda_function_arn" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

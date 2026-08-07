@@ -1,0 +1,439 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "null_resource" ], [ "Lit", "link_init" ] ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "connection",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "ssh" ] ],
+              [
+                "Attribute",
+                "host",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "prov_remote" ] ]
+                    ],
+                    [ "A_string", "host" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "port",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "prov_remote" ] ]
+                    ],
+                    [ "A_string", "port" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "user",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "prov_remote" ] ]
+                    ],
+                    [ "A_string", "user" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "password",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "prov_remote" ] ]
+                    ],
+                    [ "A_string", "password" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "inline",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "templatefile",
+                        [
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "path" ],
+                                      [ "A_string", "root" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "/attachments/init.sh" ]
+                            ]
+                          ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "DATA_DIR" ],
+                                [ "String", "/mnt/data/nfs" ]
+                              ],
+                              [
+                                [ "Bare", "TARGET_DIR" ],
+                                [
+                                  "String",
+                                  "/var/home/core/.local/etc/containers/systemd"
+                                ]
+                              ],
+                              [
+                                [ "Bare", "LINK_PATH" ],
+                                [ "String", "/etc/containers/systemd/1000" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "podman_quadlet" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "null_resource" ], [ "A_string", "link_init" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/system-systemd_quadlet-root" ]
+        ],
+        [
+          "Attribute",
+          "vm_conn",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "prov_remote" ] ] ]
+        ],
+        [
+          "Attribute",
+          "podman_quadlet",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "files" ],
+                [
+                  "Fun_call",
+                  [
+                    "flatten",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "unit", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "podman_quadlet" ]
+                                ]
+                              ],
+                              [ "A_string", "units" ]
+                            ]
+                          ],
+                          "output": [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "file", [] ],
+                              "input": [
+                                "Attr",
+                                [ [ "Id", "unit" ], [ "A_string", "files" ] ]
+                              ],
+                              "output": [
+                                "Object",
+                                [
+                                  [
+                                    [ "Bare", "content" ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "templatefile",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "file" ],
+                                              [ "A_string", "template" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "file" ],
+                                              [ "A_string", "vars" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    [ "Bare", "path" ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "join",
+                                        [
+                                          [ "String", "/" ],
+                                          [
+                                            "Tuple",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "var" ],
+                                                      [
+                                                        "A_string",
+                                                        "podman_quadlet"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "dir" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "join",
+                                                  [
+                                                    [ "String", "." ],
+                                                    [
+                                                      "Tuple",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "unit"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "service"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "name"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "Idx",
+                                                          [
+                                                            [
+                                                              "Fun_call",
+                                                              [
+                                                                "split",
+                                                                [
+                                                                  [
+                                                                    "String",
+                                                                    "."
+                                                                  ],
+                                                                  [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "basename",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "file"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "template"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [ "Int", 1 ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "services" ],
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "unit", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "podman_quadlet" ]
+                          ]
+                        ],
+                        [ "A_string", "units" ]
+                      ]
+                    ],
+                    "output": [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "unit" ], [ "A_string", "service" ] ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "then_": [ "Null" ],
+                        "else_": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "name" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "unit" ],
+                                      [ "A_string", "service" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "name" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "status" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "unit" ],
+                                      [ "A_string", "service" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "status" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

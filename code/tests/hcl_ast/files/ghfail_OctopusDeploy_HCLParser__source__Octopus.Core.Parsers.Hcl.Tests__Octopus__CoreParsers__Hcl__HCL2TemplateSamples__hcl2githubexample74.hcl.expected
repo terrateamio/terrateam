@@ -1,0 +1,138 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "account_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The AWS Account ID where the lambda function should be deployed"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "aws_default_region" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "us-east-1" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The AWS region where the resources will be located" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "lambda_version" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The version of the lambda function to deploy" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "operations_account_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The AWS account id for the operations account" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "profile" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "default" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The AWS profile which terraform will use" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "log_retention_period" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The number of days to retain the logs for in CloudWatch"
+          ]
+        ],
+        [ "Attribute", "default", [ "Int", 14 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "role_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The role which terraform will assume in to the AWS accounts"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "A map of tags to add to all resources" ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,241 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "prometheus_alerts_file_path" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Path to the Prometheus Alerting rules file" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "folder_uid" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The UID of the Grafana folder that the alerts belongs to."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "datasource_uid" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The UID of the Grafana datasource being queried with the expressions inside the Alerting rule file"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "overrides" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Overrides per Alert rule" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "alert_threshold" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "number" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "exec_err_state" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "expr" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "is_paused" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "bool" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "no_data_state" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "labels" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "annotations" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "for" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "default_evaluation_interval_duration" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "How often is the rule evaluated by default. (When not defined inside your Alerting rules file)"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "5m" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "org_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The Organization ID of of the Grafana Alerting rule groups. (Only supported with basic auth, API keys are already org-scoped)"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "disable_provenance" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Allow modifying the rule group from other sources than Terraform or the Grafana API."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "alert_relative_time_range_from" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Relative time range (seconds) for alert evaluation window"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 600 ] ]
+      ]
+    }
+  ]
+]

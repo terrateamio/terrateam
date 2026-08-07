@@ -1,0 +1,317 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "kubernetes_cron_job_v1" ],
+        [ "Lit", "automatic_certificate_regeneration" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "metadata",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "name", [ "String", "certificate-regeneration" ]
+              ],
+              [ "Attribute", "namespace", [ "String", "concourse" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "spec",
+            "labels": [],
+            "body": [
+              [ "Attribute", "schedule", [ "String", "@monthly" ] ],
+              [ "Attribute", "failed_jobs_history_limit", [ "Int", 2 ] ],
+              [ "Attribute", "successful_jobs_history_limit", [ "Int", 2 ] ],
+              [
+                "Block",
+                {
+                  "type_": "job_template",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      { "type_": "metadata", "labels": [], "body": [] }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "spec",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Block",
+                            {
+                              "type_": "template",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "metadata",
+                                    "labels": [],
+                                    "body": []
+                                  }
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "spec",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "restart_policy",
+                                        [ "String", "OnFailure" ]
+                                      ],
+                                      [
+                                        "Block",
+                                        {
+                                          "type_": "container",
+                                          "labels": [],
+                                          "body": [
+                                            [
+                                              "Attribute",
+                                              "name",
+                                              [ "String", "cert-regen" ]
+                                            ],
+                                            [
+                                              "Attribute",
+                                              "image",
+                                              [
+                                                "String",
+                                                "cloudfoundry/cf-deployment-concourse-tasks:v20.7.0"
+                                              ]
+                                            ],
+                                            [
+                                              "Attribute",
+                                              "image_pull_policy",
+                                              [ "String", "IfNotPresent" ]
+                                            ],
+                                            [
+                                              "Attribute",
+                                              "command",
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [ "String", "bash" ],
+                                                  [ "String", "-c" ],
+                                                  [
+                                                    "String",
+                                                    "IFS=',' read -r -a CERTIFICATES <<< \"$CERTS_TO_RENEW\"; for cert in \"${CERTIFICATES[@]}\"; do credhub regenerate -n \"$cert\"; done"
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Block",
+                                              {
+                                                "type_": "env",
+                                                "labels": [],
+                                                "body": [
+                                                  [
+                                                    "Attribute",
+                                                    "name",
+                                                    [
+                                                      "String",
+                                                      "CERTS_TO_RENEW"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Attribute",
+                                                    "value",
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "certificates_to_regenerate"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              }
+                                            ],
+                                            [
+                                              "Block",
+                                              {
+                                                "type_": "env",
+                                                "labels": [],
+                                                "body": [
+                                                  [
+                                                    "Attribute",
+                                                    "name",
+                                                    [
+                                                      "String",
+                                                      "CREDHUB_SERVER"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Attribute",
+                                                    "value",
+                                                    [
+                                                      "String",
+                                                      "https://credhub.concourse.svc.cluster.local:9000"
+                                                    ]
+                                                  ]
+                                                ]
+                                              }
+                                            ],
+                                            [
+                                              "Block",
+                                              {
+                                                "type_": "env",
+                                                "labels": [],
+                                                "body": [
+                                                  [
+                                                    "Attribute",
+                                                    "name",
+                                                    [
+                                                      "String",
+                                                      "CREDHUB_CA_CERT"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Block",
+                                                    {
+                                                      "type_": "value_from",
+                                                      "labels": [],
+                                                      "body": [
+                                                        [
+                                                          "Block",
+                                                          {
+                                                            "type_": "secret_key_ref",
+                                                            "labels": [],
+                                                            "body": [
+                                                              [
+                                                                "Attribute",
+                                                                "key",
+                                                                [
+                                                                  "String",
+                                                                  "certificate"
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "Attribute",
+                                                                "name",
+                                                                [
+                                                                  "String",
+                                                                  "credhub-root-ca"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          }
+                                                        ]
+                                                      ]
+                                                    }
+                                                  ]
+                                                ]
+                                              }
+                                            ],
+                                            [
+                                              "Block",
+                                              {
+                                                "type_": "env",
+                                                "labels": [],
+                                                "body": [
+                                                  [
+                                                    "Attribute",
+                                                    "name",
+                                                    [
+                                                      "String",
+                                                      "CREDHUB_CLIENT"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Attribute",
+                                                    "value",
+                                                    [
+                                                      "String",
+                                                      "credhub_admin_client"
+                                                    ]
+                                                  ]
+                                                ]
+                                              }
+                                            ],
+                                            [
+                                              "Block",
+                                              {
+                                                "type_": "env",
+                                                "labels": [],
+                                                "body": [
+                                                  [
+                                                    "Attribute",
+                                                    "name",
+                                                    [
+                                                      "String",
+                                                      "CREDHUB_SECRET"
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Block",
+                                                    {
+                                                      "type_": "value_from",
+                                                      "labels": [],
+                                                      "body": [
+                                                        [
+                                                          "Block",
+                                                          {
+                                                            "type_": "secret_key_ref",
+                                                            "labels": [],
+                                                            "body": [
+                                                              [
+                                                                "Attribute",
+                                                                "key",
+                                                                [
+                                                                  "String",
+                                                                  "password"
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "Attribute",
+                                                                "name",
+                                                                [
+                                                                  "String",
+                                                                  "credhub-admin-client-credentials"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          }
+                                                        ]
+                                                      ]
+                                                    }
+                                                  ]
+                                                ]
+                                              }
+                                            ]
+                                          ]
+                                        }
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

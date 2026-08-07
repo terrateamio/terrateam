@@ -1,0 +1,19 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Fun_call",
+      [
+        "concat",
+        [
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "list1" ] ] ],
+          [
+            "Ellipsis",
+            [ "Attr", [ [ "Id", "var" ], [ "A_string", "list2" ] ] ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]

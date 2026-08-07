@@ -1,0 +1,808 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "arm_client_secret" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The password for the service principal used for authenticating with Azure. Set interactively or using an environment variable 'TF_VAR_arm_client_secret'."
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Gte",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "arm_client_secret" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 8 ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "Must be at least 8 characters long." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "container_apps_subnet_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The resource ID of the subnet for Container Apps infrastructure."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9._()-]+/providers/Microsoft.Network/virtualNetworks/[a-zA-Z0-9-]+/subnets/[a-zA-Z0-9-]+$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "container_apps_subnet_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "Must be a valid Azure subnet resource ID." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "container_registry_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The ID of an existing Azure Container Registry to use."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9._()-]+/providers/Microsoft.ContainerRegistry/registries/[a-zA-Z0-9-]+$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "container_registry_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must be a valid Azure Container Registry resource ID in the format '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "location" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The name of the Azure Region where resources will be provisioned."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-z0-9-]+$" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "location" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must be a valid Azure region name. It should only contain lowercase letters, numbers, and dashes."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "log_analytics_workspace_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The resource ID of the Log Analytics workspace for Container Apps Environment."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9._()-]+/providers/Microsoft.OperationalInsights/workspaces/[a-zA-Z0-9-]+$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "log_analytics_workspace_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must be a valid Azure Log Analytics workspace resource ID."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "private_dns_zone_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The resource ID of the private DNS zone for Container Apps Environment."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9._()-]+/providers/Microsoft.Network/privateDnsZones/[a-zA-Z0-9.-]+$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "private_dns_zone_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must be a valid Azure private DNS zone resource ID."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "private_endpoint_subnet_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "The resource ID of the subnet for private endpoints."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9._()-]+/providers/Microsoft.Network/virtualNetworks/[a-zA-Z0-9-]+/subnets/[a-zA-Z0-9-]+$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "private_endpoint_subnet_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "Must be a valid Azure subnet resource ID." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "resource_group_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The name of the existing resource group for provisioning resources."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-zA-Z0-9._()-]{1,90}$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "resource_group_name" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must conform to Azure resource group naming requirements: it can only contain alphanumeric characters, periods (.), underscores (_), parentheses (()), and hyphens (-), and must be between 1 and 90 characters long."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "source_container_image" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the container image to import." ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [ "String", "swaggerapi/petstore31:latest" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+:[a-zA-Z0-9._-]+$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "source_container_image" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must be a valid Docker image name in the format 'repository/image:tag'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "source_container_registry" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the source container registry." ]
+        ],
+        [ "Attribute", "default", [ "String", "docker.io" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^([a-zA-Z0-9-]+\\.)*[a-zA-Z0-9-]+\\.[a-zA-Z]{2,}$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "source_container_registry" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must be a valid domain name (e.g., 'docker.io', 'registry.example.com')."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute", "type", [ "Fun_call", [ "map", [ [ "Id", "any" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The tags in map format to be used when creating new resources."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "key", [ "value" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "tags" ] ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^[a-zA-Z0-9._-]{1,512}$"
+                                          ],
+                                          [ "Id", "key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^[a-zA-Z0-9._ -]{0,256}$"
+                                          ],
+                                          [ "Id", "value" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Each tag key must be 1-512 characters long and consist of alphanumeric characters, periods (.), underscores (_), or hyphens (-). Each tag value must be 0-256 characters long and consist of alphanumeric characters, periods (.), underscores (_), spaces, or hyphens (-)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "unique_seed" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A unique seed to be used for generating unique names for resources. This should be a string that is unique to the environment or deployment."
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-zA-Z0-9-]{1,64}$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "unique_seed" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Must only contain alphanumeric characters and hyphens (-), and must be between 1 and 32 characters long."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

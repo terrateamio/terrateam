@@ -1,0 +1,4267 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ], [ "Lit", "mimir_alerts" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "mimir_alerts" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "alert", [ "String", "MimirIngesterUnhealthy" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "min by (cluster, namespace) (cortex_ring_members{state=\"Unhealthy\", name=\"ingester\"}) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir cluster {{ $labels.cluster }}/{{ $labels.namespace }} has {{ printf \"%f\" $value }} unhealthy ingester(s)."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringesterunhealthy"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alert", [ "String", "MimirRequestErrors" ] ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n100 * sum by (cluster, namespace, job, route) (rate(cortex_request_duration_seconds_count{status_code=~\"5..\",route!~\"ready\"}[1m]))\n  /\nsum by (cluster, namespace, job, route) (rate(cortex_request_duration_seconds_count{route!~\"ready\"}[1m]))\n  > 1\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "The route {{ $labels.route }} in {{ $labels.cluster }}/{{ $labels.namespace }} is experiencing {{ printf \"%.2f\" $value }}% errors."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirrequesterrors"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alert", [ "String", "MimirRequestLatency" ] ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\ncluster_namespace_job_route:cortex_request_duration_seconds:99quantile{route!~\"metrics|/frontend.Frontend/Process|ready|/schedulerpb.SchedulerForFrontend/FrontendLoop|/schedulerpb.SchedulerForQuerier/QuerierLoop\"}\n   >\n2.5\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirrequestlatency"
+                      ]
+                    ],
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "{{ $labels.job }} {{ $labels.route }} is experiencing {{ printf \"%.2f\" $value }}s 99th percentile latency."
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alert", [ "String", "MimirQueriesIncorrect" ] ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n100 * sum by (cluster, namespace) (rate(test_exporter_test_case_result_total{result=\"fail\"}[5m]))\n  /\nsum by (cluster, namespace) (rate(test_exporter_test_case_result_total[5m])) > 1\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "The Mimir cluster {{ $labels.cluster }}/{{ $labels.namespace }} is experiencing {{ printf \"%.2f\" $value }}% incorrect query results."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirqueriesincorrect"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirInconsistentRuntimeConfig" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "count(count by(cluster, namespace, job, sha256) (cortex_runtime_config_hash)) without(sha256) > 1"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "An inconsistent runtime config file is used across cluster {{ $labels.cluster }}/{{ $labels.namespace }}."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirinconsistentruntimeconfig"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alert", [ "String", "MimirBadRuntimeConfig" ] ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n# The metric value is reset to 0 on error while reloading the config at runtime.\ncortex_runtime_config_last_reload_successful == 0\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "{{ $labels.job }} failed to reload runtime config."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirbadruntimeconfig"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirFrontendQueriesStuck" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "sum by (cluster, namespace, job) (min_over_time(cortex_query_frontend_queue_length[1m])) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "There are {{ $value }} queued up queries in {{ $labels.cluster }}/{{ $labels.namespace }} {{ $labels.job }}."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirfrontendqueriesstuck"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirSchedulerQueriesStuck" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "sum by (cluster, namespace, job) (min_over_time(cortex_query_scheduler_queue_length[1m])) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "7m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "There are {{ $value }} queued up queries in {{ $labels.cluster }}/{{ $labels.namespace }} {{ $labels.job }}."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirschedulerqueriesstuck"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "alert", [ "String", "MimirCacheRequestErrors" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n  sum by(cluster, namespace, name, operation) (\n    rate(thanos_memcached_operation_failures_total[1m])\n    or\n    rate(thanos_cache_operation_failures_total[1m])\n  )\n  /\n  sum by(cluster, namespace, name, operation) (\n    rate(thanos_memcached_operations_total[1m])\n    or\n    rate(thanos_cache_operations_total[1m])\n  )\n) * 100 > 5\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "The cache {{ $labels.name }} used by Mimir {{ $labels.cluster }}/{{ $labels.namespace }} is experiencing {{ printf \"%.2f\" $value }}% errors for {{ $labels.operation }} operation."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimircacherequesterrors"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alert", [ "String", "MimirIngesterRestarts" ] ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "changes(process_start_time_seconds{job=~\".*/(ingester.*|cortex|mimir|mimir-write.*)\"}[30m]) >= 2"
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "{{ $labels.job }}/{{ $labels.pod }} has restarted {{ printf \"%.2f\" $value }} times in the last 30 mins."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringesterrestarts"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alert", [ "String", "MimirKVStoreFailure" ] ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n  sum by(cluster, namespace, pod, status_code, kv_name) (rate(cortex_kv_request_duration_seconds_count{status_code!~\"2.+\"}[1m]))\n  /\n  sum by(cluster, namespace, pod, status_code, kv_name) (rate(cortex_kv_request_duration_seconds_count[1m]))\n)\n# We want to get alerted only in case there's a constant failure.\n== 1\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir {{ $labels.pod }} in  {{ $labels.cluster }}/{{ $labels.namespace }} is failing to talk to the KV store {{ $labels.kv_name }}."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirkvstorefailure"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirMemoryMapAreasTooHigh" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "process_memory_map_areas{job=~\".*/(ingester.*|cortex|mimir|mimir-write.*|store-gateway.*|cortex|mimir|mimir-backend.*)\"} / process_memory_map_areas_limit{job=~\".*/(ingester.*|cortex|mimir|mimir-write.*|store-gateway.*|cortex|mimir|mimir-backend.*)\"} > 0.8"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "{{ $labels.job }}/{{ $labels.pod }} has a number of mmap-ed areas close to the limit."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirmemorymapareastoohigh"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirDistributorForwardingErrorRate" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\nsum by (cluster, namespace) (rate(cortex_distributor_forward_errors_total{}[1m]))\n/\nsum by (cluster, namespace) (rate(cortex_distributor_forward_requests_total{}[1m]))\n> 0.01\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir in {{ $labels.cluster }}/{{ $labels.namespace }} has a high failure rate when forwarding samples."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirdistributorforwardingerrorrate"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterInstanceHasNoTenants" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(min by(cluster, namespace, pod) (cortex_ingester_memory_users) == 0)\nand on (cluster, namespace)\n# Only if there are more time-series than would be expected due to continuous testing load\n(\n  sum by(cluster, namespace) (cortex_ingester_memory_series)\n  /\n  max by(cluster, namespace) (cortex_distributor_replication_factor)\n) > 100000\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir ingester {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has no tenants assigned."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringesterinstancehasnotenants"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirRulerInstanceHasNoRuleGroups" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n# Alert on ruler instances in microservices mode that have no rule groups assigned,\nmin by(cluster, namespace, pod) (cortex_ruler_managers_total{pod=~\"(.*mimir-)?ruler.*\"}) == 0\n# but only if other ruler instances of the same cell do have rule groups assigned\nand on (cluster, namespace)\n(max by(cluster, namespace) (cortex_ruler_managers_total) > 0)\n# and there are more than two instances overall\nand on (cluster, namespace)\n(count by (cluster, namespace) (cortex_ruler_managers_total) > 2)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir ruler {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has no rule groups assigned."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirrulerinstancehasnorulegroups"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirRingMembersMismatch" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n  avg by(cluster, namespace) (sum by(cluster, namespace, pod) (cortex_ring_members{name=\"ingester\",job=~\".*/(ingester.*|cortex|mimir|mimir-write.*)\"}))\n  != sum by(cluster, namespace) (up{job=~\".*/(ingester.*|cortex|mimir|mimir-write.*)\"})\n)\nand\n(\n  count by(cluster, namespace) (cortex_build_info) > 0\n)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "component" ], [ "String", "ingester" ] ],
+                    [ [ "Bare", "severity" ], [ "String", "warning" ] ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Number of members in Mimir ingester hash ring does not match the expected number in {{ $labels.cluster }}/{{ $labels.namespace }}."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirringmembersmismatch"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ],
+        [ "Lit", "mimir_instance_limits_alerts" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "mimir_instance_limits_alerts" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterReachingSeriesLimit" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n    (cortex_ingester_memory_series / ignoring(limit) cortex_ingester_instance_limits{limit=\"max_series\"})\n    and ignoring (limit)\n    (cortex_ingester_instance_limits{limit=\"max_series\"} > 0)\n) > 0.8\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "3h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Ingester {{ $labels.job }}/{{ $labels.pod }} has reached {{ $value | humanizePercentage }} of its series limit."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringesterreachingserieslimit"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterReachingSeriesLimit" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n    (cortex_ingester_memory_series / ignoring(limit) cortex_ingester_instance_limits{limit=\"max_series\"})\n    and ignoring (limit)\n    (cortex_ingester_instance_limits{limit=\"max_series\"} > 0)\n) > 0.9\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Ingester {{ $labels.job }}/{{ $labels.pod }} has reached {{ $value | humanizePercentage }} of its series limit."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringesterreachingserieslimit"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterReachingTenantsLimit" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n    (cortex_ingester_memory_users / ignoring(limit) cortex_ingester_instance_limits{limit=\"max_tenants\"})\n    and ignoring (limit)\n    (cortex_ingester_instance_limits{limit=\"max_tenants\"} > 0)\n) > 0.7\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Ingester {{ $labels.job }}/{{ $labels.pod }} has reached {{ $value | humanizePercentage }} of its tenant limit."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringesterreachingtenantslimit"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterReachingTenantsLimit" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n    (cortex_ingester_memory_users / ignoring(limit) cortex_ingester_instance_limits{limit=\"max_tenants\"})\n    and ignoring (limit)\n    (cortex_ingester_instance_limits{limit=\"max_tenants\"} > 0)\n) > 0.8\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringesterreachingtenantslimit"
+                      ]
+                    ],
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Ingester {{ $labels.job }}/{{ $labels.pod }} has reached {{ $value | humanizePercentage }} of its tenant limit."
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirReachingTCPConnectionsLimit" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\ncortex_tcp_connections / cortex_tcp_connections_limit > 0.8 and\ncortex_tcp_connections_limit > 0\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir instance {{ $labels.job }}/{{ $labels.pod }} has reached {{ $value | humanizePercentage }} of its TCP connections limit for {{ $labels.protocol }} protocol."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirreachingtcpconnectionslimit"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [
+                  "String",
+                  "MimirDistributorReachingInflightPushRequestLimit"
+                ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n    (cortex_distributor_inflight_push_requests / ignoring(limit) cortex_distributor_instance_limits{limit=\"max_inflight_push_requests\"})\n    and ignoring (limit)\n    (cortex_distributor_instance_limits{limit=\"max_inflight_push_requests\"} > 0)\n) > 0.8\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Distributor {{ $labels.job }}/{{ $labels.pod }} has reached {{ $value | humanizePercentage }} of its inflight push request limit."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirdistributorreachinginflightpushrequestlimit"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ],
+        [ "Lit", "mimir-rollout-alerts" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "mimir-rollout-alerts" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alert", [ "String", "MimirRolloutStuck" ] ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n  max without (revision) (\n    sum without(statefulset) (label_replace(kube_statefulset_status_current_revision, \"rollout_group\", \"$1\", \"statefulset\", \"(.*?)(?:-zone-[a-z])?\"))\n      unless\n    sum without(statefulset) (label_replace(kube_statefulset_status_update_revision, \"rollout_group\", \"$1\", \"statefulset\", \"(.*?)(?:-zone-[a-z])?\"))\n  )\n    *\n  (\n    sum without(statefulset) (label_replace(kube_statefulset_replicas, \"rollout_group\", \"$1\", \"statefulset\", \"(.*?)(?:-zone-[a-z])?\"))\n      !=\n    sum without(statefulset) (label_replace(kube_statefulset_status_replicas_updated, \"rollout_group\", \"$1\", \"statefulset\", \"(.*?)(?:-zone-[a-z])?\"))\n  )\n) and (\n  changes(sum without(statefulset) (label_replace(kube_statefulset_status_replicas_updated, \"rollout_group\", \"$1\", \"statefulset\", \"(.*?)(?:-zone-[a-z])?\"))[15m:1m])\n    ==\n  0\n)\n* on(cluster, namespace) group_left max by(cluster, namespace) (cortex_build_info)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "30m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "The {{ $labels.rollout_group }} rollout is stuck in {{ $labels.cluster }}/{{ $labels.namespace }}."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirrolloutstuck"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "alert", [ "String", "MimirRolloutStuck" ] ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n  sum without(deployment) (label_replace(kube_deployment_spec_replicas, \"rollout_group\", \"$1\", \"deployment\", \"(.*?)(?:-zone-[a-z])?\"))\n    !=\n  sum without(deployment) (label_replace(kube_deployment_status_replicas_updated, \"rollout_group\", \"$1\", \"deployment\", \"(.*?)(?:-zone-[a-z])?\"))\n) and (\n  changes(sum without(deployment) (label_replace(kube_deployment_status_replicas_updated, \"rollout_group\", \"$1\", \"deployment\", \"(.*?)(?:-zone-[a-z])?\"))[15m:1m])\n    ==\n  0\n)\n* on(cluster, namespace) group_left max by(cluster, namespace) (cortex_build_info)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "30m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "The {{ $labels.rollout_group }} rollout is stuck in {{ $labels.cluster }}/{{ $labels.namespace }}."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirrolloutstuck"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "RolloutOperatorNotReconciling" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "max by(cluster, namespace, rollout_group) (time() - rollout_operator_last_successful_group_reconcile_timestamp_seconds) > 600"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#rolloutoperatornotreconciling"
+                      ]
+                    ],
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Rollout operator is not reconciling the rollout group {{ $labels.rollout_group }} in {{ $labels.cluster }}/{{ $labels.namespace }}."
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ],
+        [ "Lit", "mimir-provisioning" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "mimir-provisioning" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirProvisioningTooManyActiveSeries" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "avg by (cluster, namespace) (cortex_ingester_memory_series) > 1.6e6"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "2h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "The number of in-memory series per ingester in {{ $labels.cluster }}/{{ $labels.namespace }} is too high."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirprovisioningtoomanyactiveseries"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirProvisioningTooManyWrites" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "avg by (cluster, namespace) (cluster_namespace_pod:cortex_ingester_ingested_samples_total:rate1m) > 80e3"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Ingesters in {{ $labels.cluster }}/{{ $labels.namespace }} ingest too many samples per second."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirprovisioningtoomanywrites"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAllocatingTooMuchMemory" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n  # We use RSS instead of working set memory because of the ingester's extensive usage of mmap.\n  # See: https://github.com/grafana/mimir/issues/2466\n  container_memory_rss{container=~\"(ingester|mimir-write|mimir-backend)\"}\n    /\n  ( container_spec_memory_limit_bytes{container=~\"(ingester|mimir-write|mimir-backend)\"} > 0 )\n) > 0.65\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Instance {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is using too much memory."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirallocatingtoomuchmemory"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAllocatingTooMuchMemory" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n  # We use RSS instead of working set memory because of the ingester's extensive usage of mmap.\n  # See: https://github.com/grafana/mimir/issues/2466\n  container_memory_rss{container=~\"(ingester|mimir-write|mimir-backend)\"}\n    /\n  ( container_spec_memory_limit_bytes{container=~\"(ingester|mimir-write|mimir-backend)\"} > 0 )\n) > 0.8\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Instance {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is using too much memory."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirallocatingtoomuchmemory"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ], [ "Lit", "ruler_alerts" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "ruler_alerts" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirRulerTooManyFailedPushes" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n100 * (\nsum by (cluster, namespace, pod) (rate(cortex_ruler_write_requests_failed_total[1m]))\n  /\nsum by (cluster, namespace, pod) (rate(cortex_ruler_write_requests_total[1m]))\n) > 1\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ruler {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is experiencing {{ printf \"%.2f\" $value }}% write (push) errors."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirrulertoomanyfailedpushes"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirRulerTooManyFailedQueries" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n100 * (\nsum by (cluster, namespace, pod) (rate(cortex_ruler_queries_failed_total[1m]))\n  /\nsum by (cluster, namespace, pod) (rate(cortex_ruler_queries_total[1m]))\n) > 1\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ruler {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is experiencing {{ printf \"%.2f\" $value }}% errors while evaluating rules."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirrulertoomanyfailedqueries"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirRulerMissedEvaluations" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n100 * (\nsum by (cluster, namespace, pod, rule_group) (rate(cortex_prometheus_rule_group_iterations_missed_total[1m]))\n  /\nsum by (cluster, namespace, pod, rule_group) (rate(cortex_prometheus_rule_group_iterations_total[1m]))\n) > 1\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ruler {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is experiencing {{ printf \"%.2f\" $value }}% missed iterations for the rule group {{ $labels.rule_group }}."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirrulermissedevaluations"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirRulerFailedRingCheck" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\nsum by (cluster, namespace, job) (rate(cortex_ruler_ring_check_errors_total[1m]))\n   > 0\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Rulers in {{ $labels.cluster }}/{{ $labels.namespace }} are experiencing errors when checking the ring for rule group ownership."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirrulerfailedringcheck"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirRulerRemoteEvaluationFailing" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n100 * (\nsum by (cluster, namespace) (rate(cortex_request_duration_seconds_count{route=\"/httpgrpc.HTTP/Handle\", status_code=~\"5..\", job=~\".*/(ruler-query-frontend.*)\"}[5m]))\n  /\nsum by (cluster, namespace) (rate(cortex_request_duration_seconds_count{route=\"/httpgrpc.HTTP/Handle\", job=~\".*/(ruler-query-frontend.*)\"}[5m]))\n) > 1\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir rulers in {{ $labels.cluster }}/{{ $labels.namespace }} are failing to perform {{ printf \"%.2f\" $value }}% of remote evaluations through the ruler-query-frontend."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirrulerremoteevaluationfailing"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ], [ "Lit", "gossip_alerts" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "gossip_alerts" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirGossipMembersMismatch" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "avg by (cluster, namespace) (memberlist_client_cluster_members_count) != sum by (cluster, namespace) (up{job=~\".+/(alertmanager|compactor|distributor|ingester.*|querier.*|ruler|ruler-querier.*|store-gateway.*|cortex|mimir|mimir-write.*|mimir-read.*|mimir-backend.*)\"})"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir instance {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} sees incorrect number of gossip members."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirgossipmembersmismatch"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ], [ "Lit", "etcd_alerts" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "etcd_alerts" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "EtcdAllocatingTooMuchMemory" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n  container_memory_working_set_bytes{container=\"etcd\"}\n    /\n  ( container_spec_memory_limit_bytes{container=\"etcd\"} > 0 )\n) > 0.65\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Too much memory being used by {{ $labels.namespace }}/{{ $labels.pod }} - bump memory limit."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#etcdallocatingtoomuchmemory"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "EtcdAllocatingTooMuchMemory" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n  container_memory_working_set_bytes{container=\"etcd\"}\n    /\n  ( container_spec_memory_limit_bytes{container=\"etcd\"} > 0 )\n) > 0.8\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Too much memory being used by {{ $labels.namespace }}/{{ $labels.pod }} - bump memory limit."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#etcdallocatingtoomuchmemory"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ],
+        [ "Lit", "alertmanager_alerts" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "alertmanager_alerts" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAlertmanagerSyncConfigsFailing" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_alertmanager_sync_configs_failed_total[5m]) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "30m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Alertmanager {{ $labels.job }}/{{ $labels.pod }} is failing to read tenant configurations from storage."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiralertmanagersyncconfigsfailing"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAlertmanagerRingCheckFailing" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_alertmanager_ring_check_errors_total[2m]) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "10m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Alertmanager {{ $labels.job }}/{{ $labels.pod }} is unable to check tenants ownership via the ring."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiralertmanagerringcheckfailing"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAlertmanagerPartialStateMergeFailing" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_alertmanager_partial_state_merges_failed_total[2m]) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "10m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Alertmanager {{ $labels.job }}/{{ $labels.pod }} is failing to merge partial state changes received from a replica."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiralertmanagerpartialstatemergefailing"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAlertmanagerReplicationFailing" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_alertmanager_state_replication_failed_total[2m]) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "10m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Alertmanager {{ $labels.job }}/{{ $labels.pod }} is failing to replicating partial state to its replicas."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiralertmanagerreplicationfailing"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAlertmanagerPersistStateFailing" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_alertmanager_state_persist_failed_total[15m]) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Alertmanager {{ $labels.job }}/{{ $labels.pod }} is unable to persist full state snaphots to remote storage."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiralertmanagerpersiststatefailing"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAlertmanagerInitialSyncFailed" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "increase(cortex_alertmanager_state_initial_sync_completed_total{outcome=\"failed\"}[1m]) > 0"
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiralertmanagerinitialsyncfailed"
+                      ]
+                    ],
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Alertmanager {{ $labels.job }}/{{ $labels.pod }} was unable to obtain some initial state when starting up."
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAlertmanagerAllocatingTooMuchMemory" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(container_memory_working_set_bytes{container=\"alertmanager\"} / container_spec_memory_limit_bytes{container=\"alertmanager\"}) > 0.80\nand\n(container_spec_memory_limit_bytes{container=\"alertmanager\"} > 0)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Alertmanager {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is using too much memory."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiralertmanagerallocatingtoomuchmemory"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAlertmanagerAllocatingTooMuchMemory" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(container_memory_working_set_bytes{container=\"alertmanager\"} / container_spec_memory_limit_bytes{container=\"alertmanager\"}) > 0.90\nand\n(container_spec_memory_limit_bytes{container=\"alertmanager\"} > 0)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Alertmanager {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is using too much memory."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiralertmanagerallocatingtoomuchmemory"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAlertmanagerInstanceHasNoTenants" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n# Alert on alertmanager instances in microservices mode that own no tenants,\nmin by(cluster, namespace, pod) (cortex_alertmanager_tenants_owned{pod=~\"(.*mimir-)?alertmanager.*\"}) == 0\n# but only if other instances of the same cell do have tenants assigned.\nand on (cluster, namespace)\nmax by(cluster, namespace) (cortex_alertmanager_tenants_owned) > 0\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir alertmanager {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} owns no tenants."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiralertmanagerinstancehasnotenants"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ],
+        [ "Lit", "mimir_blocks_alerts" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "mimir_blocks_alerts" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterHasNotShippedBlocks" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(min by(cluster, namespace, pod) (time() - thanos_shipper_last_successful_upload_time) > 60 * 60 * 4)\nand\n(max by(cluster, namespace, pod) (thanos_shipper_last_successful_upload_time) > 0)\nand\n# Only if the ingester has ingested samples over the last 4h.\n(max by(cluster, namespace, pod) (max_over_time(cluster_namespace_pod:cortex_ingester_ingested_samples_total:rate1m[4h])) > 0)\nand\n# Only if the ingester was ingesting samples 4h ago. This protects against the case where the ingester replica\n# had ingested samples in the past, then no traffic was received for a long period and then it starts\n# receiving samples again. Without this check, the alert would fire as soon as it gets back receiving\n# samples, while the a block shipping is expected within the next 4h.\n(max by(cluster, namespace, pod) (max_over_time(cluster_namespace_pod:cortex_ingester_ingested_samples_total:rate1m[1h] offset 4h)) > 0)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ingester {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has not shipped any block in the last 4 hours."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringesterhasnotshippedblocks"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterHasNotShippedBlocksSinceStart" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(max by(cluster, namespace, pod) (thanos_shipper_last_successful_upload_time) == 0)\nand\n(max by(cluster, namespace, pod) (max_over_time(cluster_namespace_pod:cortex_ingester_ingested_samples_total:rate1m[4h])) > 0)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "4h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ingester {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has not shipped any block in the last 4 hours."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringesterhasnotshippedblockssincestart"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterHasUnshippedBlocks" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(time() - cortex_ingester_oldest_unshipped_block_timestamp_seconds > 3600)\nand\n(cortex_ingester_oldest_unshipped_block_timestamp_seconds > 0)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ingester {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has compacted a block {{ $value | humanizeDuration }} ago but it hasn't been successfully uploaded to the storage yet."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringesterhasunshippedblocks"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterTSDBHeadCompactionFailed" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_ingester_tsdb_compactions_failed_total[5m]) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ingester {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is failing to compact TSDB head."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringestertsdbheadcompactionfailed"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterTSDBHeadTruncationFailed" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_ingester_tsdb_head_truncations_failed_total[5m]) > 0"
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ingester {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is failing to truncate TSDB head."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringestertsdbheadtruncationfailed"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterTSDBCheckpointCreationFailed" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_ingester_tsdb_checkpoint_creations_failed_total[5m]) > 0"
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringestertsdbcheckpointcreationfailed"
+                      ]
+                    ],
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ingester {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is failing to create TSDB checkpoint."
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterTSDBCheckpointDeletionFailed" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_ingester_tsdb_checkpoint_deletions_failed_total[5m]) > 0"
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ingester {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is failing to delete TSDB checkpoint."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringestertsdbcheckpointdeletionfailed"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterTSDBWALTruncationFailed" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_ingester_tsdb_wal_truncations_failed_total[5m]) > 0"
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ingester {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is failing to truncate TSDB WAL."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringestertsdbwaltruncationfailed"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterTSDBWALCorrupted" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_ingester_tsdb_wal_corruptions_total[5m]) > 0"
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ingester {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} got a corrupted TSDB WAL."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringestertsdbwalcorrupted"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirIngesterTSDBWALWritesFailed" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "rate(cortex_ingester_tsdb_wal_writes_failed_total[1m]) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "3m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Ingester {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is failing to write to TSDB WAL."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimiringestertsdbwalwritesfailed"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirQuerierHasNotScanTheBucket" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(time() - cortex_querier_blocks_last_successful_scan_timestamp_seconds > 60 * 30)\nand\ncortex_querier_blocks_last_successful_scan_timestamp_seconds > 0\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Querier {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has not successfully scanned the bucket since {{ $value | humanizeDuration }}."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirquerierhasnotscanthebucket"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirQuerierHighRefetchRate" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n100 * (\n  (\n    sum by(cluster, namespace) (rate(cortex_querier_storegateway_refetches_per_query_count[5m]))\n    -\n    sum by(cluster, namespace) (rate(cortex_querier_storegateway_refetches_per_query_bucket{le=\"0.0\"}[5m]))\n  )\n  /\n  sum by(cluster, namespace) (rate(cortex_querier_storegateway_refetches_per_query_count[5m]))\n)\n> 1\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "10m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Queries in {{ $labels.cluster }}/{{ $labels.namespace }} are refetching series from different store-gateways (because of missing blocks) for the {{ printf \"%.0f\" $value }}% of queries."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirquerierhighrefetchrate"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirStoreGatewayHasNotSyncTheBucket" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(time() - cortex_bucket_stores_blocks_last_successful_sync_timestamp_seconds{component=\"store-gateway\"} > 60 * 30)\nand\ncortex_bucket_stores_blocks_last_successful_sync_timestamp_seconds{component=\"store-gateway\"} > 0\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "5m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir store-gateway {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has not successfully synched the bucket since {{ $value | humanizeDuration }}."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirstoregatewayhasnotsyncthebucket"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirStoreGatewayNoSyncedTenants" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "min by(cluster, namespace, pod) (cortex_bucket_stores_tenants_synced{component=\"store-gateway\"}) == 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir store-gateway {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} is not syncing any blocks for any tenant."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirstoregatewaynosyncedtenants"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirBucketIndexNotUpdated" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "min by(cluster, namespace, user) (time() - cortex_bucket_index_last_successful_update_timestamp_seconds) > 7200"
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir bucket index for tenant {{ $labels.user }} in {{ $labels.cluster }}/{{ $labels.namespace }} has not been updated since {{ $value | humanizeDuration }}."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirbucketindexnotupdated"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirTenantHasPartialBlocks" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "max by(cluster, namespace, user) (cortex_bucket_blocks_partials_count) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "6h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirtenanthaspartialblocks"
+                      ]
+                    ],
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir tenant {{ $labels.user }} in {{ $labels.cluster }}/{{ $labels.namespace }} has {{ $value }} partial blocks."
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ],
+        [ "Lit", "mimir_compactor_alerts" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "mimir_compactor_alerts" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [
+                  "String", "MimirCompactorHasNotSuccessfullyCleanedUpBlocks"
+                ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n# The \"last successful run\" metric is updated even if the compactor owns no tenants,\n# so this alert correctly doesn't fire if compactor has nothing to do.\n(time() - cortex_compactor_block_cleanup_last_successful_run_timestamp_seconds > 60 * 60 * 6)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Compactor {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has not successfully cleaned up blocks in the last 6 hours."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimircompactorhasnotsuccessfullycleanedupblocks"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirCompactorHasNotSuccessfullyRunCompaction" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n# The \"last successful run\" metric is updated even if the compactor owns no tenants,\n# so this alert correctly doesn't fire if compactor has nothing to do.\n(time() - cortex_compactor_last_successful_run_timestamp_seconds > 60 * 60 * 24)\nand\n(cortex_compactor_last_successful_run_timestamp_seconds > 0)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "severity" ], [ "String", "critical" ] ],
+                    [ [ "Bare", "reason" ], [ "String", "in-last-24h" ] ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Compactor {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has not run compaction in the last 24 hours."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimircompactorhasnotsuccessfullyruncompaction"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirCompactorHasNotSuccessfullyRunCompaction" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n# The \"last successful run\" metric is updated even if the compactor owns no tenants,\n# so this alert correctly doesn't fire if compactor has nothing to do.\ncortex_compactor_last_successful_run_timestamp_seconds == 0\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1d" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "reason" ], [ "String", "since-startup" ] ],
+                    [ [ "Bare", "severity" ], [ "String", "critical" ] ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Compactor {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has not run compaction in the last 24 hours."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimircompactorhasnotsuccessfullyruncompaction"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirCompactorHasNotSuccessfullyRunCompaction" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "increase(cortex_compactor_runs_failed_total{reason!=\"shutdown\"}[2h]) >= 2"
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "reason" ],
+                      [ "String", "consecutive-failures" ]
+                    ],
+                    [ [ "Bare", "severity" ], [ "String", "critical" ] ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Compactor {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} failed to run 2 consecutive compactions."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimircompactorhasnotsuccessfullyruncompaction"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirCompactorHasNotUploadedBlocks" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(time() - (max by(cluster, namespace, pod) (thanos_objstore_bucket_last_successful_upload_time{component=\"compactor\"})) > 60 * 60 * 24)\nand\n(max by(cluster, namespace, pod) (thanos_objstore_bucket_last_successful_upload_time{component=\"compactor\"}) > 0)\nand\n# Only if some compactions have started. We don't want to fire this alert if the compactor has nothing to do\n# (e.g. there are more replicas than required because running as part of mimir-backend).\n(sum by(cluster, namespace, pod) (rate(cortex_compactor_group_compaction_runs_started_total[24h])) > 0)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "15m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Compactor {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has not uploaded any block in the last 24 hours."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimircompactorhasnotuploadedblocks"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirCompactorHasNotUploadedBlocks" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(max by(cluster, namespace, pod) (thanos_objstore_bucket_last_successful_upload_time{component=\"compactor\"}) == 0)\nand\n# Only if some compactions have started. We don't want to fire this alert if the compactor has nothing to do\n# (e.g. there are more replicas than required because running as part of mimir-backend).\n(sum by(cluster, namespace, pod) (rate(cortex_compactor_group_compaction_runs_started_total[24h])) > 0)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1d" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Compactor {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has not uploaded any block in the last 24 hours."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimircompactorhasnotuploadedblocks"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [
+                  "String", "MimirCompactorSkippedBlocksWithOutOfOrderChunks"
+                ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "increase(cortex_compactor_blocks_marked_for_no_compaction_total{reason=\"block-index-out-of-order-chunk\"}[5m]) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1m" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir Compactor {{ $labels.pod }} in {{ $labels.cluster }}/{{ $labels.namespace }} has found and ignored blocks with out of order chunks."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimircompactorskippedblockswithoutoforderchunks"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ],
+        [ "Lit", "mimir_autoscaling" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "mimir_autoscaling" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAutoscalerNotActive" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n    kube_horizontalpodautoscaler_status_condition{condition=\"ScalingActive\",status=\"false\"}\n    # Match only Mimir namespaces.\n    * on(cluster, namespace) group_left max by(cluster, namespace) (cortex_build_info)\n    # Add \"metric\" label.\n    + on(cluster, namespace, horizontalpodautoscaler) group_right label_replace(kube_horizontalpodautoscaler_spec_target_metric*0, \"metric\", \"$1\", \"metric_name\", \"(.+)\")\n    > 0\n)\n# Alert only if the scaling metric exists and is > 0. If the KEDA ScaledObject is configured to scale down 0,\n# then HPA ScalingActive may be false when expected to run 0 replicas. In this case, the scaling metric exported\n# by KEDA could not exist at all or being exposed with a value of 0.\nand on (cluster, namespace, metric)\n(label_replace(keda_metrics_adapter_scaler_metrics_value, \"namespace\", \"$0\", \"exported_namespace\", \".+\") > 0)\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "The Horizontal Pod Autoscaler (HPA) {{ $labels.horizontalpodautoscaler }} in {{ $labels.namespace }} is not active."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirautoscalernotactive"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirAutoscalerKedaFailing" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\n(\n    # Find KEDA scalers reporting errors.\n    label_replace(rate(keda_metrics_adapter_scaler_errors[5m]), \"namespace\", \"$1\", \"exported_namespace\", \"(.*)\")\n    # Match only Mimir namespaces.\n    * on(cluster, namespace) group_left max by(cluster, namespace) (cortex_build_info)\n)\n> 0\n"
+                  ]
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "critical" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "The Keda ScaledObject {{ $labels.scaledObject }} in {{ $labels.namespace }} is experiencing errors."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimirautoscalerkedafailing"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "mimir_rule_group_alerting" ],
+        [ "Lit", "mimir_continuous_test" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "mimir_continuous_test" ] ],
+        [ "Attribute", "namespace", [ "String", "default" ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirContinuousTestNotRunningOnWrites" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "sum by(cluster, namespace, test) (rate(mimir_continuous_test_writes_failed_total[5m])) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimircontinuoustestnotrunningonwrites"
+                      ]
+                    ],
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir continuous test {{ $labels.test }} in {{ $labels.cluster }}/{{ $labels.namespace }} is not effectively running because writes are failing."
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirContinuousTestNotRunningOnReads" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "sum by(cluster, namespace, test) (rate(mimir_continuous_test_queries_failed_total[5m])) > 0"
+                ]
+              ],
+              [ "Attribute", "for", [ "String", "1h" ] ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir continuous test {{ $labels.test }} in {{ $labels.cluster }}/{{ $labels.namespace }} is not effectively running because queries are failing."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimircontinuoustestnotrunningonreads"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "alert",
+                [ "String", "MimirContinuousTestFailed" ]
+              ],
+              [
+                "Attribute",
+                "expr",
+                [
+                  "String",
+                  "sum by(cluster, namespace, test) (rate(mimir_continuous_test_query_result_checks_failed_total[10m])) > 0"
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "severity" ], [ "String", "warning" ] ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "message" ],
+                      [
+                        "String",
+                        "Mimir continuous test {{ $labels.test }} in {{ $labels.cluster }}/{{ $labels.namespace }} failed when asserting query results."
+                      ]
+                    ],
+                    [
+                      [ "Bare", "runbook_url" ],
+                      [
+                        "String",
+                        "https://grafana.com/docs/mimir/latest/operators-guide/mimir-runbooks/#mimircontinuoustestfailed"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

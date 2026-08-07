@@ -1,0 +1,530 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "service_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The ID of the API Management Service created" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "gateway_url" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "The URL of the Gateway for the API Management Service"
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ],
+              [ "A_string", "gateway_url" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "service_public_ip_addresses" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "The Public IP addresses of the API Management Service"
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management" ],
+                  [ "A_string", "apim_service" ]
+                ]
+              ],
+              [ "A_string", "public_ip_addresses" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "service_identity_tenant_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The Tenant ID for the Service Principal associated with the Managed Service Identity of this API Management Service"
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_api_management" ],
+                          [ "A_string", "apim_service" ]
+                        ]
+                      ],
+                      [ "A_string", "identity" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "tenant_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "service_identity_object_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The Principal ID for the Service Principal associated with the Managed Service Identity for the API Management Service"
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_api_management" ],
+                          [ "A_string", "apim_service" ]
+                        ]
+                      ],
+                      [ "A_string", "identity" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "principal_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "group_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The IDs of the API Management Groups created" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "For_object",
+            {
+              "identifiers": [ "group", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_group" ],
+                  [ "A_string", "group" ]
+                ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "group" ], [ "A_string", "name" ] ]
+              ],
+              "value_output": [
+                "Attr", [ [ "Id", "group" ], [ "A_string", "id" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "api_version_set_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The IDs of the API Version Sets created" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "For_object",
+            {
+              "identifiers": [ "api_version_set", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_api_version_set" ],
+                  [ "A_string", "api_version_set" ]
+                ]
+              ],
+              "key_output": [
+                "Attr",
+                [ [ "Id", "api_version_set" ], [ "A_string", "name" ] ]
+              ],
+              "value_output": [
+                "Attr", [ [ "Id", "api_version_set" ], [ "A_string", "id" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "api_outputs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The IDs, state, and version outputs of the APIs created"
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "For_object",
+            {
+              "identifiers": [ "api", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_api" ],
+                  [ "A_string", "api" ]
+                ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "api" ], [ "A_string", "name" ] ]
+              ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "id" ],
+                    [ "Attr", [ [ "Id", "api" ], [ "A_string", "id" ] ] ]
+                  ],
+                  [
+                    [ "Bare", "is_current" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "api" ], [ "A_string", "is_current" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "is_online" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "api" ], [ "A_string", "is_online" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "version" ],
+                    [
+                      "Attr", [ [ "Id", "api" ], [ "A_string", "version" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "version_set_id" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "api" ], [ "A_string", "version_set_id" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "product_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The IDs of the Products created" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "For_object",
+            {
+              "identifiers": [ "product", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_product" ],
+                  [ "A_string", "product" ]
+                ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "product" ], [ "A_string", "product_id" ] ]
+              ],
+              "value_output": [
+                "Attr", [ [ "Id", "product" ], [ "A_string", "id" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "named_value_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The IDs of the Named Values created" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "For_object",
+            {
+              "identifiers": [ "named_value", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_property" ],
+                  [ "A_string", "named_value" ]
+                ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "named_value" ], [ "A_string", "name" ] ]
+              ],
+              "value_output": [
+                "Attr", [ [ "Id", "named_value" ], [ "A_string", "id" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "backend_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The IDs of the Backends created" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "For_object",
+            {
+              "identifiers": [ "backend", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "azurerm_api_management_backend" ],
+                  [ "A_string", "backend" ]
+                ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "backend" ], [ "A_string", "name" ] ]
+              ],
+              "value_output": [
+                "Attr", [ [ "Id", "backend" ], [ "A_string", "id" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "product_api_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The IDs of the Product/API associations created" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_api_management_product_api" ],
+                      [ "A_string", "product_api" ]
+                    ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "product_group_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The IDs of the Product/Group associations created" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_api_management_product_group" ],
+                      [ "A_string", "product_group" ]
+                    ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

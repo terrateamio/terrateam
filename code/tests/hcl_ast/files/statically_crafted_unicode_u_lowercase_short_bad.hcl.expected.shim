@@ -1,0 +1,1 @@
+hcl parse: <stdin>:4,13-17: Invalid escape sequence; The \u escape sequence must be followed by four hexadecimal digits.

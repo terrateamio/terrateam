@@ -28,8 +28,8 @@
                   "output": [
                     "Object",
                     [
-                      [ [ "Id", "cluster" ], [ "Id", "cluster" ] ],
-                      [ [ "Id", "pool_filter" ], [ "Id", "pool_filter" ] ]
+                      [ [ "Bare", "cluster" ], [ "Id", "cluster" ] ],
+                      [ [ "Bare", "pool_filter" ], [ "Id", "pool_filter" ] ]
                     ]
                   ],
                   "cond": null

@@ -1,0 +1,268 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "kubeconfig-admin" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "bootstrap" ] ] ],
+              [ "A_string", "kubeconfig-admin" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "ingress_dns_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "nlb" ] ] ],
+              [ "A_string", "dns_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "DNS name of the network load balancer for distributing traffic to Ingress controllers"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "ingress_zone_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "nlb" ] ] ],
+              [ "A_string", "zone_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Route53 zone id of the network load balancer DNS name that can be used in Route53 alias records"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "vpc_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "network" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "ID of the VPC for creating worker instances" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_subnet" ], [ "A_string", "public" ] ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "List of subnet IDs for creating worker instances" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "worker_security_groups" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "worker" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "List of worker security group IDs" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "kubeconfig" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "bootstrap" ] ] ],
+              [ "A_string", "kubeconfig-kubelet" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "nlb_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "ARN of the Network Load Balancer" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "nlb" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "worker_target_group_http" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "ARN of a target group of workers for HTTP traffic" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "workers" ] ] ],
+              [ "A_string", "target_group_http" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "worker_target_group_https" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "ARN of a target group of workers for HTTPS traffic" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "workers" ] ] ],
+              [ "A_string", "target_group_https" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

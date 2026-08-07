@@ -1,0 +1,515 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          { "type_": "backend", "labels": [ [ "Lit", "s3" ] ], "body": [] }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_availability_zones" ], [ "Lit", "available" ]
+      ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "main_vpc" ] ],
+      "body": [
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "main_vpc_cidr_block_prefix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".0.0/16" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "enable_dns_hostnames", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "subnet_count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "aws_availability_zones" ]
+                          ]
+                        ],
+                        [ "A_string", "available" ]
+                      ]
+                    ],
+                    [ "A_string", "names" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "main_vpc_subnet_1" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "main_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "main_vpc_cidr_block_prefix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Mult", [ [ "Int", 0 ], [ "Int", 16 ] ] ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".0/20" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "aws_availability_zones" ]
+                          ]
+                        ],
+                        [ "A_string", "available" ]
+                      ]
+                    ],
+                    [ "A_string", "names" ]
+                  ]
+                ],
+                [ "Int", 0 ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "main_vpc_subnet_2" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "main_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "main_vpc_cidr_block_prefix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Mult", [ [ "Int", 1 ], [ "Int", 16 ] ] ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".0/20" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "aws_availability_zones" ]
+                          ]
+                        ],
+                        [ "A_string", "available" ]
+                      ]
+                    ],
+                    [ "A_string", "names" ]
+                  ]
+                ],
+                [ "Int", 1 ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "main_vpc_subnet_3" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "main_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "main_vpc_cidr_block_prefix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Mult", [ [ "Int", 2 ], [ "Int", 16 ] ] ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".0/20" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "aws_availability_zones" ]
+                          ]
+                        ],
+                        [ "A_string", "available" ]
+                      ]
+                    ],
+                    [ "A_string", "names" ]
+                  ]
+                ],
+                [ "Int", 2 ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_internet_gateway" ],
+        [ "Lit", "main_vpc_internet_gateway" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "main_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table" ], [ "Lit", "main_vpc_route_table" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "main_vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "route",
+            "labels": [],
+            "body": [
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [
+                "Attribute",
+                "gateway_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_internet_gateway" ],
+                        [ "A_string", "main_vpc_internet_gateway" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ],
+        [ "Lit", "main_vpc_route_table_association_1" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_subnet" ], [ "A_string", "main_vpc_subnet_1" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_route_table" ],
+                  [ "A_string", "main_vpc_route_table" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

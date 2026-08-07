@@ -1,0 +1,21 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Cond",
+      {
+        "if_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+        "then_": [
+          "Cond",
+          {
+            "if_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "b" ] ] ],
+            "then_": [ "String", "both" ],
+            "else_": [ "String", "a_only" ]
+          }
+        ],
+        "else_": [ "String", "neither" ]
+      }
+    ]
+  ]
+]

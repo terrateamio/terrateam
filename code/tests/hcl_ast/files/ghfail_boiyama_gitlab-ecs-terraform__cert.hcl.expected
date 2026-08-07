@@ -1,0 +1,252 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "template_file" ], [ "Lit", "cloudformation" ] ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "file",
+                      [
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "path" ],
+                                    [ "A_string", "module" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ],
+                            [
+                              "Literal", "/templates/cert/cloudformation.yml"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "vars",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "project",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "project" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "domain",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "domain_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "sans",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "indent",
+                            [
+                              [ "Int", 8 ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Fun_call",
+                                        [
+                                          "join",
+                                          [
+                                            [ "String", "" ],
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "formatlist",
+                                                [
+                                                  [
+                                                    "String", "\n- \"%s%s\""
+                                                  ],
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "var" ],
+                                                      [
+                                                        "A_string",
+                                                        "additional_names"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "var" ],
+                                                      [
+                                                        "A_string",
+                                                        "domain_name"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_cloudformation_stack" ], [ "Lit", "cert" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [ "Tuple", [ [ "String", "aws_ses_domain_identity.main" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "project" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-stack-cert" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "template_body",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "template_file" ]
+                            ]
+                          ],
+                          [ "A_string", "cloudformation" ]
+                        ]
+                      ],
+                      [ "A_string", "rendered" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

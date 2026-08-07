@@ -1,0 +1,119 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "aws-vpn-docker-vpc" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "terraform-aws-modules/vpc/aws" ]
+        ],
+        [ "Attribute", "version", [ "String", "2.5.0" ] ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-name" ] ] ]
+        ],
+        [ "Attribute", "cidr", [ "String", "10.0.0.0/16" ] ],
+        [ "Attribute", "default_vpc_enable_dns_hostnames", [ "Bool", true ] ],
+        [ "Attribute", "enable_dns_hostnames", [ "Bool", true ] ],
+        [ "Attribute", "map_public_ip_on_launch", [ "Bool", false ] ],
+        [ "Attribute", "azs", [ "Tuple", [ [ "String", "us-east-1a" ] ] ] ],
+        [
+          "Attribute",
+          "private_subnets",
+          [ "Tuple", [ [ "String", "10.0.0.0/18" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Name" ], [ "String", "aws-vpn-docker-vpc" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "aws-vpn-docker-security-group" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "terraform-aws-modules/security-group/aws" ]
+        ],
+        [ "Attribute", "version", [ "String", "3.0.1" ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "security-group-name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "aws-vpn-docker-vpc" ] ]
+              ],
+              [ "A_string", "vpc_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "egress_rules",
+          [ "Tuple", [ [ "String", "all-all" ] ] ]
+        ],
+        [
+          "Attribute",
+          "ingress_with_cidr_blocks",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from_port" ], [ "Int", 22 ] ],
+                  [ [ "Bare", "to_port" ], [ "Int", 22 ] ],
+                  [ [ "Bare", "protocol" ], [ "String", "tcp" ] ],
+                  [ [ "Bare", "description" ], [ "String", "SSH Port" ] ],
+                  [ [ "Bare", "cidr_blocks" ], [ "String", "0.0.0.0/0" ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from_port" ], [ "Int", 80 ] ],
+                  [ [ "Bare", "to_port" ], [ "Int", 80 ] ],
+                  [ [ "Bare", "protocol" ], [ "String", "tcp" ] ],
+                  [ [ "Bare", "description" ], [ "String", "HTTP Port" ] ],
+                  [ [ "Bare", "cidr_blocks" ], [ "String", "0.0.0.0/0" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Name" ], [ "String", "aws-vpn-docker-sg" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

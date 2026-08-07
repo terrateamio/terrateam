@@ -1,0 +1,10 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "null" ], [ "Lit", "example" ] ],
+      "body": [ [ "Attribute", "input", [ "String", "test" ] ] ]
+    }
+  ]
+]

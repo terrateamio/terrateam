@@ -1,0 +1,55 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Fun_call",
+      [
+        "join",
+        [
+          [ "String", "," ],
+          [
+            "Fun_call",
+            [
+              "sort",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "distinct",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "compact",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "split",
+                                [
+                                  [ "String", "," ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "input" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]

@@ -1,0 +1,246 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "consul_key_prefix" ], [ "Lit", "environment" ] ],
+      "body": [ [ "Attribute", "path", [ "String", "apps/example/env" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_elastic_beanstalk_environment" ], [ "Lit", "example" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "test_environment" ] ],
+        [ "Attribute", "application", [ "String", "testing" ] ],
+        [
+          "Block",
+          {
+            "type_": "setting",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "namespace", [ "String", "aws:autoscaling:asg" ]
+              ],
+              [ "Attribute", "name", [ "String", "MinSize" ] ],
+              [ "Attribute", "value", [ "String", "1" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "setting" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "consul_key_prefix" ]
+                          ]
+                        ],
+                        [ "A_string", "environment" ]
+                      ]
+                    ],
+                    [ "A_string", "var" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "namespace",
+                      [
+                        "String",
+                        "aws:elasticbeanstalk:application:environment"
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "name",
+                      [
+                        "Attr",
+                        [ [ "Id", "setting" ], [ "A_string", "key" ] ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "value",
+                      [
+                        "Attr",
+                        [ [ "Id", "setting" ], [ "A_string", "value" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "environment" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "id" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_elastic_beanstalk_environment" ],
+                        [ "A_string", "example" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "vpc_settings" ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "s", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_elastic_beanstalk_environment" ],
+                            [ "A_string", "example" ]
+                          ]
+                        ],
+                        [ "A_string", "all_settings" ]
+                      ]
+                    ],
+                    "key_output": [
+                      "Attr", [ [ "Id", "s" ], [ "A_string", "name" ] ]
+                    ],
+                    "value_output": [
+                      "Attr", [ [ "Id", "s" ], [ "A_string", "value" ] ]
+                    ],
+                    "cond": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "s" ], [ "A_string", "namespace" ] ]
+                        ],
+                        [ "String", "aws:ec2:vpc" ]
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "vpc_settings2" ],
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "k", [ "v" ] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "map" ] ]
+                    ],
+                    "output": [
+                      "Add",
+                      [
+                        [ "Fun_call", [ "length", [ [ "Id", "k" ] ] ] ],
+                        [ "Fun_call", [ "length", [ [ "Id", "v" ] ] ] ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "vpc_settings3" ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "s", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ]
+                    ],
+                    "key_output": [
+                      "Fun_call",
+                      [
+                        "substr",
+                        [ [ "Id", "s" ], [ "Int", 0 ], [ "Int", 1 ] ]
+                      ]
+                    ],
+                    "value_output": [ "Ellipsis", [ "Id", "s" ] ],
+                    "cond": [
+                      "Not_equal", [ [ "Id", "s" ], [ "String", "" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "vpc_settings4" ],
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "o", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ]
+                    ],
+                    "output": [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "o" ], [ "A_string", "interfaces" ] ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

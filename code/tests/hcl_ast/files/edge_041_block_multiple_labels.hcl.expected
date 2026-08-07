@@ -1,0 +1,10 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "web" ] ],
+      "body": [ [ "Attribute", "ami", [ "String", "abc-123" ] ] ]
+    }
+  ]
+]

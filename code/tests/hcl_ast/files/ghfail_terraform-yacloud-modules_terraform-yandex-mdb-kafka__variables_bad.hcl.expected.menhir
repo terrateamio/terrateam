@@ -1,0 +1,1879 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Name of the Kafka cluster" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_description" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Description of the Kafka cluster" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "folder_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The ID of the folder that the resource belongs to" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "labels" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A set of key/value label pairs to assign to the Kafka cluster"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "network_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "ID of the network, to which the Kafka cluster belongs"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "IDs of the subnets, to which the Kafka cluster belongs"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "environment" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Deployment environment of the Kafka cluster" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "PRODUCTION" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_version" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Version of the Kafka server" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "3.7" ],
+                          [ "String", "3.8" ],
+                          [ "String", "3.9" ],
+                          [ "String", "4.0" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "kafka_version" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The Kafka server version must be one of: 3.7, 3.8, 3.9, 4.0"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "brokers_count" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Count of brokers per availability zone" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 1 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "brokers_count" ]
+                          ]
+                        ],
+                        [ "Int", 1 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "brokers_count" ]
+                          ]
+                        ],
+                        [ "Int", 10 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String", "Brokers count must be between 1 and 10 per zone"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zones" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "List of availability zones" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "assign_public_ip" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Determines whether each broker will be assigned a public IP address"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enables managed schema registry on cluster" ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "unmanaged_topics" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enables unmanaged topics (topics created via yandex_mdb_kafka_topic)"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_resource_preset_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The ID of the preset for computational resources available to a Kafka host"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_disk_size" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Volume of the storage available to a Kafka host, in gigabytes"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "kafka_disk_size" ]
+                          ]
+                        ],
+                        [ "Int", 10 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "kafka_disk_size" ]
+                          ]
+                        ],
+                        [ "Int", 4096 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String", "Kafka disk size must be between 10GB and 4096GB"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_disk_type_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Type of the storage of Kafka hosts" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_compression_type" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server compression type" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_log_flush_interval_messages" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server log flush interval messages" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_log_flush_interval_ms" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server log flush interval milliseconds" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_log_flush_scheduler_interval_ms" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Kafka server log flush scheduler interval milliseconds"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_log_retention_bytes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server log retention bytes" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_log_retention_hours" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server log retention hours" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_log_retention_minutes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server log retention minutes" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_log_retention_ms" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server log retention milliseconds" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_log_segment_bytes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server log segment bytes" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_log_preallocate" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Should pre allocate file when create new segment?" ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_num_partitions" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server number of partitions" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_default_replication_factor" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server default replication factor" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_message_max_bytes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server message max bytes" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_replica_fetch_max_bytes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server replica fetch max bytes" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_ssl_cipher_suites" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server SSL cipher suites" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_offsets_retention_minutes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server offsets retention minutes" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_sasl_enabled_mechanisms" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Kafka server SASL enabled mechanisms" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kraft_resource_preset_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The ID of the preset for computational resources available to a KRaft host"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kraft_disk_size" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Volume of the storage available to a KRaft host, in gigabytes"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "kraft_disk_size" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Bool", true ],
+                    "else_": [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "kraft_disk_size" ]
+                          ]
+                        ],
+                        [ "Int", 10 ]
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "KRaft disk size must be at least 10GB if specified"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kraft_disk_type_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Type of the storage of KRaft hosts" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_api_enabled" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enable REST API for Kafka cluster" ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_ui_enabled" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enable Kafka UI for cluster" ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "disk_size_autoscaling" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Disk size autoscaling configuration" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "disk_size_limit" ], [ "Id", "number" ] ],
+                    [
+                      [ "Bare", "planned_usage_threshold" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "number" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "emergency_usage_threshold" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "number" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "disk_size_autoscaling" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Bool", true ],
+                    "else_": [
+                      "Log_and",
+                      [
+                        [
+                          "Log_and",
+                          [
+                            [
+                              "Gte",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string", "disk_size_autoscaling"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "disk_size_limit" ]
+                                  ]
+                                ],
+                                [ "Int", 10 ]
+                              ]
+                            ],
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "disk_size_autoscaling"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string",
+                                          "planned_usage_threshold"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [ "Bool", true ],
+                                "else_": [
+                                  "Log_and",
+                                  [
+                                    [
+                                      "Gte",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "disk_size_autoscaling"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "planned_usage_threshold"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Int", 0 ]
+                                      ]
+                                    ],
+                                    [
+                                      "Lte",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "disk_size_autoscaling"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "planned_usage_threshold"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Int", 100 ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string", "disk_size_autoscaling"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "A_string", "emergency_usage_threshold"
+                                    ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ],
+                            "then_": [ "Bool", true ],
+                            "else_": [
+                              "Log_and",
+                              [
+                                [
+                                  "Gte",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "disk_size_autoscaling"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string",
+                                          "emergency_usage_threshold"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                [
+                                  "Lte",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "disk_size_autoscaling"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string",
+                                          "emergency_usage_threshold"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 100 ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Disk size autoscaling validation failed: disk_size_limit must be >= 10GB, thresholds must be between 0 and 100"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_resource_preset_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The ID of the preset for computational resources available to a ZooKeeper host"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_disk_size" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Volume of the storage available to a ZooKeeper host, in gigabytes"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_disk_type_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Type of the storage of ZooKeeper hosts" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "data_transfer_access" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Allow access for DataTransfer" ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "security_group_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Security group ids, to which the Kafka cluster belongs"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "host_group_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A list of IDs of the host groups to place VMs of the cluster on"
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "deletion_protection" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Inhibits deletion of the cluster" ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "maintenance_window_type" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Type of maintenance window" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "maintenance_window_day" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Day of the week for maintenance window" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "maintenance_window_day" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Bool", true ],
+                    "else_": [
+                      "Fun_call",
+                      [
+                        "contains",
+                        [
+                          [
+                            "Tuple",
+                            [
+                              [ "String", "MON" ],
+                              [ "String", "TUE" ],
+                              [ "String", "WED" ],
+                              [ "String", "THU" ],
+                              [ "String", "FRI" ],
+                              [ "String", "SAT" ],
+                              [ "String", "SUN" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "maintenance_window_day" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Maintenance window day must be one of: MON, TUE, WED, THU, FRI, SAT, SUN"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "maintenance_window_hour" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Hour of the day in UTC for maintenance window" ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "maintenance_window_hour" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [ "Bool", true ],
+                    "else_": [
+                      "Log_and",
+                      [
+                        [
+                          "Gte",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "maintenance_window_hour" ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        [
+                          "Lte",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "maintenance_window_hour" ]
+                              ]
+                            ],
+                            [ "Int", 23 ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Maintenance window hour must be between 0 and 23"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "topics" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    (Required) This is a list of Kafka topics to create.\n\n    Required values:\n      - name               - The name of the topic.\n      - partitions         - The number of partitions for the topic.\n      - replication_factor - The replication factor for the topic.\n\n    Optional values:\n      - config             - Configuration settings for the topic. The list is documented below.\n        - cleanup_policy        - (Optional) The cleanup policy for the topic. Allowed values: `CLEANUP_POLICY_DELETE`, `CLEANUP_POLICY_COMPACT`, `CLEANUP_POLICY_COMPACT_AND_DELETE`.\n        - compression_type      - (Optional) The compression type for the topic. Allowed values: `COMPRESSION_TYPE_SNAPPY`, `COMPRESSION_TYPE_GZIP`, `COMPRESSION_TYPE_PRODUCER`, `COMPRESSION_TYPE_UNCOMPRESSED`, `COMPRESSION_TYPE_ZSTD`, `COMPRESSION_TYPE_LZ4`.\n        - delete_retention_ms   - (Optional) The time to retain delete tombstone markers for log compacted topics.\n        - file_delete_delay_ms  - (Optional) The time to wait before deleting a file from the filesystem.\n        - flush_messages        - (Optional) The number of messages accumulated on a log partition before messages are flushed to disk.\n        - flush_ms              - (Optional) The maximum time in milliseconds that a message in any topic is kept in memory before flushed to disk.\n        - min_compaction_lag_ms - (Optional) The minimum time a message will remain uncompacted in the log.\n        - retention_bytes       - (Optional) The maximum size a partition can grow to before Kafka will discard old log segments to free up space.\n        - retention_ms          - (Optional) The maximum time Kafka will retain messages in a topic.\n        - max_message_bytes     - (Optional) The largest record batch size allowed by Kafka.\n        - min_insync_replicas   - (Optional) The minimum number of replicas that must acknowledge a write for the write to be considered successful.\n        - segment_bytes         - (Optional) The maximum size of a single log file.\n        - preallocate           - (Optional) Whether to preallocate the file on disk.\n        - message_timestamp_type - (Optional) Timestamp type. Allowed values: `MESSAGE_TIMESTAMP_TYPE_CREATE_TIME`, `MESSAGE_TIMESTAMP_TYPE_LOG_APPEND_TIME`.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "partitions" ], [ "Id", "number" ] ],
+                          [
+                            [ "Bare", "replication_factor" ],
+                            [ "Id", "number" ]
+                          ],
+                          [
+                            [ "Bare", "config" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "cleanup_policy" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [
+                                                      "String",
+                                                      "CLEANUP_POLICY_DELETE"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "compression_type" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [
+                                                      "String",
+                                                      "COMPRESSION_TYPE_PRODUCER"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare", "delete_retention_ms"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Int", 86400000 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "file_delete_delay_ms"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Int", 60000 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "flush_messages" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [
+                                                      "Float",
+                                                      9.223372036854776e+18
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "flush_ms" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [
+                                                      "Float",
+                                                      9.223372036854776e+18
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "min_compaction_lag_ms"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Int", 0 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "retention_bytes" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Minus", [ "Int", 1 ] ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "retention_ms" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Int", 604800000 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "max_message_bytes" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Int", 1048588 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare", "min_insync_replicas"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Int", 1 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "segment_bytes" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Int", 1073741824 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "preallocate" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "bool" ],
+                                                    [ "Bool", false ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "message_timestamp_type"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [
+                                                      "String",
+                                                      "MESSAGE_TIMESTAMP_TYPE_CREATE_TIME"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "users" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "List of Kafka users to create" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "password" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "permissions" ],
+                            [
+                              "Fun_call",
+                              [
+                                "list",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "topic_name" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [ "Bare", "role" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [ "Bare", "allow_hosts" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "timeouts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Timeout settings for cluster operations" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "create" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [ [ "Id", "string" ], [ "String", "30m" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "update" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [ [ "Id", "string" ], [ "String", "30m" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "delete" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [ [ "Id", "string" ], [ "String", "30m" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ]
+]

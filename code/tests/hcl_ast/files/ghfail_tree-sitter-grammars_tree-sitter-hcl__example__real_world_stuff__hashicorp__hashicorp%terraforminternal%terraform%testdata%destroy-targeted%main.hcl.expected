@@ -1,0 +1,51 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "a" ] ],
+      "body": [ [ "Attribute", "foo", [ "String", "bar" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "child" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./child" ] ],
+        [
+          "Attribute",
+          "in",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_instance" ], [ "A_string", "a" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "out" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_instance" ], [ "A_string", "a" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

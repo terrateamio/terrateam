@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,3-4: Unclosed configuration block; There is no closing brace for this block before the end of the file. This may be caused by incorrect brace nesting elsewhere in this file.

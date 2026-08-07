@@ -1,0 +1,101 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "azurerm_resource_group" ], [ "Lit", "appinsights" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "service_plan_resource_group_name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_application_insights" ], [ "Lit", "appinsights" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "appinsights_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "appinsights" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "appinsights" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "application_type",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "appinsights_application_type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_tags" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

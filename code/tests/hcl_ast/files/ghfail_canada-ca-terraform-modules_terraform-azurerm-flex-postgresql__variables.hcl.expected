@@ -1,0 +1,1096 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "active_directory_administrator" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "object_id" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "principal_name" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "principal_type" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "String", "Group" ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "entry", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string", "active_directory_administrator"
+                              ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Not_equal",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "entry" ],
+                                              [ "A_string", "object_id" ]
+                                            ]
+                                          ],
+                                          [ "Null" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Not_equal",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "entry" ],
+                                              [
+                                                "A_string", "principal_name"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Null" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "entry" ],
+                                          [ "A_string", "principal_type" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "contains",
+                                  [
+                                    [
+                                      "Tuple",
+                                      [
+                                        [ "String", "Group" ],
+                                        [ "String", "User" ],
+                                        [ "String", "ServicePrincipal" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "entry" ],
+                                        [ "A_string", "principal_type" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Invalid active_directory_administrator configuration. Make sure object_id, principal_name, and principal_type are not null, and principal_type is one of 'Group', 'User', or 'ServicePrincipal'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "administrator_login" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The Administrator Login for the PostgreSQL Flexible Server."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "administrator_password" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The Password associated with the administrator_login for the PostgreSQL Flexible Server."
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "databases" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [ "map", [ [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ] ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The name, collation, and charset of the PostgreSQL database(s). (defaults: charset='utf8', collation='en_US.utf8')"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ip_rules" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "List of public IP or IP ranges in CIDR Format." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "firewall_rules" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Specifies the Start IP Address associated with this Firewall Rule."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "geo_redundant_backup_enabled" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Is Geo-Redundant backup enabled on the PostgreSQL Flexible Server."
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "location" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Specifies the supported Azure location where the resource exists."
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "canadacentral" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the PostgreSQL Flexible Server." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "storage_account_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Name of the storage account used for diagnostics (optional, if not provided the name is auto-generated)."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "pgsql_version" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The version of the PostgreSQL Flexible Server. Currently supported versions 13, 14, 15, 16, or 17."
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "17" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "13" ],
+                          [ "String", "14" ],
+                          [ "String", "15" ],
+                          [ "String", "16" ],
+                          [ "String", "17" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "pgsql_version" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The version of PostgreSQL Flexible Server specified must be one of the currently supported versions 13, 14, 15, 16, or 17."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "resource_group_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The name of the resource group in which to create the PostgreSQL Flexible Server."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "sku_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Specifies the SKU Name for this PostgreSQL Flexible Server."
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "GP_Standard_D4ds_v4" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "storagesize_mb" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Specifies the storage size in MB for the PostgreSQL Flexible Server."
+          ]
+        ],
+        [ "Attribute", "default", [ "Int", 262144 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "Int", 32768 ],
+                          [ "Int", 65536 ],
+                          [ "Int", 131072 ],
+                          [ "Int", 262144 ],
+                          [ "Int", 524288 ],
+                          [ "Int", 1048576 ],
+                          [ "Int", 2097152 ],
+                          [ "Int", 4193280 ],
+                          [ "Int", 4194304 ],
+                          [ "Int", 8388608 ],
+                          [ "Int", 16777216 ],
+                          [ "Int", 33553408 ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "storagesize_mb" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The storage size must be set to one of the supported values 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4193280, 4194304, 8388608, 16777216, or 33553408."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "A mapping of tags to assign to the resource." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "project" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute", "description", [ "String", "Name of client project" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "environment" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The environment used for keyvault access." ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "delegated_subnet_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The subnet where you want the database created. The subnet must be delegated to Microsoft.DBforPostgreSQL/flexibleServers."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "private_dns_zone_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The ID of the private DNS zone to create the PostgreSQL Flexible Server. The private DNS zone must end with the suffix .postgres.database.azure.com."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "public_network_access_enabled" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "(Optional) Specifies whether this PostgreSQL Flexible Server is publicly accessible."
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kv_private_endpoints" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "sub_resource_name" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "String", "vault" ] ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "subnet_id" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "private_dns_zone_id" ],
+                            [ "Id", "string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The information required to create a private endpoint for the Key Vault."
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "entry", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "kv_private_endpoints" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [ "Tuple", [ [ "String", "vault" ] ] ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "entry" ],
+                                    [ "A_string", "sub_resource_name" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Invalid sub_resource_name within var.kv_private_endpoints. Expected the name to be 'vault'."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "entry", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "kv_private_endpoints" ]
+                            ]
+                          ],
+                          "output": [
+                            "Equal",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "element",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "split",
+                                        [
+                                          [ "String", "/" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "entry" ],
+                                              [
+                                                "A_string",
+                                                "private_dns_zone_id"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 8 ]
+                                  ]
+                                ]
+                              ],
+                              [ "String", "privatelink.vaultcore.azure.net" ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Invalid private_dns_zone_id attribute within var.kv_private_endpoints. Expected a Private DNS Zone with the name 'privatelink.vaultcore.azure.net'"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kv_public_network_access_enabled" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "(Required) Whether or not public network access is allowed."
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kv_subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The subnets for the key vault." ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "sa_subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "The subnets for the storage account." ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "diagnostics" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "destination" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "eventhub_name" ], [ "Id", "string" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Diagnostic settings for those resources that support it."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "sa_create_log" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Creates a storage account to be used for diagnostics logging of the PostgreSQL database created if the variable is set to `true`."
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kv_pointer_enable" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Flag kv_pointer_enable can either be `true` (state from key vault), or `false` (state from terraform)."
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kv_pointer_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The key vault name to be used when kv_pointer_enable is set to `true`."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kv_pointer_rg" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The key vault resource group to be used when kv_pointer_enable is set to `true`."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kv_pointer_sqladmin_password" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The sqladmin password to be looked up in key vault when kv_pointer_enable is set to `true`."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "postgresql_configurations" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "azure.extensions" ],
+                [ "String", "POSTGIS,PGCRYPTO" ]
+              ],
+              [ [ "Quoted", "client_min_messages" ], [ "String", "log" ] ],
+              [ [ "Quoted", "debug_pretty_print" ], [ "String", "on" ] ],
+              [ [ "Quoted", "debug_print_parse" ], [ "String", "off" ] ],
+              [ [ "Quoted", "debug_print_plan" ], [ "String", "off" ] ],
+              [ [ "Quoted", "debug_print_rewritten" ], [ "String", "off" ] ],
+              [ [ "Quoted", "log_checkpoints" ], [ "String", "on" ] ],
+              [ [ "Quoted", "log_duration" ], [ "String", "off" ] ],
+              [
+                [ "Quoted", "log_error_verbosity" ], [ "String", "verbose" ]
+              ],
+              [
+                [ "Quoted", "log_line_prefix" ],
+                [ "String", "%m [%p] %q[user=%u,db=%d,app=%a,client=%h] " ]
+              ],
+              [ [ "Quoted", "log_lock_waits" ], [ "String", "off" ] ],
+              [
+                [ "Quoted", "log_min_duration_statement" ],
+                [ "String", "10" ]
+              ],
+              [
+                [ "Quoted", "log_min_error_statement" ],
+                [ "String", "error" ]
+              ],
+              [ [ "Quoted", "log_min_messages" ], [ "String", "warning" ] ],
+              [ [ "Quoted", "log_statement" ], [ "String", "ddl" ] ],
+              [ [ "Quoted", "row_security" ], [ "String", "on" ] ],
+              [ [ "Quoted", "checkpoint_warning" ], [ "String", "0" ] ],
+              [
+                [ "Quoted", "connection_throttle.enable" ],
+                [ "String", "on" ]
+              ],
+              [ [ "Quoted", "maintenance_work_mem" ], [ "String", "32000" ] ],
+              [ [ "Quoted", "min_wal_size" ], [ "String", "512" ] ],
+              [ [ "Quoted", "max_wal_size" ], [ "String", "512" ] ],
+              [
+                [ "Quoted", "pg_stat_statements.track_utility" ],
+                [ "String", "off" ]
+              ],
+              [ [ "Quoted", "pg_qs.track_utility" ], [ "String", "off" ] ],
+              [
+                [ "Quoted", "pg_qs.query_capture_mode" ], [ "String", "top" ]
+              ],
+              [ [ "Quoted", "pgaudit.log" ], [ "String", "ddl" ] ],
+              [
+                [ "Quoted", "pgms_wait_sampling.query_capture_mode" ],
+                [ "String", "all" ]
+              ],
+              [ [ "Quoted", "temp_buffers" ], [ "String", "16384" ] ],
+              [ [ "Quoted", "wal_buffers" ], [ "String", "8192" ] ],
+              [ [ "Quoted", "wal_writer_delay" ], [ "String", "200" ] ],
+              [ [ "Quoted", "wal_writer_flush_after" ], [ "String", "128" ] ],
+              [ [ "Quoted", "work_mem" ], [ "String", "2048000" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

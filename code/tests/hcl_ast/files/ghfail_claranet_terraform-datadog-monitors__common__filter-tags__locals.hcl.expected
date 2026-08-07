@@ -1,0 +1,1077 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "including_default_list",
+          [
+            "Fun_call",
+            [
+              "compact",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "concat",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "split",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "filter_tags_separator" ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "format",
+                                [
+                                  [
+                                    "Template",
+                                    [
+                                      [ "Literal", "dd_monitoring:enabled" ],
+                                      [
+                                        "Interpolation",
+                                        {
+                                          "expr": [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "filter_tags_separator"
+                                              ]
+                                            ]
+                                          ],
+                                          "strip_before": false,
+                                          "strip_after": false
+                                        }
+                                      ],
+                                      [ "Literal", "dd_%s:enabled" ],
+                                      [
+                                        "Interpolation",
+                                        {
+                                          "expr": [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "filter_tags_separator"
+                                              ]
+                                            ]
+                                          ],
+                                          "strip_before": false,
+                                          "strip_after": false
+                                        }
+                                      ],
+                                      [ "Literal", "env:%s" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "resource" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "environment" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "compact",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "extra_tags" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "including_custom_list",
+          [
+            "Fun_call",
+            [
+              "compact",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "concat",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "split",
+                          [
+                            [
+                              "Template",
+                              [
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "filter_tags_separator"
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "filter_tags_custom" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "compact",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "extra_tags" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "excluding_list",
+          [
+            "Fun_call",
+            [
+              "compact",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "split",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "filter_tags_separator" ]
+                        ]
+                      ],
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "filter_tags_use_defaults" ]
+                                ]
+                              ],
+                              [ "String", "true" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Fun_call",
+                            [
+                              "join",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "filter_tags_separator" ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "compact",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string", "extra_tags_excluded"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "else_": [
+                            "Fun_call",
+                            [
+                              "join",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "filter_tags_separator" ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "concat",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "split",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string",
+                                                  "filter_tags_separator"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "filter_tags_custom_excluded"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "compact",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "extra_tags_excluded"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "std_including_string",
+          [
+            "Fun_call",
+            [
+              "replace",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "replace",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "including_string" ]
+                                ]
+                              ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "filter_tags_separator"
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [
+                                            "A_string",
+                                            "filter_tags_separator"
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [ "String", "/ +/" ],
+                [ "String", " " ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "std_excluding_string",
+          [
+            "Fun_call",
+            [
+              "replace",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "replace",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "excluding_string" ]
+                                ]
+                              ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "filter_tags_separator"
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [
+                                            "A_string",
+                                            "filter_tags_separator"
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [ "String", "/ +/" ],
+                [ "String", " " ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "event_including_string",
+          [
+            "Fun_call",
+            [
+              "replace",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "replace",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "including_string" ]
+                                ]
+                              ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "filter_tags_separator"
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ],
+                              [ "String", " " ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [ "String", "/ +/" ],
+                [ "String", " " ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "event_excluding_string",
+          [
+            "Fun_call",
+            [
+              "replace",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "replace",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "excluding_string" ]
+                                ]
+                              ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string",
+                                            "filter_tags_separator"
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ],
+                              [ "String", " -" ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [ "String", "/ +/" ],
+                [ "String", " " ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "including_string",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "filter_tags_use_defaults" ]
+                    ]
+                  ],
+                  [ "String", "true" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "join",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "filter_tags_separator" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "including_default_list" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Fun_call",
+                [
+                  "join",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "filter_tags_separator" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "including_custom_list" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "excluding_string",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "filter_tags_separator" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "excluding_list" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filter_tags_not_operator",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "filter_tags_separator" ]
+                    ]
+                  ],
+                  [ "String", "AND" ]
+                ]
+              ],
+              "then_": [ "String", "NOT " ],
+              "else_": [ "String", "!" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "filter_tags_separator",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "filter_tags_separator" ]
+                    ]
+                  ],
+                  [ "String", "AND" ]
+                ]
+              ],
+              "then_": [ "String", " AND " ],
+              "else_": [ "String", "," ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "query_alert",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "filter_tags_separator" ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "compact",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "concat",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "formatlist",
+                                [
+                                  [
+                                    "Template",
+                                    [
+                                      [
+                                        "Interpolation",
+                                        {
+                                          "expr": [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "filter_tags_not_operator"
+                                              ]
+                                            ]
+                                          ],
+                                          "strip_before": false,
+                                          "strip_after": false
+                                        }
+                                      ],
+                                      [ "Literal", "%s" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "excluding_list" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "std_including_string" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_check",
+          [
+            "Template",
+            [
+              [ "Literal", ".over(\"" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "replace",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "std_including_string" ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "filter_tags_separator" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ],
+                        [
+                          "Template",
+                          [
+                            [ "Literal", "\"" ],
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "filter_tags_separator" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ],
+                            [ "Literal", "\"" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "\")" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Equal",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "std_excluding_string" ]
+                            ]
+                          ],
+                          [ "String", "" ]
+                        ]
+                      ],
+                      "then_": [ "String", "" ],
+                      "else_": [
+                        "Template",
+                        [
+                          [ "Literal", ".exclude(\"" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Fun_call",
+                                [
+                                  "replace",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "std_excluding_string"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Template",
+                                      [
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string",
+                                                  "filter_tags_separator"
+                                                ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Template",
+                                      [
+                                        [ "Literal", "\"" ],
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string",
+                                                  "filter_tags_separator"
+                                                ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [ "Literal", "\"" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "\")" ]
+                        ]
+                      ]
+                    }
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_check_sanitized",
+          [
+            "Fun_call",
+            [
+              "replace",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "replace",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "replace",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "service_check" ]
+                              ]
+                            ],
+                            [ "String", "\"(" ],
+                            [ "String", "(\"" ]
+                          ]
+                        ]
+                      ],
+                      [ "String", ")\"" ],
+                      [ "String", "\")" ]
+                    ]
+                  ]
+                ],
+                [ "String", " OR " ],
+                [ "String", "\" OR \"" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

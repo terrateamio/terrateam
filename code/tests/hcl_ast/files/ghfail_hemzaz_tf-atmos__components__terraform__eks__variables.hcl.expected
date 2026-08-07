@@ -1,0 +1,1103 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "region" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "description", [ "String", "AWS region" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-z]{2}(-[a-z]+)+-\\d+$" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The region must be a valid AWS region name (e.g., us-east-1, eu-west-1)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "clusters" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "enabled" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", true ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "kubernetes_version" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "endpoint_private_access" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", true ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "endpoint_public_access" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "subnet_ids" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "security_group_ids" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "kms_key_arn" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "enabled_cluster_log_types" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [
+                                    "Tuple",
+                                    [
+                                      [ "String", "api" ],
+                                      [ "String", "audit" ],
+                                      [ "String", "authenticator" ],
+                                      [ "String", "controllerManager" ],
+                                      [ "String", "scheduler" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "node_groups" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "any" ] ] ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "tags" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Map of EKS cluster configurations with typed schema" ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "clusters" ] ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "String", "kubernetes_version" ],
+                                        [ "String", "" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "" ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [ "String", "^\\d+\\.(\\d+)$" ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "lookup",
+                                              [
+                                                [ "Id", "v" ],
+                                                [
+                                                  "String",
+                                                  "kubernetes_version"
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string",
+                                                      "default_kubernetes_version"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Kubernetes version must be valid and in the format 'X.Y' (e.g., 1.28)."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "clusters" ] ]
+                          ],
+                          "output": [
+                            "Gt",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [ "Id", "v" ],
+                                          [
+                                            "String",
+                                            "enabled_cluster_log_types"
+                                          ],
+                                          [ "Tuple", [] ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "At least one cluster log type must be enabled for each cluster."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "clusters" ] ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "String", "kms_key_arn" ],
+                                        [ "String", "" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "" ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^arn:aws:kms:[a-z0-9-]+:[0-9]{12}:key/[a-f0-9-]+$"
+                                          ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "lookup",
+                                              [
+                                                [ "Id", "v" ],
+                                                [ "String", "kms_key_arn" ],
+                                                [ "String", "" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "KMS key ARN must be in a valid format (e.g., arn:aws:kms:region:account-id:key/key-id)."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "clusters" ] ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "alltrue",
+                              [
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "sg", [] ],
+                                    "input": [
+                                      "Fun_call",
+                                      [
+                                        "lookup",
+                                        [
+                                          [ "Id", "v" ],
+                                          [ "String", "security_group_ids" ],
+                                          [ "Tuple", [] ]
+                                        ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "can",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "regex",
+                                              [
+                                                [
+                                                  "String", "^sg-[a-z0-9]+$"
+                                                ],
+                                                [ "Id", "sg" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "All security group IDs must be in a valid format (e.g., sg-abc123)."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "clusters" ] ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [ "Id", "v" ],
+                                        [
+                                          "String", "endpoint_private_access"
+                                        ],
+                                        [ "Bool", true ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Bool", true ]
+                                ]
+                              ],
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [ "Id", "v" ],
+                                        [
+                                          "String", "endpoint_public_access"
+                                        ],
+                                        [ "Bool", false ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Bool", true ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "At least one of endpoint_private_access or endpoint_public_access must be enabled for the cluster."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "List of subnet IDs for the EKS clusters" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Gte",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "subnet_ids" ] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 2 ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "At least 2 subnet IDs are required for an EKS cluster for high availability."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "id", [] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "subnet_ids" ] ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [ "String", "^subnet-[a-z0-9]+$" ],
+                                      [ "Id", "id" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "All subnet IDs must be in a valid format (e.g., subnet-abc123)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "default_kubernetes_version" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Default Kubernetes version for EKS clusters" ]
+        ],
+        [ "Attribute", "default", [ "String", "1.28" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^\\d+\\.(\\d+)$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "default_kubernetes_version" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Default Kubernetes version must be in the format 'X.Y' (e.g., 1.28)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "oidc_provider_arn" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "ARN of the OIDC provider for the EKS cluster" ]
+        ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "oidc_provider_arn" ]
+                          ]
+                        ],
+                        [ "String", "" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "can",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "regex",
+                              [
+                                [
+                                  "String",
+                                  "^arn:aws:iam::[0-9]{12}:oidc-provider/"
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "oidc_provider_arn" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "OIDC provider ARN must be in a valid format (e.g., arn:aws:iam::123456789012:oidc-provider/...)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_cluster_protection" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enable prevent_destroy lifecycle for EKS clusters in production environments"
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "default_cluster_log_retention_days" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Number of days to retain cluster logs" ]
+        ],
+        [ "Attribute", "default", [ "Int", 90 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "contains",
+                        [
+                          [
+                            "Tuple",
+                            [
+                              [ "Int", 1 ],
+                              [ "Int", 3 ],
+                              [ "Int", 5 ],
+                              [ "Int", 7 ],
+                              [ "Int", 14 ],
+                              [ "Int", 30 ],
+                              [ "Int", 60 ],
+                              [ "Int", 90 ],
+                              [ "Int", 120 ],
+                              [ "Int", 150 ],
+                              [ "Int", 180 ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "default_cluster_log_retention_days"
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "contains",
+                        [
+                          [
+                            "Tuple",
+                            [
+                              [ "Int", 365 ],
+                              [ "Int", 400 ],
+                              [ "Int", 545 ],
+                              [ "Int", 731 ],
+                              [ "Int", 1827 ],
+                              [ "Int", 3653 ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "default_cluster_log_retention_days"
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Log retention days must be a CloudWatch allowed value: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, or 3653 days."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Common tags to apply to all resources" ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "keys",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "tags" ] ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "String", "Environment" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String", "The tags map must contain an 'Environment' key."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

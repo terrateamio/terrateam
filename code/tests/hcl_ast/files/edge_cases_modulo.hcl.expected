@@ -1,0 +1,58 @@
+[
+  [
+    "Block",
+    {
+      "type_": "modulo",
+      "labels": [],
+      "body": [
+        [ "Attribute", "simple", [ "Mod", [ [ "Int", 10 ], [ "Int", 3 ] ] ] ],
+        [
+          "Attribute",
+          "with_var",
+          [
+            "Mod",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "count" ] ] ],
+              [ "Int", 2 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "chained",
+          [
+            "Mod",
+            [ [ "Mod", [ [ "Int", 100 ], [ "Int", 7 ] ] ], [ "Int", 3 ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "in_expression",
+          [
+            "Mod",
+            [
+              [
+                "Add",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "x" ] ] ],
+                  [ "Int", 5 ]
+                ]
+              ],
+              [ "Int", 10 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "with_float",
+          [ "Mod", [ [ "Int", 11 ], [ "Float", 5.1 ] ] ]
+        ],
+        [
+          "Attribute",
+          "negative",
+          [ "Mod", [ [ "Minus", [ "Int", 10 ] ], [ "Int", 3 ] ] ]
+        ]
+      ]
+    }
+  ]
+]

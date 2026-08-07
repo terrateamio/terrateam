@@ -1,0 +1,723 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "roles_list_array",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "i", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "roles_list" ] ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "default_roles_list" ]
+                      ]
+                    ],
+                    [ "Id", "i" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "roles_array",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "i", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "roles_list_array" ]
+                      ]
+                    ],
+                    "output": [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Attr", [ [ "Id", "i" ], [ "A_string", "name" ] ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "namespace" ],
+                          [
+                            "Attr",
+                            [ [ "Id", "i" ], [ "A_string", "namespace" ] ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "rules" ],
+                          [
+                            "Attr",
+                            [ [ "Id", "i" ], [ "A_string", "rules" ] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_roles_list",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "i", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "cluster_roles_list" ] ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "default_cluster_roles_list" ]
+                      ]
+                    ],
+                    [ "Id", "i" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_roles_array",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "i", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "cluster_roles_list" ]
+                      ]
+                    ],
+                    "output": [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Attr", [ [ "Id", "i" ], [ "A_string", "name" ] ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "rules" ],
+                          [
+                            "Attr",
+                            [ [ "Id", "i" ], [ "A_string", "rules" ] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "sa_array",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "i", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "sa_list" ] ]
+                    ],
+                    "output": [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Attr", [ [ "Id", "i" ], [ "A_string", "name" ] ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "namespace" ],
+                          [
+                            "Attr",
+                            [ [ "Id", "i" ], [ "A_string", "namespace" ] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "binding_array",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "i", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "bindings" ] ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "default_bindings" ] ]
+                    ],
+                    [ "Id", "i" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "users_array",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "flatten",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "i", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "binding_array" ]
+                            ]
+                          ],
+                          "output": [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "j", [] ],
+                              "input": [
+                                "Attr",
+                                [ [ "Id", "i" ], [ "A_string", "users" ] ]
+                              ],
+                              "output": [ "Id", "j" ],
+                              "cond": null
+                            }
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "roles_binding_array",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "i", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "binding_array" ] ]
+                    ],
+                    "output": [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Not_equal",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "i" ], [ "A_string", "type" ] ]
+                            ],
+                            [ "String", "role_binding" ]
+                          ]
+                        ],
+                        "then_": [ "Tuple", [] ],
+                        "else_": [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "j", [] ],
+                            "input": [
+                              "Attr",
+                              [ [ "Id", "i" ], [ "A_string", "namespaces" ] ]
+                            ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "k", [] ],
+                                "input": [
+                                  "Attr",
+                                  [ [ "Id", "i" ], [ "A_string", "roles" ] ]
+                                ],
+                                "output": [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "type" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "i" ],
+                                          [ "A_string", "type" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "prefix" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "i" ],
+                                          [ "A_string", "prefix" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "namespace" ], [ "Id", "j" ]
+                                    ],
+                                    [
+                                      [ "Bare", "sa" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "i" ], [ "A_string", "sa" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "users" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "i" ],
+                                          [ "A_string", "users" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "groups" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "i" ],
+                                          [ "A_string", "groups" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ [ "Bare", "role" ], [ "Id", "k" ] ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "roles_binding_cluster_role_array",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "i", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "binding_array" ] ]
+                    ],
+                    "output": [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Not_equal",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "i" ], [ "A_string", "type" ] ]
+                            ],
+                            [ "String", "role_binding" ]
+                          ]
+                        ],
+                        "then_": [ "Tuple", [] ],
+                        "else_": [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "j", [] ],
+                            "input": [
+                              "Attr",
+                              [ [ "Id", "i" ], [ "A_string", "namespaces" ] ]
+                            ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "k", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "i" ],
+                                    [ "A_string", "cluster_roles" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "type" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "i" ],
+                                          [ "A_string", "type" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "prefix" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "i" ],
+                                          [ "A_string", "prefix" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "namespace" ], [ "Id", "j" ]
+                                    ],
+                                    [
+                                      [ "Bare", "sa" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "i" ], [ "A_string", "sa" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "users" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "i" ],
+                                          [ "A_string", "users" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "groups" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "i" ],
+                                          [ "A_string", "groups" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "cluster_role" ],
+                                      [ "Id", "k" ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_roles_binding_array",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "i", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "binding_array" ] ]
+                    ],
+                    "output": [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Not_equal",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "i" ], [ "A_string", "type" ] ]
+                            ],
+                            [ "String", "cluster_role_binding" ]
+                          ]
+                        ],
+                        "then_": [ "Tuple", [] ],
+                        "else_": [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "k", [] ],
+                            "input": [
+                              "Attr",
+                              [
+                                [ "Id", "i" ],
+                                [ "A_string", "cluster_roles" ]
+                              ]
+                            ],
+                            "output": [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "type" ],
+                                  [
+                                    "Attr",
+                                    [ [ "Id", "i" ], [ "A_string", "type" ] ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "prefix" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "i" ], [ "A_string", "prefix" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "sa" ],
+                                  [
+                                    "Attr",
+                                    [ [ "Id", "i" ], [ "A_string", "sa" ] ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "users" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "i" ], [ "A_string", "users" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "groups" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "i" ], [ "A_string", "groups" ]
+                                    ]
+                                  ]
+                                ],
+                                [ [ "Bare", "cluster_role" ], [ "Id", "k" ] ]
+                              ]
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "merged_certificate_authority_data",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "default_k8s_auth_cluster_ca_certificate" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "k8s_auth_cluster_ca_certificate" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "certificate_authority_data",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [
+                                  "A_string",
+                                  "merged_certificate_authority_data"
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "raw" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "base64encode",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [
+                              "A_string", "merged_certificate_authority_data"
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "raw" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "merged_certificate_authority_data" ]
+                    ]
+                  ],
+                  [ "A_string", "encoded" ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

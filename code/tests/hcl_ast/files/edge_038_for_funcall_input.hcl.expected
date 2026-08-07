@@ -1,0 +1,24 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "For_tuple",
+      {
+        "identifiers": [ "x", [] ],
+        "input": [
+          "Fun_call",
+          [
+            "concat",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "b" ] ] ]
+            ]
+          ]
+        ],
+        "output": [ "Id", "x" ],
+        "cond": null
+      }
+    ]
+  ]
+]

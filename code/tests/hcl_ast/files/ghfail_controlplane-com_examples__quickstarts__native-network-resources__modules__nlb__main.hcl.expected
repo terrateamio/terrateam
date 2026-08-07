@@ -1,0 +1,693 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_lb" ], [ "Lit", "aws-nlb" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-nlb" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "internal",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "internal" ] ] ]
+        ],
+        [ "Attribute", "load_balancer_type", [ "String", "network" ] ],
+        [
+          "Attribute",
+          "subnets",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "subnet-ids" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [ "Attribute", "enable_cross_zone_load_balancing", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_target_group" ], [ "Lit", "aws-target-group" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "targets" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-tg-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "index",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "values",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ], [ "A_string", "targets" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "port",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "internal-port" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "target_type", [ "String", "ip" ] ],
+        [ "Attribute", "protocol", [ "String", "TCP" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "target-ip" ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "ip-address" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "target-internal-port" ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "internal-port" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "target-external-port" ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "external-port" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_target_group_attachment" ],
+        [ "Lit", "aws-target-group-attachment" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Id", "aws_lb_target_group" ],
+              [ "A_string", "aws-target-group" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "target_group_arn",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "target_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "tags" ]
+                ]
+              ],
+              [ "A_string", "target-ip" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "port",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "tags" ]
+                ]
+              ],
+              [ "A_string", "target-internal-port" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_listener" ], [ "Lit", "aws-lb-listener" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Id", "aws_lb_target_group" ],
+              [ "A_string", "aws-target-group" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "load_balancer_arn",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "aws-nlb" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "protocol", [ "String", "TCP" ] ],
+        [
+          "Attribute",
+          "port",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "tags" ]
+                ]
+              ],
+              [ "A_string", "target-external-port" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "default_action",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "forward" ] ],
+              [
+                "Attribute",
+                "target_group_arn",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_target_group" ], [ "Lit", "target-group-all" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "include-all-resources-in-one-target-group" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-tg-all" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "port",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "values",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "targets" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "internal-port" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-id" ] ] ]
+        ],
+        [ "Attribute", "target_type", [ "String", "ip" ] ],
+        [ "Attribute", "protocol", [ "String", "TCP" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_listener" ], [ "Lit", "lb-listener-all" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "include-all-resources-in-one-target-group" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "load_balancer_arn",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "aws-nlb" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "protocol", [ "String", "TCP" ] ],
+        [
+          "Attribute",
+          "port",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "values",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "targets" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "internal-port" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "default_action",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "forward" ] ],
+              [
+                "Attribute",
+                "target_group_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_lb_target_group" ],
+                            [ "A_string", "target-group-all" ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "name-prefix" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_target_group_attachment" ],
+        [ "Lit", "lb-attachment-all" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "t" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "targets" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Id", "t" ],
+              "cond": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "include-all-resources-in-one-target-group" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "target_group_arn",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_lb_target_group" ],
+                      [ "A_string", "target-group-all" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "target_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "ip-address" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "port",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "internal-port" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "nlb-dns-name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "aws-nlb" ] ] ],
+              [ "A_string", "dns_name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "nlb-arn" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "aws-nlb" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "zone-id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "aws-nlb" ] ] ],
+              [ "A_string", "zone_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

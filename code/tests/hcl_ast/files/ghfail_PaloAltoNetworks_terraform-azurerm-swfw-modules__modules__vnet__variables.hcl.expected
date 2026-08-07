@@ -1,0 +1,3805 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the Azure Virtual Network." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "resource_group_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the Resource Group to use." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "region" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The name of the Azure region to deploy the resources in."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The map of tags to assign to all created resources." ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "create_virtual_network" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nControls Virtual Network creation.\n  \nWhen set to `true`, creates the Virtual Network, otherwise just use a pre-existing network.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [ "Attribute", "type", [ "Id", "bool" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "address_space" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nThe address space used by the virtual network.\n  \nYou can supply more than one address space. Required only when you create a VNET.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "v", [] ],
+                          "input": [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "address_space" ]
+                                  ]
+                                ],
+                                [ "Tuple", [] ]
+                              ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [
+                                        "String",
+                                        "^(\\d{1,3}\\.){3}\\d{1,3}\\/[12]?[0-9]$"
+                                      ],
+                                      [ "Id", "v" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nAll items in var.address_space should be in CIDR notation, with the maximum subnet of /29.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "dns_servers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "List of IP addresses of custom DNS servers (by default Azure DNS is used)."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "v", [] ],
+                          "input": [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "dns_servers" ]
+                                  ]
+                                ],
+                                [ "Tuple", [] ]
+                              ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [
+                                        "String",
+                                        "^(\\d{1,3}\\.){3}\\d{1,3}$"
+                                      ],
+                                      [ "Id", "v" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nAll items in var.dns_servers should be valid IP addresses.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vnet_encryption" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nEnables Azure Virtual Network encryption feature (in `AllowUnencrypted` mode by default).\nWhen set to `null` VNET encryption is disabled.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "AllowUnencrypted" ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "vnet_encryption" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "contains",
+                        [
+                          [ "Tuple", [ [ "String", "AllowUnencrypted" ] ] ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "vnet_encryption" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `vnet_encryption` variable must be of \"AllowUnencrypted\" (encryption enabled) or `null` (encryption disabled).\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ddos_protection_plan_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "ID of an existing Azure Network DDOS Protection Plan to be associated with the VNET."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "network_security_groups" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nMap of objects describing Network Security Groups.\n\nList of available properties:\n\n- `name`  - (`string`, required) name of the Network Security Group.\n- `rules` - (`map`, optional, defaults to `{}`) A list of objects representing Network Security Rules.\n\n  **Note!** \\\n  All port values are integers between `0` and `65535`. Port ranges can be specified as `minimum-maximum` port value,\n  example: `21-23`.\n    \n  Following attributes are available:\n\n  - `name`                         - (`string`, required) name of the rule.\n  - `priority`                     - (`number`, required) numeric priority of the rule. The value can be between 100 and 4096\n                                     and must be unique for each rule in the collection. The lower the priority number,\n                                     the higher the priority of the rule.\n  - `direction`                    - (`string`, required) the direction specifies if rule will be evaluated on incoming\n                                     or outgoing traffic. Possible values are `Inbound` and `Outbound`.\n  - `access`                       - (`string`, required) specifies whether network traffic is allowed or denied.\n                                     Possible values are `Allow` and `Deny`.\n  - `protocol`                     - (`string`, required) a network protocol this rule applies to. Possible values include\n                                     `Tcp`, `Udp`, `Icmp`, or `*` (which matches all). For supported values refer to the\n                                     [provider documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_securityrule#protocol).\n  - `source_port_range`            - (`string`, required, mutually exclusive with `source_port_ranges`) a source port or\n                                     a range of ports. This can also be an `*` to match all.\n  - `source_port_ranges`           - (`list`, required, mutually exclusive with `source_port_range`) a list of source ports\n                                     or ranges of ports.\n  - `source_address_prefix`        - (`string`, required, mutually exclusive with `source_address_prefixes`) source CIDR or IP\n                                     range or `*` to match any IP. This can also be a tag. To see all available tags for a\n                                     region use the following command (example for US West Central):\n                                     `az network list-service-tags --location westcentralus`.\n  - `source_address_prefixes`      - (`list`, required, mutually exclusive with `source_address_prefix`) a list of source\n                                     address prefixes. Tags are not allowed.\n  - `destination_port_range`       - (`string`, required, mutually exclusive with `destination_port_ranges`) destination port\n                                     or a range of ports. This can also be an `*` to match all.\n  - `destination_port_ranges`      - (`list`, required, mutually exclusive with `destination_port_range`) a list of\n                                     destination ports or a ranges of ports.\n  - `destination_address_prefix`   - (`string`, required, mutually exclusive with `destination_address_prefixes`) destination\n                                     CIDR or IP range or `*` to match any IP. Tags are allowed, see `source_address_prefix`\n                                     for details.\n  - `destination_address_prefixes` - (`list`, required,  mutually exclusive with `destination_address_prefixes`) a list of \n                                     destination address prefixes. Tags are not allowed.\n\nExample:\n```hcl\n{\n  \"nsg_1\" = {\n    name = \"network_security_group_1\"\n    rules = {\n      \"AllOutbound\" = {\n        name =                     = \"DefaultOutbound\"\n        priority                   = 100\n        direction                  = \"Outbound\"\n        access                     = \"Allow\"\n        protocol                   = \"Tcp\"\n        source_port_range          = \"*\"\n        source_address_prefix      = \"*\"\n        destination_port_range     = \"*\"\n        destination_address_prefix = \"*\"\n      },\n      \"AllowSSH\" = {\n        name                       = \"InboundSSH\"\n        priority                   = 200\n        direction                  = \"Inbound\"\n        access                     = \"Allow\"\n        protocol                   = \"Tcp\"\n        source_port_range          = \"*\"\n        source_address_prefix      = \"*\"\n        destination_port_range     = \"22\"\n        destination_address_prefix = \"*\"\n      },\n      \"AllowWebBrowsing\" = {\n        name                       = \"InboundWeb\"\n        priority                   = 300\n        direction                  = \"Inbound\"\n        access                     = \"Allow\"\n        protocol                   = \"Tcp\"\n        source_port_range          = \"*\"\n        source_address_prefix      = \"*\"\n        destination_port_ranges    = [\"80\",\"443\"]\n        destination_address_prefix = \"VirtualNetwork\"\n      }\n    }\n  },\n  \"nsg_2\" = {\n    name = \"empty-nsg\n  }\n}\n```\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "rules" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "map",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "object",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "name" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "priority" ],
+                                                    [ "Id", "number" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "direction" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "access" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "protocol" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "source_port_range"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "source_port_ranges"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "list",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "source_address_prefix"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "source_address_prefixes"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "list",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "destination_port_range"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "destination_port_ranges"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "list",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "destination_address_prefix"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "destination_address_prefixes"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "list",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Equal",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "_", [ "v" ] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "network_security_groups" ]
+                                ]
+                              ],
+                              "output": [
+                                "Attr",
+                                [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "distinct",
+                              [
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "v" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string",
+                                          "network_security_groups"
+                                        ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ], [ "A_string", "name" ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [ "EOF", "\nThe `name` property has to be unique.\n" ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "_", [ "nsg" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "network_security_groups" ]
+                            ]
+                          ],
+                          "output": [
+                            "Equal",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "_", [ "rule" ] ],
+                                        "input": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "nsg" ],
+                                            [ "A_string", "rules" ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rule" ],
+                                            [ "A_string", "name" ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "distinct",
+                                        [
+                                          [
+                                            "For_tuple",
+                                            {
+                                              "identifiers": [
+                                                "_", [ "rule" ]
+                                              ],
+                                              "input": [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "nsg" ],
+                                                  [ "A_string", "rules" ]
+                                                ]
+                                              ],
+                                              "output": [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "rule" ],
+                                                  [ "A_string", "name" ]
+                                                ]
+                                              ],
+                                              "cond": null
+                                            }
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `rule.name` property has to be unique in a particular NSG.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Log_and",
+                                      [
+                                        [
+                                          "Gte",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "rule" ],
+                                                [ "A_string", "priority" ]
+                                              ]
+                                            ],
+                                            [ "Int", 100 ]
+                                          ]
+                                        ],
+                                        [
+                                          "Lte",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "rule" ],
+                                                [ "A_string", "priority" ]
+                                              ]
+                                            ],
+                                            [ "Int", 4096 ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `priority` should be a value between 100 and 4096.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "contains",
+                                        [
+                                          [
+                                            "Tuple",
+                                            [
+                                              [ "String", "Inbound" ],
+                                              [ "String", "Outbound" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "rule" ],
+                                              [ "A_string", "direction" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `direction` property should be one of Inbound or Outbound.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "contains",
+                                        [
+                                          [
+                                            "Tuple",
+                                            [
+                                              [ "String", "Allow" ],
+                                              [ "String", "Deny" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "rule" ],
+                                              [ "A_string", "access" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `access` property should be one of Allow or Deny.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "contains",
+                                        [
+                                          [
+                                            "Tuple",
+                                            [
+                                              [ "String", "Tcp" ],
+                                              [ "String", "Udp" ],
+                                              [ "String", "Icmp" ],
+                                              [ "String", "*" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "rule" ],
+                                              [ "A_string", "protocol" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `protocol` property should be one of Tcp, Udp, Icmp or *.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Log_and",
+                                      [
+                                        [
+                                          "Log_or",
+                                          [
+                                            [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "source_port_range"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "source_port_ranges"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Not",
+                                          [
+                                            "Log_and",
+                                            [
+                                              [
+                                                "Equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [
+                                                        "A_string",
+                                                        "source_port_range"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [
+                                                        "A_string",
+                                                        "source_port_ranges"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `source_port_range` and `source_port_ranges` properties are required but mutually exclusive.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "can",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "regex",
+                                              [
+                                                [
+                                                  "String",
+                                                  "^\\*$|^\\d{1,5}(\\-\\d{1,5})?$"
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "source_port_range"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": [
+                                      "Not_equal",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rule" ],
+                                            [
+                                              "A_string", "source_port_range"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `source_port_range` can be either an '*' or a port number (between 0 and 65535) or a range of ports\n(delimited with a '-').\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "_", [ "range" ] ],
+                                        "input": [
+                                          "Fun_call",
+                                          [
+                                            "coalesce",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "rule" ],
+                                                  [
+                                                    "A_string",
+                                                    "source_port_ranges"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Tuple", [] ]
+                                            ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Fun_call",
+                                          [
+                                            "can",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "regex",
+                                                  [
+                                                    [
+                                                      "String",
+                                                      "^\\d{1,5}(\\-\\d{1,5})?$"
+                                                    ],
+                                                    [ "Id", "range" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `source_port_ranges` is a list of port numbers (between 0 and 65535) or a ranges of ports (delimited with a '-').\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Log_and",
+                                      [
+                                        [
+                                          "Log_or",
+                                          [
+                                            [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "destination_port_range"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "destination_port_ranges"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Not",
+                                          [
+                                            "Log_and",
+                                            [
+                                              [
+                                                "Equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [
+                                                        "A_string",
+                                                        "destination_port_range"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [
+                                                        "A_string",
+                                                        "destination_port_ranges"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `destination_port_range` and `destination_port_ranges` properties are required but mutually exclusive.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "can",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "regex",
+                                              [
+                                                [
+                                                  "String",
+                                                  "^\\*$|^\\d{1,5}(\\-\\d{1,5})?$"
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "destination_port_range"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": [
+                                      "Not_equal",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rule" ],
+                                            [
+                                              "A_string",
+                                              "destination_port_range"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `destination_port_range` can be either an '*' or a port number (between 0 and 65535) or a range of ports\n(delimited with a '-').\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "_", [ "range" ] ],
+                                        "input": [
+                                          "Fun_call",
+                                          [
+                                            "coalesce",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "rule" ],
+                                                  [
+                                                    "A_string",
+                                                    "destination_port_ranges"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Tuple", [] ]
+                                            ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Fun_call",
+                                          [
+                                            "can",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "regex",
+                                                  [
+                                                    [
+                                                      "String",
+                                                      "^\\d{1,5}(\\-\\d{1,5})?$"
+                                                    ],
+                                                    [ "Id", "range" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `destination_port_ranges` is a list of port numbers (between 0 and 65535) or a ranges of ports (delimited with a '-').\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Log_and",
+                                      [
+                                        [
+                                          "Log_or",
+                                          [
+                                            [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "source_address_prefix"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "source_address_prefixes"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Not",
+                                          [
+                                            "Log_and",
+                                            [
+                                              [
+                                                "Equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [
+                                                        "A_string",
+                                                        "source_address_prefix"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [
+                                                        "A_string",
+                                                        "source_address_prefixes"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `source_address_prefix` and `source_address_prefixes` properties are required but mutually exclusive.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "can",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "regex",
+                                              [
+                                                [
+                                                  "String",
+                                                  "^\\*$|^[A-Za-z]+$|^(\\d{1,3}\\.){3}\\d{1,3}(\\/[12]?[0-9]|\\/3[0-2])?$"
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "source_address_prefix"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": [
+                                      "Not_equal",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rule" ],
+                                            [
+                                              "A_string",
+                                              "source_address_prefix"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `source_address_prefix` can be either '*', a CIDR or an Azure Service Tag.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "_", [ "prefix" ] ],
+                                        "input": [
+                                          "Fun_call",
+                                          [
+                                            "coalesce",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "rule" ],
+                                                  [
+                                                    "A_string",
+                                                    "source_address_prefixes"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Tuple", [] ]
+                                            ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Fun_call",
+                                          [
+                                            "can",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "regex",
+                                                  [
+                                                    [
+                                                      "String",
+                                                      "^(\\d{1,3}\\.){3}\\d{1,3}(\\/[12]?[0-9]|\\/3[0-2])?$"
+                                                    ],
+                                                    [ "Id", "prefix" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `source_address_prefixes` can be a list of CIDRs.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Log_and",
+                                      [
+                                        [
+                                          "Log_or",
+                                          [
+                                            [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "destination_address_prefix"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Equal",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "destination_address_prefixes"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Not",
+                                          [
+                                            "Log_and",
+                                            [
+                                              [
+                                                "Equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [
+                                                        "A_string",
+                                                        "destination_address_prefix"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [
+                                                        "A_string",
+                                                        "destination_address_prefixes"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `destination_address_prefix` and `destination_address_prefixes` properties are required but mutually exclusive.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "can",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "regex",
+                                              [
+                                                [
+                                                  "String",
+                                                  "^\\*$|^[A-Za-z]+$|^(\\d{1,3}\\.){3}\\d{1,3}(\\/[12]?[0-9]|\\/3[0-2])?$"
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "rule" ],
+                                                    [
+                                                      "A_string",
+                                                      "destination_address_prefix"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": [
+                                      "Not_equal",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rule" ],
+                                            [
+                                              "A_string",
+                                              "destination_address_prefix"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `destination_address_prefix` can be either '*', a CIDR or an Azure Service Tag.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "nsg" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "network_security_groups" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "rule" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "nsg" ],
+                                        [ "A_string", "rules" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "_", [ "prefix" ] ],
+                                        "input": [
+                                          "Fun_call",
+                                          [
+                                            "coalesce",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "rule" ],
+                                                  [
+                                                    "A_string",
+                                                    "destination_address_prefixes"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Tuple", [] ]
+                                            ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Fun_call",
+                                          [
+                                            "can",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "regex",
+                                                  [
+                                                    [
+                                                      "String",
+                                                      "^(\\d{1,3}\\.){3}\\d{1,3}(\\/[12]?[0-9]|\\/3[0-2])?$"
+                                                    ],
+                                                    [ "Id", "prefix" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `destination_address_prefixes` can be a list of CIDRs.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "route_tables" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nMap of objects describing a Route Tables.\n\nList of available properties:\n\n- `name`                          - (`string`, required) name of a Route Table.\n- `bgp_route_propagation_enabled` - (`bool`, optional, defaults to `true`) controls propagation of routes learned by BGP.\n- `routes`                        - (`map`, required) a map of Route Table entries (UDRs):\n  - `name`                - (`string`, required) a name of a UDR.\n  - `address_prefix`      - (`string`, required) the destination CIDR to which the route applies, such as `10.1.0.0/16`.\n  - `next_hop_type`       - (`string`, required) the type of Azure hop the packet should be sent to. Possible values are:\n                            `VirtualNetworkGateway`, `VnetLocal`, `Internet`, `VirtualAppliance` and `None`.\n  - `next_hop_ip_address` - (`string`, required) contains the IP address packets should be forwarded to. Used only when\n                            `next_hop_type` is set to `VirtualAppliance`, ignored otherwise.\n\nExample:\n```hcl\n{\n  \"rt_1\" = {\n    name = \"route_table_1\"\n    routes = {\n      \"route_1\" = {\n        name           = \"route-1\"\n        address_prefix = \"10.1.0.0/16\"\n        next_hop_type  = \"VnetLocal\"\n      },\n      \"route_2\" = {\n        name           = \"route-2\"\n        address_prefix = \"10.2.0.0/16\"\n        next_hop_type  = \"VnetLocal\"\n      },\n    }\n  },\n  \"rt_2\" = {\n    name = \"route_table_2\"\n    routes = {\n      \"route_3\" = {\n        name                   = \"default-nva-route\"\n        address_prefix         = \"0.0.0.0/0\"\n        next_hop_type          = \"VirtualAppliance\"\n        next_hop_ip_address = \"10.112.0.100\"\n      }\n    },\n  },\n}\n```\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "bgp_route_propagation_enabled" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", true ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "routes" ],
+                            [
+                              "Fun_call",
+                              [
+                                "map",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "name" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [ "Bare", "address_prefix" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [ "Bare", "next_hop_type" ],
+                                              [ "Id", "string" ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare", "next_hop_ip_address"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Equal",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "_", [ "v" ] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "route_tables" ]
+                                ]
+                              ],
+                              "output": [
+                                "Attr",
+                                [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "distinct",
+                              [
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "v" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "route_tables" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ], [ "A_string", "name" ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [ "EOF", "\nThe `name` property has to be unique.\n" ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "_", [ "rt" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "route_tables" ]
+                            ]
+                          ],
+                          "output": [
+                            "Equal",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "_", [ "udr" ] ],
+                                        "input": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rt" ],
+                                            [ "A_string", "routes" ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "udr" ],
+                                            [ "A_string", "name" ]
+                                          ]
+                                        ],
+                                        "cond": null
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "distinct",
+                                        [
+                                          [
+                                            "For_tuple",
+                                            {
+                                              "identifiers": [
+                                                "_", [ "udr" ]
+                                              ],
+                                              "input": [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "rt" ],
+                                                  [ "A_string", "routes" ]
+                                                ]
+                                              ],
+                                              "output": [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "udr" ],
+                                                  [ "A_string", "name" ]
+                                                ]
+                                              ],
+                                              "cond": null
+                                            }
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `rule.name` property has to be unique in a particular NSG.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "rt" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "route_tables" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "udr" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "rt" ],
+                                        [ "A_string", "routes" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Tuple",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "can",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "regex",
+                                                  [
+                                                    [
+                                                      "String",
+                                                      "^(\\d{1,3}\\.){3}\\d{1,3}(\\/[12]?[0-9]|\\/3[0-2])?$"
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "udr" ],
+                                                        [
+                                                          "A_string",
+                                                          "address_prefix"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `address_prefix` should be in CIDR notation.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "rt" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "route_tables" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "udr" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "rt" ],
+                                        [ "A_string", "routes" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Cond",
+                                      {
+                                        "if_": [
+                                          "Fun_call",
+                                          [
+                                            "can",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "udr" ],
+                                                  [
+                                                    "A_string",
+                                                    "next_hop_type"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "then_": [
+                                          "Fun_call",
+                                          [
+                                            "contains",
+                                            [
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [
+                                                    "String",
+                                                    "VirtualNetworkGateway"
+                                                  ],
+                                                  [ "String", "VnetLocal" ],
+                                                  [ "String", "Internet" ],
+                                                  [
+                                                    "String",
+                                                    "VirtualAppliance"
+                                                  ],
+                                                  [ "String", "None" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "udr" ],
+                                                  [
+                                                    "A_string",
+                                                    "next_hop_type"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "else_": [ "Bool", true ]
+                                      }
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `next_hop_type` route property should have value of either: \\\"VirtualNetworkGateway\\\", \\\"VnetLocal\\\", \\\"Internet\\\",\n\\\"VirtualAppliance\\\" or \\\"None\\\".\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "rt" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "route_tables" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "udr" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "rt" ],
+                                        [ "A_string", "routes" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "can",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "regex",
+                                              [
+                                                [
+                                                  "String",
+                                                  "^(\\d{1,3}\\.){3}\\d{1,3}$"
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "udr" ],
+                                                    [
+                                                      "A_string",
+                                                      "next_hop_ip_address"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": [
+                                      "Not_equal",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "udr" ],
+                                            [
+                                              "A_string",
+                                              "next_hop_ip_address"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `next_hop_ip_address` should be a valid IPv4 address.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "subnets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nMap of objects describing subnets to manage.\n  \nList of available attributes of each subnet entry:\n\n- `create`                          - (`bool`, optional, defaults to `true`) controls subnet creation, subnets are created when\n                                      set to `true` or sourced when set to `false`.\n- `name`                            - (`string`, required) name of a subnet.\n- `address_prefixes`                - (`list(string)`, required when `create` = true`) a list of address prefixes within VNET's\n                                      address space to assign to a created subnet.\n- `network_security_group_key`      - (`string`, optional, defaults to `null`) a key identifying an NSG defined in\n                                      `network_security_groups` that should be assigned to this subnet.\n- `route_table_key`                 - (`string`, optional, defaults to `null`) a key identifying a Route Table defined in\n                                      `route_tables` that should be assigned to this subnet.\n- `default_outbound_access_enabled` - (`bool`, optional, defaults to `false`) a flag that enables default outbound access to\n                                      the Internet from the subnet. Using explicit Internet access methods is recommended.\n- `enable_storage_service_endpoint` - (`bool`, optional, defaults to `false`) a flag that enables `Microsoft.Storage` service\n                                      endpoint on a subnet. This is a suggested setting for the management interface when full\n                                      bootstrapping using an Azure Storage Account is used.\n- `enable_appgw_delegation`         - (`bool`, optional, defaults to `false`) a flag that enables subnet delegation to \n                                      `Microsoft.Network/applicationGateways` service. This is required for Application Gateway\n                                      Enhanced Network Isolation.\n- `enable_cloudngfw_delegation`     - (`bool`, optional, defaults to `false`) a flag that enables subnet delegation to\n                                      `PaloAltoNetworks.Cloudngfw/firewalls` service. This is required for Cloud NGFW to work\n                                      in a VNET-based deployment.\n\nExample:\n```hcl\n{\n  \"management\" = {\n    name                            = \"management-snet\"\n    address_prefixes                = [\"10.100.0.0/24\"]\n    network_security_group_key      = \"network_security_group_1\"\n    enable_storage_service_endpoint = true\n  },\n  \"private\" = {\n    name                       = \"private-snet\"\n    address_prefixes           = [\"10.100.1.0/24\"]\n    route_table_key            = \"route_table_2\"\n  },\n  \"public\" = {\n    name                       = \"public-snet\"\n    address_prefixes           = [\"10.100.2.0/24\"]\n  }\n}\n```\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "create" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", true ] ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "address_prefixes" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "network_security_group_key" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "route_table_key" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "default_outbound_access_enabled" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "enable_storage_service_endpoint" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "enable_appgw_delegation" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "enable_cloudngfw_delegation" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Equal",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "_", [ "v" ] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ], [ "A_string", "subnets" ]
+                                ]
+                              ],
+                              "output": [
+                                "Attr",
+                                [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "distinct",
+                              [
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "v" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "subnets" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ], [ "A_string", "name" ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [ "EOF", "\nThe `name` property has to be unique.\n" ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "snet" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "subnets" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Cond",
+                                      {
+                                        "if_": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "snet" ],
+                                            [ "A_string", "create" ]
+                                          ]
+                                        ],
+                                        "then_": [
+                                          "Gt",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "length",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "snet" ],
+                                                      [
+                                                        "A_string",
+                                                        "address_prefixes"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Int", 0 ]
+                                          ]
+                                        ],
+                                        "else_": [ "Bool", true ]
+                                      }
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nWhen subnet is created, the `address_prefixes` list must not be empty.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "flatten",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "_", [ "snet" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "subnets" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "_", [ "cidr" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "snet" ],
+                                        [ "A_string", "address_prefixes" ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Fun_call",
+                                      [
+                                        "can",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "regex",
+                                              [
+                                                [
+                                                  "String",
+                                                  "^(\\d{1,3}\\.){3}\\d{1,3}\\/[12]?[0-9]$"
+                                                ],
+                                                [ "Id", "cidr" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nThe `address_prefixes` should be list of CIDR blocks, with the maximum subnet of /29.\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

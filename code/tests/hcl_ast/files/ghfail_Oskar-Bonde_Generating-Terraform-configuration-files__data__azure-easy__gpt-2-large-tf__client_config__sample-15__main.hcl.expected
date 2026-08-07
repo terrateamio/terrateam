@@ -1,0 +1,337 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "azurerm",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "source" ], [ "String", "hashicorp/azurerm" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_public_ip" ], [ "Lit", "name_0" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "myTFResourceGroup" ] ],
+        [ "Attribute", "location", [ "String", "westus2" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "rg" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute", "public_ip_address_allocation", [ "String", "static" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_network_interface" ], [ "Lit", "name_1" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "myTFResourceGroup" ] ],
+        [ "Attribute", "location", [ "String", "westus2" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "rg" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_network_security_group" ],
+                  [ "A_string", "rg" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_virtual_machine" ], [ "Lit", "name_2" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "myTFResourceGroup" ] ],
+        [ "Attribute", "location", [ "String", "westus2" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_resource_group" ], [ "A_string", "rg" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_interface_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "azurerm_network_interface" ],
+                              [ "A_string", "name_1" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "vm_size", [ "String", "Standard_A0" ] ],
+        [ "Attribute", "delete_os_disk_on_termination", [ "Bool", true ] ],
+        [ "Attribute", "vm_size_gb", [ "String", "Standard_A1" ] ],
+        [
+          "Block",
+          {
+            "type_": "storage_image_reference",
+            "labels": [],
+            "body": [
+              [ "Attribute", "publisher", [ "String", "CoreOS" ] ],
+              [ "Attribute", "offer", [ "String", "CoreOS" ] ],
+              [ "Attribute", "sku", [ "String", "CoreOS" ] ],
+              [ "Attribute", "version", [ "String", "latest" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "storage_os_disk",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "myTFResourceGroup" ] ],
+              [
+                "Attribute",
+                "vhd_uri",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "azurerm_storage_account" ],
+                        [ "A_string", "rg" ]
+                      ]
+                    ],
+                    [ "A_string", "primary_blob_endpoint" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "caching", [ "String", "ReadWrite" ] ],
+              [ "Attribute", "create_option", [ "String", "FromImage" ] ],
+              [ "Attribute", "os_type", [ "String", "linux" ] ],
+              [ "Attribute", "os_type_size", [ "String", "Standard_A1" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "os_profile",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "computer_name",
+                [ "String", "myTFResourceGroup" ]
+              ],
+              [
+                "Attribute",
+                "admin_username",
+                [ "String", "myTFResourceGroup" ]
+              ],
+              [
+                "Attribute",
+                "admin_password",
+                [ "String", "myTFResourceGroup" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "os_profile_linux_config",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "disable_password_authentication",
+                [ "Bool", true ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "ssh_keys",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "path",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "/home/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ], [ "A_string", "username" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/.ssh/authorized_keys" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "key_data",
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Fun_call",
+                                [
+                                  "file",
+                                  [
+                                    [
+                                      "Template",
+                                      [
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "username" ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [
+                                          "Literal", "/.ssh/authorized_keys}"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "tags",
+            "labels": [],
+            "body": [
+              [ "Attribute", "Name", [ "String", "myTFResourceGroup" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

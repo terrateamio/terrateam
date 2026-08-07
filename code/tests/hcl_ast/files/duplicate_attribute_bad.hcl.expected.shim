@@ -1,0 +1,1 @@
+hcl parse: <stdin>:5,1-4: Attribute redefined; The argument "foo" was already set at <stdin>:4,1-4. Each argument may be set only once.

@@ -1,0 +1,82 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_ami" ], [ "Lit", "fedora-coreos" ] ],
+      "body": [
+        [ "Attribute", "most_recent", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "owners",
+          [ "Tuple", [ [ "String", "125523088429" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "architecture" ] ],
+              [
+                "Attribute",
+                "values",
+                [ "Tuple", [ [ "String", "x86_64" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "virtualization-type" ] ],
+              [ "Attribute", "values", [ "Tuple", [ [ "String", "hvm" ] ] ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "description" ] ],
+              [
+                "Attribute",
+                "values",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [ "Literal", "Fedora CoreOS " ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "os_stream" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", " *" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

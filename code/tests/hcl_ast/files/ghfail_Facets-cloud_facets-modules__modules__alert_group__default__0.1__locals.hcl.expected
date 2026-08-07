@@ -1,0 +1,495 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "spec_json",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "instance" ] ] ],
+              [ "A_string", "spec" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "userspecified_rules",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "spec_json" ] ]
+                ],
+                [ "String", "rules" ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "all_metadata",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "labels" ],
+                [
+                  "Fun_call",
+                  [
+                    "merge",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "alert_group_name" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "instance_name" ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "role" ], [ "String", "alert-rules" ] ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "instance" ]
+                                  ]
+                                ],
+                                [ "A_string", "metadata" ]
+                              ]
+                            ],
+                            [ "String", "labels" ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "annotations" ],
+                [
+                  "Fun_call",
+                  [
+                    "merge",
+                    [
+                      [
+                        "Object",
+                        [ [ [ "Bare", "owner" ], [ "String", "facets" ] ] ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "instance" ]
+                                  ]
+                                ],
+                                [ "A_string", "metadata" ]
+                              ]
+                            ],
+                            [ "String", "annotations" ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "instance_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-alert-group" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "namespace" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                    ],
+                    [ "A_string", "namespace" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "all_rules",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "rule_name", [ "rule_object" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "userspecified_rules" ] ]
+              ],
+              "output": [
+                "Object",
+                [
+                  [ [ "Bare", "alert" ], [ "Id", "rule_name" ] ],
+                  [
+                    [ "Bare", "expr" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule_object" ], [ "A_string", "expr" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "for" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "rule_object" ], [ "A_string", "for" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "labels" ],
+                    [
+                      "Fun_call",
+                      [
+                        "merge",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "lookup",
+                              [
+                                [ "Id", "rule_object" ],
+                                [ "String", "labels" ],
+                                [ "Object", [] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Quoted", "resource_type" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule_object" ],
+                                    [ "A_string", "resource_type" ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Quoted", "resource_name" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule_object" ],
+                                    [ "A_string", "resource_name" ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Quoted", "resourceType" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule_object" ],
+                                    [ "A_string", "resource_type" ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Quoted", "resourceName" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule_object" ],
+                                    [ "A_string", "resource_name" ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Quoted", "alert_type" ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "lookup",
+                                    [
+                                      [ "Id", "rule_object" ],
+                                      [ "String", "alert_type" ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Quoted", "severity" ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "lookup",
+                                    [
+                                      [ "Id", "rule_object" ],
+                                      [ "String", "severity" ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "annotations" ],
+                    [
+                      "Fun_call",
+                      [
+                        "merge",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "lookup",
+                              [
+                                [ "Id", "rule_object" ],
+                                [ "String", "annotations" ],
+                                [ "Object", [] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "message" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule_object" ],
+                                    [ "A_string", "message" ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Bare", "summary" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule_object" ],
+                                    [ "A_string", "summary" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not",
+                [
+                  "Fun_call",
+                  [
+                    "lookup",
+                    [
+                      [ "Id", "rule_object" ],
+                      [ "String", "disabled" ],
+                      [ "Bool", false ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "alert_manifest",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "apiVersion" ],
+                [ "String", "monitoring.coreos.com/v1" ]
+              ],
+              [ [ "Bare", "kind" ], [ "String", "PrometheusRule" ] ],
+              [
+                [ "Bare", "metadata" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "all_metadata" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "spec" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "groups" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "name" ],
+                                [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [ "A_string", "instance_name" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-alert-rules" ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Bare", "rules" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "all_rules" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "alert_manifest_yaml",
+          [
+            "Fun_call",
+            [
+              "yamlencode",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "alert_manifest" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "helm_values",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "anyResources" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "facets_alert" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "alert_manifest_yaml" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "helm_values_yaml",
+          [
+            "Fun_call",
+            [
+              "yamlencode",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "helm_values" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

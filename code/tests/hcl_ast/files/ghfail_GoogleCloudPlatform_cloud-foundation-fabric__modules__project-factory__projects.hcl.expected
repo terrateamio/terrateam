@@ -1,0 +1,2385 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "_folder_projects_raw",
+          [
+            "For_object",
+            {
+              "identifiers": [ "f", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "fileset",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ], [ "A_string", "paths" ]
+                                ]
+                              ],
+                              [ "A_string", "folders" ]
+                            ]
+                          ],
+                          [ "String", "**/*.yaml" ]
+                        ]
+                      ]
+                    ],
+                    [ "Tuple", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Fun_call",
+                [ "trimsuffix", [ [ "Id", "f" ], [ "String", ".yaml" ] ] ]
+              ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "parent" ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Equal",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "dirname", [ [ "Id", "f" ] ] ]
+                                  ],
+                                  [ "String", "." ]
+                                ]
+                              ],
+                              "then_": [ "Null" ],
+                              "else_": [
+                                "Template",
+                                [
+                                  [ "Literal", "$folder_ids:" ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Fun_call",
+                                        [ "dirname", [ [ "Id", "f" ] ] ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "yamldecode",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "file",
+                              [
+                                [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [ "A_string", "paths" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "folders" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "/" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "f" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not",
+                [
+                  "Fun_call",
+                  [
+                    "endswith",
+                    [ [ "Id", "f" ], [ "String", "/.config.yaml" ] ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_projects_input",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "_folder_projects_raw" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "_projects_raw" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Fun_call", [ "basename", [ [ "Id", "k" ] ] ] ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "_templates_raw" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "v" ],
+                                  [ "A_string", "project_template" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Object", [] ]
+                        ]
+                      ]
+                    ],
+                    [ "Id", "v" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_projects_raw",
+          [
+            "For_object",
+            {
+              "identifiers": [ "f", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "fileset",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ], [ "A_string", "paths" ]
+                                ]
+                              ],
+                              [ "A_string", "projects" ]
+                            ]
+                          ],
+                          [ "String", "**/*.yaml" ]
+                        ]
+                      ]
+                    ],
+                    [ "Tuple", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Fun_call",
+                [ "trimsuffix", [ [ "Id", "f" ], [ "String", ".yaml" ] ] ]
+              ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "yamldecode",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "file",
+                        [
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "paths" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "projects" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "/" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "f" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not",
+                [
+                  "Fun_call",
+                  [
+                    "endswith",
+                    [ [ "Id", "f" ], [ "String", ".config.yaml" ] ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_templates_path",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "pathexpand",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "paths" ] ]
+                          ],
+                          [ "A_string", "project_templates" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "_templates_raw",
+          [
+            "For_object",
+            {
+              "identifiers": [ "f", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "fileset",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "_templates_path" ]
+                            ]
+                          ],
+                          [ "String", "**/*.yaml" ]
+                        ]
+                      ]
+                    ],
+                    [ "Tuple", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Fun_call",
+                [ "trimsuffix", [ [ "Id", "f" ], [ "String", ".yaml" ] ] ]
+              ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "yamldecode",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "file",
+                        [
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "_templates_path" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "/" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "f" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ctx_project_ids",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "ctx" ] ] ],
+                    [ "A_string", "project_ids" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "project_ids" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ctx_project_numbers",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "ctx" ] ] ],
+                    [ "A_string", "project_numbers" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "project_numbers" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ctx_tag_keys",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "ctx" ] ] ],
+                    [ "A_string", "tag_keys" ]
+                  ]
+                ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "k", [ "v" ] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "merge",
+                        [
+                          [
+                            "Ellipsis",
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "pk", [ "pv" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "projects_input" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_object",
+                                  {
+                                    "identifiers": [ "tk", [ "tv" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "module" ],
+                                                [ "A_string", "projects" ]
+                                              ]
+                                            ],
+                                            [ "Id", "pk" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "tag_keys" ]
+                                      ]
+                                    ],
+                                    "key_output": [
+                                      "Template",
+                                      [
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "pv" ],
+                                                [ "A_string", "name" ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [ "Literal", "/" ],
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [ "Id", "tk" ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ]
+                                      ]
+                                    ],
+                                    "value_output": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "tv" ], [ "A_string", "id" ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "key_output": [ "Id", "k" ],
+                    "value_output": [ "Id", "v" ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ctx_tag_values",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "ctx" ] ] ],
+                    [ "A_string", "tag_values" ]
+                  ]
+                ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "k", [ "v" ] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "merge",
+                        [
+                          [
+                            "Ellipsis",
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "pk", [ "pv" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "projects_input" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_object",
+                                  {
+                                    "identifiers": [ "tk", [ "tv" ] ],
+                                    "input": [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "module" ],
+                                                [ "A_string", "projects" ]
+                                              ]
+                                            ],
+                                            [ "Id", "pk" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "tag_values" ]
+                                      ]
+                                    ],
+                                    "key_output": [
+                                      "Template",
+                                      [
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "pv" ],
+                                                [ "A_string", "name" ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [ "Literal", "/" ],
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [ "Id", "tk" ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ]
+                                      ]
+                                    ],
+                                    "value_output": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "tv" ], [ "A_string", "id" ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "key_output": [ "Id", "k" ],
+                    "value_output": [ "Id", "v" ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "per_project_service_agents",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "module" ], [ "A_string", "projects" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "kk", [ "vv" ] ],
+                  "input": [
+                    "Attr",
+                    [ [ "Id", "v" ], [ "A_string", "service_agents" ] ]
+                  ],
+                  "key_output": [
+                    "Template",
+                    [
+                      [ "Literal", "service_agents/_self_/" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [ "Id", "kk" ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ],
+                  "value_output": [
+                    "Attr", [ [ "Id", "vv" ], [ "A_string", "iam_email" ] ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project_ids",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "module" ], [ "A_string", "projects" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Attr", [ [ "Id", "v" ], [ "A_string", "project_id" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project_numbers",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "module" ], [ "A_string", "projects" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Attr", [ [ "Id", "v" ], [ "A_string", "number" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "projects_input",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "projects" ] ] ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "_projects_output" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "projects_service_agents",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Ellipsis",
+                  [
+                    "For_tuple",
+                    {
+                      "identifiers": [ "k", [ "v" ] ],
+                      "input": [
+                        "Attr",
+                        [ [ "Id", "module" ], [ "A_string", "projects" ] ]
+                      ],
+                      "output": [
+                        "For_object",
+                        {
+                          "identifiers": [ "kk", [ "vv" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "v" ], [ "A_string", "service_agents" ]
+                            ]
+                          ],
+                          "key_output": [
+                            "Template",
+                            [
+                              [ "Literal", "service_agents/" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "k" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "/" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "kk" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ],
+                          "value_output": [
+                            "Attr",
+                            [ [ "Id", "vv" ], [ "A_string", "iam_email" ] ]
+                          ],
+                          "cond": null
+                        }
+                      ],
+                      "cond": null
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "terraform_data" ], [ "Lit", "project-preconditions" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Fun_call",
+                        [
+                          "alltrue",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "k", [ "v" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "_projects_input" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Log_or",
+                                  [
+                                    [
+                                      "Equal",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "try",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [
+                                                    "A_string",
+                                                    "project_template"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Not_equal",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "lookup",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "_templates_raw"
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [
+                                                    "A_string",
+                                                    "project_template"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "String",
+                        "Missing project templates referenced in projects."
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "projects" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../project" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "projects_input" ] ] ]
+        ],
+        [
+          "Attribute",
+          "billing_account",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "billing_account" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "deletion_policy",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "deletion_policy" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "descriptive_name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "descriptive_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parent",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "parent" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "prefix",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "prefix" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project_reuse",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "project_reuse" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "alerts",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "alerts" ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "asset_feeds",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "asset_feeds" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "auto_create_network",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "auto_create_network" ]
+                  ]
+                ],
+                [ "Bool", false ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "compute_metadata",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "compute_metadata" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "contacts",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "contacts" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "data_merges" ] ]
+                    ],
+                    [ "A_string", "contacts" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "context",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "ctx" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "condition_vars" ],
+                      [
+                        "Fun_call",
+                        [
+                          "merge",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ], [ "A_string", "ctx" ]
+                                  ]
+                                ],
+                                [ "A_string", "condition_vars" ]
+                              ]
+                            ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "folder_ids" ],
+                                  [
+                                    "For_object",
+                                    {
+                                      "identifiers": [ "k", [ "v" ] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "ctx_folder_ids" ]
+                                        ]
+                                      ],
+                                      "key_output": [
+                                        "Fun_call",
+                                        [
+                                          "replace",
+                                          [
+                                            [ "Id", "k" ],
+                                            [ "String", "$folder_ids:" ],
+                                            [ "String", "" ]
+                                          ]
+                                        ]
+                                      ],
+                                      "value_output": [ "Id", "v" ],
+                                      "cond": null
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "folder_ids" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "ctx_folder_ids" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default_service_account",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "default_service_account" ]
+                  ]
+                ],
+                [ "String", "keep" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "factories_config",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "factories_config" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "pathexpand",
+                        [
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Log_or",
+                                [
+                                  [
+                                    "Log_or",
+                                    [
+                                      [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string",
+                                                    "factories_config"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "A_string", "basepath" ]
+                                            ]
+                                          ],
+                                          [ "Null" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "startswith",
+                                          [
+                                            [ "Id", "v" ], [ "String", "/" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "startswith",
+                                      [ [ "Id", "v" ], [ "String", "." ] ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "then_": [ "Id", "v" ],
+                              "else_": [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "factories_config"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "basepath" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [ "Literal", "/" ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [ "Id", "v" ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Null" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "kms_autokeys",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "kms" ]
+                      ]
+                    ],
+                    [ "A_string", "autokeys" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "labels" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "data_merges" ] ]
+                    ],
+                    [ "A_string", "labels" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lien_reason",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "lien_reason" ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "log_scopes",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "log_scopes" ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "logging_exclusions",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "logging_exclusions" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "logging_metrics",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "logging_metrics" ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "logging_sinks",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "logging_sinks" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "notification_channels",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "notification_channels" ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "org_policies",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "org_policies" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "quotas",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "quotas" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "services",
+          [
+            "Fun_call",
+            [
+              "distinct",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "concat",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "services" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "data_merges" ]
+                            ]
+                          ],
+                          [ "A_string", "services" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "tags" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags_config",
+          [ "Object", [ [ [ "Bare", "ignore_iam" ], [ "Bool", true ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "universe",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "universe" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_sc",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "vpc_sc" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "workload_identity_pools",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "workload_identity_pools" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "projects-iam" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../project" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "projects_input" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "prefix",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "prefix" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project_reuse",
+          [
+            "Object",
+            [
+              [ [ "Bare", "use_data_source" ], [ "Bool", false ] ],
+              [
+                [ "Bare", "attributes" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [ "A_string", "projects" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "number" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [ "A_string", "projects" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "number" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "services_enabled" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [ "A_string", "projects" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "services" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "context",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "ctx" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "folder_ids" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "ctx" ] ]
+                          ],
+                          [ "A_string", "folder_ids" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "kms_keys" ],
+                      [
+                        "Fun_call",
+                        [
+                          "merge",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ], [ "A_string", "ctx" ]
+                                  ]
+                                ],
+                                [ "A_string", "kms_keys" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ], [ "A_string", "kms_keys" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "iam_principals" ],
+                      [
+                        "Fun_call",
+                        [
+                          "merge",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "ctx_iam_principals" ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "lookup",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string",
+                                        "per_project_service_agents"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ], [ "A_string", "key" ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "lookup",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "self_sas_iam_emails" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ], [ "A_string", "key" ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "projects_service_agents" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "project_ids" ],
+                      [
+                        "Fun_call",
+                        [
+                          "merge",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ], [ "A_string", "ctx" ]
+                                  ]
+                                ],
+                                [ "A_string", "project_ids" ]
+                              ]
+                            ],
+                            [
+                              "For_object",
+                              {
+                                "identifiers": [ "k", [ "v" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "module" ],
+                                    [ "A_string", "projects" ]
+                                  ]
+                                ],
+                                "key_output": [ "Id", "k" ],
+                                "value_output": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "v" ],
+                                    [ "A_string", "project_id" ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "tag_keys" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "ctx_tag_keys" ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "tag_values" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "ctx_tag_values" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "factories_config",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "pam_entitlements" ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "factories_config" ]
+                            ]
+                          ],
+                          [ "A_string", "pam_entitlements" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "iam",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "iam" ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "iam_bindings",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "iam_bindings" ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "iam_bindings_additive",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "iam_bindings_additive" ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "iam_by_principals",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "iam_by_principals" ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "iam_by_principals_conditional",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "iam_by_principals_conditional" ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "iam_by_principals_additive",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "iam_by_principals_additive" ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "logging_data_access",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "logging_data_access" ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metric_scopes",
+          [
+            "Fun_call",
+            [
+              "distinct",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "concat",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "metric_scopes" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "data_merges" ]
+                            ]
+                          ],
+                          [ "A_string", "metric_scopes" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "pam_entitlements",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "pam_entitlements" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_agents_config",
+          [
+            "Object",
+            [
+              [ [ "Bare", "create_primary_agents" ], [ "Bool", false ] ],
+              [ [ "Bare", "grant_default_roles" ], [ "Bool", false ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_encryption_key_ids",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "service_encryption_key_ids" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "data_merges" ] ]
+                    ],
+                    [ "A_string", "service_encryption_key_ids" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "shared_vpc_host_config",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "shared_vpc_host_config" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "shared_vpc_service_config",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "shared_vpc_service_config" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tag_bindings",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "tag_bindings" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "data_merges" ] ]
+                    ],
+                    [ "A_string", "tag_bindings" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "tags" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags_config",
+          [
+            "Object",
+            [ [ [ "Bare", "force_context_ids" ], [ "Bool", true ] ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "universe",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "universe" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "projects" ] ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

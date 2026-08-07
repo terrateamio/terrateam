@@ -1,0 +1,1 @@
+hcl parse: <stdin>:4,25-27: Extra characters in else marker; Expected a closing brace to end the sequence, but found extra characters., and 2 other diagnostic(s)

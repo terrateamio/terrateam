@@ -1,0 +1,435 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_availability_zones" ], [ "Lit", "all" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "network" ] ],
+      "body": [
+        [
+          "Attribute",
+          "cidr_block",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "host_cidr" ] ] ]
+        ],
+        [ "Attribute", "assign_generated_ipv6_cidr_block", [ "Bool", true ] ],
+        [ "Attribute", "enable_dns_support", [ "Bool", true ] ],
+        [ "Attribute", "enable_dns_hostnames", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "Name" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_internet_gateway" ], [ "Lit", "gateway" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "network" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "Name" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route_table" ], [ "Lit", "default" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "network" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "Name" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route" ], [ "Lit", "egress-ipv4" ] ],
+      "body": [
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_route_table" ], [ "A_string", "default" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "destination_cidr_block", [ "String", "0.0.0.0/0" ] ],
+        [
+          "Attribute",
+          "gateway_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_internet_gateway" ], [ "A_string", "gateway" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route" ], [ "Lit", "egress-ipv6" ] ],
+      "body": [
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_route_table" ], [ "A_string", "default" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "destination_ipv6_cidr_block", [ "String", "::/0" ] ],
+        [
+          "Attribute",
+          "gateway_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_internet_gateway" ], [ "A_string", "gateway" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "public" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "aws_availability_zones" ]
+                          ]
+                        ],
+                        [ "A_string", "all" ]
+                      ]
+                    ],
+                    [ "A_string", "names" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "network" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "aws_availability_zones" ]
+                        ]
+                      ],
+                      [ "A_string", "all" ]
+                    ]
+                  ],
+                  [ "A_string", "names" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Fun_call",
+            [
+              "cidrsubnet",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "host_cidr" ] ] ],
+                [ "Int", 4 ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ipv6_cidr_block",
+          [
+            "Fun_call",
+            [
+              "cidrsubnet",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "aws_vpc" ], [ "A_string", "network" ] ]
+                    ],
+                    [ "A_string", "ipv6_cidr_block" ]
+                  ]
+                ],
+                [ "Int", 8 ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "map_public_ip_on_launch", [ "Bool", true ] ],
+        [ "Attribute", "assign_ipv6_address_on_creation", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-public-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ], [ "Lit", "public" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "aws_availability_zones" ]
+                          ]
+                        ],
+                        [ "A_string", "all" ]
+                      ]
+                    ],
+                    [ "A_string", "names" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_route_table" ], [ "A_string", "default" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_subnet" ], [ "A_string", "public" ] ]
+                      ],
+                      [ "A_splat" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,616 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "compartment_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Compartment OCID where the bastion will be created" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "OKE Cluster OCID (required only for OKE sessions)" ]
+        ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "target_subnet_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Subnet OCID for the bastion target network" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "bastion_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Name for the bastion service" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ssh_public_keys" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Map of username to SSH public key content" ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "bastion_sessions" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Map of bastion sessions configuration" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "type" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "pool_name" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "String", "" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "instance_names" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "compartment_id" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "String", "" ] ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "time" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "active" ], [ "Id", "bool" ] ],
+                          [ [ "Bare", "user" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "nodes" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Tuple", [ [ "String", "all" ] ] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "os_user" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "String", "opc" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "port" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "number" ], [ "Int", 22 ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "session", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "bastion_sessions" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [ "String", "oke" ],
+                                    [ "String", "compute" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "session" ],
+                                    [ "A_string", "type" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String", "Session type must be either 'oke' or 'compute'."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "session", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "bastion_sessions" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "session" ],
+                                          [ "A_string", "type" ]
+                                        ]
+                                      ],
+                                      [ "String", "oke" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "session" ],
+                                          [ "A_string", "pool_name" ]
+                                        ]
+                                      ],
+                                      [ "String", "" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "session" ],
+                                          [ "A_string", "type" ]
+                                        ]
+                                      ],
+                                      [ "String", "compute" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Gt",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "length",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "session" ],
+                                                [
+                                                  "A_string",
+                                                  "instance_names"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "For OKE sessions, pool_name must be specified. For compute sessions, instance_names must be provided."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "session", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "bastion_sessions" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Gt",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "session" ],
+                                      [ "A_string", "time" ]
+                                    ]
+                                  ],
+                                  [ "Int", 0 ]
+                                ]
+                              ],
+                              [
+                                "Lte",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "session" ],
+                                      [ "A_string", "time" ]
+                                    ]
+                                  ],
+                                  [ "Int", 180 ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String", "Session time must be between 1 and 180 minutes."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tenancy_ocid" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "description", [ "String", "OCI Tenancy OCID" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "allowed_ips" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "List of allowed IP CIDR blocks for bastion access" ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [ [ "String", "10.0.0.0/8" ], [ "String", "172.16.0.0/12" ] ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "ip", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "allowed_ips" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "cidrhost",
+                                    [ [ "Id", "ip" ], [ "Int", 0 ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "All allowed_ips must be valid CIDR blocks." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "max_session_ttl_seconds" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Maximum session TTL in seconds for the bastion" ]
+        ],
+        [ "Attribute", "default", [ "Int", 7200 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "max_session_ttl_seconds" ]
+                          ]
+                        ],
+                        [ "Int", 1800 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "max_session_ttl_seconds" ]
+                          ]
+                        ],
+                        [ "Int", 10800 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "max_session_ttl_seconds must be between 1800 (30 min) and 10800 (3 hours)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

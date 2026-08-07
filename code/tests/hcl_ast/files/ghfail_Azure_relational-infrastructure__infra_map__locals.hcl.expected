@@ -1,0 +1,1044 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "subscriptions_by_slot",
+          [
+            "For_object",
+            {
+              "identifiers": [ "subscription_name", [ "subscription" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "subscriptions" ] ]
+              ],
+              "key_output": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "subscription_slots" ]
+                    ]
+                  ],
+                  [ "Id", "subscription_name" ]
+                ]
+              ],
+              "value_output": [ "Id", "subscription" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "default_subscription_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "values",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "subscriptions" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "subscription_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription_ids",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "i", [] ],
+              "input": [
+                "Fun_call", [ "range", [ [ "Int", 0 ], [ "Int", 10 ] ] ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "values",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "subscriptions" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Id", "i" ]
+                          ]
+                        ],
+                        [ "A_string", "subscription_id" ]
+                      ]
+                    ],
+                    [ "Null" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "provider_subscription_ids",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "i", [] ],
+              "input": [
+                "Fun_call", [ "range", [ [ "Int", 0 ], [ "Int", 10 ] ] ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "values",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "subscriptions" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Id", "i" ]
+                          ]
+                        ],
+                        [ "A_string", "subscription_id" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "default_subscription_id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription_slot_names",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "i", [] ],
+              "input": [
+                "Fun_call", [ "range", [ [ "Int", 0 ], [ "Int", 10 ] ] ]
+              ],
+              "output": [
+                "Template",
+                [
+                  [ "Literal", "az_subscription_" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [ "Add", [ [ "Id", "i" ], [ "Int", 1 ] ] ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription_names_by_slot",
+          [
+            "For_object",
+            {
+              "identifiers": [ "i", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "range",
+                  [
+                    [ "Int", 0 ],
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "subscriptions" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "subscription_slot_names" ]
+                    ]
+                  ],
+                  [ "Id", "i" ]
+                ]
+              ],
+              "value_output": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "keys",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "subscriptions" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Id", "i" ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription_slots",
+          [
+            "For_object",
+            {
+              "identifiers": [ "i", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "range",
+                  [
+                    [ "Int", 0 ],
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "subscriptions" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Idx",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "keys",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "subscriptions" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Id", "i" ]
+                ]
+              ],
+              "value_output": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "subscription_slot_names" ]
+                    ]
+                  ],
+                  [ "Id", "i" ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "deploy_to_subscription",
+          [
+            "For_object",
+            {
+              "identifiers": [ "i", [] ],
+              "input": [
+                "Fun_call", [ "range", [ [ "Int", 0 ], [ "Int", 10 ] ] ]
+              ],
+              "key_output": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "subscription_slot_names" ]
+                    ]
+                  ],
+                  [ "Id", "i" ]
+                ]
+              ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Not_equal",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "subscription_ids" ]
+                            ]
+                          ],
+                          [ "Id", "i" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [ "Int", 1 ],
+                  "else_": [ "Int", 0 ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ddos_protection_plans_by_subscription",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "subscription_slot_names" ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [
+                                    "A_string", "az_subscription_1_infra_map"
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "ddos_protection_plan" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "subscription_slot_names" ]
+                              ]
+                            ],
+                            [ "Int", 1 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [
+                                    "A_string", "az_subscription_2_infra_map"
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "ddos_protection_plan" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "subscription_slot_names" ]
+                              ]
+                            ],
+                            [ "Int", 2 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [
+                                    "A_string", "az_subscription_3_infra_map"
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "ddos_protection_plan" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "subscription_slot_names" ]
+                              ]
+                            ],
+                            [ "Int", 3 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [
+                                    "A_string", "az_subscription_4_infra_map"
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "ddos_protection_plan" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "subscription_slot_names" ]
+                              ]
+                            ],
+                            [ "Int", 4 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [
+                                    "A_string", "az_subscription_5_infra_map"
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "ddos_protection_plan" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "subscription_slot_names" ]
+                              ]
+                            ],
+                            [ "Int", 5 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [
+                                    "A_string", "az_subscription_6_infra_map"
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "ddos_protection_plan" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "subscription_slot_names" ]
+                              ]
+                            ],
+                            [ "Int", 6 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [
+                                    "A_string", "az_subscription_7_infra_map"
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "ddos_protection_plan" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "subscription_slot_names" ]
+                              ]
+                            ],
+                            [ "Int", 7 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [
+                                    "A_string", "az_subscription_8_infra_map"
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "ddos_protection_plan" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "subscription_slot_names" ]
+                              ]
+                            ],
+                            [ "Int", 8 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [
+                                    "A_string", "az_subscription_9_infra_map"
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "ddos_protection_plan" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "subscription_slot_names" ]
+                              ]
+                            ],
+                            [ "Int", 9 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "module" ],
+                                  [
+                                    "A_string",
+                                    "az_subscription_10_infra_map"
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "ddos_protection_plan" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "external_networks",
+          [
+            "For_object",
+            {
+              "identifiers": [ "network_name", [ "network" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "networks" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "external_networks" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "network_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "address_space" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "network" ], [ "A_string", "address_space" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnets" ],
+                    [
+                      "For_object",
+                      {
+                        "identifiers": [ "subnet_name", [ "subnet" ] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "network" ], [ "A_string", "subnets" ] ]
+                        ],
+                        "key_output": [ "Id", "subnet_name" ],
+                        "value_output": [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "address_space" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "subnet" ],
+                                  [ "A_string", "address_space" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

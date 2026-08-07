@@ -1,0 +1,251 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ],
+        [ "Lit", "aws_terraform_external_runner_resource_s3_bucket" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "id",
+          [ "String", "aws-terrafom-ext-runner-s3-bucket" ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "aws-terrafom-ext-runner-s3-bucket" ]
+        ],
+        [ "Attribute", "type", [ "String", "s3" ] ],
+        [ "Attribute", "driver_type", [ "String", "humanitec/terraform" ] ],
+        [ "Attribute", "driver_account", [ "String", "my-aws-account" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "secrets_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "runner" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "credentials" ],
+                                  [
+                                    "String",
+                                    "${resources['k8s-cluster.runner'].outputs.credentials}"
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "source" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "ssh_key" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "ssh_key" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "runner_mode" ],
+                            [ "String", "custom-kubernetes" ]
+                          ],
+                          [
+                            [ "Bare", "runner" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "cluster_type" ],
+                                  [ "String", "eks" ]
+                                ],
+                                [
+                                  [ "Bare", "cluster" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "region" ],
+                                        [
+                                          "String",
+                                          "${resources['k8s-cluster.runner'].outputs.region}"
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "name" ],
+                                        [
+                                          "String",
+                                          "${resources['k8s-cluster.runner'].outputs.name}"
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "loadbalancer" ],
+                                        [
+                                          "String",
+                                          "${resources['k8s-cluster.runner'].outputs.loadbalancer}"
+                                        ]
+                                      ],
+                                      [
+                                        [
+                                          "Bare", "loadbalancer_hosted_zone"
+                                        ],
+                                        [
+                                          "String",
+                                          "${resources['k8s-cluster.runner'].outputs.loadbalancer_hosted_zone}"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "service_account" ],
+                                  [ "String", "humanitec-tf-runner-sa" ]
+                                ],
+                                [
+                                  [ "Bare", "namespace" ],
+                                  [ "String", "humanitec-tf-runner" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "credentials_config" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "variables" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "ACCESS_KEY_ID" ],
+                                        [ "String", "AccessKeyId" ]
+                                      ],
+                                      [
+                                        [ "Bare", "SECRET_ACCESS_KEY" ],
+                                        [ "String", "SecretAccessKey" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "environment" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "AWS_ACCESS_KEY_ID" ],
+                                        [ "String", "AccessKeyId" ]
+                                      ],
+                                      [
+                                        [ "Bare", "AWS_SECRET_ACCESS_KEY" ],
+                                        [ "String", "SecretAccessKey" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "source" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "path" ],
+                                  [ "String", "s3/terraform/bucket/" ]
+                                ],
+                                [
+                                  [ "Bare", "rev" ],
+                                  [ "String", "refs/heads/main" ]
+                                ],
+                                [
+                                  [ "Bare", "url" ],
+                                  [
+                                    "String",
+                                    "my-domain.com:my-org/my-repo.git"
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "variables" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "bucket" ],
+                                  [
+                                    "String",
+                                    "my-company-my-app-${context.app.id}-${context.env.id}"
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "region" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "region" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,1456 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "utils_describe_stacks" ], [ "Lit", "teams" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "dynamic_role_enabled" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "components",
+          [ "Tuple", [ [ "String", "aws-teams" ] ] ]
+        ],
+        [
+          "Attribute",
+          "component_types",
+          [ "Tuple", [ [ "String", "terraform" ] ] ]
+        ],
+        [ "Attribute", "sections", [ "Tuple", [ [ "String", "vars" ] ] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "utils_describe_stacks" ], [ "Lit", "team_roles" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "dynamic_role_enabled" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "components",
+          [ "Tuple", [ [ "String", "aws-team-roles" ] ] ]
+        ],
+        [
+          "Attribute",
+          "component_types",
+          [ "Tuple", [ [ "String", "terraform" ] ] ]
+        ],
+        [ "Attribute", "sections", [ "Tuple", [ [ "String", "vars" ] ] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "dynamic_role_enabled",
+          [
+            "Log_and",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "module" ], [ "A_string", "this" ] ] ],
+                  [ "A_string", "enabled" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "terraform_dynamic_role_enabled" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "apply_role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "terraform_role_name_map" ]
+                ]
+              ],
+              [ "A_string", "apply" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "plan_role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "terraform_role_name_map" ]
+                ]
+              ],
+              [ "A_string", "plan" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_namespace_index",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "index",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "module" ],
+                                          [ "A_string", "this" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "normalized_context" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "descriptor_formats" ]
+                                ]
+                              ],
+                              [ "A_string", "stack" ]
+                            ]
+                          ],
+                          [ "A_string", "labels" ]
+                        ]
+                      ],
+                      [ "String", "namespace" ]
+                    ]
+                  ]
+                ],
+                [ "Minus", [ "Int", 1 ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_has_namespace",
+          [
+            "Gte",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ], [ "A_string", "stack_namespace_index" ]
+                ]
+              ],
+              [ "Int", 0 ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_account_map",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "module" ], [ "A_string", "atmos" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "lookup",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "v" ], [ "A_string", "descriptors" ] ]
+                    ],
+                    [ "String", "account_name" ],
+                    [ "Attr", [ [ "Id", "v" ], [ "A_string", "stage" ] ] ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "empty_map",
+          [
+            "Object",
+            [
+              [ [ "Bare", "true" ], [ "Null" ] ],
+              [ [ "Bare", "false" ], [ "Object", [] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "empty",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "empty_map" ] ] ],
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "dynamic_role_enabled" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "teams_stacks",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "dynamic_role_enabled" ] ]
+              ],
+              "then_": [
+                "For_object",
+                {
+                  "identifiers": [ "k", [ "v" ] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "yamldecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string", "utils_describe_stacks"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "teams" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "output" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [ "Id", "k" ],
+                  "value_output": [ "Id", "v" ],
+                  "cond": [
+                    "Log_or",
+                    [
+                      [
+                        "Not",
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "stack_has_namespace" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Equal",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "split",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "module" ],
+                                                  [ "A_string", "this" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "delimiter" ]
+                                            ]
+                                          ],
+                                          [ "Id", "k" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "stack_namespace_index"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "this" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "namespace" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Bool", false ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "empty" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "teams_vars",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "teams_stacks" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "v" ], [ "A_string", "components" ] ]
+                          ],
+                          [ "A_string", "terraform" ]
+                        ]
+                      ],
+                      [ "A_string", "aws-teams" ]
+                    ]
+                  ],
+                  [ "A_string", "vars" ]
+                ]
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "A_string", "components" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "terraform" ]
+                                  ]
+                                ],
+                                [ "A_string", "aws-teams" ]
+                              ]
+                            ],
+                            [ "A_string", "vars" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "teams_config",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "dynamic_role_enabled" ] ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "values",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "teams_vars" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [ "A_string", "teams_config" ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "empty" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "team_names",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "teams_config" ] ]
+              ],
+              "output": [ "Id", "k" ],
+              "cond": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [ "Attr", [ [ "Id", "v" ], [ "A_string", "enabled" ] ] ],
+                    [ "Bool", true ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "team_arns",
+          [
+            "For_object",
+            {
+              "identifiers": [ "team_name", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "team_names" ] ]
+              ],
+              "key_output": [ "Id", "team_name" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "format",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "iam_role_arn_templates" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "account_role_map" ]
+                              ]
+                            ],
+                            [ "A_string", "identity" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Id", "team_name" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "team_roles_stacks",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "dynamic_role_enabled" ] ]
+              ],
+              "then_": [
+                "For_object",
+                {
+                  "identifiers": [ "k", [ "v" ] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "yamldecode",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [
+                                          "A_string", "utils_describe_stacks"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "team_roles" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [ "A_string", "output" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [ "Id", "k" ],
+                  "value_output": [ "Id", "v" ],
+                  "cond": [
+                    "Log_or",
+                    [
+                      [
+                        "Not",
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "stack_has_namespace" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Equal",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "split",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "module" ],
+                                                  [ "A_string", "this" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "delimiter" ]
+                                            ]
+                                          ],
+                                          [ "Id", "k" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "stack_namespace_index"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "this" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "namespace" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Bool", false ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "empty" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "team_roles_vars",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "team_roles_stacks" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "v" ], [ "A_string", "components" ] ]
+                          ],
+                          [ "A_string", "terraform" ]
+                        ]
+                      ],
+                      [ "A_string", "aws-team-roles" ]
+                    ]
+                  ],
+                  [ "A_string", "vars" ]
+                ]
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "A_string", "components" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "terraform" ]
+                                  ]
+                                ],
+                                [ "A_string", "aws-team-roles" ]
+                              ]
+                            ],
+                            [ "A_string", "vars" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "all_team_vars",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "teams_vars" ] ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "team_roles_vars" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_planners",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "team_roles_vars" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [ "Attr", [ [ "Id", "v" ], [ "A_string", "roles" ] ] ],
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "plan_role" ] ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "trusted_teams" ]
+                ]
+              ],
+              "cond": [
+                "Log_and",
+                [
+                  [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "v" ],
+                                              [ "A_string", "roles" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [ "A_string", "plan_role" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "trusted_teams" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [ [ "Id", "v" ], [ "A_string", "roles" ] ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "plan_role" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "enabled" ]
+                          ]
+                        ],
+                        [ "Bool", true ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_terraformers",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "team_roles_vars" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [ "Attr", [ [ "Id", "v" ], [ "A_string", "roles" ] ] ],
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "apply_role" ] ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "trusted_teams" ]
+                ]
+              ],
+              "cond": [
+                "Log_and",
+                [
+                  [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "v" ],
+                                              [ "A_string", "roles" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [ "A_string", "apply_role" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "trusted_teams" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 0 ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [ [ "Id", "v" ], [ "A_string", "roles" ] ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "apply_role" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "enabled" ]
+                          ]
+                        ],
+                        [ "Bool", true ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "team_planners",
+          [
+            "For_object",
+            {
+              "identifiers": [ "team", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "team_names" ] ]
+              ],
+              "key_output": [ "Id", "team" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "stack", [ "trusted" ] ],
+                  "input": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "stack_planners" ] ]
+                  ],
+                  "key_output": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "stack_account_map" ]
+                        ]
+                      ],
+                      [ "Id", "stack" ]
+                    ]
+                  ],
+                  "value_output": [ "String", "plan" ],
+                  "cond": [
+                    "Fun_call",
+                    [ "contains", [ [ "Id", "trusted" ], [ "Id", "team" ] ] ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "team_terraformers",
+          [
+            "For_object",
+            {
+              "identifiers": [ "team", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "team_names" ] ]
+              ],
+              "key_output": [ "Id", "team" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "stack", [ "trusted" ] ],
+                  "input": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "stack_terraformers" ]
+                    ]
+                  ],
+                  "key_output": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "stack_account_map" ]
+                        ]
+                      ],
+                      [ "Id", "stack" ]
+                    ]
+                  ],
+                  "value_output": [ "String", "apply" ],
+                  "cond": [
+                    "Fun_call",
+                    [ "contains", [ [ "Id", "trusted" ], [ "Id", "team" ] ] ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "role_arn_terraform_access",
+          [
+            "For_object",
+            {
+              "identifiers": [ "team", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "team_names" ] ]
+              ],
+              "key_output": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "team_arns" ] ]
+                  ],
+                  [ "Id", "team" ]
+                ]
+              ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "team_planners" ]
+                          ]
+                        ],
+                        [ "Id", "team" ]
+                      ]
+                    ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "team_terraformers" ]
+                          ]
+                        ],
+                        [ "Id", "team" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "atmos" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "all_team_vars" ] ] ]
+        ],
+        [ "Attribute", "source", [ "String", "cloudposse/label/null" ] ],
+        [ "Attribute", "version", [ "String", "0.25.0" ] ],
+        [ "Attribute", "enabled", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "namespace" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tenant",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "tenant" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "environment",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "environment" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stage",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "stage" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "name" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "delimiter",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "delimiter" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "attributes",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "attributes" ],
+                [ "Tuple", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "tags" ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "additional_tag_map",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "additional_tag_map" ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "label_order",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "label_order" ],
+                [ "Tuple", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "regex_replace_chars",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "regex_replace_chars" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "id_length_limit",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "id_length_limit" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "label_key_case",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "label_key_case" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "label_value_case",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "label_value_case" ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "descriptor_formats",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "descriptor_formats" ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "labels_as_tags",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                [ "String", "labels_as_tags" ],
+                [ "Tuple", [] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

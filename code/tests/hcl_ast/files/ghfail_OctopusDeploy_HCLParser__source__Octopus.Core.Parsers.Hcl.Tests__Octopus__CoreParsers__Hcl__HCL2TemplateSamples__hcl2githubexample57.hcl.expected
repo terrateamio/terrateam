@@ -1,0 +1,277 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "policy_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "default_policy" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "access_level" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "Allow" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "target_service" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "namespace" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "account-id" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "region" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "prefix" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "aws-policy" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../../core/iam/policy" ] ],
+        [
+          "Attribute",
+          "policy_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "policy_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "namespace" ] ] ]
+        ],
+        [
+          "Attribute",
+          "access_level",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "access_level" ] ] ]
+        ],
+        [
+          "Attribute",
+          "target_service",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "target_service" ] ] ]
+        ],
+        [
+          "Attribute",
+          "operation_list",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "operation_list" ] ] ]
+        ],
+        [
+          "Attribute",
+          "target_resource",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "target_resource_id_list" ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [ "String", "*" ]
+                ]
+              ],
+              "then_": [ "Tuple", [ [ "String", "*" ] ] ],
+              "else_": [
+                "Fun_call",
+                [
+                  "formatlist",
+                  [
+                    [ "String", "arn:aws:%s:%s:%s:%s%s-%s" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "target_service" ] ]
+                    ],
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "account-id" ] ]
+                    ],
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ] ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "namespace" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "target_resource_id_list" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "target_user_name" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "target_role_name" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_policy_attachment" ], [ "Lit", "policy-attach" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "policy-attachment" ] ],
+        [
+          "Attribute",
+          "users",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "target_user_name" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "roles",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "target_role_name" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "module" ], [ "A_string", "aws-policy" ] ]
+              ],
+              [ "A_string", "policy_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "policy" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "module" ], [ "A_string", "aws-policy" ] ]
+              ],
+              [ "A_string", "policy" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "operation_list" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [ [ "String", "*" ] ] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "target_resource_id_list" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [ [ "String", "*" ] ] ] ]
+      ]
+    }
+  ]
+]

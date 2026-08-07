@@ -1,0 +1,1 @@
+hcl parse: <stdin>:3,32-33: Unexpected end of template; The for directive at <stdin>:3,10-28 is missing its corresponding endfor directive.

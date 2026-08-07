@@ -1,0 +1,238 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "aws",
+                [
+                  "Object",
+                  [ [ [ "Bare", "source" ], [ "String", "hashicorp/aws" ] ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "required_version", [ "String", ">= 1.1.0" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "aws-region" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "nlb-manager-lambda" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../modules/nlb-manager-lambda" ]
+        ],
+        [
+          "Attribute",
+          "private-subnets",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "private-subnets" ] ] ]
+        ],
+        [
+          "Attribute",
+          "public-subnet-cidr",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "public-subnet-cidr" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc-id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-id" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "nlb" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc-id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc-id" ] ] ]
+        ],
+        [ "Attribute", "source", [ "String", "../modules/nlb" ] ],
+        [
+          "Attribute",
+          "name-prefix",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "subnet-ids",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "subnet-ids" ] ] ]
+        ],
+        [
+          "Attribute",
+          "include-all-resources-in-one-target-group",
+          [ "Bool", false ]
+        ],
+        [
+          "Attribute",
+          "include-all-resources-in-separate-target-groups",
+          [ "Bool", false ]
+        ],
+        [
+          "Attribute",
+          "internal",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "internal-nlb" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "nlb-manager-target" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "targets" ] ] ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../modules/nlb-manager-target" ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+        ],
+        [
+          "Attribute",
+          "nlb-arn",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "nlb" ] ] ],
+              [ "A_string", "nlb-arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "target",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "lambda-arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ],
+                      [ "A_string", "nlb-manager-lambda" ]
+                    ]
+                  ],
+                  [ "A_string", "lambda" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lambda-name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ],
+                      [ "A_string", "nlb-manager-lambda" ]
+                    ]
+                  ],
+                  [ "A_string", "lambda" ]
+                ]
+              ],
+              [ "A_string", "function_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "polling-schedule-expression",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "polling-schedule-expression" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "endpoint-service" ] ],
+      "body": [
+        [
+          "Attribute", "source", [ "String", "../modules/endpoint-service" ]
+        ],
+        [
+          "Attribute",
+          "name-prefix",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "nlb-arn",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "nlb" ] ] ],
+              [ "A_string", "nlb-arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

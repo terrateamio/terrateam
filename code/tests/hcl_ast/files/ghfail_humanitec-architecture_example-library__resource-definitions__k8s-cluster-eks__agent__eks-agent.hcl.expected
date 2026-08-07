@@ -1,0 +1,86 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ], [ "Lit", "eks-agent" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "driver_type",
+          [ "String", "humanitec/k8s-cluster-eks" ]
+        ],
+        [ "Attribute", "id", [ "String", "eks-agent" ] ],
+        [ "Attribute", "name", [ "String", "eks-agent" ] ],
+        [ "Attribute", "type", [ "String", "k8s-cluster" ] ],
+        [ "Attribute", "driver_account", [ "String", "aws-temp-creds" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "region" ],
+                            [ "String", "eu-central-1" ]
+                          ],
+                          [ [ "Quoted", "name" ], [ "String", "demo-123" ] ],
+                          [
+                            [ "Quoted", "loadbalancer" ],
+                            [
+                              "String",
+                              "x111111xxx111111111x1xx1x111111x-x111x1x11xx111x1.elb.eu-central-1.amazonaws.com"
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "loadbalancer_hosted_zone" ],
+                            [ "String", "ABC0DEF5WYYZ00" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "secrets_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "agent_url" ],
+                            [
+                              "String",
+                              "${resources['agent#agent'].outputs.url}"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,26 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "For_tuple",
+      {
+        "identifiers": [ "x", [] ],
+        "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "items" ] ] ],
+        "output": [ "Id", "x" ],
+        "cond": [
+          "Log_and",
+          [
+            [ "Not_equal", [ [ "Id", "x" ], [ "String", "" ] ] ],
+            [
+              "Gt",
+              [
+                [ "Fun_call", [ "length", [ [ "Id", "x" ] ] ] ], [ "Int", 0 ]
+              ]
+            ]
+          ]
+        ]
+      }
+    ]
+  ]
+]

@@ -1,0 +1,535 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "example" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-resources" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "azure_location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Environment" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "Lab" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "lab_name" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_storage_account" ], [ "Lit", "example" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "storage" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "random_string" ], [ "A_string", "suffix" ]
+                        ]
+                      ],
+                      [ "A_string", "result" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "account_tier", [ "String", "Standard" ] ],
+        [ "Attribute", "account_replication_type", [ "String", "LRS" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "storage_account_tag_name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Environment" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "Lab" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "lab_name" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_storage_container" ], [ "Lit", "example" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-container" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "storage_account_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_storage_account" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "container_access_type", [ "String", "private" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_user_assigned_identity" ], [ "Lit", "example" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-identity" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Lab" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "lab_name" ] ] ]
+              ],
+              [
+                [ "Bare", "Environment" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_role_assignment" ], [ "Lit", "example" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "scope",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_storage_account" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role_definition_name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "role_definition_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "principal_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_user_assigned_identity" ],
+                  [ "A_string", "example" ]
+                ]
+              ],
+              [ "A_string", "principal_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_policy_definition" ], [ "Lit", "example" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-policy-definition" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "policy_type", [ "String", "Custom" ] ],
+        [ "Attribute", "mode", [ "String", "Indexed" ] ],
+        [
+          "Attribute",
+          "display_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-storage-policy" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "policy_description" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " for " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "lab_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_rule",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "if" ],
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "field" ], [ "String", "type" ] ],
+                          [
+                            [ "Bare", "equals" ],
+                            [ "String", "Microsoft.Storage/storageAccounts" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "effect" ], [ "String", "audit" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "category" ], [ "String", "Storage" ] ],
+                    [
+                      [ "Bare", "Lab" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "lab_name" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_string" ], [ "Lit", "suffix" ] ],
+      "body": [
+        [
+          "Attribute",
+          "length",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "random_suffix_length" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "special",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "special_chars_allowed" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "upper",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "upper_chars_allowed" ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

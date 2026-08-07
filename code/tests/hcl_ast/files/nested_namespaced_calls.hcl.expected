@@ -1,0 +1,21 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Fun_call",
+      [
+        "provider::terraform::decode_tfvars",
+        [
+          [
+            "Fun_call",
+            [
+              "provider::terraform::encode_tfvars",
+              [ [ "Object", [ [ [ "Bare", "k" ], [ "String", "v" ] ] ] ] ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]

@@ -1,0 +1,1522 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "shared_image_galleries" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/shared_image_gallery/image_galleries" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "shared_services" ]
+                      ]
+                    ],
+                    [ "A_string", "shared_image_galleries" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group",
+          [
+            "Idx",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "combined_objects_resource_groups" ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group" ]
+                              ]
+                            ],
+                            [ "A_string", "lz_key" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "client_config" ]
+                              ]
+                            ],
+                            [ "A_string", "landingzone_key" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group" ]
+                          ]
+                        ],
+                        [ "A_string", "key" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "resource_group_key" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "base_tags",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+              ],
+              [ "A_string", "inherit_tags" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "diagnostics",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "diagnostics" ] ] ]
+        ],
+        [
+          "Attribute",
+          "client_config",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "client_config" ] ] ]
+        ],
+        [
+          "Attribute",
+          "global_settings",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "keyvaults" ] ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "image_definitions" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/shared_image_gallery/image_definitions" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "shared_services" ]
+                      ]
+                    ],
+                    [ "A_string", "image_definitions" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group",
+          [
+            "Idx",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "combined_objects_resource_groups" ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group" ]
+                              ]
+                            ],
+                            [ "A_string", "lz_key" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "client_config" ]
+                              ]
+                            ],
+                            [ "A_string", "landingzone_key" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group" ]
+                          ]
+                        ],
+                        [ "A_string", "key" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "resource_group_key" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "base_tags",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+              ],
+              [ "A_string", "inherit_tags" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "diagnostics",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "diagnostics" ] ] ]
+        ],
+        [
+          "Attribute",
+          "client_config",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "client_config" ] ] ]
+        ],
+        [
+          "Attribute",
+          "global_settings",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "gallery_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ],
+                      [ "A_string", "shared_image_galleries" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "gallery_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "image_definitions" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [ [ "Id", "module" ], [ "A_string", "image_definitions" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "packer_service_principal" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [
+            "String",
+            "./modules/shared_image_gallery/packer_service_principal"
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "shared_services" ]
+                      ]
+                    ],
+                    [ "A_string", "packer_service_principal" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group",
+          [
+            "Idx",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "combined_objects_resource_groups" ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group" ]
+                              ]
+                            ],
+                            [ "A_string", "lz_key" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "client_config" ]
+                              ]
+                            ],
+                            [ "A_string", "landingzone_key" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group" ]
+                          ]
+                        ],
+                        [ "A_string", "key" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "resource_group_key" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "base_tags",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+              ],
+              [ "A_string", "inherit_tags" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "client_config",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "client_config" ] ] ]
+        ],
+        [
+          "Attribute",
+          "global_settings",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_subscription" ]
+                    ]
+                  ],
+                  [ "A_string", "primary" ]
+                ]
+              ],
+              [ "A_string", "subscription_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tenant_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_client_config" ]
+                    ]
+                  ],
+                  [ "A_string", "current" ]
+                ]
+              ],
+              [ "A_string", "tenant_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "gallery_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ],
+                      [ "A_string", "shared_image_galleries" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "shared_image_gallery_destination" ]
+                        ]
+                      ],
+                      [ "A_string", "gallery_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "image_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ], [ "A_string", "image_definitions" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "shared_image_gallery_destination" ]
+                        ]
+                      ],
+                      [ "A_string", "image_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key_vault_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "lookup",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "String", "keyvault_key" ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "module" ], [ "A_string", "keyvaults" ] ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "keyvault_key" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "shared_image_galleries" ]
+                ]
+              ],
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "image_definitions" ] ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_role_assignment" ], [ "A_string", "for" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "packer_build" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/shared_image_gallery/packer_build" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "shared_services" ]
+                      ]
+                    ],
+                    [ "A_string", "packer_build" ]
+                  ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group",
+          [
+            "Idx",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "combined_objects_resource_groups" ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_group" ]
+                              ]
+                            ],
+                            [ "A_string", "lz_key" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "client_config" ]
+                              ]
+                            ],
+                            [ "A_string", "landingzone_key" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group" ]
+                          ]
+                        ],
+                        [ "A_string", "key" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "resource_group_key" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "base_tags",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+              ],
+              [ "A_string", "inherit_tags" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "build_resource_group_name",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "resource_groups" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "build_resource_group_key" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "resource_groups" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group_key" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "client_config",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "client_config" ] ] ]
+        ],
+        [
+          "Attribute",
+          "global_settings",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_subscription" ]
+                    ]
+                  ],
+                  [ "A_string", "primary" ]
+                ]
+              ],
+              [ "A_string", "subscription_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tenant_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_client_config" ]
+                    ]
+                  ],
+                  [ "A_string", "current" ]
+                ]
+              ],
+              [ "A_string", "tenant_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "gallery_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ],
+                      [ "A_string", "shared_image_galleries" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "shared_image_gallery_destination" ]
+                        ]
+                      ],
+                      [ "A_string", "gallery_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "image_name",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "module" ], [ "A_string", "image_definitions" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "shared_image_gallery_destination" ]
+                        ]
+                      ],
+                      [ "A_string", "image_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key_vault_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "keyvault_key" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "module" ], [ "A_string", "keyvaults" ] ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "keyvault_key" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "managed_identities",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "combined_objects_managed_identities" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vnet_name",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string",
+                                        "combined_objects_networking"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "lz_key" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "vnet_key" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [
+                                        "A_string",
+                                        "combined_objects_networking"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "client_config" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "landingzone_key" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "vnet_key" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [ "String", "" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_name",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "lookup",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "String", "lz_key" ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "combined_objects_networking"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "client_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "landingzone_key" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "vnet_key" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "subnets" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "subnet_key" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ],
+                    "else_": [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "combined_objects_networking"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "each" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "lz_key" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "vnet_key" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "subnets" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "subnet_key" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ]
+                  }
+                ],
+                [ "String", "" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "settings",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "shared_image_galleries" ]
+                ]
+              ],
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "image_definitions" ] ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_role_assignment" ], [ "A_string", "for" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

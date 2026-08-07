@@ -1,0 +1,466 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ], [ "Lit", "assume_role" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "effect", [ "String", "Allow" ] ],
+              [
+                "Block",
+                {
+                  "type_": "principals",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "Service" ] ],
+                    [
+                      "Attribute",
+                      "identifiers",
+                      [
+                        "Tuple", [ [ "String", "iotevents.amazonaws.com" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sts:AssumeRole" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ], [ "Lit", "iotevents_policy" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "effect", [ "String", "Allow" ] ],
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sns:Publish" ] ] ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "awscc_sns_topic" ],
+                            [ "A_string", "alarm_topic" ]
+                          ]
+                        ],
+                        [ "A_string", "topic_arn" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "awscc_iam_role" ], [ "Lit", "iotevents_role" ] ],
+      "body": [
+        [ "Attribute", "role_name", [ "String", "IoTEventsAlarmRole" ] ],
+        [ "Attribute", "path", [ "String", "/" ] ],
+        [
+          "Attribute",
+          "assume_role_policy_document",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "assume_role" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policies",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "policy_name" ],
+                    [ "String", "IoTEventsPublishToSNS" ]
+                  ],
+                  [
+                    [ "Bare", "policy_document" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_iam_policy_document" ]
+                              ]
+                            ],
+                            [ "A_string", "iotevents_policy" ]
+                          ]
+                        ],
+                        [ "A_string", "json" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "key" ], [ "String", "Modified By" ] ],
+                  [ [ "Bare", "value" ], [ "String", "AWSCC" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "awscc_iotevents_input" ], [ "Lit", "temp_sensor" ]
+      ],
+      "body": [
+        [ "Attribute", "input_name", [ "String", "TemperatureSensor" ] ],
+        [
+          "Attribute",
+          "input_description",
+          [ "String", "Input for temperature sensor readings" ]
+        ],
+        [
+          "Attribute",
+          "input_definition",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "attributes" ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "json_path" ],
+                          [ "String", "temperature" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "json_path" ], [ "String", "device_id" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "json_path" ], [ "String", "timestamp" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "key" ], [ "String", "Modified By" ] ],
+                  [ [ "Bare", "value" ], [ "String", "AWSCC" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "awscc_sns_topic" ], [ "Lit", "alarm_topic" ] ],
+      "body": [
+        [
+          "Attribute", "topic_name", [ "String", "temperature-alarm-topic" ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "key" ], [ "String", "Modified By" ] ],
+                  [ [ "Bare", "value" ], [ "String", "AWSCC" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "awscc_iotevents_alarm_model" ],
+        [ "Lit", "temperature_alarm" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "alarm_model_name",
+          [ "String", "HighTemperatureAlarm" ]
+        ],
+        [
+          "Attribute",
+          "alarm_model_description",
+          [ "String", "Alarm for high temperature readings" ]
+        ],
+        [
+          "Attribute",
+          "role_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "awscc_iam_role" ],
+                  [ "A_string", "iotevents_role" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_rule",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "simple_rule" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "comparison_operator" ],
+                      [ "String", "GREATER" ]
+                    ],
+                    [
+                      [ "Bare", "input_property" ],
+                      [ "String", "$input.TemperatureSensor.temperature" ]
+                    ],
+                    [ [ "Bare", "threshold" ], [ "String", "30" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_capabilities",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "initialization_configuration" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "disabled_on_initialization" ],
+                      [ "Bool", false ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "acknowledge_flow" ],
+                [ "Object", [ [ [ "Bare", "enabled" ], [ "Bool", true ] ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_event_actions",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "alarm_actions" ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "sns" ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "target_arn" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "awscc_sns_topic" ],
+                                        [ "A_string", "alarm_topic" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "topic_arn" ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Bare", "payload" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "content_expression" ],
+                                      [
+                                        "String",
+                                        "'{ \"alarmId\": \"${$input.TemperatureSensor.device_id}\", \"temperature\": \"${$input.TemperatureSensor.temperature}\", \"threshold\": \"30\", \"timestamp\": \"${$input.TemperatureSensor.timestamp}\" }'"
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "type" ],
+                                      [ "String", "JSON" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "key", [ "String", "device_id" ] ],
+        [ "Attribute", "severity", [ "Int", 3 ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "key" ], [ "String", "Modified By" ] ],
+                  [ [ "Bare", "value" ], [ "String", "AWSCC" ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "key" ], [ "String", "Environment" ] ],
+                  [ [ "Bare", "value" ], [ "String", "Production" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,20 @@
+[
+  [ "Attribute", "a", [ "Int", 1 ] ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "x" ], [ "Lit", "y" ] ],
+      "body": [ [ "Attribute", "b", [ "Int", 2 ] ] ]
+    }
+  ],
+  [ "Attribute", "c", [ "Int", 3 ] ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "v" ] ],
+      "body": [ [ "Attribute", "default", [ "Int", 4 ] ] ]
+    }
+  ]
+]

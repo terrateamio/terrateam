@@ -1,0 +1,156 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_eip" ], [ "Lit", "nat_ip" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "nat_az_count" ] ] ]
+        ],
+        [ "Attribute", "vpc", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_nat_gateway" ], [ "Lit", "nat" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "nat_az_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "allocation_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr", [ [ "Id", "aws_eip" ], [ "A_string", "nat_ip" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_subnet" ], [ "A_string", "public" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "terraform" ],
+                            [ "A_string", "workspace" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "app_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-gw-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "app_name" ] ] ]
+              ],
+              [
+                [ "Bare", "workspace" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

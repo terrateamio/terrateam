@@ -1,0 +1,238 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "assets_bundle",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "bootstrap" ] ]
+                  ],
+                  [ "A_string", "assets_dist" ]
+                ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "format",
+                  [
+                    [ "String", "##### %s\n%s" ],
+                    [ "Id", "key" ],
+                    [ "Id", "value" ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "null_resource" ], [ "Lit", "copy-controller-secrets" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "controller_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "bootstrap" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "connection",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "ssh" ] ],
+              [
+                "Attribute",
+                "host",
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_instance" ],
+                                [ "A_string", "controllers" ]
+                              ]
+                            ],
+                            [ "A_splat" ]
+                          ]
+                        ],
+                        [ "A_string", "public_ip" ]
+                      ]
+                    ],
+                    [
+                      "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "user", [ "String", "core" ] ],
+              [ "Attribute", "timeout", [ "String", "15m" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "file" ] ],
+            "body": [
+              [
+                "Attribute",
+                "content",
+                [
+                  "Fun_call",
+                  [
+                    "join",
+                    [
+                      [ "String", "\n" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "assets_bundle" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "destination", [ "String", "$HOME/assets" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "inline",
+                [ "Tuple", [ [ "String", "sudo /opt/bootstrap/layout" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "null_resource" ], [ "Lit", "bootstrap" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "null_resource" ],
+                  [ "A_string", "copy-controller-secrets" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "workers" ] ] ],
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_route53_record" ], [ "A_string", "apiserver" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "connection",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "ssh" ] ],
+              [
+                "Attribute",
+                "host",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_instance" ],
+                            [ "A_string", "controllers" ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [ "A_string", "public_ip" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "user", [ "String", "core" ] ],
+              [ "Attribute", "timeout", [ "String", "15m" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "inline",
+                [
+                  "Tuple", [ [ "String", "sudo systemctl start bootstrap" ] ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

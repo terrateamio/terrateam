@@ -1,0 +1,1667 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_security_group" ], [ "Lit", "controller" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-controller" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " controller security group" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "network" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-controller" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "controller-ssh" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 22 ] ],
+        [ "Attribute", "to_port", [ "Int", 22 ] ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "controller-etcd" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 2379 ] ],
+        [ "Attribute", "to_port", [ "Int", 2380 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "controller-etcd-metrics" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 2381 ] ],
+        [ "Attribute", "to_port", [ "Int", 2381 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "kube-proxy-metrics" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 10249 ] ],
+        [ "Attribute", "to_port", [ "Int", 10249 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "controller-scheduler-metrics" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 10251 ] ],
+        [ "Attribute", "to_port", [ "Int", 10251 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "controller-manager-metrics" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 10252 ] ],
+        [ "Attribute", "to_port", [ "Int", 10252 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "controller-vxlan" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "networking" ] ]
+                  ],
+                  [ "String", "flannel" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "udp" ] ],
+        [ "Attribute", "from_port", [ "Int", 4789 ] ],
+        [ "Attribute", "to_port", [ "Int", 4789 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "controller-vxlan-self" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "networking" ] ]
+                  ],
+                  [ "String", "flannel" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "udp" ] ],
+        [ "Attribute", "from_port", [ "Int", 4789 ] ],
+        [ "Attribute", "to_port", [ "Int", 4789 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "controller-apiserver" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 6443 ] ],
+        [ "Attribute", "to_port", [ "Int", 6443 ] ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "controller-node-exporter" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 9100 ] ],
+        [ "Attribute", "to_port", [ "Int", 9100 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "controller-kubelet" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 10250 ] ],
+        [ "Attribute", "to_port", [ "Int", 10250 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "controller-kubelet-self" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 10250 ] ],
+        [ "Attribute", "to_port", [ "Int", 10250 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "controller-bgp" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 179 ] ],
+        [ "Attribute", "to_port", [ "Int", 179 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "controller-bgp-self" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 179 ] ],
+        [ "Attribute", "to_port", [ "Int", 179 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "controller-ipip" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "Int", 4 ] ],
+        [ "Attribute", "from_port", [ "Int", 0 ] ],
+        [ "Attribute", "to_port", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "controller-ipip-self" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "Int", 4 ] ],
+        [ "Attribute", "from_port", [ "Int", 0 ] ],
+        [ "Attribute", "to_port", [ "Int", 0 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "controller-ipip-legacy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "Int", 94 ] ],
+        [ "Attribute", "from_port", [ "Int", 0 ] ],
+        [ "Attribute", "to_port", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "controller-ipip-legacy-self" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "Int", 94 ] ],
+        [ "Attribute", "from_port", [ "Int", 0 ] ],
+        [ "Attribute", "to_port", [ "Int", 0 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "controller-egress" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "egress" ] ],
+        [ "Attribute", "protocol", [ "String", "-1" ] ],
+        [ "Attribute", "from_port", [ "Int", 0 ] ],
+        [ "Attribute", "to_port", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+        ],
+        [
+          "Attribute",
+          "ipv6_cidr_blocks",
+          [ "Tuple", [ [ "String", "::/0" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_security_group" ], [ "Lit", "worker" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-worker" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " worker security group" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "network" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-worker" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-ssh" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 22 ] ],
+        [ "Attribute", "to_port", [ "Int", 22 ] ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-http" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 80 ] ],
+        [ "Attribute", "to_port", [ "Int", 80 ] ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-https" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 443 ] ],
+        [ "Attribute", "to_port", [ "Int", 443 ] ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-vxlan" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "networking" ] ]
+                  ],
+                  [ "String", "flannel" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "udp" ] ],
+        [ "Attribute", "from_port", [ "Int", 4789 ] ],
+        [ "Attribute", "to_port", [ "Int", 4789 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-vxlan-self" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "networking" ] ]
+                  ],
+                  [ "String", "flannel" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "udp" ] ],
+        [ "Attribute", "from_port", [ "Int", 4789 ] ],
+        [ "Attribute", "to_port", [ "Int", 4789 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "worker-node-exporter" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 9100 ] ],
+        [ "Attribute", "to_port", [ "Int", 9100 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-kube-proxy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 10249 ] ],
+        [ "Attribute", "to_port", [ "Int", 10249 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-kubelet" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 10250 ] ],
+        [ "Attribute", "to_port", [ "Int", 10250 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "worker-kubelet-self" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 10250 ] ],
+        [ "Attribute", "to_port", [ "Int", 10250 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "ingress-health" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 10254 ] ],
+        [ "Attribute", "to_port", [ "Int", 10254 ] ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-bgp" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 179 ] ],
+        [ "Attribute", "to_port", [ "Int", 179 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-bgp-self" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [ "Attribute", "from_port", [ "Int", 179 ] ],
+        [ "Attribute", "to_port", [ "Int", 179 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-ipip" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "Int", 4 ] ],
+        [ "Attribute", "from_port", [ "Int", 0 ] ],
+        [ "Attribute", "to_port", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-ipip-self" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "Int", 4 ] ],
+        [ "Attribute", "from_port", [ "Int", 0 ] ],
+        [ "Attribute", "to_port", [ "Int", 0 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-ipip-legacy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "Int", 94 ] ],
+        [ "Attribute", "from_port", [ "Int", 0 ] ],
+        [ "Attribute", "to_port", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "controller" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "worker-ipip-legacy-self" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "protocol", [ "Int", 94 ] ],
+        [ "Attribute", "from_port", [ "Int", 0 ] ],
+        [ "Attribute", "to_port", [ "Int", 0 ] ],
+        [ "Attribute", "self", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ], [ "Lit", "worker-egress" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_security_group" ], [ "A_string", "worker" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "egress" ] ],
+        [ "Attribute", "protocol", [ "String", "-1" ] ],
+        [ "Attribute", "from_port", [ "Int", 0 ] ],
+        [ "Attribute", "to_port", [ "Int", 0 ] ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+        ],
+        [
+          "Attribute",
+          "ipv6_cidr_blocks",
+          [ "Tuple", [ [ "String", "::/0" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

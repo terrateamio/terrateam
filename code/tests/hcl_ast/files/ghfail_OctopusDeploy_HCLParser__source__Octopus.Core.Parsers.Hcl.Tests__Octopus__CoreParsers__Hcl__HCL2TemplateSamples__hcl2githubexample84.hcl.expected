@@ -1,0 +1,290 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "appsync_athena_resolver" ] ],
+      "body": [
+        [
+          "Attribute",
+          "environment_variables",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "AWS_ATHENA_REGION_NAME" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "aws_athena_region_name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "AWS_ATHENA_S3_STAGING_DIR" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "athena_s3_staging_dir" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "AWS_ATHENA_SCHEMA_NAME" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "athena_schema_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "MAX_CONCURRENT_QUERIES" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "max_concurrent_queries" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "POLL_INTERVAL" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "poll_interval" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dead_letter_arn",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "dead_letter_arn" ] ] ]
+        ],
+        [ "Attribute", "handler", [ "String", "function.handler" ] ],
+        [
+          "Attribute",
+          "kms_key_arn",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "kms_key_arn" ] ] ]
+        ],
+        [
+          "Attribute",
+          "l3_object_key",
+          [
+            "String",
+            "quinovas/appsync-athena-resolver/appsync-athena-resolver-0.3.1.zip"
+          ]
+        ],
+        [
+          "Attribute",
+          "memory_size",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "memory_size" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "appsync-athena-resolver" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_arns",
+          [
+            "Tuple",
+            [
+              [ "String", "arn:aws:iam::aws:policy/AmazonAthenaFullAccess" ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_iam_policy" ],
+                      [ "A_string", "non_default_staging_dir_access" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "athena_datasource_policy_arn" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "runtime", [ "String", "python3.7" ] ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "QuiNovas/lambdalambdalambda/aws" ]
+        ],
+        [
+          "Attribute",
+          "timeout",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "timeout" ] ] ]
+        ],
+        [ "Attribute", "version", [ "String", "3.0.1" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_policy" ],
+        [ "Lit", "non_default_staging_dir_access" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "appsync-athena-resolver-staging-s3-access" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "non_default_staging_dir_access" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "appsync_lambda_datasource" ] ],
+      "body": [
+        [
+          "Attribute",
+          "api_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "api_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "invoke_lambda_policy_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "appsync_athena_resolver" ]
+                ]
+              ],
+              [ "A_string", "invoke_policy_arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lambda_function_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "appsync_athena_resolver" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "replace",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "name_prefix" ] ]
+                        ],
+                        [ "String", "-" ],
+                        [ "String", "_" ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "Athena" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "QuiNovas/appsync-lambda-datasource/aws" ]
+        ],
+        [ "Attribute", "version", [ "String", "3.0.0" ] ]
+      ]
+    }
+  ]
+]

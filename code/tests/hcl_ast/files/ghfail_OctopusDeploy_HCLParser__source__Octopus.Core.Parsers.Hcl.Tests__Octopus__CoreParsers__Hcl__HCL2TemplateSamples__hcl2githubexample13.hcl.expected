@@ -1,0 +1,2476 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_availability_zones" ], [ "Lit", "available" ]
+      ],
+      "body": [ [ "Attribute", "state", [ "String", "available" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "covidportal" ] ],
+      "body": [
+        [
+          "Attribute",
+          "cidr_block",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc_cidr_block" ] ] ]
+        ],
+        [ "Attribute", "enable_dns_hostnames", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc_name" ] ] ]
+              ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc_endpoint" ], [ "Lit", "ecr-dkr" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "vpc_endpoint_type", [ "String", "Interface" ] ],
+        [
+          "Attribute",
+          "service_name",
+          [
+            "Template",
+            [
+              [ "Literal", "com.amazonaws." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".ecr.dkr" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "private_dns_enabled", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_security_group" ],
+                              [ "A_string", "privatelink" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_subnet_ids" ] ]
+                  ],
+                  [ "A_string", "ecr_endpoint_available" ]
+                ]
+              ],
+              [ "A_string", "ids" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc_endpoint" ], [ "Lit", "ecr-api" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "vpc_endpoint_type", [ "String", "Interface" ] ],
+        [
+          "Attribute",
+          "service_name",
+          [
+            "Template",
+            [
+              [ "Literal", "com.amazonaws." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".ecr.api" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "private_dns_enabled", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_security_group" ],
+                              [ "A_string", "privatelink" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_subnet_ids" ] ]
+                  ],
+                  [ "A_string", "ecr_endpoint_available" ]
+                ]
+              ],
+              [ "A_string", "ids" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc_endpoint" ], [ "Lit", "kms" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "vpc_endpoint_type", [ "String", "Interface" ] ],
+        [
+          "Attribute",
+          "service_name",
+          [
+            "Template",
+            [
+              [ "Literal", "com.amazonaws." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".kms" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "private_dns_enabled", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_security_group" ],
+                              [ "A_string", "privatelink" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_subnet" ],
+                      [ "A_string", "covidportal_private" ]
+                    ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_vpc_endpoint" ], [ "Lit", "secretsmanager" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "vpc_endpoint_type", [ "String", "Interface" ] ],
+        [
+          "Attribute",
+          "service_name",
+          [
+            "Template",
+            [
+              [ "Literal", "com.amazonaws." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".secretsmanager" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "private_dns_enabled", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_security_group" ],
+                              [ "A_string", "privatelink" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_subnet" ],
+                      [ "A_string", "covidportal_private" ]
+                    ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc_endpoint" ], [ "Lit", "s3" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "vpc_endpoint_type", [ "String", "Gateway" ] ],
+        [
+          "Attribute",
+          "service_name",
+          [
+            "Template",
+            [
+              [ "Literal", "com.amazonaws." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".s3" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+                  ],
+                  [ "A_string", "main_route_table_id" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc_endpoint" ], [ "Lit", "logs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "vpc_endpoint_type", [ "String", "Interface" ] ],
+        [
+          "Attribute",
+          "service_name",
+          [
+            "Template",
+            [
+              [ "Literal", "com.amazonaws." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".logs" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "private_dns_enabled", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_security_group" ],
+                              [ "A_string", "privatelink" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_subnet" ],
+                      [ "A_string", "covidportal_private" ]
+                    ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc_endpoint" ], [ "Lit", "monitoring" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "vpc_endpoint_type", [ "String", "Interface" ] ],
+        [
+          "Attribute",
+          "service_name",
+          [
+            "Template",
+            [
+              [ "Literal", "com.amazonaws." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".monitoring" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "private_dns_enabled", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_security_group" ],
+                              [ "A_string", "privatelink" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_subnet" ],
+                      [ "A_string", "covidportal_private" ]
+                    ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_internet_gateway" ], [ "Lit", "covidportal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc_name" ] ] ]
+              ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "covidportal_private" ] ],
+      "body": [
+        [ "Attribute", "count", [ "Int", 3 ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Fun_call",
+            [
+              "cidrsubnet",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "vpc_cidr_block" ] ]
+                ],
+                [ "Int", 4 ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "aws_availability_zones" ]
+                          ]
+                        ],
+                        [ "A_string", "available" ]
+                      ]
+                    ],
+                    [ "A_string", "names" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "Private Subnet 0" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Add",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                            ],
+                            [ "Int", 1 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ],
+              [ [ "Bare", "Access" ], [ "String", "private" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "covidportal_public" ] ],
+      "body": [
+        [ "Attribute", "count", [ "Int", 3 ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Fun_call",
+            [
+              "cidrsubnet",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "vpc_cidr_block" ] ]
+                ],
+                [ "Int", 4 ],
+                [
+                  "Add",
+                  [
+                    [
+                      "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                    ],
+                    [ "Int", 3 ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "aws_availability_zones" ]
+                          ]
+                        ],
+                        [ "A_string", "available" ]
+                      ]
+                    ],
+                    [ "A_string", "names" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "Public Subnet 0" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Add",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                            ],
+                            [ "Int", 1 ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ],
+              [ [ "Bare", "Access" ], [ "String", "public" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_subnet_ids" ], [ "Lit", "ecr_endpoint_available" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "tag:Access" ] ],
+              [
+                "Attribute",
+                "values",
+                [ "Tuple", [ [ "String", "private" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "availability-zone" ] ],
+              [
+                "Attribute",
+                "values",
+                [
+                  "Tuple",
+                  [
+                    [ "String", "ca-central-1a" ],
+                    [ "String", "ca-central-1b" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_subnet" ],
+                  [ "A_string", "covidportal_private" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_eip" ], [ "Lit", "covidportal_natgw" ] ],
+      "body": [
+        [ "Attribute", "count", [ "Int", 3 ] ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_internet_gateway" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "vpc", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "vpc_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " NAT GW " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_nat_gateway" ], [ "Lit", "covidportal" ] ],
+      "body": [
+        [ "Attribute", "count", [ "Int", 3 ] ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_internet_gateway" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "allocation_id",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_eip" ],
+                          [ "A_string", "covidportal_natgw" ]
+                        ]
+                      ],
+                      [ "A_splat" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_subnet" ],
+                          [ "A_string", "covidportal_public" ]
+                        ]
+                      ],
+                      [ "A_splat" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "vpc_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " NAT GW" ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table" ], [ "Lit", "covidportal_public_subnet" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "route",
+            "labels": [],
+            "body": [
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [
+                "Attribute",
+                "gateway_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_internet_gateway" ],
+                        [ "A_string", "covidportal" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ], [ "String", "Public Subnet Route Table" ]
+              ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ], [ "Lit", "covidportal" ]
+      ],
+      "body": [
+        [ "Attribute", "count", [ "Int", 3 ] ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_subnet" ],
+                          [ "A_string", "covidportal_public" ]
+                        ]
+                      ],
+                      [ "A_splat" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_route_table" ],
+                  [ "A_string", "covidportal_public_subnet" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table" ], [ "Lit", "covidportal_private_subnet" ]
+      ],
+      "body": [
+        [ "Attribute", "count", [ "Int", 3 ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "route",
+            "labels": [],
+            "body": [
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [
+                "Attribute",
+                "nat_gateway_id",
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_nat_gateway" ],
+                                [ "A_string", "covidportal" ]
+                              ]
+                            ],
+                            [ "A_splat" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ],
+                    [
+                      "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "Private Subnet Route Table " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ],
+        [ "Lit", "covidportal_private_route" ]
+      ],
+      "body": [
+        [ "Attribute", "count", [ "Int", 3 ] ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_subnet" ],
+                          [ "A_string", "covidportal_private" ]
+                        ]
+                      ],
+                      [ "A_splat" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_route_table" ],
+                          [ "A_string", "covidportal_private_subnet" ]
+                        ]
+                      ],
+                      [ "A_splat" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_security_group" ], [ "Lit", "covidportal" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "covidportal" ] ],
+        [
+          "Attribute", "description", [ "String", "Ingress - Covid Portal" ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "covidportal_ingress_alb" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Security group rule for Portal Ingress ALB" ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "from_port", [ "Int", 8000 ] ],
+        [ "Attribute", "to_port", [ "Int", 8000 ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "covidportal_load_balancer" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "covidportal_egress_privatelink" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Security group rule for Portal egress through privatelink"
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "egress" ] ],
+        [ "Attribute", "from_port", [ "Int", 443 ] ],
+        [ "Attribute", "to_port", [ "Int", 443 ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "privatelink" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "covidportal_egress_s3_privatelink" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Security group rule for Retrieval S3 egress through privatelink"
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "egress" ] ],
+        [ "Attribute", "from_port", [ "Int", 443 ] ],
+        [ "Attribute", "to_port", [ "Int", 443 ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "prefix_list_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_vpc_endpoint" ], [ "A_string", "s3" ] ]
+                  ],
+                  [ "A_string", "prefix_list_id" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "covidportal_egress_database" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Security group rule for Portal DB egress through privatelink"
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "egress" ] ],
+        [ "Attribute", "from_port", [ "Int", 5432 ] ],
+        [ "Attribute", "to_port", [ "Int", 5432 ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "covidportal_database" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ],
+        [ "Lit", "covidportal_load_balancer" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "covidportal-load-balancer" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Ingress - covidportal Load Balancer" ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "from_port", [ "Int", 443 ] ],
+              [ "Attribute", "to_port", [ "Int", 443 ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "from_port", [ "Int", 80 ] ],
+              [ "Attribute", "to_port", [ "Int", 80 ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "egress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "from_port", [ "Int", 8000 ] ],
+              [ "Attribute", "to_port", [ "Int", 8000 ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "vpc_cidr_block" ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ], [ "Lit", "covidportal_database" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "covidportal-database" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Ingress - covidportal Database" ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "from_port", [ "Int", 5432 ] ],
+              [ "Attribute", "to_port", [ "Int", 5432 ] ],
+              [
+                "Attribute",
+                "security_groups",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_security_group" ],
+                            [ "A_string", "covidportal" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ], [ "Lit", "covidportal_egress" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "egress-anywhere" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Egress - CovidShield External Services" ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "covidportal_egress_email" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Security group rule for Portal email egress" ]
+        ],
+        [ "Attribute", "type", [ "String", "egress" ] ],
+        [ "Attribute", "from_port", [ "Int", 587 ] ],
+        [ "Attribute", "to_port", [ "Int", 587 ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "covidportal_egress" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "covidportal_egress_new_relic" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Security group rule for Portal New Relic egress" ]
+        ],
+        [ "Attribute", "type", [ "String", "egress" ] ],
+        [ "Attribute", "from_port", [ "Int", 443 ] ],
+        [ "Attribute", "to_port", [ "Int", 443 ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "covidportal_egress" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_blocks",
+          [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_security_group" ], [ "Lit", "privatelink" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "privatelink" ] ],
+        [ "Attribute", "description", [ "String", "privatelink endpoints" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group_rule" ],
+        [ "Lit", "privatelink_portal_ingress" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Security group rule for Portal ingress" ]
+        ],
+        [ "Attribute", "type", [ "String", "ingress" ] ],
+        [ "Attribute", "from_port", [ "Int", 443 ] ],
+        [ "Attribute", "to_port", [ "Int", 443 ] ],
+        [ "Attribute", "protocol", [ "String", "tcp" ] ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "privatelink" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source_security_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_security_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_default_network_acl" ], [ "Lit", "covidportal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "default_network_acl_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "default_network_acl_id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "rule_no", [ "Int", 100 ] ],
+              [ "Attribute", "action", [ "String", "deny" ] ],
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [ "Attribute", "from_port", [ "Int", 22 ] ],
+              [ "Attribute", "to_port", [ "Int", 22 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "rule_no", [ "Int", 200 ] ],
+              [ "Attribute", "action", [ "String", "deny" ] ],
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [ "Attribute", "from_port", [ "Int", 3389 ] ],
+              [ "Attribute", "to_port", [ "Int", 3389 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "protocol", [ "Minus", [ "Int", 1 ] ] ],
+              [ "Attribute", "rule_no", [ "Int", 300 ] ],
+              [ "Attribute", "action", [ "String", "allow" ] ],
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "egress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "protocol", [ "Minus", [ "Int", 1 ] ] ],
+              [ "Attribute", "rule_no", [ "Int", 100 ] ],
+              [ "Attribute", "action", [ "String", "allow" ] ],
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [ "Tuple", [ [ "Id", "subnet_ids" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

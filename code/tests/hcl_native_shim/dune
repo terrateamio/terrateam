@@ -1,0 +1,11 @@
+; Tests for libraries that transitively pull in hcl_native shell out to
+; the Go shim at ../hcl_native_shim/sg_hcl_shim relative to the test
+; executable. Test binaries build under code/tests/<pkg>/, so mirror
+; the shim into code/tests/hcl_native_shim/ so the same relative path
+; resolves as for src/ executables.
+
+(rule
+ (target sg_hcl_shim)
+ (deps ../../src/hcl_native_shim/sg_hcl_shim)
+ (action
+  (copy %{deps} %{target})))

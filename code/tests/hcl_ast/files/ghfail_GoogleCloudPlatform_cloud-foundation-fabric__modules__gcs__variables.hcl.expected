@@ -1,0 +1,2328 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "autoclass" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enable autoclass to automatically transition objects to appropriate storage classes based on their access pattern. If set to true, storage_class must be set to STANDARD. Defaults to false."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "bucket_create" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "Create bucket." ] ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "context" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Context-specific interpolations." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "condition_vars" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "map",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "custom_roles" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "iam_principals" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "kms_keys" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "locations" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "project_ids" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "storage_buckets" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "tag_values" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cors" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "CORS configuration for the bucket. Defaults to null."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "origin" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "method" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "response_header" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "max_age_seconds" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "number" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "custom_placement_config" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The bucket's custom location configuration, which specifies the individual regions that comprise a dual-region bucket. If the bucket is designated as REGIONAL or MULTI_REGIONAL, the parameters are empty."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "default_event_based_hold" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enable event based hold to new objects added to specific bucket, defaults to false."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_hierarchical_namespace" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enables hierarchical namespace." ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_object_retention" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enables object retention on a storage bucket." ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "encryption_key" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "KMS key that will be used for encryption." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "force_destroy" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Optional map to set force destroy keyed by name, defaults to false."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ip_filter" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The bucket's IP filter configuration." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "allow_cross_org_vpcs" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "bool" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "allow_all_service_agent_access" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "bool" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "public_network_sources" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "vpc_network_sources" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "map",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kms_autokeys" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "KMS Autokey key handles. If location is not specified the bucket location will be used. Key handle names will be added to the kms_keys context with an `autokeys/` prefix."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "location" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "resource_type_selector" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [ "Id", "string" ],
+                                  [
+                                    "String", "storage.googleapis.com/Bucket"
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "kms_autokeys" ]
+                            ]
+                          ],
+                          "output": [
+                            "Equal",
+                            [
+                              [ "Id", "k" ],
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^[a-z][a-z0-9-]+[a-z0-9]$"
+                                          ],
+                                          [ "Id", "k" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Autokey keys need to be valid GCP resource names."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "labels" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Labels to be attached to all buckets." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "lifecycle_rules" ] ],
+      "body": [
+        [
+          "Attribute", "description", [ "String", "Bucket lifecycle rule." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "action" ],
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "type" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "storage_class" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "string" ] ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "condition" ],
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "age" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "number" ] ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "created_before" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "string" ] ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "custom_time_before" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "string" ] ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "days_since_custom_time" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "number" ] ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [
+                                          "Bare",
+                                          "days_since_noncurrent_time"
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "number" ] ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "matches_prefix" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "matches_storage_class" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "matches_suffix" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "noncurrent_time_before" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "string" ] ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "num_newer_versions" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "number" ] ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "with_state" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "string" ] ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "lifecycle_rules" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ], [ "A_string", "action" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "condition" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Lifecycle rules action and condition cannot be null."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "lifecycle_rules" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [ "String", "Delete" ],
+                                    [ "String", "SetStorageClass" ],
+                                    [
+                                      "String",
+                                      "AbortIncompleteMultipartUpload"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "A_string", "action" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "type" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Lifecycle rules action type has unsupported value."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "lifecycle_rules" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "v" ],
+                                          [ "A_string", "action" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "type" ]
+                                    ]
+                                  ],
+                                  [ "String", "SetStorageClass" ]
+                                ]
+                              ],
+                              [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "v" ],
+                                          [ "A_string", "action" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "storage_class" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Lifecycle rules with action type SetStorageClass require a storage class."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "location" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "Bucket location." ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "bucket_create" ]
+                          ]
+                        ],
+                        [ "Bool", true ]
+                      ]
+                    ],
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "location" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Bucket location needs to be defined when creating a bucket."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "logging_config" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Bucket logging configuration." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "log_bucket" ], [ "Id", "string" ] ],
+                    [
+                      [ "Bare", "log_object_prefix" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "managed_folders" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Managed folders to create within the bucket in {PATH => CONFIG} format."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "force_destroy" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "iam" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "map",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [ "list", [ [ "Id", "string" ] ] ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "iam_bindings" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "map",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "object",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "members" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "role" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "condition" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "object",
+                                                              [
+                                                                [
+                                                                  "Object",
+                                                                  [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "expression"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "title"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "description"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "iam_bindings_additive" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "map",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "object",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "member" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "role" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "condition" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "object",
+                                                              [
+                                                                [
+                                                                  "Object",
+                                                                  [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "expression"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "title"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "description"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "Bucket name suffix." ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "notification_config" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "GCS Notification configuration." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "enabled" ], [ "Id", "bool" ] ],
+                    [ [ "Bare", "payload_format" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "sa_email" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "topic_name" ], [ "Id", "string" ] ],
+                    [
+                      [ "Bare", "create_topic" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "create" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "bool" ],
+                                              [ "Bool", true ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "kms_key_id" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "string" ] ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "event_types" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "custom_attributes" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "object_name_prefix" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "objects_to_upload" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Objects to be uploaded to bucket." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "metadata" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "content" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "source" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "cache_control" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "content_disposition" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "content_encoding" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "content_language" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "content_type" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "event_based_hold" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "bool" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "temporary_hold" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "bool" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "detect_md5hash" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "storage_class" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "kms_key_name" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "customer_encryption" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [
+                                                "Bare",
+                                                "encryption_algorithm"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "encryption_key" ],
+                                              [ "Id", "string" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "prefix" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Optional prefix used to generate the bucket name." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Not_equal",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ] ],
+                    [ "String", "" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Prefix cannot be empty, please use null instead."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "project_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Bucket project id. Only required when creating buckets, or notification config topics."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "nullable", [ "Bool", true ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "bucket_create" ]
+                          ]
+                        ],
+                        [ "Bool", true ]
+                      ]
+                    ],
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "project_id" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Project id needs to be defined when creating a bucket."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [
+                                            "A_string", "notification_config"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "create_topic" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "create" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ],
+                        [ "Bool", true ]
+                      ]
+                    ],
+                    [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "project_id" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Project id needs to be defined when creating a notification topic."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "public_access_prevention" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Prevents public access to the bucket." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "public_access_prevention" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "contains",
+                        [
+                          [
+                            "Tuple",
+                            [
+                              [ "String", "enforced" ],
+                              [ "String", "inherited" ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string", "public_access_prevention"
+                                    ]
+                                  ]
+                                ],
+                                [ "String", "none" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "public_access_prevention must be either enforced or inherited."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "requester_pays" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enables Requester Pays on a storage bucket." ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "retention_policy" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Bucket retention policy." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "retention_period" ], [ "Id", "string" ] ],
+                    [
+                      [ "Bare", "is_locked" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "bool" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rpo" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Bucket recovery point objective." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "rpo" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "contains",
+                        [
+                          [
+                            "Tuple",
+                            [
+                              [ "String", "ASYNC_TURBO" ],
+                              [ "String", "DEFAULT" ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [ [ "Id", "var" ], [ "A_string", "rpo" ] ]
+                                ],
+                                [ "String", "none" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "rpo must be one of ASYNC_TURBO, DEFAULT." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "soft_delete_retention" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The duration in seconds that soft-deleted objects in the bucket will be retained and cannot be permanently deleted. Set to 0 to override the default and disable."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "storage_class" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "Bucket storage class." ] ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "STANDARD" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "STANDARD" ],
+                          [ "String", "MULTI_REGIONAL" ],
+                          [ "String", "REGIONAL" ],
+                          [ "String", "NEARLINE" ],
+                          [ "String", "COLDLINE" ],
+                          [ "String", "ARCHIVE" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "storage_class" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Storage class must be one of STANDARD, MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE, ARCHIVE."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tag_bindings" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Tag bindings for this folder, in key => tag value id format."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "uniform_bucket_level_access" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Allow using object ACLs (false) or not (true, this is the recommended behavior) , defaults to true (which is the recommended practice, but not the behavior of storage API)."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "versioning" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enable versioning, defaults to false." ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "website" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "Bucket website." ] ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "main_page_suffix" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "not_found_page" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ]
+]

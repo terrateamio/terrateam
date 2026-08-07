@@ -1,0 +1,966 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "backend",
+            "labels": [ [ "Lit", "s3" ] ],
+            "body": [
+              [
+                "Attribute",
+                "key",
+                [ "String", "common/lambda/cloudwatch-log-destination" ]
+              ],
+              [ "Attribute", "encrypt", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [ "Attribute", "required_version", [ "String", ">= 0.12" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "common_tags",
+          [
+            "Object",
+            [
+              [ [ "Bare", "Owner" ], [ "String", "global" ] ],
+              [
+                [ "Bare", "Environment" ],
+                [
+                  "Attr",
+                  [ [ "Id", "terraform" ], [ "A_string", "workspace" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "terraform_remote_state" ], [ "Lit", "master" ] ],
+      "body": [
+        [ "Attribute", "backend", [ "String", "s3" ] ],
+        [
+          "Attribute",
+          "config",
+          [
+            "Object",
+            [
+              [ [ "Bare", "bucket" ], [ "String", "terraform.bhavik.io" ] ],
+              [ [ "Bare", "key" ], [ "String", "common/master" ] ],
+              [
+                [ "Bare", "region" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "aws_default_region" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "profile" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "profile" ] ] ]
+              ],
+              [
+                [ "Bare", "role_arn" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "arn:aws:iam::" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "operations_account_id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", ":role/" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "role_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [
+        [
+          "Attribute",
+          "region",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "aws_default_region" ] ]
+          ]
+        ],
+        [ "Attribute", "version", [ "String", "~> 2.8.0" ] ],
+        [
+          "Attribute",
+          "profile",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "profile" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "assume_role",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "role_arn",
+                [
+                  "Template",
+                  [
+                    [ "Literal", "arn:aws:iam::" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "account_id" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", ":role/" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "role_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "session_name", [ "String", "terraform" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ], [ "Lit", "lambda_assume_role" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "effect", [ "String", "Allow" ] ],
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "sts:AssumeRole" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "principals",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "type", [ "String", "Service" ] ],
+                    [
+                      "Attribute",
+                      "identifiers",
+                      [ "Tuple", [ [ "String", "lambda.amazonaws.com" ] ] ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ], [ "Lit", "lambda_write_logs" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "effect", [ "String", "Allow" ] ],
+              [
+                "Attribute",
+                "actions",
+                [
+                  "Tuple",
+                  [
+                    [ "String", "logs:CreateLogStream" ],
+                    [ "String", "logs:PutLogEvents" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_cloudwatch_log_group" ],
+                            [ "A_string", "lambda" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ],
+        [ "Lit", "subscription_policy" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "effect", [ "String", "Allow" ] ],
+              [
+                "Attribute",
+                "actions",
+                [ "Tuple", [ [ "String", "logs:PutSubscriptionFilter" ] ] ]
+              ],
+              [
+                "Attribute",
+                "resources",
+                [ "Tuple", [ [ "String", "arn:aws:logs:*:*:*" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_iam_role" ], [ "Lit", "lambda" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "CloudWatchSubscriptionFilterLambda" ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Used by CloudWatch Destination Lambda" ]
+        ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "lambda_assume_role" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "common_tags" ] ]
+                ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy" ], [ "Lit", "lambda_write_logs" ]
+      ],
+      "body": [
+        [
+          "Attribute", "name", [ "String", "CloudwatchLogWritePermissions" ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "lambda" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "lambda_write_logs" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy" ],
+        [ "Lit", "lambda_subscription_filter_policy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "AllowPutSubscriptionFilterPolicy" ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "lambda" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "subscription_policy" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_group" ], [ "Lit", "lambda" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "/aws/lambda/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_lambda_function" ],
+                          [ "A_string", "lambda" ]
+                        ]
+                      ],
+                      [ "A_string", "function_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "retention_in_days",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "log_retention_period" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kms_key_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "terraform_remote_state" ]
+                        ]
+                      ],
+                      [ "A_string", "master" ]
+                    ]
+                  ],
+                  [ "A_string", "outputs" ]
+                ]
+              ],
+              [ "A_string", "default_kms_key_arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "common_tags" ] ]
+                ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_subscription_filter" ],
+        [ "Lit", "lambda" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "DefaultLogDestination" ] ],
+        [
+          "Attribute",
+          "log_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_group" ],
+                  [ "A_string", "lambda" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "filter_pattern", [ "String", "" ] ],
+        [
+          "Attribute",
+          "destination_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "terraform_remote_state" ]
+                        ]
+                      ],
+                      [ "A_string", "master" ]
+                    ]
+                  ],
+                  [ "A_string", "outputs" ]
+                ]
+              ],
+              [ "A_string", "log_destination_arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "distribution", [ "String", "ByLogStream" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_lambda_function" ], [ "Lit", "lambda" ] ],
+      "body": [
+        [
+          "Attribute",
+          "function_name",
+          [ "String", "CloudWatchLogDestination" ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Sets the default cloudwatch log subscription filter" ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "lambda" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "handler", [ "String", "main" ] ],
+        [ "Attribute", "runtime", [ "String", "go1.x" ] ],
+        [ "Attribute", "memory_size", [ "Int", 128 ] ],
+        [
+          "Attribute",
+          "kms_key_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "terraform_remote_state" ]
+                        ]
+                      ],
+                      [ "A_string", "master" ]
+                    ]
+                  ],
+                  [ "A_string", "outputs" ]
+                ]
+              ],
+              [ "A_string", "default_kms_key_arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [ "Literal", "cloudwatch-log-destination" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "lambda_version" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".zip" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "publish", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "source_code_hash",
+          [
+            "Fun_call",
+            [
+              "filebase64sha256",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "format",
+                    [
+                      [ "String", "cloudwatch-log-destination%s.zip" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "lambda_version" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "environment",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "variables",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "DESTINATION_ARN" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "data" ],
+                                      [
+                                        "A_string", "terraform_remote_state"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "master" ]
+                                ]
+                              ],
+                              [ "A_string", "outputs" ]
+                            ]
+                          ],
+                          [ "A_string", "log_destination_arn" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "common_tags" ] ]
+                ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_event_rule" ],
+        [ "Lit", "subscription_filter" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "LogSubscriptionFilterModifications" ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Captures when log groups are created or the subscription filters are modified"
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "common_tags" ] ]
+                ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "event_pattern",
+          [
+            "Heredoc",
+            [
+              "PATTERN",
+              "\n{\n  \"source\": [\n    \"aws.logs\"\n  ],\n  \"detail-type\": [\n    \"AWS API Call via CloudTrail\"\n  ],\n  \"detail\": {\n    \"eventSource\": [\n      \"logs.amazonaws.com\"\n    ],\n    \"eventName\": [\n      \"CreateLogGroup\",\n      \"PutSubscriptionFilter\",\n      \"DeleteSubscriptionFilter\"\n    ]\n  }\n}\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_event_target" ],
+        [ "Lit", "subscription_lambda" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "rule",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_event_rule" ],
+                  [ "A_string", "subscription_filter" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_lambda_function" ], [ "A_string", "lambda" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lambda_permission" ], [ "Lit", "allow_cloudwatch" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "statement_id",
+          [
+            "String", "AllowSubscriptionFilterLambdaExecutionFromCloudWatch"
+          ]
+        ],
+        [ "Attribute", "action", [ "String", "lambda:InvokeFunction" ] ],
+        [
+          "Attribute",
+          "function_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_lambda_function" ], [ "A_string", "lambda" ] ]
+              ],
+              [ "A_string", "function_name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "principal", [ "String", "events.amazonaws.com" ] ],
+        [
+          "Attribute",
+          "source_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_event_rule" ],
+                  [ "A_string", "subscription_filter" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

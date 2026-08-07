@@ -1,0 +1,1344 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_group" ], [ "Lit", "covidportal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "cloudwatch_log_group_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kms_key_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_kms_key" ], [ "A_string", "cw" ] ] ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ],
+        [ "Lit", "portal_cpu_utilization_high" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "alarm_name",
+          [ "String", "portal-cpu-utilization-high-warn" ]
+        ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "2" ] ],
+        [ "Attribute", "metric_name", [ "String", "CPUUtilization" ] ],
+        [ "Attribute", "namespace", [ "String", "AWS/ECS" ] ],
+        [ "Attribute", "period", [ "String", "120" ] ],
+        [ "Attribute", "statistic", [ "String", "Average" ] ],
+        [ "Attribute", "threshold", [ "String", "50" ] ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "String",
+            "COVID Alert Portal Warning - CPU usage has been over 50% for 4 minutes."
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_sns_topic" ],
+                      [ "A_string", "alert_warning" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dimensions",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "ClusterName" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_ecs_cluster" ],
+                        [ "A_string", "covidportal" ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ServiceName" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_ecs_service" ],
+                        [ "A_string", "covidportal" ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ],
+        [ "Lit", "portal_memory_utilization_high" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "alarm_name",
+          [ "String", "portal-memory-utilization-high-warn" ]
+        ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "Int", 2 ] ],
+        [ "Attribute", "metric_name", [ "String", "MemoryUtilization" ] ],
+        [ "Attribute", "namespace", [ "String", "AWS/ECS" ] ],
+        [ "Attribute", "period", [ "String", "120" ] ],
+        [ "Attribute", "statistic", [ "String", "Average" ] ],
+        [ "Attribute", "threshold", [ "String", "50" ] ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "String",
+            "COVID Alert Portal Warning - Memory usage have been over 50% for 4 minutes."
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_sns_topic" ],
+                      [ "A_string", "alert_warning" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dimensions",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "ClusterName" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_ecs_cluster" ],
+                        [ "A_string", "covidportal" ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ServiceName" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_ecs_service" ],
+                        [ "A_string", "covidportal" ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_metric_filter" ],
+        [ "Lit", "five_hundred_response" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "500Response" ] ],
+        [ "Attribute", "pattern", [ "String", "\"HTTP/1.1 5\"" ] ],
+        [
+          "Attribute",
+          "log_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "metric_transformation",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "500Response" ] ],
+              [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+              [ "Attribute", "value", [ "String", "1" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ],
+        [ "Lit", "five_hundred_response_warn" ]
+      ],
+      "body": [
+        [ "Attribute", "alarm_name", [ "String", "500ResponseWarn" ] ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "metric_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_metric_filter" ],
+                  [ "A_string", "five_hundred_response" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+        [ "Attribute", "period", [ "String", "60" ] ],
+        [ "Attribute", "statistic", [ "String", "Sum" ] ],
+        [ "Attribute", "threshold", [ "String", "0" ] ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "String",
+            "COVID Alert Portal Warning - A 5xx HTML error was detected coming from the portal."
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_sns_topic" ],
+                      [ "A_string", "alert_warning" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_metric_filter" ],
+        [ "Lit", "application_error" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "ApplicationError" ] ],
+        [ "Attribute", "pattern", [ "String", "Error" ] ],
+        [
+          "Attribute",
+          "log_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "metric_transformation",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "ApplicationError" ] ],
+              [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+              [ "Attribute", "value", [ "String", "1" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ],
+        [ "Lit", "application_error_warn" ]
+      ],
+      "body": [
+        [ "Attribute", "alarm_name", [ "String", "ApplicationErrorWarn" ] ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "metric_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_metric_filter" ],
+                  [ "A_string", "application_error" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+        [ "Attribute", "period", [ "String", "60" ] ],
+        [ "Attribute", "statistic", [ "String", "Sum" ] ],
+        [ "Attribute", "threshold", [ "String", "0" ] ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "String",
+            "COVID Alert Portal Warning - Django raised an Application Error"
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_sns_topic" ],
+                      [ "A_string", "alert_warning" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_metric_filter" ],
+        [ "Lit", "key_generation_warn" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "KeyGenerationWarn" ] ],
+        [
+          "Attribute",
+          "pattern",
+          [ "String", "\"CRUD event_type:CREATE model:covid_key.covidkey\"" ]
+        ],
+        [
+          "Attribute",
+          "log_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "metric_transformation",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "KeyGeneration" ] ],
+              [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+              [ "Attribute", "value", [ "String", "1" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ],
+        [ "Lit", "key_generation_warn" ]
+      ],
+      "body": [
+        [ "Attribute", "alarm_name", [ "String", "KeyGenerationWarn" ] ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "metric_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_metric_filter" ],
+                  [ "A_string", "key_generation_warn" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+        [ "Attribute", "period", [ "String", "3600" ] ],
+        [ "Attribute", "statistic", [ "String", "Sum" ] ],
+        [ "Attribute", "threshold", [ "String", "5" ] ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "String",
+            "COVID Alert Portal Warning - 6 COVID One Time Keys have been generated in the last hour"
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_sns_topic" ],
+                      [ "A_string", "alert_warning" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_metric_filter" ],
+        [ "Lit", "key_generation_critical" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "KeyGenerationCritical" ] ],
+        [
+          "Attribute",
+          "pattern",
+          [ "String", "\"CRUD event_type:CREATE model:covid_key.covidkey\"" ]
+        ],
+        [
+          "Attribute",
+          "log_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "metric_transformation",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "KeyGeneration" ] ],
+              [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+              [ "Attribute", "value", [ "String", "1" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ],
+        [ "Lit", "key_generation_critical" ]
+      ],
+      "body": [
+        [ "Attribute", "alarm_name", [ "String", "KeyGenerationCritical" ] ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "metric_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_metric_filter" ],
+                  [ "A_string", "key_generation_critical" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+        [ "Attribute", "period", [ "String", "3600" ] ],
+        [ "Attribute", "statistic", [ "String", "Sum" ] ],
+        [ "Attribute", "threshold", [ "String", "10" ] ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "String",
+            "COVID Alert Portal Critical - 11 COVID One Time Keys have been generated in the last hour"
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_sns_topic" ],
+                      [ "A_string", "alert_critical" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_metric_filter" ],
+        [ "Lit", "site_change" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "SiteTableChange" ] ],
+        [
+          "Attribute",
+          "pattern",
+          [ "String", "\"CRUD\" \"model:sites.site\"" ]
+        ],
+        [
+          "Attribute",
+          "log_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "metric_transformation",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "SiteTableChange" ] ],
+              [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+              [ "Attribute", "value", [ "String", "1" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ],
+        [ "Lit", "site_change_warn" ]
+      ],
+      "body": [
+        [ "Attribute", "alarm_name", [ "String", "SiteChangeWarn" ] ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "metric_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_metric_filter" ],
+                  [ "A_string", "site_change" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+        [ "Attribute", "period", [ "String", "60" ] ],
+        [ "Attribute", "statistic", [ "String", "Sum" ] ],
+        [ "Attribute", "threshold", [ "String", "0" ] ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "String",
+            "COVID Alert Portal Warning - Someone changed something on the Django sites table."
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_sns_topic" ],
+                      [ "A_string", "alert_warning" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_metric_filter" ],
+        [ "Lit", "account_lockout" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "AccountLockout" ] ],
+        [ "Attribute", "pattern", [ "String", "\"AXES: Locking out\"" ] ],
+        [
+          "Attribute",
+          "log_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "metric_transformation",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "AccountLockout" ] ],
+              [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+              [ "Attribute", "value", [ "String", "1" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ],
+        [ "Lit", "AccountLockoutWarn" ]
+      ],
+      "body": [
+        [ "Attribute", "alarm_name", [ "String", "AccountLockoutWarn" ] ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "metric_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_metric_filter" ],
+                  [ "A_string", "account_lockout" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+        [ "Attribute", "period", [ "String", "3600" ] ],
+        [ "Attribute", "statistic", [ "String", "Sum" ] ],
+        [ "Attribute", "threshold", [ "String", "4" ] ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "String",
+            "COVID Alert Portal Warning - 5 user accounts have been locked out in the last hour."
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_sns_topic" ],
+                      [ "A_string", "alert_warning" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_metric_filter" ],
+        [ "Lit", "invite_lockout" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "InviteLockout" ] ],
+        [
+          "Attribute", "pattern", [ "String", "\"Forbidden: /en/invite/\"" ]
+        ],
+        [
+          "Attribute",
+          "log_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "metric_transformation",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "InviteLockout" ] ],
+              [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+              [ "Attribute", "value", [ "String", "1" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ],
+        [ "Lit", "InviteLockoutWarn" ]
+      ],
+      "body": [
+        [ "Attribute", "alarm_name", [ "String", "InviteLockoutWarn" ] ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [
+          "Attribute",
+          "metric_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_log_metric_filter" ],
+                  [ "A_string", "invite_lockout" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "namespace", [ "String", "covidportal" ] ],
+        [ "Attribute", "period", [ "String", "60" ] ],
+        [ "Attribute", "statistic", [ "String", "Sum" ] ],
+        [ "Attribute", "threshold", [ "String", "0" ] ],
+        [ "Attribute", "treat_missing_data", [ "String", "notBreaching" ] ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "String",
+            "COVID Alert Portal Warning - Someone has tried to invite more than 25 users in the last hour."
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_sns_topic" ],
+                      [ "A_string", "alert_warning" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ],
+        [ "Lit", "ddos_detected_covidportal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "alarm_name",
+          [ "String", "DDoSDetectedCovidPortalWarn" ]
+        ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [ "Attribute", "metric_name", [ "String", "DDoSDetected" ] ],
+        [ "Attribute", "namespace", [ "String", "AWS/DDoSProtection" ] ],
+        [ "Attribute", "period", [ "String", "60" ] ],
+        [ "Attribute", "statistic", [ "String", "Sum" ] ],
+        [ "Attribute", "threshold", [ "String", "0" ] ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "String",
+            "COVID Alert Portal Warning - AWS has detected a DDOS attack on the COVID Alert Portal's Load Balancer"
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_sns_topic" ],
+                      [ "A_string", "alert_warning" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dimensions",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "ResourceArn" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "aws_lb" ], [ "A_string", "covidportal" ] ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ],
+        [ "Lit", "ddos_detected_route53" ]
+      ],
+      "body": [
+        [
+          "Attribute", "alarm_name", [ "String", "DDoSDetectedRoute53Warn" ]
+        ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [ "String", "GreaterThanThreshold" ]
+        ],
+        [ "Attribute", "evaluation_periods", [ "String", "1" ] ],
+        [ "Attribute", "metric_name", [ "String", "DDoSDetected" ] ],
+        [ "Attribute", "namespace", [ "String", "AWS/DDoSProtection" ] ],
+        [ "Attribute", "period", [ "String", "60" ] ],
+        [ "Attribute", "statistic", [ "String", "Sum" ] ],
+        [ "Attribute", "threshold", [ "String", "0" ] ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "String",
+            "COVID Alert Portal Warning - AWS has detected a DDOS attack on the COVID Alert Portal's DNS Server"
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_sns_topic" ],
+                      [ "A_string", "alert_warning" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dimensions",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "ResourceArn" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "arn:aws:route53:::hostedzone/" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_route53_zone" ],
+                                [ "A_string", "covidportal" ]
+                              ]
+                            ],
+                            [ "A_string", "zone_id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_event_target" ], [ "Lit", "codedeploy_sns" ]
+      ],
+      "body": [
+        [ "Attribute", "target_id", [ "String", "CodeDeploy_SNS" ] ],
+        [
+          "Attribute",
+          "rule",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_event_rule" ],
+                  [ "A_string", "codedeploy_sns" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_sns_topic" ], [ "A_string", "alert_warning" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "input_transformer",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "input_paths",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "status" ], [ "String", "$.detail.state" ]
+                    ],
+                    [
+                      [ "Quoted", "deploymentID" ],
+                      [ "String", "$.detail.deploymentId" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "input_template",
+                [
+                  "String",
+                  "\"COVID Alert Portal Warning - CloudDeploy has registered a <status> for deployment: <deploymentID>\""
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_event_rule" ], [ "Lit", "codedeploy_sns" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "alert-on-codedeploy-status" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Alert if CodeDeploy Fails during deployment" ]
+        ],
+        [
+          "Attribute",
+          "event_pattern",
+          [
+            "Heredoc",
+            [
+              "PATTERN",
+              "\n  {\n    \"source\": [\n      \"aws.codedeploy\"\n    ],\n    \"detail-type\": [\n      \"CodeDeploy Deployment State-change Notification\"\n    ],\n    \"detail\": {\n      \"state\": [\n        \"FAILURE\"\n      ]\n    }\n  }\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

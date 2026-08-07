@@ -1,0 +1,12 @@
+[
+  [
+    "Attribute",
+    "x",
+    [ "Tuple", [ [ "Id", "in" ], [ "Int", 1 ], [ "Int", 2 ] ] ]
+  ],
+  [
+    "Attribute",
+    "y",
+    [ "Tuple", [ [ "Int", 1 ], [ "Id", "if" ], [ "Int", 2 ] ] ]
+  ]
+]

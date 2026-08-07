@@ -37,22 +37,22 @@
         [
           "Attribute",
           "exactly",
-          [ "Not", [ "Equal", [ [ "String", "a" ], [ "String", "a" ] ] ] ]
+          [ "Not_equal", [ [ "String", "a" ], [ "String", "a" ] ] ]
         ],
         [
           "Attribute",
           "not",
-          [ "Not", [ "Equal", [ [ "String", "a" ], [ "String", "b" ] ] ] ]
+          [ "Not_equal", [ [ "String", "a" ], [ "String", "b" ] ] ]
         ],
         [
           "Attribute",
           "type_mismatch_number",
-          [ "Not", [ "Equal", [ [ "String", "1" ], [ "Int", 1 ] ] ] ]
+          [ "Not_equal", [ [ "String", "1" ], [ "Int", 1 ] ] ]
         ],
         [
           "Attribute",
           "type_mismatch_bool",
-          [ "Not", [ "Equal", [ [ "String", "true" ], [ "Bool", true ] ] ] ]
+          [ "Not_equal", [ [ "String", "true" ], [ "Bool", true ] ] ]
         ]
       ]
     }
@@ -139,7 +139,7 @@
         ],
         [
           "Attribute",
-          "sub_neg",
+          "sub_neg2",
           [ "Subtract", [ [ "Int", 2 ], [ "Minus", [ "Int", 2 ] ] ] ]
         ]
       ]

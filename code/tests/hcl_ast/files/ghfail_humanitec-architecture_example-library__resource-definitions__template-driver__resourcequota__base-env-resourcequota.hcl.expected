@@ -1,0 +1,92 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ], [ "Lit", "base-env" ]
+      ],
+      "body": [
+        [ "Attribute", "driver_type", [ "String", "humanitec/template" ] ],
+        [ "Attribute", "id", [ "String", "base-env" ] ],
+        [ "Attribute", "name", [ "String", "base-env" ] ],
+        [ "Attribute", "type", [ "String", "base-env" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "templates" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "manifests" ],
+                                  [
+                                    "String",
+                                    "quota.yaml:\n  location: namespace\n  data:\n    apiVersion: v1\n    kind: ResourceQuota\n    metadata:\n      name: compute-resources\n    spec:\n      hard:\n        limits.cpu: ${resources['config#quota'].outputs.limits-cpu}\n        limits.memory: ${resources['config#quota'].outputs.limits-memory}"
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition_criteria" ],
+        [ "Lit", "base-env_criteria_0" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "resource" ],
+                      [ "A_string", "humanitec_resource_definition" ]
+                    ]
+                  ],
+                  [ "A_string", "base-env" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

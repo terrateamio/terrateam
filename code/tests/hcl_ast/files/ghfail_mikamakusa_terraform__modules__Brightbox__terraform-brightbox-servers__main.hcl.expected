@@ -1,0 +1,924 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "brightbox_volume" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "volumes" ] ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "volumes" ] ] ],
+                [ "String", "name" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "image",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "volumes" ] ] ],
+                [ "String", "image" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "size",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "volumes" ] ] ],
+                [ "String", "size" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "volumes" ] ] ],
+                [ "String", "description" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "encrypted",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "volumes" ] ] ],
+                [ "String", "encrypted" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filesystem_label",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "volumes" ] ] ],
+                [ "String", "filesystem_label" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filesystem_type",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "volumes" ] ] ],
+                [ "String", "filesystem_type" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "serial",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "volumes" ] ] ],
+                [ "String", "serial" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "server",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "volumes" ] ] ],
+              [ "A_string", "server" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "volumes" ] ] ],
+                [ "String", "source" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "brightbox_server_group" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "server_group" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "server_group" ] ]
+                ],
+                [ "String", "name" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "server_group" ] ]
+                ],
+                [ "String", "description" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "brightbox_server" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "name" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "volume",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "volume" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "server_groups",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "server_groups" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "image",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "image" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "type" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "zone",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "zone" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "locked",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "locked" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "disk_encrypted",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "disk_encrypted" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "disk_size",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "disk_size" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "snapshots_retention",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "snapshots_retention" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "snapshots_schedule",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "snapshots_schedule" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "user_data",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "user_data" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "user_data_base64",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "server" ] ] ],
+                [ "String", "user_data_base64" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "brightbox_server_group_membership" ], [ "Lit", "this" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "server_group_membership" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "group",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "server_group_membership" ]
+                  ]
+                ],
+                [ "String", "group" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "servers",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "server_group_membership" ]
+                  ]
+                ],
+                [ "String", "servers" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "brightbox_load_balancer" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                ],
+                [ "String", "name" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                ],
+                [ "String", "policy" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "https_redirect",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                ],
+                [ "String", "https_redirect" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ssl_minimum_version",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                ],
+                [ "String", "ssl_minimum_version" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "locked",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                ],
+                [ "String", "locked" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "nodes",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                ],
+                [ "String", "nodes" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "domains",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                ],
+                [ "String", "domains" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "certificate_pem",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                ],
+                [ "String", "certificate_pem" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "certificate_private_key",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                ],
+                [ "String", "certificate_private_key" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "listener" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Fun_call",
+                  [
+                    "lookup",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                      ],
+                      [ "String", "listener" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "protocol",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "listener" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "protocol" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "in",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "listener" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "in" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "out",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "listener" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "out" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "timeout",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "listener" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "timeout" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "proxy_protocol",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "listener" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "proxy_protocol" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "healthcheck" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Fun_call",
+                  [
+                    "lookup",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "load_balancer" ] ]
+                      ],
+                      [ "String", "healthcheck" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "type",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "healthcheck" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "type" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "port",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "healthcheck" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "port" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "request",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "healthcheck" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "request" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "interval",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "healthcheck" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "interval" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "timeout",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "healthcheck" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "timeout" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "threshold_down",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "healthcheck" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "threshold_down" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "threshold_up",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "healthcheck" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "A_string", "threshold_up" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

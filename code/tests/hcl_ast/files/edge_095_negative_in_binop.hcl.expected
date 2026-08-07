@@ -1,0 +1,7 @@
+[
+  [
+    "Attribute",
+    "x",
+    [ "Add", [ [ "Minus", [ "Int", 1 ] ], [ "Minus", [ "Int", 2 ] ] ] ]
+  ]
+]

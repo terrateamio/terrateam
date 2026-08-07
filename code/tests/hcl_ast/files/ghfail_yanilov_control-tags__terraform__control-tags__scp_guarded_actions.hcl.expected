@@ -1,0 +1,500 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_iam_policy_document" ], [ "Lit", "guarded_actions" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "guarded_action_spec" ] ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "statement",
+            "labels": [],
+            "body": [
+              [ "Attribute", "sid", [ "String", "GuardActions" ] ],
+              [ "Attribute", "effect", [ "String", "Deny" ] ],
+              [
+                "Attribute",
+                "actions",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "actions" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute", "resources", [ "Tuple", [ [ "String", "*" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "condition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "test",
+                      [ "String", "StringNotLikeIfExists" ]
+                    ],
+                    [
+                      "Attribute",
+                      "variable",
+                      [
+                        "Template",
+                        [
+                          [ "Literal", "aws:PrincipalTag/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "approval_ticket_tag_key" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "tag_key", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "human_identity_tag_keys" ]
+                            ]
+                          ],
+                          "output": [
+                            "Template",
+                            [
+                              [ "Literal", "*/for/${" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "tag_key" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", ", '" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "invalid" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "identity" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "'}" ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_organizations_policy" ], [ "Lit", "guarded_actions" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "data" ], [ "A_string", "aws_iam_policy_document" ]
+                ]
+              ],
+              [ "A_string", "guarded_actions" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "guarded_actions_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SERVICE_CONTROL_POLICY" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "guard actions from being performed without approval."
+          ]
+        ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "guarded_actions_attachments",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Ellipsis",
+                  [
+                    "For_tuple",
+                    {
+                      "identifiers": [ "key", [ "spec" ] ],
+                      "input": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "guarded_action_spec" ]
+                        ]
+                      ],
+                      "output": [
+                        "For_object",
+                        {
+                          "identifiers": [ "target", [] ],
+                          "input": [
+                            "Fun_call",
+                            [
+                              "flatten",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "values",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "spec" ],
+                                          [
+                                            "A_string", "deployment_targets"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "key_output": [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "key" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [ "Literal", "/" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "target" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ],
+                          "value_output": [
+                            "Object",
+                            [
+                              [ [ "Bare", "target_id" ], [ "Id", "target" ] ],
+                              [
+                                [ "Bare", "policy_id" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Id",
+                                              "aws_organizations_policy"
+                                            ],
+                                            [ "A_string", "guarded_actions" ]
+                                          ]
+                                        ],
+                                        [ "Id", "key" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "id" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": [
+                            "Not_equal", [ [ "Id", "target" ], [ "Null" ] ]
+                          ]
+                        }
+                      ],
+                      "cond": [
+                        "Not_equal",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "spec" ],
+                              [ "A_string", "deployment_targets" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_organizations_policy_attachment" ],
+        [ "Lit", "guarded_actions" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "guarded_actions_attachments" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "policy_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "target_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "target_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "check",
+      "labels": [ [ "Lit", "guarded_actions_without_controltags" ] ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "assert",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "_", [ "attachment" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "guarded_actions_attachments" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "anytrue",
+                              [
+                                [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [ "target_id", [] ],
+                                    "input": [
+                                      "Fun_call",
+                                      [
+                                        "toset",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "flatten",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "values",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "var" ],
+                                                          [
+                                                            "A_string",
+                                                            "deployment_targets"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Equal",
+                                      [
+                                        [ "Id", "target_id" ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "attachment" ],
+                                            [ "A_string", "target_id" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "You have attached a guarded action policy to a target in which controltags scp is not attached."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

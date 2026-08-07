@@ -1,0 +1,269 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "kubectl_manifest" ], [ "Lit", "vmrule_cluster" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "yaml_body",
+          [
+            "Fun_call",
+            [
+              "yamlencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "apiVersion" ],
+                      [ "String", "operator.victoriametrics.com/v1beta1" ]
+                    ],
+                    [ [ "Bare", "kind" ], [ "String", "VMRule" ] ],
+                    [
+                      [ "Bare", "metadata" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "name" ],
+                            [ "String", "vmrule-cluster" ]
+                          ],
+                          [
+                            [ "Bare", "namespace" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "namespace" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "spec" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "groups" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "interval" ],
+                                      [ "String", "15s" ]
+                                    ],
+                                    [
+                                      [ "Bare", "name" ],
+                                      [ "String", "K8sClusters" ]
+                                    ],
+                                    [
+                                      [ "Bare", "rules" ],
+                                      [
+                                        "Tuple",
+                                        [
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "expr" ],
+                                                [
+                                                  "String",
+                                                  "avg((avg (container_memory_working_set_bytes) by (container_name , pod ))/ on (container_name , pod)(avg (container_spec_memory_limit_bytes>0 ) by (container_name, pod))*100)"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "record" ],
+                                                [
+                                                  "String",
+                                                  "cluster:mem_used"
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "expr" ],
+                                                [
+                                                  "String",
+                                                  "avg((sum (rate (container_cpu_usage_seconds_total{container_name!=\"\"} [5m])) by (namespace , cluster_name ) / on ( namespace, cluster_name) ((kube_pod_container_resource_limits_cpu_cores >0)*300))*100)"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "record" ],
+                                                [
+                                                  "String",
+                                                  "cluster:cpu_used"
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "alert" ],
+                                                [
+                                                  "String", "HighClusterMem"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "annotations" ],
+                                                [
+                                                  "Object",
+                                                  [
+                                                    [
+                                                      [
+                                                        "Bare", "description"
+                                                      ],
+                                                      [
+                                                        "String",
+                                                        "`{{ $labels.cluster_name }}` cluster memory usage is high"
+                                                      ]
+                                                    ],
+                                                    [
+                                                      [ "Bare", "summary" ],
+                                                      [
+                                                        "String",
+                                                        "High k8s cluster Mem Usage"
+                                                      ]
+                                                    ],
+                                                    [
+                                                      [ "Bare", "value" ],
+                                                      [
+                                                        "String",
+                                                        "{{ $value }}"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "expr" ],
+                                                [
+                                                  "String",
+                                                  "cluster:mem_used > 90"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "for" ],
+                                                [ "String", "1m" ]
+                                              ],
+                                              [
+                                                [ "Bare", "labels" ],
+                                                [
+                                                  "Object",
+                                                  [
+                                                    [
+                                                      [ "Bare", "severity" ],
+                                                      [ "String", "warning" ]
+                                                    ],
+                                                    [
+                                                      [ "Bare", "team" ],
+                                                      [ "String", "ops" ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "alert" ],
+                                                [
+                                                  "String", "HighClusterCPU"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "annotations" ],
+                                                [
+                                                  "Object",
+                                                  [
+                                                    [
+                                                      [
+                                                        "Bare", "description"
+                                                      ],
+                                                      [
+                                                        "String",
+                                                        "`{{ $labels.cluster_name }}` cluster cpu usage is high"
+                                                      ]
+                                                    ],
+                                                    [
+                                                      [ "Bare", "summary" ],
+                                                      [
+                                                        "String",
+                                                        "High k8s cluster CPU Usage"
+                                                      ]
+                                                    ],
+                                                    [
+                                                      [ "Bare", "value" ],
+                                                      [
+                                                        "String",
+                                                        "{{ $value }}"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "expr" ],
+                                                [
+                                                  "String",
+                                                  "cluster:cpu_used > 90"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "for" ],
+                                                [ "String", "1m" ]
+                                              ],
+                                              [
+                                                [ "Bare", "labels" ],
+                                                [
+                                                  "Object",
+                                                  [
+                                                    [
+                                                      [ "Bare", "severity" ],
+                                                      [ "String", "warning" ]
+                                                    ],
+                                                    [
+                                                      [ "Bare", "team" ],
+                                                      [ "String", "ops" ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

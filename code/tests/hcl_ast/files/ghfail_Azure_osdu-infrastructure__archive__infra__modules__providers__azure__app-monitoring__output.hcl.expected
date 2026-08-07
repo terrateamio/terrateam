@@ -1,0 +1,39 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "rule_resource_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The id of a metric alert rule." ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_monitor_metric_alert" ],
+                      [ "A_string", "appmonitoring" ]
+                    ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

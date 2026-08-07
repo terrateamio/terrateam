@@ -1,0 +1,3410 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "annotations" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "Resource annotations." ] ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "automations" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Configuration for automations associated with the deployment pipeline in a name => attributes format."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "project_id" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "region" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "annotations" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "description" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "labels" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "service_account" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "suspended" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "advance_rollout_rule" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "id" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [
+                                                      "String",
+                                                      "advance-rollout"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "source_phases" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "wait" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "promote_release_rule" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "id" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [
+                                                      "String",
+                                                      "promote-release"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "wait" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "destination_target_id"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "destination_phase" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "repair_rollout_rule" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "id" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [
+                                                      "String",
+                                                      "repair-rollout"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "phases" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "jobs" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "retry" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "attempts"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ],
+                                                                    [
+                                                                    "Null"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "wait"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ],
+                                                                    [
+                                                                    "Null"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "backoff_mode"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ],
+                                                                    [
+                                                                    "Null"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "rollback" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "destination_phase"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ],
+                                                                    [
+                                                                    "Null"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "disable_rollback_if_rollout_pending"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "bool"
+                                                                    ],
+                                                                    [
+                                                                    "Bool",
+                                                                    true
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "timed_promote_release_rule" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "id" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [
+                                                      "String",
+                                                      "timed-promote-release"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "destination_target_id"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "schedule" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "time_zone" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "destination_phase" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "selector" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "list",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "object",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "id" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [ "Id", "string" ],
+                                                          [ "String", "*" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "labels" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "map",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [ "Object", [] ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Tuple",
+                                    [
+                                      [
+                                        "Object",
+                                        [
+                                          [
+                                            [ "Bare", "id" ],
+                                            [ "String", "*" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "automations" ]
+                            ]
+                          ],
+                          "output": [
+                            "Not",
+                            [
+                              "Log_and",
+                              [
+                                [
+                                  "Log_and",
+                                  [
+                                    [
+                                      "Log_and",
+                                      [
+                                        [
+                                          "Equal",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "v" ],
+                                                [
+                                                  "A_string",
+                                                  "promote_release_rule"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Null" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Equal",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "v" ],
+                                                [
+                                                  "A_string",
+                                                  "advance_rollout_rule"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Null" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Equal",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [
+                                              "A_string",
+                                              "repair_rollout_rule"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ],
+                                        [
+                                          "A_string",
+                                          "timed_promote_release_rule"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\n    At least one rule should be defined (promote_release_rule, advance_rollout_rule, repair_rollout_rule or timed_promote_release_rule).\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "deploy_policies" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Configurations for Deployment Policies in a name => attributes format."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "project_id" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "region" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "annotations" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "description" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "labels" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "suspended" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "rollout_restrictions" ],
+                            [
+                              "Fun_call",
+                              [
+                                "map",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "actions" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "invokers" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "time_zone" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "weekly_windows" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "object",
+                                                              [
+                                                                [
+                                                                  "Object",
+                                                                  [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "days_of_week"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "list",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "start_time"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "object",
+                                                                    [
+                                                                    [
+                                                                    "Object",
+                                                                    [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "hours"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "minutes"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "seconds"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "nanos"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "end_time"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "object",
+                                                                    [
+                                                                    [
+                                                                    "Object",
+                                                                    [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "hours"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "minutes"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "seconds"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "nanos"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Tuple", [] ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "one_time_windows" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "object",
+                                                              [
+                                                                [
+                                                                  "Object",
+                                                                  [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "start_date"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "object",
+                                                                    [
+                                                                    [
+                                                                    "Object",
+                                                                    [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "day"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "month"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "year"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "start_time"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "object",
+                                                                    [
+                                                                    [
+                                                                    "Object",
+                                                                    [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "hours"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "minutes"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "seconds"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "nanos"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "end_date"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "object",
+                                                                    [
+                                                                    [
+                                                                    "Object",
+                                                                    [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "day"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "month"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "year"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "end_time"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "object",
+                                                                    [
+                                                                    [
+                                                                    "Object",
+                                                                    [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "hours"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "minutes"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "seconds"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "nanos"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Tuple", [] ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "selectors" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "list",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "object",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "id" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [ "Id", "string" ],
+                                                          [ "String", "*" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "type" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [ "Id", "string" ],
+                                                          [
+                                                            "String",
+                                                            "DELIVERY_PIPELINE"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "labels" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "map",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [ "Object", [] ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Tuple",
+                                    [
+                                      [
+                                        "Object",
+                                        [
+                                          [
+                                            [ "Bare", "id" ],
+                                            [ "String", "*" ]
+                                          ],
+                                          [
+                                            [ "Bare", "type" ],
+                                            [ "String", "DELIVERY_PIPELINE" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "deploy_policies" ]
+                            ]
+                          ],
+                          "output": [
+                            "Equal",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "sum",
+                                  [
+                                    [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "kk", [ "vv" ] ],
+                                        "input": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [
+                                              "A_string",
+                                              "rollout_restrictions"
+                                            ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Cond",
+                                          {
+                                            "if_": [
+                                              "Log_or",
+                                              [
+                                                [
+                                                  "Gt",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "length",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "vv" ],
+                                                              [
+                                                                "A_string",
+                                                                "weekly_windows"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Int", 0 ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Gt",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "length",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "vv" ],
+                                                              [
+                                                                "A_string",
+                                                                "one_time_windows"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Int", 0 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "then_": [ "Int", 0 ],
+                                            "else_": [ "Int", 1 ]
+                                          }
+                                        ],
+                                        "cond": null
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\n    At least one window should be defined (weekly_windows or one_time_windows).\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "deploy_policies" ]
+                            ]
+                          ],
+                          "output": [
+                            "Equal",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "sum",
+                                  [
+                                    [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "kk", [ "vv" ] ],
+                                        "input": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [ "A_string", "selectors" ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Cond",
+                                          {
+                                            "if_": [
+                                              "Log_or",
+                                              [
+                                                [
+                                                  "Equal",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "upper",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "vv" ],
+                                                              [
+                                                                "A_string",
+                                                                "type"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "String",
+                                                      "DELIVERY_PIPELINE"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Equal",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "upper",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "vv" ],
+                                                              [
+                                                                "A_string",
+                                                                "type"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "String", "TARGET" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "then_": [ "Int", 0 ],
+                                            "else_": [ "Int", 1 ]
+                                          }
+                                        ],
+                                        "cond": null
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\n    Selector type should either be \"DELIVERY_PIPELINE\" or \"TARGET.\"\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "description" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Cloud Deploy Delivery Pipeline description." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "Terraform managed." ] ],
+        [ "Attribute", "nullable", [ "Bool", true ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Lte",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "description" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 255 ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Description cannot be longer than 255 characters."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "labels" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Cloud Deploy Delivery Pipeline resource labels." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "labels" ] ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^[a-z]([a-z0-9_.-]{0,62}[a-z0-9.])?$"
+                                          ],
+                                          [ "Id", "k" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^[a-z0-9]([a-z0-9_.-]{0,62}[a-z0-9.])?$"
+                                          ],
+                                          [ "Id", "v" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Labels must start with a lowercase letter and can only contain lowercase letters, numeric characters, underscores and dashes."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Cloud Deploy Delivery Pipeline name." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Delivery pipeline name must be between 1 and 63 characters and match the regular expression [a-z]([a-z0-9-]{0,61}[a-z0-9])?."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "project_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Project id used for resources, if not explicitly specified."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "region" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Region used for resources, if not explicitly specified."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "suspended" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Configuration to suspend a delivery pipeline." ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "targets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Configuration for new targets associated with the delivery pipeline in a list format. Order of the targets are defined by the order within the list."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "project_id" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "region" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "create_target" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", true ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "exclude_from_pipeline" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "annotations" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "description" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "deployment_percentages" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "number" ] ] ]
+                                  ],
+                                  [ "Tuple", [ [ "Int", 10 ] ] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "execution_configs_usages" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "execution_configs_timeout" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "labels" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "multi_target_target_ids" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "profiles" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "predeploy_actions" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "postdeploy_actions" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "require_approval" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "strategy" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [ "Id", "string" ],
+                                  [ "String", "STANDARD" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "target_deploy_parameters" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "verify" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "cloud_run_configs" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "project_id" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "region" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "string" ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "automatic_traffic_control"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "bool" ],
+                                                    [ "Bool", true ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "canary_revision_tags"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare", "prior_revision_tags"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "stable_revision_tags"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "custom_canary_phase_configs" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "map",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "object",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "deployment_percentage"
+                                                    ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "predeploy_actions"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "list",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "postdeploy_actions"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "list",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "delivery_pipeline_deploy_parameters" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "list",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "object",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "values" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "map",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [ "Null" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [
+                                                      "Bare",
+                                                      "matching_target_labels"
+                                                    ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "map",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [ "Null" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "iam" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "map",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [ "list", [ [ "Id", "string" ] ] ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "iam_bindings" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "map",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "object",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "members" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "role" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "condition" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "object",
+                                                              [
+                                                                [
+                                                                  "Object",
+                                                                  [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "expression"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "title"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "description"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "iam_bindings_additive" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "map",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "object",
+                                            [
+                                              [
+                                                "Object",
+                                                [
+                                                  [
+                                                    [ "Bare", "member" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "role" ],
+                                                    [ "Id", "string" ]
+                                                  ],
+                                                  [
+                                                    [ "Bare", "condition" ],
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "optional",
+                                                        [
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "object",
+                                                              [
+                                                                [
+                                                                  "Object",
+                                                                  [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "expression"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "title"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "description"
+                                                                    ],
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "iam_by_principals" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "map",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [ "list", [ [ "Id", "string" ] ] ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "target", [] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "targets" ] ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [ "String", "STANDARD" ],
+                                    [ "String", "CANARY" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "target" ],
+                                    [ "A_string", "strategy" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The strategy for a target must be either 'STANDARD' or 'CANARY'."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "v", [] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "targets" ] ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "strategy" ]
+                                    ]
+                                  ],
+                                  [ "String", "CANARY" ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "alltrue",
+                                  [
+                                    [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [ "i", [ "p" ] ],
+                                        "input": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [
+                                              "A_string",
+                                              "deployment_percentages"
+                                            ]
+                                          ]
+                                        ],
+                                        "output": [
+                                          "Cond",
+                                          {
+                                            "if_": [
+                                              "Equal",
+                                              [ [ "Id", "i" ], [ "Int", 0 ] ]
+                                            ],
+                                            "then_": [
+                                              "Log_and",
+                                              [
+                                                [
+                                                  "Gte",
+                                                  [
+                                                    [ "Id", "p" ],
+                                                    [ "Int", 0 ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Lt",
+                                                  [
+                                                    [ "Id", "p" ],
+                                                    [ "Int", 100 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "else_": [
+                                              "Log_and",
+                                              [
+                                                [
+                                                  "Log_and",
+                                                  [
+                                                    [
+                                                      "Gte",
+                                                      [
+                                                        [ "Id", "p" ],
+                                                        [ "Int", 0 ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Lt",
+                                                      [
+                                                        [ "Id", "p" ],
+                                                        [ "Int", 100 ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Gt",
+                                                  [
+                                                    [ "Id", "p" ],
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "v" ],
+                                                            [
+                                                              "A_string",
+                                                              "deployment_percentages"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "Subtract",
+                                                          [
+                                                            [ "Id", "i" ],
+                                                            [ "Int", 1 ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          }
+                                        ],
+                                        "cond": null
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "For canary strategy, deployment percentages must be in ascending order and each percentage must be between 0 and 99."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

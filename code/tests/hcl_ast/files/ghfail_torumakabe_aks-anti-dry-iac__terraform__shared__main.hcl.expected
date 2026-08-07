@@ -1,0 +1,4409 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [ "Attribute", "required_version", [ "String", "~> 1.11.3" ] ],
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "azurerm",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "source" ], [ "String", "hashicorp/azurerm" ]
+                    ],
+                    [ [ "Bare", "version" ], [ "String", "~> 4.24.0" ] ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "random",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "source" ], [ "String", "hashicorp/random" ]
+                    ],
+                    [ [ "Bare", "version" ], [ "String", "~> 3.6" ] ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "subnet_addrs" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "hashicorp/subnets/cidr" ] ],
+        [
+          "Attribute",
+          "base_cidr_block",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "subnet_addrs" ] ]
+              ],
+              [ "A_string", "base_cidr_block" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "networks",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ], [ "String", "aks_blue_node_system" ]
+                  ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [ "String", "aks_blue_node_user_az1" ]
+                  ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [ "String", "aks_blue_node_user_az2" ]
+                  ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [ "String", "aks_blue_node_user_az3" ]
+                  ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "String", "aks_blue_svc_lb" ] ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ], [ "String", "aks_green_node_system" ]
+                  ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [ "String", "aks_green_node_user_az1" ]
+                  ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [ "String", "aks_green_node_user_az2" ]
+                  ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [ "String", "aks_green_node_user_az3" ]
+                  ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "String", "aks_green_svc_lb" ] ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "String", "appgw" ] ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "String", "endpoint" ] ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "name" ], [ "String", "aci" ] ],
+                  [ [ "Bare", "new_bits" ], [ "Int", 8 ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "azurerm" ] ],
+      "body": [
+        [ "Attribute", "use_oidc", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "resource_provider_registrations",
+          [ "String", "none" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "features",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "resource_group",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "prevent_deletion_if_contains_resources",
+                      [ "Bool", false ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "shared" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "shared_rg" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "shared_rg" ] ] ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_virtual_network" ], [ "Lit", "default" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "vnet-default" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_space",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "module" ], [ "A_string", "subnet_addrs" ] ]
+                  ],
+                  [ "A_string", "base_cidr_block" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subnet" ], [ "Lit", "aks_blue_node_system" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "snet-aks-blue-node-system" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "subnet_addrs" ]
+                        ]
+                      ],
+                      [ "A_string", "network_cidr_blocks" ]
+                    ]
+                  ],
+                  [ "String", "aks_blue_node_system" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subnet" ], [ "Lit", "aks_blue_node_user_az" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Tuple",
+                  [ [ "String", "1" ], [ "String", "2" ], [ "String", "3" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "snet-aks-blue-node-user-az" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "subnet_addrs" ]
+                        ]
+                      ],
+                      [ "A_string", "network_cidr_blocks" ]
+                    ]
+                  ],
+                  [
+                    "Template",
+                    [
+                      [ "Literal", "aks_blue_node_user_az" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_subnet" ], [ "Lit", "aks_blue_svc_lb" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "snet-aks-blue-svc-lb" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "subnet_addrs" ]
+                        ]
+                      ],
+                      [ "A_string", "network_cidr_blocks" ]
+                    ]
+                  ],
+                  [ "String", "aks_blue_svc_lb" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subnet" ], [ "Lit", "aks_green_node_system" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "snet-aks-green-node-system" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "subnet_addrs" ]
+                        ]
+                      ],
+                      [ "A_string", "network_cidr_blocks" ]
+                    ]
+                  ],
+                  [ "String", "aks_green_node_system" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subnet" ], [ "Lit", "aks_green_node_user_az" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Tuple",
+                  [ [ "String", "1" ], [ "String", "2" ], [ "String", "3" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "snet-aks-green-node-user-az" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "subnet_addrs" ]
+                        ]
+                      ],
+                      [ "A_string", "network_cidr_blocks" ]
+                    ]
+                  ],
+                  [
+                    "Template",
+                    [
+                      [ "Literal", "aks_green_node_user_az" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_subnet" ], [ "Lit", "aks_green_svc_lb" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "snet-aks-green-svc-lb" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "subnet_addrs" ]
+                        ]
+                      ],
+                      [ "A_string", "network_cidr_blocks" ]
+                    ]
+                  ],
+                  [ "String", "aks_green_svc_lb" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_subnet" ], [ "Lit", "appgw" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "snet-appgw" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "subnet_addrs" ]
+                        ]
+                      ],
+                      [ "A_string", "network_cidr_blocks" ]
+                    ]
+                  ],
+                  [ "String", "appgw" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_subnet" ], [ "Lit", "endpoint" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "snet-endpoint" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "subnet_addrs" ]
+                        ]
+                      ],
+                      [ "A_string", "network_cidr_blocks" ]
+                    ]
+                  ],
+                  [ "String", "endpoint" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_subnet" ], [ "Lit", "aci" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "snet-aci" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "address_prefixes",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "subnet_addrs" ]
+                        ]
+                      ],
+                      [ "A_string", "network_cidr_blocks" ]
+                    ]
+                  ],
+                  [ "String", "aci" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "delegation",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "delegation" ] ],
+              [
+                "Block",
+                {
+                  "type_": "service_delegation",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "name",
+                      [
+                        "String",
+                        "Microsoft.ContainerInstance/containerGroups"
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "actions",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "String",
+                            "Microsoft.Network/virtualNetworks/subnets/action"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [ [ "Attribute", "command", [ "String", "sleep 30" ] ] ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_public_ip" ], [ "Lit", "demoapp" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "pip-demoapp" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "allocation_method", [ "String", "Static" ] ],
+        [ "Attribute", "sku", [ "String", "Standard" ] ],
+        [
+          "Attribute",
+          "zones",
+          [ "Tuple", [ [ "Int", 1 ], [ "Int", 2 ], [ "Int", 3 ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_application_gateway" ], [ "Lit", "shared" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "agw_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "sku",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "Standard_v2" ] ],
+              [ "Attribute", "tier", [ "String", "Standard_v2" ] ],
+              [ "Attribute", "capacity", [ "Int", 2 ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "zones",
+          [ "Tuple", [ [ "Int", 1 ], [ "Int", 2 ], [ "Int", 3 ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "gateway_ip_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "agw_settings" ] ]
+                    ],
+                    [ "A_string", "gateway_ip_configuration_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "subnet_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "azurerm_subnet" ], [ "A_string", "appgw" ] ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "frontend_port",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "agw_settings" ] ]
+                    ],
+                    [ "A_string", "frontend_port_name" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "port", [ "Int", 80 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "frontend_ip_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "agw_settings" ] ]
+                    ],
+                    [ "A_string", "frontend_ip_configuration_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "public_ip_address_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "azurerm_public_ip" ],
+                        [ "A_string", "demoapp" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "backend_address_pool",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "backend_address_pool_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "ip_addresses",
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "target", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "target" ]
+                      ]
+                    ],
+                    "output": [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [ [ "Id", "target" ], [ "String", "blue" ] ]
+                        ],
+                        "then_": [
+                          "Fun_call",
+                          [
+                            "cidrhost",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "azurerm_subnet" ],
+                                          [ "A_string", "aks_blue_svc_lb" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "address_prefixes" ]
+                                    ]
+                                  ],
+                                  [ "Int", 0 ]
+                                ]
+                              ],
+                              [ "Int", 4 ]
+                            ]
+                          ]
+                        ],
+                        "else_": [
+                          "Fun_call",
+                          [
+                            "cidrhost",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "azurerm_subnet" ],
+                                          [ "A_string", "aks_green_svc_lb" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "address_prefixes" ]
+                                    ]
+                                  ],
+                                  [ "Int", 0 ]
+                                ]
+                              ],
+                              [ "Int", 4 ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "backend_http_settings",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "http_setting_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "cookie_based_affinity",
+                [ "String", "Disabled" ]
+              ],
+              [ "Attribute", "path", [ "String", "/" ] ],
+              [ "Attribute", "port", [ "Int", 80 ] ],
+              [ "Attribute", "protocol", [ "String", "Http" ] ],
+              [ "Attribute", "request_timeout", [ "Int", 15 ] ],
+              [
+                "Attribute",
+                "probe_name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "probe_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "connection_draining",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "enabled", [ "Bool", true ] ],
+                    [ "Attribute", "drain_timeout_sec", [ "Int", 10 ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "http_listener",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "listener_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "frontend_ip_configuration_name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "agw_settings" ] ]
+                    ],
+                    [ "A_string", "frontend_ip_configuration_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "frontend_port_name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "agw_settings" ] ]
+                    ],
+                    [ "A_string", "frontend_port_name" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "protocol", [ "String", "Http" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "request_routing_rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "request_routing_rule_name" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "rule_type", [ "String", "PathBasedRouting" ] ],
+              [
+                "Attribute",
+                "http_listener_name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "listener_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "url_path_map_name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "url_path_map_name" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "priority", [ "Int", 100 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "url_path_map",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "url_path_map_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "default_backend_address_pool_name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "backend_address_pool_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "default_backend_http_settings_name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "http_setting_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "path_rule",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "name", [ "String", "black-hole" ] ],
+                    [
+                      "Attribute",
+                      "paths",
+                      [ "Tuple", [ [ "String", "/healthz" ] ] ]
+                    ],
+                    [
+                      "Attribute",
+                      "redirect_configuration_name",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "demoapp" ]
+                                ]
+                              ],
+                              [ "A_string", "agw_settings" ]
+                            ]
+                          ],
+                          [ "A_string", "redirect_configuration_name" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "redirect_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "redirect_configuration_name" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "redirect_type", [ "String", "Permanent" ] ],
+              [
+                "Attribute",
+                "target_url",
+                [ "String", "http://blackhole.example" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "probe",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "agw_settings" ]
+                      ]
+                    ],
+                    [ "A_string", "probe_name" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "host", [ "String", "127.0.0.1" ] ],
+              [ "Attribute", "protocol", [ "String", "Http" ] ],
+              [ "Attribute", "path", [ "String", "/healthz" ] ],
+              [ "Attribute", "interval", [ "Int", 30 ] ],
+              [ "Attribute", "timeout", [ "Int", 30 ] ],
+              [ "Attribute", "unhealthy_threshold", [ "Int", 3 ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_password" ], [ "Lit", "redis_password" ] ],
+      "body": [
+        [ "Attribute", "length", [ "Int", 16 ] ],
+        [ "Attribute", "special", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_container_group" ], [ "Lit", "demoapp_redis" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "ci-demoapp-redis" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "ip_address_type", [ "String", "Private" ] ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "azurerm_subnet" ], [ "A_string", "aci" ] ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "exposed_port",
+            "labels": [],
+            "body": [
+              [ "Attribute", "port", [ "Int", 6379 ] ],
+              [ "Attribute", "protocol", [ "String", "TCP" ] ]
+            ]
+          }
+        ],
+        [ "Attribute", "restart_policy", [ "String", "Always" ] ],
+        [ "Attribute", "os_type", [ "String", "Linux" ] ],
+        [
+          "Block",
+          {
+            "type_": "container",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "redis" ] ],
+              [
+                "Attribute",
+                "image",
+                [ "String", "ghcr.io/torumakabe/redis:7.4" ]
+              ],
+              [ "Attribute", "cpu", [ "String", "1.0" ] ],
+              [ "Attribute", "memory", [ "String", "1.0" ] ],
+              [
+                "Block",
+                {
+                  "type_": "ports",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "port", [ "Int", 6379 ] ],
+                    [ "Attribute", "protocol", [ "String", "TCP" ] ]
+                  ]
+                }
+              ],
+              [
+                "Attribute",
+                "environment_variables",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "REDIS_PASSWORD" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "random_password" ],
+                              [ "A_string", "redis_password" ]
+                            ]
+                          ],
+                          [ "A_string", "result" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_private_dns_zone" ],
+        [ "Lit", "demoapp_internal_shared" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "shared." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "demoapp" ] ]
+                      ],
+                      [ "A_string", "domain" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_private_dns_zone_virtual_network_link" ],
+        [ "Lit", "demoapp_internal_shared" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "pdnsz-link-demoapp-internal-shared" ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_private_dns_zone" ],
+                  [ "A_string", "demoapp_internal_shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_private_dns_a_record" ], [ "Lit", "demoapp_redis" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "redis" ] ],
+        [
+          "Attribute",
+          "zone_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_private_dns_zone" ],
+                  [ "A_string", "demoapp_internal_shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "ttl", [ "Int", 300 ] ],
+        [
+          "Attribute",
+          "records",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_container_group" ],
+                      [ "A_string", "demoapp_redis" ]
+                    ]
+                  ],
+                  [ "A_string", "ip_address" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_key_vault" ], [ "Lit", "demoapp" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                  ],
+                  [ "A_string", "key_vault" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tenant_id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tenant_id" ] ] ]
+        ],
+        [ "Attribute", "sku_name", [ "String", "standard" ] ],
+        [ "Attribute", "enable_rbac_authorization", [ "Bool", true ] ],
+        [ "Attribute", "purge_protection_enabled", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "network_acls",
+            "labels": [],
+            "body": [
+              [ "Attribute", "bypass", [ "String", "None" ] ],
+              [ "Attribute", "default_action", [ "String", "Deny" ] ],
+              [
+                "Attribute",
+                "ip_rules",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "demoapp" ] ]
+                        ],
+                        [ "A_string", "key_vault" ]
+                      ]
+                    ],
+                    [ "A_string", "ip_rules" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_role_assignment" ],
+        [ "Lit", "kv_demoapp_admin_to_current_client" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "scope",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_key_vault" ], [ "A_string", "demoapp" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role_definition_id",
+          [
+            "Template",
+            [
+              [ "Literal", "/subscriptions/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "azurerm_client_config" ]
+                            ]
+                          ],
+                          [ "A_string", "current" ]
+                        ]
+                      ],
+                      [ "A_string", "subscription_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [
+                "Literal",
+                "/providers/Microsoft.Authorization/roleDefinitions/00482a5a-887f-4fb3-b363-3b7fe8e74483"
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "principal_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "current_client" ] ]
+              ],
+              [ "A_string", "object_id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [ [ "Attribute", "command", [ "String", "sleep 60" ] ] ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_key_vault_secret" ],
+        [ "Lit", "demoapp_redis_server" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_role_assignment" ],
+                  [ "A_string", "kv_demoapp_admin_to_current_client" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "redis-server" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_private_dns_a_record" ],
+                          [ "A_string", "demoapp_redis" ]
+                        ]
+                      ],
+                      [ "A_string", "fqdn" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ":6379" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key_vault_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_key_vault" ], [ "A_string", "demoapp" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "content_type", [ "String", "text/plain" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_key_vault_secret" ],
+        [ "Lit", "demoapp_redis_password" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_role_assignment" ],
+                  [ "A_string", "kv_demoapp_admin_to_current_client" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "redis-password" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "random_password" ],
+                  [ "A_string", "redis_password" ]
+                ]
+              ],
+              [ "A_string", "result" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key_vault_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_key_vault" ], [ "A_string", "demoapp" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "content_type", [ "String", "text/plain" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_private_dns_zone" ], [ "Lit", "demoapp_kv" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "privatelink.vaultcore.azure.net" ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_private_dns_zone_virtual_network_link" ],
+        [ "Lit", "demoapp_kv" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "pdnsz-link-demoapp-kv" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_dns_zone_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_private_dns_zone" ],
+                  [ "A_string", "demoapp_kv" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_virtual_network" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_private_endpoint" ], [ "Lit", "demoapp_kv" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "pe-demoapp-kv" ] ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_subnet" ], [ "A_string", "endpoint" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "private_dns_zone_group",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "pdnsz-group-demoapp-kv" ] ],
+              [
+                "Attribute",
+                "private_dns_zone_ids",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "azurerm_private_dns_zone" ],
+                            [ "A_string", "demoapp_kv" ]
+                          ]
+                        ],
+                        [ "A_string", "id" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "private_service_connection",
+            "labels": [],
+            "body": [
+              [
+                "Attribute", "name", [ "String", "pe-connection-demoapp-kv" ]
+              ],
+              [
+                "Attribute",
+                "private_connection_resource_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "azurerm_key_vault" ],
+                        [ "A_string", "demoapp" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "subresource_names",
+                [ "Tuple", [ [ "String", "vault" ] ] ]
+              ],
+              [ "Attribute", "is_manual_connection", [ "Bool", false ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_workspace" ],
+        [ "Lit", "prometheus_shared" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "prometheus_grafana" ] ]
+                  ],
+                  [ "A_string", "enabled" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [ "toset", [ [ "Tuple", [ [ "String", "1" ] ] ] ] ]
+              ],
+              "else_": [ "Fun_call", [ "toset", [ [ "Tuple", [] ] ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "prometheus_grafana" ] ]
+              ],
+              [ "A_string", "workspace_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_data_collection_endpoint" ],
+        [ "Lit", "amw_prometheus_shared" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "prometheus_grafana" ] ]
+                  ],
+                  [ "A_string", "enabled" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [ "toset", [ [ "Tuple", [ [ "String", "1" ] ] ] ] ]
+              ],
+              "else_": [ "Fun_call", [ "toset", [ [ "Tuple", [] ] ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "prometheus_grafana" ] ]
+              ],
+              [ "A_string", "data_collection_endpoint_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "kind", [ "String", "Linux" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_data_collection_rule" ],
+        [ "Lit", "amw_prometheus_shared" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "prometheus_grafana" ] ]
+                  ],
+                  [ "A_string", "enabled" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [ "toset", [ [ "Tuple", [ [ "String", "1" ] ] ] ] ]
+              ],
+              "else_": [ "Fun_call", [ "toset", [ [ "Tuple", [] ] ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "prometheus_grafana" ] ]
+              ],
+              [ "A_string", "data_collection_rule_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "data_collection_endpoint_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_monitor_data_collection_endpoint" ],
+                      [ "A_string", "amw_prometheus_shared" ]
+                    ]
+                  ],
+                  [ "String", "1" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "kind", [ "String", "Linux" ] ],
+        [
+          "Block",
+          {
+            "type_": "destinations",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "monitor_account",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "monitor_account_id",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "azurerm_monitor_workspace" ],
+                                  [ "A_string", "prometheus_shared" ]
+                                ]
+                              ],
+                              [ "String", "1" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute", "name", [ "String", "MonitoringAccount1" ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "data_flow",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "streams",
+                [ "Tuple", [ [ "String", "Microsoft-PrometheusMetrics" ] ] ]
+              ],
+              [
+                "Attribute",
+                "destinations",
+                [ "Tuple", [ [ "String", "MonitoringAccount1" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "data_sources",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "prometheus_forwarder",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "streams",
+                      [
+                        "Tuple",
+                        [ [ "String", "Microsoft-PrometheusMetrics" ] ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "name",
+                      [ "String", "PrometheusDataSource" ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_alert_prometheus_rule_group" ],
+        [ "Lit", "amw_prometheus_shared_node" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "prometheus_grafana" ] ]
+                  ],
+                  [ "A_string", "enabled" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [ "toset", [ [ "Tuple", [ [ "String", "1" ] ] ] ] ]
+              ],
+              "else_": [ "Fun_call", [ "toset", [ [ "Tuple", [] ] ] ] ]
+            }
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "node" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "rule_group_enabled", [ "Bool", true ] ],
+        [ "Attribute", "interval", [ "String", "PT1M" ] ],
+        [
+          "Attribute",
+          "scopes",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_monitor_workspace" ],
+                          [ "A_string", "prometheus_shared" ]
+                        ]
+                      ],
+                      [ "String", "1" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [ "String", "instance:node_num_cpu:sum" ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\ncount without (cpu, mode) (  node_cpu_seconds_total{job=\"node\",mode=\"idle\"})\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [ "String", "instance:node_cpu_utilisation:rate5m" ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\n1 - avg without (cpu) (  sum without (mode) (rate(node_cpu_seconds_total{job=\"node\", mode=~\"idle|iowait|steal\"}[5m])))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [ "String", "instance:node_load1_per_cpu:ratio" ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\n(  node_load1{job=\"node\"}/  instance:node_num_cpu:sum{job=\"node\"})\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [ "String", "instance:node_memory_utilisation:ratio" ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\n1 - (  (    node_memory_MemAvailable_bytes{job=\"node\"}    or    (      node_memory_Buffers_bytes{job=\"node\"}      +      node_memory_Cached_bytes{job=\"node\"}      +      node_memory_MemFree_bytes{job=\"node\"}      +      node_memory_Slab_bytes{job=\"node\"}    )  )/  node_memory_MemTotal_bytes{job=\"node\"})\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [ "String", "instance:node_vmstat_pgmajfault:rate5m" ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nrate(node_vmstat_pgmajfault{job=\"node\"}[5m])\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "instance_device:node_disk_io_time_seconds:rate5m"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nrate(node_disk_io_time_seconds_total{job=\"node\", device!=\"\"}[5m])\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "instance_device:node_disk_io_time_weighted_seconds:rate5m"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nrate(node_disk_io_time_weighted_seconds_total{job=\"node\", device!=\"\"}[5m])\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "instance:node_network_receive_bytes_excluding_lo:rate5m"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nsum without (device) (  rate(node_network_receive_bytes_total{job=\"node\", device!=\"lo\"}[5m]))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "instance:node_network_transmit_bytes_excluding_lo:rate5m"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nsum without (device) (  rate(node_network_transmit_bytes_total{job=\"node\", device!=\"lo\"}[5m]))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "instance:node_network_receive_drop_excluding_lo:rate5m"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nsum without (device) (  rate(node_network_receive_drop_total{job=\"node\", device!=\"lo\"}[5m]))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "instance:node_network_transmit_drop_excluding_lo:rate5m"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nsum without (device) (  rate(node_network_transmit_drop_total{job=\"node\", device!=\"lo\"}[5m]))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_alert_prometheus_rule_group" ],
+        [ "Lit", "amw_prometheus_shared_kubernetes" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "prometheus_grafana" ] ]
+                  ],
+                  [ "A_string", "enabled" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [ "toset", [ [ "Tuple", [ [ "String", "1" ] ] ] ] ]
+              ],
+              "else_": [ "Fun_call", [ "toset", [ [ "Tuple", [] ] ] ] ]
+            }
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "kubernetes" ] ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "rule_group_enabled", [ "Bool", true ] ],
+        [ "Attribute", "interval", [ "String", "PT1M" ] ],
+        [
+          "Attribute",
+          "scopes",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "azurerm_monitor_workspace" ],
+                          [ "A_string", "prometheus_shared" ]
+                        ]
+                      ],
+                      [ "String", "1" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nsum by (cluster, namespace, pod, container) (  irate(container_cpu_usage_seconds_total{job=\"cadvisor\", image!=\"\"}[5m])) * on (cluster, namespace, pod) group_left(node) topk by (cluster, namespace, pod) (  1, max by(cluster, namespace, pod, node) (kube_pod_info{node!=\"\"}))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "node_namespace_pod_container:container_memory_working_set_bytes"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\ncontainer_memory_working_set_bytes{job=\"cadvisor\", image!=\"\"}* on (namespace, pod) group_left(node) topk by(namespace, pod) (1,  max by(namespace, pod, node) (kube_pod_info{node!=\"\"}))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "node_namespace_pod_container:container_memory_rss"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\ncontainer_memory_rss{job=\"cadvisor\", image!=\"\"}* on (namespace, pod) group_left(node) topk by(namespace, pod) (1,  max by(namespace, pod, node) (kube_pod_info{node!=\"\"}))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "node_namespace_pod_container:container_memory_cache"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\ncontainer_memory_cache{job=\"cadvisor\", image!=\"\"}* on (namespace, pod) group_left(node) topk by(namespace, pod) (1,  max by(namespace, pod, node) (kube_pod_info{node!=\"\"}))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "node_namespace_pod_container:container_memory_swap"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\ncontainer_memory_swap{job=\"cadvisor\", image!=\"\"}* on (namespace, pod) group_left(node) topk by(namespace, pod) (1,  max by(namespace, pod, node) (kube_pod_info{node!=\"\"}))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "cluster:namespace:pod_memory:active:kube_pod_container_resource_requests"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nkube_pod_container_resource_requests{resource=\"memory\",job=\"kube-state-metrics\"}  * on (namespace, pod, cluster)group_left() max by (namespace, pod, cluster) (  (kube_pod_status_phase{phase=~\"Pending|Running\"} == 1))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "namespace_memory:kube_pod_container_resource_requests:sum"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nsum by (namespace, cluster) (    sum by (namespace, pod, cluster) (        max by (namespace, pod, container, cluster) (          kube_pod_container_resource_requests{resource=\"memory\",job=\"kube-state-metrics\"}        ) * on(namespace, pod, cluster) group_left() max by (namespace, pod, cluster) (          kube_pod_status_phase{phase=~\"Pending|Running\"} == 1        )    ))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "cluster:namespace:pod_cpu:active:kube_pod_container_resource_requests"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nkube_pod_container_resource_requests{resource=\"cpu\",job=\"kube-state-metrics\"}  * on (namespace, pod, cluster)group_left() max by (namespace, pod, cluster) (  (kube_pod_status_phase{phase=~\"Pending|Running\"} == 1))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "namespace_cpu:kube_pod_container_resource_requests:sum"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nsum by (namespace, cluster) (    sum by (namespace, pod, cluster) (        max by (namespace, pod, container, cluster) (          kube_pod_container_resource_requests{resource=\"cpu\",job=\"kube-state-metrics\"}        ) * on(namespace, pod, cluster) group_left() max by (namespace, pod, cluster) (          kube_pod_status_phase{phase=~\"Pending|Running\"} == 1        )    ))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "cluster:namespace:pod_memory:active:kube_pod_container_resource_limits"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nkube_pod_container_resource_limits{resource=\"memory\",job=\"kube-state-metrics\"}  * on (namespace, pod, cluster)group_left() max by (namespace, pod, cluster) (  (kube_pod_status_phase{phase=~\"Pending|Running\"} == 1))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "namespace_memory:kube_pod_container_resource_limits:sum"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nsum by (namespace, cluster) (    sum by (namespace, pod, cluster) (        max by (namespace, pod, container, cluster) (          kube_pod_container_resource_limits{resource=\"memory\",job=\"kube-state-metrics\"}        ) * on(namespace, pod, cluster) group_left() max by (namespace, pod, cluster) (          kube_pod_status_phase{phase=~\"Pending|Running\"} == 1        )    ))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "cluster:namespace:pod_cpu:active:kube_pod_container_resource_limits"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nkube_pod_container_resource_limits{resource=\"cpu\",job=\"kube-state-metrics\"}  * on (namespace, pod, cluster)group_left() max by (namespace, pod, cluster) ( (kube_pod_status_phase{phase=~\"Pending|Running\"} == 1) )\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [
+                  "String",
+                  "namespace_cpu:kube_pod_container_resource_limits:sum"
+                ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nsum by (namespace, cluster) (    sum by (namespace, pod, cluster) (        max by (namespace, pod, container, cluster) (          kube_pod_container_resource_limits{resource=\"cpu\",job=\"kube-state-metrics\"}        ) * on(namespace, pod, cluster) group_left() max by (namespace, pod, cluster) (          kube_pod_status_phase{phase=~\"Pending|Running\"} == 1        )    ))\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [ "String", "namespace_workload_pod:kube_pod_owner:relabel" ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nmax by (cluster, namespace, workload, pod) (  label_replace(    label_replace(      kube_pod_owner{job=\"kube-state-metrics\", owner_kind=\"ReplicaSet\"},      \"replicaset\", \"$1\", \"owner_name\", \"(.*)\"    ) * on(replicaset, namespace) group_left(owner_name) topk by(replicaset, namespace) (      1, max by (replicaset, namespace, owner_name) (        kube_replicaset_owner{job=\"kube-state-metrics\"}      )    ),    \"workload\", \"$1\", \"owner_name\", \"(.*)\"  ))\n"
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "workload_type" ], [ "String", "deployment" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [ "String", "namespace_workload_pod:kube_pod_owner:relabel" ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nmax by (cluster, namespace, workload, pod) (  label_replace(    kube_pod_owner{job=\"kube-state-metrics\", owner_kind=\"DaemonSet\"},    \"workload\", \"$1\", \"owner_name\", \"(.*)\"  ))\n"
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "workload_type" ], [ "String", "daemonset" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [ "String", "namespace_workload_pod:kube_pod_owner:relabel" ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nmax by (cluster, namespace, workload, pod) (  label_replace(    kube_pod_owner{job=\"kube-state-metrics\", owner_kind=\"StatefulSet\"},    \"workload\", \"$1\", \"owner_name\", \"(.*)\"  ))\n"
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "workload_type" ],
+                      [ "String", "statefulset" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [ "String", "namespace_workload_pod:kube_pod_owner:relabel" ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nmax by (cluster, namespace, workload, pod) (  label_replace(    kube_pod_owner{job=\"kube-state-metrics\", owner_kind=\"Job\"},    \"workload\", \"$1\", \"owner_name\", \"(.*)\"  ))\n"
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [ [ [ "Bare", "workload_type" ], [ "String", "job" ] ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [ "String", ":node_memory_MemAvailable_bytes:sum" ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nsum(  node_memory_MemAvailable_bytes{job=\"node\"} or  (    node_memory_Buffers_bytes{job=\"node\"} +    node_memory_Cached_bytes{job=\"node\"} +    node_memory_MemFree_bytes{job=\"node\"} +    node_memory_Slab_bytes{job=\"node\"}  )) by (cluster)\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "record",
+                [ "String", "cluster:node_cpu:ratio_rate5m" ]
+              ],
+              [
+                "Attribute",
+                "expression",
+                [
+                  "Heredoc",
+                  [
+                    "EOF",
+                    "\nsum(rate(node_cpu_seconds_total{job=\"node\",mode!=\"idle\",mode!=\"iowait\",mode!=\"steal\"}[5m])) by (cluster) /count(sum(node_cpu_seconds_total{job=\"node\"}) by (cluster, instance, cpu)) by (cluster)\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_dashboard_grafana" ], [ "Lit", "shared" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "prometheus_grafana" ] ]
+                  ],
+                  [ "A_string", "enabled" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [ "toset", [ [ "Tuple", [ [ "String", "1" ] ] ] ] ]
+              ],
+              "else_": [ "Fun_call", [ "toset", [ [ "Tuple", [] ] ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-grafana-shared" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ],
+                  [ "A_string", "shared" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "api_key_enabled", [ "Bool", true ] ],
+        [
+          "Attribute", "deterministic_outbound_ip_enabled", [ "Bool", true ]
+        ],
+        [ "Attribute", "public_network_access_enabled", [ "Bool", true ] ],
+        [ "Attribute", "grafana_major_version", [ "Int", 10 ] ],
+        [
+          "Block",
+          {
+            "type_": "azure_monitor_workspace_integrations",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "resource_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "azurerm_monitor_workspace" ],
+                            [ "A_string", "prometheus_shared" ]
+                          ]
+                        ],
+                        [ "String", "1" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "identity",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "SystemAssigned" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_role_assignment" ],
+        [ "Lit", "grafana_prom_monitoring_data_reader" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "prometheus_grafana" ] ]
+                  ],
+                  [ "A_string", "enabled" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [ "toset", [ [ "Tuple", [ [ "String", "1" ] ] ] ] ]
+              ],
+              "else_": [ "Fun_call", [ "toset", [ [ "Tuple", [] ] ] ] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "scope",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_monitor_workspace" ],
+                      [ "A_string", "prometheus_shared" ]
+                    ]
+                  ],
+                  [ "String", "1" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role_definition_name",
+          [ "String", "Monitoring Data Reader" ]
+        ],
+        [
+          "Attribute",
+          "principal_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "azurerm_dashboard_grafana" ],
+                              [ "A_string", "shared" ]
+                            ]
+                          ],
+                          [ "String", "1" ]
+                        ]
+                      ],
+                      [ "A_string", "identity" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "principal_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

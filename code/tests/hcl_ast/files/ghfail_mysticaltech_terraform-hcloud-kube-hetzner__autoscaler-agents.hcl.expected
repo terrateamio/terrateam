@@ -1,0 +1,3097 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "cluster_prefix",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "use_cluster_name_in_node_name" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "-" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "first_nodepool_snapshot_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "autoscaler_nodepools" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "String", "" ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "substr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string", "autoscaler_nodepools"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                [ "A_string", "server_type" ]
+                              ]
+                            ],
+                            [ "Int", 0 ],
+                            [ "Int", 3 ]
+                          ]
+                        ]
+                      ],
+                      [ "String", "cax" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "hcloud_image" ]
+                            ]
+                          ],
+                          [ "A_string", "microos_arm_snapshot" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "hcloud_image" ]
+                            ]
+                          ],
+                          [ "A_string", "microos_x86_snapshot" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "imageList",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "arm64" ],
+                [
+                  "Fun_call",
+                  [
+                    "tostring",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "hcloud_image" ]
+                                ]
+                              ],
+                              [ "A_string", "microos_arm_snapshot" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "amd64" ],
+                [
+                  "Fun_call",
+                  [
+                    "tostring",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "hcloud_image" ]
+                                ]
+                              ],
+                              [ "A_string", "microos_x86_snapshot" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "nodeConfigName",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "use_cluster_name_in_node_name" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [ "Literal", "-" ]
+                ]
+              ],
+              "else_": [ "String", "" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_config",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "imagesForArch" ],
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "imageList" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "nodeConfigs" ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "index", [ "nodePool" ] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "autoscaler_nodepools" ]
+                      ]
+                    ],
+                    "key_output": [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "nodeConfigName" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "nodePool" ], [ "A_string", "name" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ],
+                    "value_output": [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "cloudInit" ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "data" ],
+                                          [ "A_string", "cloudinit_config" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "autoscaler_config" ]
+                                    ]
+                                  ],
+                                  [ "Id", "index" ]
+                                ]
+                              ],
+                              [ "A_string", "rendered" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "labels" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "nodePool" ], [ "A_string", "labels" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "taints" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "nodePool" ], [ "A_string", "taints" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "isUsingLegacyConfig",
+          [
+            "Log_or",
+            [
+              [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "autoscaler_labels" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "autoscaler_taints" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "autoscaler_yaml",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "autoscaler_nodepools" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "String", "" ],
+              "else_": [
+                "Fun_call",
+                [
+                  "templatefile",
+                  [
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "/templates/autoscaler.yaml.tpl" ]
+                      ]
+                    ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "cloudinit_config" ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "isUsingLegacyConfig" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Fun_call",
+                                [
+                                  "base64encode",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "data" ],
+                                                    [
+                                                      "A_string",
+                                                      "cloudinit_config"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string",
+                                                  "autoscaler_legacy_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Int", 0 ]
+                                          ]
+                                        ],
+                                        [ "A_string", "rendered" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "else_": [ "String", "" ]
+                            }
+                          ]
+                        ],
+                        [
+                          [ "Bare", "ca_image" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "cluster_autoscaler_image" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "ca_version" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "cluster_autoscaler_version" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "ca_replicas" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "cluster_autoscaler_replicas" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "ca_resource_limits" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "cluster_autoscaler_resource_limits"
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "ca_resources" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "cluster_autoscaler_resource_values"
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "cluster_autoscaler_extra_args" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "cluster_autoscaler_extra_args" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "cluster_autoscaler_log_level" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "cluster_autoscaler_log_level" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "cluster_autoscaler_log_to_stderr" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "cluster_autoscaler_log_to_stderr"
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "cluster_autoscaler_stderr_threshold" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "cluster_autoscaler_stderr_threshold"
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [
+                            "Bare",
+                            "cluster_autoscaler_server_creation_timeout"
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "tostring",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string",
+                                      "cluster_autoscaler_server_creation_timeout"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "ssh_key" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "hcloud_ssh_key_id" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "ipv4_subnet_id" ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "data" ],
+                                      [ "A_string", "hcloud_network" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "k3s" ]
+                                ]
+                              ],
+                              [ "A_string", "id" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "snapshot_id" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "first_nodepool_snapshot_id" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "cluster_config" ],
+                          [
+                            "Fun_call",
+                            [
+                              "base64encode",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "jsonencode",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "cluster_config" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "firewall_id" ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "hcloud_firewall" ],
+                                  [ "A_string", "k3s" ]
+                                ]
+                              ],
+                              [ "A_string", "id" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "cluster_name" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "cluster_prefix" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "node_pools" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "autoscaler_nodepools" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "enable_ipv4" ],
+                          [
+                            "Not",
+                            [
+                              "Log_or",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaler_disable_ipv4" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "use_nat_router" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "enable_ipv6" ],
+                          [
+                            "Not",
+                            [
+                              "Log_or",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaler_disable_ipv6" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "use_nat_router" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "autoscaled_nodes",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "autoscaler_nodepools" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Object", [] ],
+              "else_": [
+                "For_object",
+                {
+                  "identifiers": [ "v", [] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "concat",
+                      [
+                        [
+                          "Ellipsis",
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "k", [ "v" ] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "data" ],
+                                      [ "A_string", "hcloud_servers" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "autoscaled_nodes" ]
+                                ]
+                              ],
+                              "output": [
+                                "For_tuple",
+                                {
+                                  "identifiers": [ "v", [] ],
+                                  "input": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "servers" ]
+                                    ]
+                                  ],
+                                  "output": [ "Id", "v" ],
+                                  "cond": null
+                                }
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [
+                    "Attr", [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                  ],
+                  "value_output": [ "Id", "v" ],
+                  "cond": null
+                }
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "terraform_data" ], [ "Lit", "configure_autoscaler" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "autoscaler_nodepools" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "triggers_replace",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "template" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "autoscaler_yaml" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "connection",
+            "labels": [],
+            "body": [
+              [ "Attribute", "user", [ "String", "root" ] ],
+              [
+                "Attribute",
+                "private_key",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "ssh_private_key" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "agent_identity",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "ssh_agent_identity" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "host",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "first_control_plane_ip" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "port",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "ssh_port" ] ] ]
+              ],
+              [
+                "Attribute",
+                "bastion_host",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_host" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "bastion_port",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_port" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "bastion_user",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_user" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "bastion_private_key",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_private_key" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "file" ] ],
+            "body": [
+              [
+                "Attribute",
+                "content",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "autoscaler_yaml" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "destination",
+                [ "String", "/tmp/autoscaler.yaml" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "inline",
+                [
+                  "Tuple",
+                  [ [ "String", "kubectl apply -f /tmp/autoscaler.yaml" ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "hcloud_load_balancer" ], [ "A_string", "cluster" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "terraform_data" ],
+                  [ "A_string", "control_planes" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "random_password" ],
+                  [ "A_string", "rancher_bootstrap" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "hcloud_volume" ],
+                  [ "A_string", "longhorn_volume" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "hcloud_image" ] ]
+                  ],
+                  [ "A_string", "microos_x86_snapshot" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "moved",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "from",
+          [
+            "Attr",
+            [
+              [ "Id", "null_resource" ],
+              [ "A_string", "configure_autoscaler" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "to",
+          [
+            "Attr",
+            [
+              [ "Id", "terraform_data" ],
+              [ "A_string", "configure_autoscaler" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "cloudinit_config" ], [ "Lit", "autoscaler_config" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "autoscaler_nodepools" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "gzip", [ "Bool", true ] ],
+        [ "Attribute", "base64_encode", [ "Bool", true ] ],
+        [
+          "Block",
+          {
+            "type_": "part",
+            "labels": [],
+            "body": [
+              [ "Attribute", "filename", [ "String", "init.cfg" ] ],
+              [
+                "Attribute",
+                "content_type",
+                [ "String", "text/cloud-config" ]
+              ],
+              [
+                "Attribute",
+                "content",
+                [
+                  "Fun_call",
+                  [
+                    "templatefile",
+                    [
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "path" ], [ "A_string", "module" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [
+                            "Literal",
+                            "/templates/autoscaler-cloudinit.yaml.tpl"
+                          ]
+                        ]
+                      ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "hostname" ],
+                            [ "String", "autoscaler" ]
+                          ],
+                          [
+                            [ "Bare", "dns_servers" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "dns_servers" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "has_dns_servers" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "has_dns_servers" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "sshAuthorizedKeys" ],
+                            [
+                              "Fun_call",
+                              [
+                                "concat",
+                                [
+                                  [
+                                    "Tuple",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "ssh_public_key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "ssh_additional_public_keys"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "swap_size" ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string", "autoscaler_nodepools"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "count" ],
+                                        [ "A_string", "index" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "swap_size" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "zram_size" ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string", "autoscaler_nodepools"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "count" ],
+                                        [ "A_string", "index" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "zram_size" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "k3s_config" ],
+                            [
+                              "Fun_call",
+                              [
+                                "yamlencode",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "merge",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "server" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "k3s_endpoint"
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "token" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [ "A_string", "k3s_token" ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "kubelet-arg" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "concat",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "local" ],
+                                                        [
+                                                          "A_string",
+                                                          "kubelet_arg"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Idx",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id", "var"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "autoscaler_nodepools"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "count"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "index"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "kubelet_args"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "k3s_global_kubelet_args"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "k3s_autoscaler_kubelet_args"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "flannel-iface" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "flannel_iface"
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "node-label" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "concat",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "local" ],
+                                                        [
+                                                          "A_string",
+                                                          "default_agent_labels"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "For_tuple",
+                                                      {
+                                                        "identifiers": [
+                                                          "k", [ "v" ]
+                                                        ],
+                                                        "input": [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Idx",
+                                                              [
+                                                                [
+                                                                  "Attr",
+                                                                  [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "autoscaler_nodepools"
+                                                                    ]
+                                                                  ]
+                                                                ],
+                                                                [
+                                                                  "Attr",
+                                                                  [
+                                                                    [
+                                                                    "Id",
+                                                                    "count"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "index"
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "labels"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "output": [
+                                                          "Template",
+                                                          [
+                                                            [
+                                                              "Interpolation",
+                                                              {
+                                                                "expr": [
+                                                                  "Id", "k"
+                                                                ],
+                                                                "strip_before": false,
+                                                                "strip_after": false
+                                                              }
+                                                            ],
+                                                            [
+                                                              "Literal", "="
+                                                            ],
+                                                            [
+                                                              "Interpolation",
+                                                              {
+                                                                "expr": [
+                                                                  "Id", "v"
+                                                                ],
+                                                                "strip_before": false,
+                                                                "strip_after": false
+                                                              }
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "cond": null
+                                                      }
+                                                    ],
+                                                    [
+                                                      "Cond",
+                                                      {
+                                                        "if_": [
+                                                          "Log_or",
+                                                          [
+                                                            [
+                                                              "Not_equal",
+                                                              [
+                                                                [
+                                                                  "Attr",
+                                                                  [
+                                                                    [
+                                                                    "Idx",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "autoscaler_nodepools"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "count"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "index"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "swap_size"
+                                                                    ]
+                                                                  ]
+                                                                ],
+                                                                [
+                                                                  "String",
+                                                                  ""
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "Not_equal",
+                                                              [
+                                                                [
+                                                                  "Attr",
+                                                                  [
+                                                                    [
+                                                                    "Idx",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "autoscaler_nodepools"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "count"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "index"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "zram_size"
+                                                                    ]
+                                                                  ]
+                                                                ],
+                                                                [
+                                                                  "String",
+                                                                  ""
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "then_": [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "local" ],
+                                                            [
+                                                              "A_string",
+                                                              "swap_node_label"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "else_": [
+                                                          "Tuple", []
+                                                        ]
+                                                      }
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "node-taint" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "compact",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "concat",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id", "local"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "default_agent_taints"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "For_tuple",
+                                                            {
+                                                              "identifiers": [
+                                                                "taint", []
+                                                              ],
+                                                              "input": [
+                                                                "Attr",
+                                                                [
+                                                                  [
+                                                                    "Idx",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "autoscaler_nodepools"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "count"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "index"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ],
+                                                                  [
+                                                                    "A_string",
+                                                                    "taints"
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              "output": [
+                                                                "Template",
+                                                                [
+                                                                  [
+                                                                    "Interpolation",
+                                                                    {
+                                                                    "expr": [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "taint"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "key"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "strip_before": false,
+                                                                    "strip_after": false
+                                                                    }
+                                                                  ],
+                                                                  [
+                                                                    "Literal",
+                                                                    "="
+                                                                  ],
+                                                                  [
+                                                                    "Interpolation",
+                                                                    {
+                                                                    "expr": [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "tostring",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "taint"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "value"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "strip_before": false,
+                                                                    "strip_after": false
+                                                                    }
+                                                                  ],
+                                                                  [
+                                                                    "Literal",
+                                                                    ":"
+                                                                  ],
+                                                                  [
+                                                                    "Interpolation",
+                                                                    {
+                                                                    "expr": [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "taint"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "effect"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    "strip_before": false,
+                                                                    "strip_after": false
+                                                                    }
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              "cond": null
+                                                            }
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "selinux" ],
+                                              [
+                                                "Not",
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string",
+                                                      "disable_selinux"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "agent_nodes_custom_config"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "prefer_bundled_bin_config"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "install_k3s_agent_script" ],
+                            [
+                              "Fun_call",
+                              [
+                                "join",
+                                [
+                                  [ "String", "\n" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "concat",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string", "install_k3s_agent"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Tuple",
+                                          [
+                                            [
+                                              "String",
+                                              "systemctl start k3s-agent"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "cloudinit_write_files_common" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [
+                                  "A_string", "cloudinit_write_files_common"
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "cloudinit_runcmd_common" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "cloudinit_runcmd_common" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "private_network_only" ],
+                            [
+                              "Log_and",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaler_disable_ipv4" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaler_disable_ipv6" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "network_gw_ipv4" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "network_gw_ipv4" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "cloudinit_config" ], [ "Lit", "autoscaler_legacy_config" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "autoscaler_nodepools" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "isUsingLegacyConfig" ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "gzip", [ "Bool", true ] ],
+        [ "Attribute", "base64_encode", [ "Bool", true ] ],
+        [
+          "Block",
+          {
+            "type_": "part",
+            "labels": [],
+            "body": [
+              [ "Attribute", "filename", [ "String", "init.cfg" ] ],
+              [
+                "Attribute",
+                "content_type",
+                [ "String", "text/cloud-config" ]
+              ],
+              [
+                "Attribute",
+                "content",
+                [
+                  "Fun_call",
+                  [
+                    "templatefile",
+                    [
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "path" ], [ "A_string", "module" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [
+                            "Literal",
+                            "/templates/autoscaler-cloudinit.yaml.tpl"
+                          ]
+                        ]
+                      ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "hostname" ],
+                            [ "String", "autoscaler" ]
+                          ],
+                          [
+                            [ "Bare", "dns_servers" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "dns_servers" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "has_dns_servers" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "has_dns_servers" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "sshAuthorizedKeys" ],
+                            [
+                              "Fun_call",
+                              [
+                                "concat",
+                                [
+                                  [
+                                    "Tuple",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "ssh_public_key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "ssh_additional_public_keys"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "swap_size" ], [ "String", "" ] ],
+                          [ [ "Bare", "zram_size" ], [ "String", "" ] ],
+                          [
+                            [ "Bare", "k3s_config" ],
+                            [
+                              "Fun_call",
+                              [
+                                "yamlencode",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "merge",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "server" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "k3s_endpoint"
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "token" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [ "A_string", "k3s_token" ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "kubelet-arg" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string", "kubelet_arg"
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "flannel-iface" ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "flannel_iface"
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "node-label" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "concat",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "local" ],
+                                                        [
+                                                          "A_string",
+                                                          "default_agent_labels"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string",
+                                                          "autoscaler_labels"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "node-taint" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "compact",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "concat",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id", "local"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "default_agent_taints"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [ "Id", "var" ],
+                                                              [
+                                                                "A_string",
+                                                                "autoscaler_taints"
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "selinux" ],
+                                              [
+                                                "Not",
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string",
+                                                      "disable_selinux"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "agent_nodes_custom_config"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "prefer_bundled_bin_config"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "install_k3s_agent_script" ],
+                            [
+                              "Fun_call",
+                              [
+                                "join",
+                                [
+                                  [ "String", "\n" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "concat",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string", "install_k3s_agent"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Tuple",
+                                          [
+                                            [
+                                              "String",
+                                              "systemctl start k3s-agent"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "cloudinit_write_files_common" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [
+                                  "A_string", "cloudinit_write_files_common"
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "cloudinit_runcmd_common" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "cloudinit_runcmd_common" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "private_network_only" ],
+                            [
+                              "Log_and",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaler_disable_ipv4" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "autoscaler_disable_ipv6" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "network_gw_ipv4" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "network_gw_ipv4" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "hcloud_servers" ], [ "Lit", "autoscaled_nodes" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "autoscaler_nodepools" ]
+                          ]
+                        ],
+                        [ "Splat" ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "with_selector",
+          [
+            "Template",
+            [
+              [ "Literal", "hcloud/node-group=" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "cluster_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "terraform_data" ], [ "Lit", "autoscaled_nodes_registries" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "autoscaled_nodes" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "triggers_replace",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "registries" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "k3s_registries" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "connection",
+            "labels": [],
+            "body": [
+              [ "Attribute", "user", [ "String", "root" ] ],
+              [
+                "Attribute",
+                "private_key",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "ssh_private_key" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "agent_identity",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "ssh_agent_identity" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "host",
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "ipv4_address" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "ipv6_address" ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "one",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "network" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "ip" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "port",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "ssh_port" ] ] ]
+              ],
+              [
+                "Attribute",
+                "bastion_host",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_host" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "bastion_port",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_port" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "bastion_user",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_user" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "bastion_private_key",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_private_key" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "file" ] ],
+            "body": [
+              [
+                "Attribute",
+                "content",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "k3s_registries" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "destination",
+                [ "String", "/tmp/registries.yaml" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "inline",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "k3s_registries_update_script" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "moved",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "from",
+          [
+            "Attr",
+            [
+              [ "Id", "null_resource" ],
+              [ "A_string", "autoscaled_nodes_registries" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "to",
+          [
+            "Attr",
+            [
+              [ "Id", "terraform_data" ],
+              [ "A_string", "autoscaled_nodes_registries" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "terraform_data" ],
+        [ "Lit", "autoscaled_nodes_kubelet_config" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "k3s_kubelet_config" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "autoscaled_nodes" ] ]
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "triggers_replace",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "kubelet_config" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "k3s_kubelet_config" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "connection",
+            "labels": [],
+            "body": [
+              [ "Attribute", "user", [ "String", "root" ] ],
+              [
+                "Attribute",
+                "private_key",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "ssh_private_key" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "agent_identity",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "ssh_agent_identity" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "host",
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "ipv4_address" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "ipv6_address" ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "one",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "network" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "ip" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "port",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "ssh_port" ] ] ]
+              ],
+              [
+                "Attribute",
+                "bastion_host",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_host" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "bastion_port",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_port" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "bastion_user",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_user" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "bastion_private_key",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "ssh_bastion" ] ]
+                    ],
+                    [ "A_string", "bastion_private_key" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "file" ] ],
+            "body": [
+              [
+                "Attribute",
+                "content",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "k3s_kubelet_config" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "destination",
+                [ "String", "/tmp/kubelet-config.yaml" ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "remote-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "inline",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "k3s_kubelet_config_update_script" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "moved",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "from",
+          [
+            "Attr",
+            [
+              [ "Id", "null_resource" ],
+              [ "A_string", "autoscaled_nodes_kubelet_config" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "to",
+          [
+            "Attr",
+            [
+              [ "Id", "terraform_data" ],
+              [ "A_string", "autoscaled_nodes_kubelet_config" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

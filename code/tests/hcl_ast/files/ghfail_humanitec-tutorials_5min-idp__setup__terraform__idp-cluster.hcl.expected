@@ -1,0 +1,795 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "tls_private_key" ], [ "Lit", "agent_private_key" ]
+      ],
+      "body": [
+        [ "Attribute", "algorithm", [ "String", "RSA" ] ],
+        [ "Attribute", "rsa_bits", [ "Int", 4096 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "agent_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "agent" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "humanitec_agent" ], [ "Lit", "agent" ] ],
+      "body": [
+        [
+          "Attribute",
+          "id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "agent_id" ] ] ]
+        ],
+        [ "Attribute", "description", [ "String", "5min-idp" ] ],
+        [
+          "Attribute",
+          "public_keys",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "key" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "tls_private_key" ],
+                            [ "A_string", "agent_private_key" ]
+                          ]
+                        ],
+                        [ "A_string", "public_key_pem" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "helm_release" ], [ "Lit", "humanitec_agent" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "humanitec-agent" ] ],
+        [ "Attribute", "namespace", [ "String", "humanitec-agent" ] ],
+        [ "Attribute", "create_namespace", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "repository",
+          [ "String", "oci://ghcr.io/humanitec/charts" ]
+        ],
+        [ "Attribute", "chart", [ "String", "humanitec-agent" ] ],
+        [
+          "Block",
+          {
+            "type_": "set",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "humanitec.org" ] ],
+              [
+                "Attribute",
+                "value",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "humanitec_org" ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "set",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "humanitec.privateKey" ] ],
+              [
+                "Attribute",
+                "value",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "tls_private_key" ],
+                        [ "A_string", "agent_private_key" ]
+                      ]
+                    ],
+                    [ "A_string", "private_key_pem" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "humanitec_agent" ], [ "A_string", "agent" ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ], [ "Lit", "agent" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "id",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "agent_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "agent_id" ] ] ]
+        ],
+        [ "Attribute", "type", [ "String", "agent" ] ],
+        [ "Attribute", "driver_type", [ "String", "humanitec/agent" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "id" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ], [ "A_string", "agent_id" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "helm_release" ], [ "A_string", "humanitec_agent" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition_criteria" ],
+        [ "Lit", "agent" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "humanitec_resource_definition" ],
+                  [ "A_string", "agent" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "res_id", [ "String", "agent" ] ],
+        [
+          "Attribute",
+          "app_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "humanitec_application" ], [ "A_string", "demo" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "force_delete", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "parsed_kubeconfig",
+          [
+            "Fun_call",
+            [
+              "yamldecode",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "file",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "kubeconfig" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ],
+        [ "Lit", "cluster_local" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "k8s-cluster" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "k8s-cluster" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "k8s-cluster" ] ],
+        [ "Attribute", "driver_type", [ "String", "humanitec/k8s-cluster" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "loadbalancer" ],
+                            [ "String", "127.0.0.1" ]
+                          ],
+                          [
+                            [ "Bare", "cluster_data" ],
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string", "parsed_kubeconfig"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "String", "clusters" ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                [ "String", "cluster" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "secrets_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "agent_url" ],
+                            [
+                              "String",
+                              "${resources['agent#agent'].outputs.url}"
+                            ]
+                          ],
+                          [
+                            [ "Bare", "credentials" ],
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string", "parsed_kubeconfig"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "String", "users" ]
+                                      ]
+                                    ],
+                                    [ "Int", 0 ]
+                                  ]
+                                ],
+                                [ "String", "user" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition_criteria" ],
+        [ "Lit", "cluster_local" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "humanitec_resource_definition" ],
+                  [ "A_string", "cluster_local" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "app_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "humanitec_application" ], [ "A_string", "demo" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "force_delete", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "humanitec_resource_definition_criteria" ],
+                  [ "A_string", "agent" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "kubernetes_namespace" ], [ "Lit", "operator_namespace" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "metadata",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "operator_ns" ] ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "tls_private_key" ], [ "Lit", "operator" ] ],
+      "body": [
+        [ "Attribute", "algorithm", [ "String", "RSA" ] ],
+        [ "Attribute", "rsa_bits", [ "Int", 4096 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "kubernetes_secret" ], [ "Lit", "operator_private_key" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "kubernetes_namespace" ],
+                  [ "A_string", "operator_namespace" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "metadata",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [ "String", "humanitec-operator-private-key" ]
+              ],
+              [
+                "Attribute",
+                "namespace",
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "operator_ns" ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "data",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "privateKey" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "tls_private_key" ],
+                        [ "A_string", "operator" ]
+                      ]
+                    ],
+                    [ "A_string", "private_key_pem" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "humanitecOrganisationID" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "humanitec_org" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_key" ], [ "Lit", "operator_public_key" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "kubernetes_secret" ],
+                  [ "A_string", "operator_private_key" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "key",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "tls_private_key" ], [ "A_string", "operator" ] ]
+              ],
+              [ "A_string", "public_key_pem" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "kubernetes_namespace" ],
+        [ "Lit", "secret_store_namespace" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "metadata",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "5min-idp-secrets" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "helm_release" ], [ "Lit", "operator" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "kubernetes_secret" ],
+                  [ "A_string", "operator_private_key" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "kubernetes_namespace" ],
+                  [ "A_string", "secret_store_namespace" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "humanitec_key" ],
+                  [ "A_string", "operator_public_key" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "name", [ "String", "humanitec-operator" ] ],
+        [
+          "Attribute",
+          "namespace",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "operator_ns" ] ] ]
+        ],
+        [
+          "Attribute",
+          "repository",
+          [ "String", "oci://ghcr.io/humanitec/charts" ]
+        ],
+        [ "Attribute", "chart", [ "String", "humanitec-operator" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_secretstore" ],
+        [ "Lit", "kubernetes_secret_store" ]
+      ],
+      "body": [
+        [ "Attribute", "id", [ "String", "5min-idp-secrets" ] ],
+        [ "Attribute", "primary", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "vault",
+          [
+            "Object",
+            [ [ [ "Bare", "url" ], [ "String", "http://fake-vault" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

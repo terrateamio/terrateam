@@ -1,0 +1,1561 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_version" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "description", [ "String", "EKS cluster version" ] ],
+        [ "Attribute", "default", [ "String", "1.28" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^1\\.(2[4-9]|[3-9][0-9])$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "cluster_version" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "Cluster version must be 1.24 or higher." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_endpoint_public_access" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enable public API server endpoint" ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_endpoint_public_access_cidrs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "CIDR blocks that can access the public API server endpoint"
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "cidr", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "cluster_endpoint_public_access_cidrs"
+                              ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "cidrhost",
+                                    [ [ "Id", "cidr" ], [ "Int", 0 ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "All values must be valid CIDR blocks." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "domain_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Primary domain name for the IDP platform" ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\\.[a-zA-Z]{2,}$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "domain_name" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "Domain name must be a valid DNS domain." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "database_engine_version" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "PostgreSQL engine version" ]
+        ],
+        [ "Attribute", "default", [ "String", "15.4" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^1[2-9]\\.[0-9]+$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "database_engine_version" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Database engine version must be PostgreSQL 12 or higher."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "database_instance_class" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "description", [ "String", "RDS instance class" ] ],
+        [ "Attribute", "default", [ "String", "db.r6g.large" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "db.t4g.micro" ],
+                          [ "String", "db.t4g.small" ],
+                          [ "String", "db.t4g.medium" ],
+                          [ "String", "db.t4g.large" ],
+                          [ "String", "db.r6g.large" ],
+                          [ "String", "db.r6g.xlarge" ],
+                          [ "String", "db.r6g.2xlarge" ],
+                          [ "String", "db.r6g.4xlarge" ],
+                          [ "String", "db.r6i.large" ],
+                          [ "String", "db.r6i.xlarge" ],
+                          [ "String", "db.r6i.2xlarge" ],
+                          [ "String", "db.r6i.4xlarge" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "database_instance_class" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Database instance class must be a supported RDS instance type."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "database_allocated_storage" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Initial allocated storage in GB" ]
+        ],
+        [ "Attribute", "default", [ "Int", 100 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "database_allocated_storage" ]
+                          ]
+                        ],
+                        [ "Int", 20 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "database_allocated_storage" ]
+                          ]
+                        ],
+                        [ "Int", 65536 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Allocated storage must be between 20 and 65536 GB."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "database_max_allocated_storage" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Maximum allocated storage in GB for autoscaling" ]
+        ],
+        [ "Attribute", "default", [ "Int", 1000 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Gte",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "database_max_allocated_storage" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "database_allocated_storage" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Maximum allocated storage must be greater than or equal to allocated storage."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "redis_node_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "ElastiCache Redis node type" ]
+        ],
+        [ "Attribute", "default", [ "String", "cache.r7g.large" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "cache.t4g.micro" ],
+                          [ "String", "cache.t4g.small" ],
+                          [ "String", "cache.t4g.medium" ],
+                          [ "String", "cache.r7g.large" ],
+                          [ "String", "cache.r7g.xlarge" ],
+                          [ "String", "cache.r7g.2xlarge" ],
+                          [ "String", "cache.r6g.large" ],
+                          [ "String", "cache.r6g.xlarge" ],
+                          [ "String", "cache.r6g.2xlarge" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "redis_node_type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Redis node type must be a supported ElastiCache instance type."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "redis_num_cache_clusters" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "Number of Redis cache clusters for high availability"
+          ]
+        ],
+        [ "Attribute", "default", [ "Int", 2 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "redis_num_cache_clusters" ]
+                          ]
+                        ],
+                        [ "Int", 1 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "redis_num_cache_clusters" ]
+                          ]
+                        ],
+                        [ "Int", 6 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Number of cache clusters must be between 1 and 6."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_monitoring" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enable comprehensive monitoring and logging" ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_backup" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enable automated backup solutions" ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "backup_retention_days" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Number of days to retain backups" ]
+        ],
+        [ "Attribute", "default", [ "Int", 30 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "backup_retention_days" ]
+                          ]
+                        ],
+                        [ "Int", 1 ]
+                      ]
+                    ],
+                    [
+                      "Lte",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "backup_retention_days" ]
+                          ]
+                        ],
+                        [ "Int", 365 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Backup retention days must be between 1 and 365."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_disaster_recovery" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enable disaster recovery setup" ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "dr_region" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Disaster recovery region" ]
+        ],
+        [ "Attribute", "default", [ "String", "us-west-2" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "us-east-1" ],
+                          [ "String", "us-east-2" ],
+                          [ "String", "us-west-1" ],
+                          [ "String", "us-west-2" ],
+                          [ "String", "eu-west-1" ],
+                          [ "String", "eu-west-2" ],
+                          [ "String", "eu-west-3" ],
+                          [ "String", "eu-central-1" ],
+                          [ "String", "ap-northeast-1" ],
+                          [ "String", "ap-northeast-2" ],
+                          [ "String", "ap-southeast-1" ],
+                          [ "String", "ap-southeast-2" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "dr_region" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "DR region must be a valid AWS region." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_cost_optimization" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "Enable cost optimization features like Spot instances"
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_security_scanning" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enable security scanning and compliance checks" ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "allowed_cidr_blocks" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "CIDR blocks allowed to access the platform" ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [ "String", "10.0.0.0/8" ],
+              [ "String", "172.16.0.0/12" ],
+              [ "String", "192.168.0.0/16" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "cidr", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "allowed_cidr_blocks" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "cidrhost",
+                                    [ [ "Id", "cidr" ], [ "Int", 0 ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "All values must be valid CIDR blocks." ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "notification_endpoints" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "email" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ],
+                            [ "Tuple", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "slack" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [ [ "Id", "string" ], [ "String", "" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "teams" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [ [ "Id", "string" ], [ "String", "" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Notification endpoints for alerts and events" ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [ [ "Bare", "email" ], [ "Tuple", [] ] ],
+              [ [ "Bare", "slack" ], [ "String", "" ] ],
+              [ [ "Bare", "teams" ], [ "String", "" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "feature_flags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "enable_argocd_integration" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_cost_analysis" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_compliance_checking" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_drift_detection" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_auto_scaling" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_blue_green_deployment" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "enable_canary_deployment" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "Feature flags to enable/disable platform capabilities"
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [ [ "Bare", "enable_argocd_integration" ], [ "Bool", true ] ],
+              [ [ "Bare", "enable_cost_analysis" ], [ "Bool", true ] ],
+              [ [ "Bare", "enable_compliance_checking" ], [ "Bool", true ] ],
+              [ [ "Bare", "enable_drift_detection" ], [ "Bool", true ] ],
+              [ [ "Bare", "enable_auto_scaling" ], [ "Bool", true ] ],
+              [
+                [ "Bare", "enable_blue_green_deployment" ], [ "Bool", false ]
+              ],
+              [ [ "Bare", "enable_canary_deployment" ], [ "Bool", false ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "resource_tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Additional resource tags" ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "tag_key", [ "tag_value" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "resource_tags" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^[a-zA-Z0-9+\\-=._:/@]{1,128}$"
+                                          ],
+                                          [ "Id", "tag_key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^[a-zA-Z0-9+\\-=._:/@\\s]{0,256}$"
+                                          ],
+                                          [ "Id", "tag_value" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Tag keys and values must comply with AWS tagging requirements."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "log_retention_days" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "CloudWatch log retention period in days" ]
+        ],
+        [ "Attribute", "default", [ "Int", 30 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "Int", 1 ],
+                          [ "Int", 3 ],
+                          [ "Int", 5 ],
+                          [ "Int", 7 ],
+                          [ "Int", 14 ],
+                          [ "Int", 30 ],
+                          [ "Int", 60 ],
+                          [ "Int", 90 ],
+                          [ "Int", 120 ],
+                          [ "Int", 150 ],
+                          [ "Int", 180 ],
+                          [ "Int", 365 ],
+                          [ "Int", 400 ],
+                          [ "Int", 545 ],
+                          [ "Int", 731 ],
+                          [ "Int", 1827 ],
+                          [ "Int", 3653 ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "log_retention_days" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Log retention days must be a valid CloudWatch retention period."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "performance_insights_retention_period" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "RDS Performance Insights retention period in days" ]
+        ],
+        [ "Attribute", "default", [ "Int", 7 ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [ "Tuple", [ [ "Int", 7 ], [ "Int", 731 ] ] ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "performance_insights_retention_period"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Performance Insights retention period must be either 7 or 731 days."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_deletion_protection" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enable deletion protection for critical resources" ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "maintenance_window" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "database" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Id", "string" ],
+                            [ "String", "sun:04:00-sun:05:00" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "redis" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Id", "string" ],
+                            [ "String", "sun:05:00-sun:07:00" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "eks" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [ "Id", "string" ],
+                            [ "String", "sun:02:00-sun:03:00" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Maintenance windows for different services" ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [ [ "Bare", "database" ], [ "String", "sun:04:00-sun:05:00" ] ],
+              [ [ "Bare", "redis" ], [ "String", "sun:05:00-sun:07:00" ] ],
+              [ [ "Bare", "eks" ], [ "String", "sun:02:00-sun:03:00" ] ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "window", [] ],
+                          "input": [
+                            "Fun_call",
+                            [
+                              "values",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "maintenance_window" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [
+                                        "String",
+                                        "^(mon|tue|wed|thu|fri|sat|sun):[0-2][0-9]:[0-5][0-9]-(mon|tue|wed|thu|fri|sat|sun):[0-2][0-9]:[0-5][0-9]$"
+                                      ],
+                                      [ "Id", "window" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Maintenance windows must be in the format 'ddd:hh:mm-ddd:hh:mm'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "backup_window" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute", "description", [ "String", "Database backup window" ]
+        ],
+        [ "Attribute", "default", [ "String", "03:00-04:00" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^[0-2][0-9]:[0-5][0-9]-[0-2][0-9]:[0-5][0-9]$"
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "backup_window" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Backup window must be in the format 'hh:mm-hh:mm'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,194 @@
+[
+  [
+    "Block",
+    {
+      "type_": "ellipsis_complex",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "merged",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "list1" ] ] ],
+                [
+                  "Ellipsis",
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "list2" ] ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "expanded",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [ "Tuple", [ [ "Int", 1 ], [ "Int", 2 ] ] ],
+                [
+                  "Ellipsis",
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "items" ] ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "result",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "defaults" ] ] ],
+                [
+                  "Ellipsis",
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "overrides" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "grouped",
+          [
+            "For_object",
+            {
+              "identifiers": [ "item", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "items" ] ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "item" ], [ "A_string", "key" ] ]
+              ],
+              "value_output": [
+                "Ellipsis",
+                [ "Attr", [ [ "Id", "item" ], [ "A_string", "value" ] ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "flattened",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [ "Tuple", [] ],
+                [
+                  "Ellipsis",
+                  [
+                    "For_tuple",
+                    {
+                      "identifiers": [ "x", [] ],
+                      "input": [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "nested" ] ]
+                      ],
+                      "output": [ "Id", "x" ],
+                      "cond": null
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "multiline_fn_variadic",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "list1" ] ] ],
+                [
+                  "Ellipsis",
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "list2" ] ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "multiline_for_object",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "m" ] ] ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [ "Ellipsis", [ "Id", "v" ] ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "paren_ellipsis",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [ "Tuple", [] ],
+                [
+                  "Ellipsis",
+                  [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "cond" ] ]
+                      ],
+                      "then_": [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ]
+                      ],
+                      "else_": [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "b" ] ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "grouped_if",
+          [
+            "For_object",
+            {
+              "identifiers": [ "x", [] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "items" ] ]
+              ],
+              "key_output": [
+                "Attr", [ [ "Id", "x" ], [ "A_string", "key" ] ]
+              ],
+              "value_output": [
+                "Ellipsis",
+                [ "Attr", [ [ "Id", "x" ], [ "A_string", "value" ] ] ]
+              ],
+              "cond": [ "Attr", [ [ "Id", "x" ], [ "A_string", "active" ] ] ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

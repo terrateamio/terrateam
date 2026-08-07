@@ -1,0 +1,27 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Tuple",
+      [
+        [
+          "Cond",
+          {
+            "if_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+            "then_": [ "String", "yes" ],
+            "else_": [ "String", "no" ]
+          }
+        ],
+        [
+          "Cond",
+          {
+            "if_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "b" ] ] ],
+            "then_": [ "Int", 1 ],
+            "else_": [ "Int", 0 ]
+          }
+        ]
+      ]
+    ]
+  ]
+]

@@ -1,0 +1,2937 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "custom_roles" ] ],
+      "body": [
+        [
+          "Attribute", "source", [ "String", "./modules/roles/custom_roles" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "custom_role_definitions" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "global_settings",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "global_settings" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subscription_primary",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_subscription" ]
+                    ]
+                  ],
+                  [ "A_string", "primary" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "custom_role",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ],
+        [
+          "Attribute",
+          "assignable_scopes",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "assignable_scopes" ] ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_role_assignment" ], [ "Lit", "for" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "roles_to_process" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [ "Id", "value" ],
+              "cond": [
+                "Fun_call",
+                [
+                  "contains",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "keys",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "services_roles" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "value" ],
+                        [ "A_string", "scope_resource_key" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "principal_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "object_id_resource_type" ]
+                    ]
+                  ],
+                  [ "String", "object_ids" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "object_id_key_resource" ]
+                ]
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "object_id_lz_key" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "services_roles" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "object_id_resource_type"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "current_landingzone_key" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "object_id_key_resource" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "rbac_id" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "services_roles" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "object_id_resource_type"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "object_id_lz_key" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "object_id_key_resource" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "rbac_id" ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "role_definition_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "mode" ]
+                    ]
+                  ],
+                  [ "String", "custom_role_mapping" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "custom_roles" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "role_definition_name" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "role_definition_resource_id" ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "role_definition_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "mode" ]
+                    ]
+                  ],
+                  [ "String", "built_in_role_mapping" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "role_definition_name" ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "scope",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "scope_lz_key" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "services_roles" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "scope_resource_key" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "current_landingzone_key" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "scope_key_resource" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "services_roles" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "scope_resource_key" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "scope_lz_key" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "scope_key_resource" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_role_assignment" ], [ "Lit", "for_deferred" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "roles_to_process" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [ "Id", "value" ],
+              "cond": [
+                "Fun_call",
+                [
+                  "contains",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "keys",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "services_roles_deferred" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "value" ],
+                        [ "A_string", "scope_resource_key" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "principal_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "object_id_resource_type" ]
+                    ]
+                  ],
+                  [ "String", "object_ids" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "object_id_key_resource" ]
+                ]
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "object_id_lz_key" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "services_roles" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "object_id_resource_type"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "current_landingzone_key" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "object_id_key_resource" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "rbac_id" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "services_roles" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "object_id_resource_type"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "object_id_lz_key" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "object_id_key_resource" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "rbac_id" ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "role_definition_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "mode" ]
+                    ]
+                  ],
+                  [ "String", "custom_role_mapping" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "module" ], [ "A_string", "custom_roles" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "role_definition_name" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "role_definition_resource_id" ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "role_definition_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "mode" ]
+                    ]
+                  ],
+                  [ "String", "built_in_role_mapping" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "role_definition_name" ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "scope",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "scope_lz_key" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "services_roles_deferred" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "scope_resource_key" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "current_landingzone_key" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "scope_key_resource" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "services_roles_deferred" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "scope_resource_key" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "scope_lz_key" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "scope_key_resource" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "time_sleep" ], [ "Lit", "azurerm_role_assignment_for" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_role_assignment" ], [ "A_string", "for" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "For_object",
+                          {
+                            "identifiers": [ "key", [ "value" ] ],
+                            "input": [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "roles_to_process" ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ],
+                            "key_output": [ "Id", "key" ],
+                            "value_output": [ "Id", "value" ],
+                            "cond": [
+                              "Fun_call",
+                              [
+                                "contains",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "keys",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "services_roles" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "value" ],
+                                      [ "A_string", "scope_resource_key" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "create_duration", [ "String", "3m" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "time_sleep" ],
+        [ "Lit", "azurerm_role_assignment_for_deferred" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_role_assignment" ],
+                  [ "A_string", "for_deferred" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "For_object",
+                          {
+                            "identifiers": [ "key", [ "value" ] ],
+                            "input": [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "roles_to_process" ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ],
+                            "key_output": [ "Id", "key" ],
+                            "value_output": [ "Id", "value" ],
+                            "cond": [
+                              "Fun_call",
+                              [
+                                "contains",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "keys",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "services_roles_deferred"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "value" ],
+                                      [ "A_string", "scope_resource_key" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "create_duration", [ "String", "2m" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_management_group" ], [ "Lit", "level" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "role_mapping" ]
+                              ]
+                            ],
+                            [ "A_string", "built_in_role_mapping" ]
+                          ]
+                        ],
+                        [ "A_string", "management_group" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [ "Id", "value" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "lower",
+                      [
+                        [
+                          "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "String", "root" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "azurerm_client_config" ]
+                        ]
+                      ],
+                      [ "A_string", "current" ]
+                    ]
+                  ],
+                  [ "A_string", "tenant_id" ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "aks_ingress_application_gateway_identities",
+          [
+            "Fun_call",
+            [
+              "tomap",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [
+                        "Computed",
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "current_landingzone_key" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "For_object",
+                        {
+                          "identifiers": [ "key", [ "value" ] ],
+                          "input": [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "module" ],
+                                    [ "A_string", "aks_clusters" ]
+                                  ]
+                                ],
+                                [ "Object", [] ]
+                              ]
+                            ]
+                          ],
+                          "key_output": [ "Id", "key" ],
+                          "value_output": [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "rbac_id" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Idx",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "value" ],
+                                                            [
+                                                              "A_string",
+                                                              "addon_profile"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Int", 0 ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "ingress_application_gateway"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Int", 0 ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "ingress_application_gateway_identity"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Int", 0 ]
+                                      ]
+                                    ],
+                                    [ "A_string", "object_id" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Idx",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Idx",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "value" ],
+                                                            [
+                                                              "A_string",
+                                                              "addon_profile"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Int", 0 ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "ingress_application_gateway"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Int", 0 ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "ingress_application_gateway_identity"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Int", 0 ]
+                                      ]
+                                    ],
+                                    [ "A_string", "object_id" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "management_groups",
+          [
+            "Fun_call",
+            [
+              "tomap",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [
+                        "Computed",
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "current_landingzone_key" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "For_object",
+                        {
+                          "identifiers": [ "key", [ "value" ] ],
+                          "input": [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [ "A_string", "role_mapping" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string", "built_in_role_mapping"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "A_string", "management_group" ]
+                                  ]
+                                ],
+                                [ "Object", [] ]
+                              ]
+                            ]
+                          ],
+                          "key_output": [ "Id", "key" ],
+                          "value_output": [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "id" ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "data" ],
+                                                [
+                                                  "A_string",
+                                                  "azurerm_management_group"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "level" ]
+                                          ]
+                                        ],
+                                        [ "Id", "key" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "id" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "services_roles_deferred",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "storage_containers" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_storage_containers" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "storage_account_file_shares" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "combined_objects_storage_account_file_shares"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "services_roles",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "aks_clusters" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_aks_clusters" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "aks_ingress_application_gateway_identities" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "aks_ingress_application_gateway_identities"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "api_management" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_api_management" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app_config" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_app_config" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app_service_environments" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string", "combined_objects_app_service_environments"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app_service_environments_v3" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "combined_objects_app_service_environments_v3"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app_service_plans" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_app_service_plans" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "app_services" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_app_services" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "application_gateway_platforms" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "combined_objects_application_gateway_platforms"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "application_gateways" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_application_gateways" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "automations" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_automations" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "availability_sets" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_availability_sets" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "azure_container_registries" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "combined_objects_azure_container_registries"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "azuread_applications" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_azuread_applications" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "azuread_apps" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_azuread_apps" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "azuread_groups" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_azuread_groups" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "azuread_service_principals" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "combined_objects_azuread_service_principals"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "azurerm_firewalls" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_azurerm_firewalls" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "backup_vaults" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_backup_vaults" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "batch_accounts" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_batch_accounts" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "cognitive_services_account" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "combined_objects_cognitive_services_accounts"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "data_factory" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_data_factory" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "databricks_workspaces" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_databricks_workspaces" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "diagnostic_storage_accounts" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "current_objects_diagnostic_storage_accounts"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "dns_zones" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_dns_zones" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "event_hub_namespaces" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_event_hub_namespaces" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "function_apps" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_function_apps" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "iot_hub" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_iot_hub" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "iot_hub_dps" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_iot_hub_dps" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "keyvaults" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_keyvaults" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "kusto_clusters" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_kusto_clusters" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "log_analytics" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "current_objects_log_analytics" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "logged_in" ],
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "logged_in" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "machine_learning_compute_instance" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "module" ],
+                    [ "A_string", "machine_learning_compute_instance" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "machine_learning_workspaces" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_machine_learning" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "managed_identities" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_managed_identities" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "management_group" ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "management_groups" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "monitor_action_groups" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_monitor_action_groups" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "mssql_databases" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_mssql_databases" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "mssql_elastic_pools" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_mssql_elastic_pools" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "mssql_managed_databases" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string", "combined_objects_mssql_managed_databases"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "mssql_managed_instances" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string", "combined_objects_mssql_managed_instances"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "mssql_servers" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_mssql_servers" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "maintenance_configuration" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "combined_objects_maintenance_configuration"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "mysql_servers" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_mysql_servers" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "network_watchers" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_network_watchers" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "networking" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_networking" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "postgresql_servers" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_postgresql_servers" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "private_dns" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_private_dns" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "proximity_placement_groups" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "combined_objects_proximity_placement_groups"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "public_ip_addresses" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_public_ip_addresses" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "purview_accounts" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_purview_accounts" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "recovery_vaults" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_recovery_vaults" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "resource_groups" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_resource_groups" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "route_tables" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_route_tables" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "servicebus_namespaces" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_servicebus_namespaces" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "servicebus_topics" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_servicebus_topics" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "storage_accounts" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_storage_accounts" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "subscriptions" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_subscriptions" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "synapse_workspaces" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_synapse_workspaces" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "virtual_subnets" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_virtual_subnets" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "wvd_application_groups" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_wvd_application_groups" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "wvd_applications" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_wvd_applications" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "wvd_host_pools" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_wvd_host_pools" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "wvd_workspaces" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "combined_objects_wvd_workspaces" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "current_objects_log_analytics",
+          [
+            "Fun_call",
+            [
+              "tomap",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [
+                        "Computed",
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "current_landingzone_key" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "merge",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [
+                                  "A_string",
+                                  "combined_objects_log_analytics"
+                                ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "combined_diagnostics" ]
+                                  ]
+                                ],
+                                [ "A_string", "log_analytics" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "current_objects_diagnostic_storage_accounts",
+          [
+            "Fun_call",
+            [
+              "tomap",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [
+                        "Computed",
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "current_landingzone_key" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "merge",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [
+                                  "A_string",
+                                  "combined_objects_diagnostic_storage_accounts"
+                                ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "combined_diagnostics" ]
+                                  ]
+                                ],
+                                [ "A_string", "storage_accounts" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "logged_in",
+          [
+            "Fun_call",
+            [
+              "tomap",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [
+                        "Computed",
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "current_landingzone_key" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "user" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "rbac_id" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "client_config" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "logged_user_objectId" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "app" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "rbac_id" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "client_config" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "logged_aad_app_objectId"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "assignable_scopes",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "custom_role_definitions" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "flatten",
+                  [
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "assignment_type", [ "attrs" ] ],
+                        "input": [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "v" ],
+                                  [ "A_string", "assignable_scopes" ]
+                                ]
+                              ],
+                              [ "Object", [] ]
+                            ]
+                          ]
+                        ],
+                        "output": [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "attr", [] ],
+                            "input": [ "Id", "attrs" ],
+                            "output": [
+                              "Tuple",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "attr" ],
+                                          [ "A_string", "id" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Idx",
+                                                [
+                                                  [
+                                                    "Idx",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "services_roles"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "Id",
+                                                        "assignment_type"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "try",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "attr" ],
+                                                            [
+                                                              "A_string",
+                                                              "lz_key"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "var" ],
+                                                            [
+                                                              "A_string",
+                                                              "current_landingzone_key"
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "attr" ],
+                                                  [ "A_string", "key" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "id" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "cond": null
+                          }
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "roles_to_process",
+          [
+            "For_object",
+            {
+              "identifiers": [ "mapping", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "flatten",
+                  [
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "key_mode", [ "all_role_mapping" ] ],
+                        "input": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "role_mapping" ] ]
+                        ],
+                        "output": [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "key", [ "role_mappings" ] ],
+                            "input": [ "Id", "all_role_mapping" ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [
+                                  "scope_key_resource", [ "role_mapping" ]
+                                ],
+                                "input": [ "Id", "role_mappings" ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [
+                                      "role_definition_name", [ "resources" ]
+                                    ],
+                                    "input": [ "Id", "role_mapping" ],
+                                    "output": [
+                                      "For_tuple",
+                                      {
+                                        "identifiers": [
+                                          "object_id_key",
+                                          [ "object_resources" ]
+                                        ],
+                                        "input": [ "Id", "resources" ],
+                                        "output": [
+                                          "For_tuple",
+                                          {
+                                            "identifiers": [
+                                              "object_id_key_resource", []
+                                            ],
+                                            "input": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "object_resources" ],
+                                                [ "A_string", "keys" ]
+                                              ]
+                                            ],
+                                            "output": [
+                                              "Object",
+                                              [
+                                                [
+                                                  [ "Bare", "mode" ],
+                                                  [ "Id", "key_mode" ]
+                                                ],
+                                                [
+                                                  [
+                                                    "Bare",
+                                                    "scope_resource_key"
+                                                  ],
+                                                  [ "Id", "key" ]
+                                                ],
+                                                [
+                                                  [ "Bare", "scope_lz_key" ],
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "try",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "role_mapping"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "lz_key"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Null" ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  [
+                                                    "Bare",
+                                                    "scope_key_resource"
+                                                  ],
+                                                  [
+                                                    "Id",
+                                                    "scope_key_resource"
+                                                  ]
+                                                ],
+                                                [
+                                                  [
+                                                    "Bare",
+                                                    "role_definition_name"
+                                                  ],
+                                                  [
+                                                    "Id",
+                                                    "role_definition_name"
+                                                  ]
+                                                ],
+                                                [
+                                                  [
+                                                    "Bare",
+                                                    "object_id_resource_type"
+                                                  ],
+                                                  [ "Id", "object_id_key" ]
+                                                ],
+                                                [
+                                                  [
+                                                    "Bare",
+                                                    "object_id_key_resource"
+                                                  ],
+                                                  [
+                                                    "Id",
+                                                    "object_id_key_resource"
+                                                  ]
+                                                ],
+                                                [
+                                                  [
+                                                    "Bare",
+                                                    "object_id_lz_key"
+                                                  ],
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "try",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "object_resources"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "lz_key"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Null" ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "cond": null
+                                          }
+                                        ],
+                                        "cond": null
+                                      }
+                                    ],
+                                    "cond": [
+                                      "Not_equal",
+                                      [
+                                        [ "Id", "role_definition_name" ],
+                                        [ "String", "lz_key" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Fun_call",
+                [
+                  "format",
+                  [
+                    [ "String", "%s_%s_%s_%s" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "mapping" ],
+                        [ "A_string", "object_id_resource_type" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "mapping" ],
+                        [ "A_string", "scope_key_resource" ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "replace",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "mapping" ],
+                              [ "A_string", "role_definition_name" ]
+                            ]
+                          ],
+                          [ "String", " " ],
+                          [ "String", "_" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "mapping" ],
+                        [ "A_string", "object_id_key_resource" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "value_output": [ "Id", "mapping" ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

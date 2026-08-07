@@ -1,0 +1,1139 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "aws",
+                [
+                  "Object",
+                  [ [ [ "Bare", "source" ], [ "String", "hashicorp/aws" ] ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "required_version", [ "String", ">= 1.1.0" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "aws-region" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "vpc" ] ],
+      "body": [
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-vpc" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_msk_cluster" ], [ "Lit", "msk-cluster" ] ],
+      "body": [
+        [
+          "Attribute",
+          "cluster_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_msk_broker_nodes" ], [ "Lit", "msk-broker-nodes" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "cluster_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "aws_msk_cluster" ] ]
+                  ],
+                  [ "A_string", "msk-cluster" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_subnets" ], [ "Lit", "subnets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_security_group" ], [ "Lit", "msk-security-group" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-sg" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "bastion_subnet" ] ],
+      "body": [
+        [
+          "Attribute",
+          "cidr_block",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "ecs-cidr" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ] ],
+                  [ "A_string", "vpc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "map_public_ip_on_launch", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-bastion" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-ecs-subnet" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_internet_gateway" ],
+        [ "Lit", "bastion-internet-gateway" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ] ],
+                  [ "A_string", "vpc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ],
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-ecs-internet-gateway" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table" ], [ "Lit", "bastion-route-table" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ] ],
+                  [ "A_string", "vpc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "route",
+            "labels": [],
+            "body": [
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [
+                "Attribute",
+                "gateway_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_internet_gateway" ],
+                        [ "A_string", "bastion-internet-gateway" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ],
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-ecs-route-table" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ],
+        [ "Lit", "ecs-route-table-association" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_route_table" ],
+                  [ "A_string", "bastion-route-table" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_subnet" ], [ "A_string", "bastion_subnet" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_security_group" ], [ "Lit", "bastion-sg" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ] ],
+                  [ "A_string", "vpc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-bastion-sg" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 22 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [ "Attribute", "to_port", [ "Int", 22 ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "egress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 65535 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_ami" ], [ "Lit", "amzn2" ] ],
+      "body": [
+        [ "Attribute", "most_recent", [ "Bool", true ] ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "name" ] ],
+              [
+                "Attribute",
+                "values",
+                [ "Tuple", [ [ "String", "amzn2-ami-kernel-*" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "virtualization-type" ] ],
+              [ "Attribute", "values", [ "Tuple", [ [ "String", "hvm" ] ] ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "owners",
+          [ "Tuple", [ [ "String", "137112412989" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "bastion-instance" ] ],
+      "body": [
+        [
+          "Attribute",
+          "ami",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "aws_ami" ] ] ],
+                  [ "A_string", "amzn2" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "root_block_device",
+            "labels": [],
+            "body": [ [ "Attribute", "volume_size", [ "Int", 128 ] ] ]
+          }
+        ],
+        [ "Attribute", "associate_public_ip_address", [ "Bool", true ] ],
+        [ "Attribute", "instance_type", [ "String", "t2.micro" ] ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_subnet" ], [ "A_string", "bastion_subnet" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "bastion-sg" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Parent" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ],
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-bastion" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "user_data",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [ "String", "../msk-init-container/init-ec2-instance.tftpl" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "broker-hosts" ],
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "b", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "data" ],
+                                      [ "A_string", "aws_msk_broker_nodes" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "msk-broker-nodes" ]
+                                ]
+                              ],
+                              [ "A_string", "node_info_list" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "element",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "tolist",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "b" ],
+                                          [ "A_string", "endpoints" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "time_sleep" ],
+        [ "Lit", "wait_for_bastion_instance_to_be_initialize" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_instance" ],
+                  [ "A_string", "bastion-instance" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "create_duration", [ "String", "60s" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "nlb" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc-id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ] ],
+                  [ "A_string", "vpc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "source", [ "String", "../../modules/nlb" ] ],
+        [
+          "Attribute",
+          "subnet-ids",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "sid", [] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "data" ], [ "A_string", "aws_subnets" ] ]
+                      ],
+                      [ "A_string", "subnets" ]
+                    ]
+                  ],
+                  [ "A_string", "ids" ]
+                ]
+              ],
+              "output": [ "Id", "sid" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "targets",
+          [
+            "For_object",
+            {
+              "identifiers": [ "i", [ "b" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "aws_msk_broker_nodes" ]
+                        ]
+                      ],
+                      [ "A_string", "msk-broker-nodes" ]
+                    ]
+                  ],
+                  [ "A_string", "node_info_list" ]
+                ]
+              ],
+              "key_output": [ "Id", "i" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "ip-address" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "b" ],
+                        [ "A_string", "client_vpc_ip_address" ]
+                      ]
+                    ]
+                  ],
+                  [ [ "Bare", "internal-port" ], [ "Int", 9094 ] ],
+                  [
+                    [ "Bare", "external-port" ],
+                    [ "Add", [ [ "Id", "i" ], [ "Int", 9001 ] ] ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name-prefix",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "dns" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "time_sleep" ],
+                  [
+                    "A_string", "wait_for_bastion_instance_to_be_initialize"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "source", [ "String", "../../modules/dns" ] ],
+        [
+          "Attribute",
+          "aliases",
+          [
+            "For_object",
+            {
+              "identifiers": [ "i", [ "b" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "aws_msk_broker_nodes" ]
+                        ]
+                      ],
+                      [ "A_string", "msk-broker-nodes" ]
+                    ]
+                  ],
+                  [ "A_string", "node_info_list" ]
+                ]
+              ],
+              "key_output": [ "Id", "i" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "from-name" ],
+                    [
+                      "Fun_call",
+                      [
+                        "element",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "tolist",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "b" ],
+                                    [ "A_string", "endpoints" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Int", 0 ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "to-name" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "module" ], [ "A_string", "nlb" ] ]
+                        ],
+                        [ "A_string", "nlb-dns-name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "nlb-zone-id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "nlb" ] ] ],
+              [ "A_string", "zone-id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc-id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ] ],
+                  [ "A_string", "vpc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "endpoint-service" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/endpoint-service" ]
+        ],
+        [
+          "Attribute",
+          "nlb-arn",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "nlb" ] ] ],
+              [ "A_string", "nlb-arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name-prefix",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "init" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [ "String", "../msk-init-container/init-ec2-instance.tftpl" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "broker-hosts" ],
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "b", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "data" ],
+                                      [ "A_string", "aws_msk_broker_nodes" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "msk-broker-nodes" ]
+                                ]
+                              ],
+                              [ "A_string", "node_info_list" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "element",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "tolist",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "b" ],
+                                          [ "A_string", "endpoints" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

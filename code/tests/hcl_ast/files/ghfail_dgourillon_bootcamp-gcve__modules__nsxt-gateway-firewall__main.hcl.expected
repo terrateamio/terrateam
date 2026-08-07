@@ -1,0 +1,1268 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "ip_address_regex",
+          [
+            "String",
+            "(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}"
+          ]
+        ],
+        [
+          "Attribute",
+          "ip_address_range_regex",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "ip_address_regex" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "\\-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "ip_address_regex" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_groups",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "flatten",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "each_rule", [] ],
+                          "input": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "rules" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "rules" ] ]
+                              ],
+                              "else_": [ "Tuple", [] ]
+                            }
+                          ],
+                          "output": [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "each_dg", [] ],
+                              "input": [
+                                "Idx",
+                                [
+                                  [ "Id", "each_rule" ],
+                                  [ "String", "destination_groups" ]
+                                ]
+                              ],
+                              "output": [ "Id", "each_dg" ],
+                              "cond": [
+                                "Log_and",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "cidrnetmask",
+                                                    [ [ "Id", "each_dg" ] ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Null" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "regex",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "ip_address_regex"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Id", "each_dg" ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Null" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "try",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "regex",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "ip_address_range_regex"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Id", "each_dg" ]
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Null" ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source_groups",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "flatten",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "each_rule", [] ],
+                          "input": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "rules" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "rules" ] ]
+                              ],
+                              "else_": [ "Tuple", [] ]
+                            }
+                          ],
+                          "output": [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "each_sg", [] ],
+                              "input": [
+                                "Idx",
+                                [
+                                  [ "Id", "each_rule" ],
+                                  [ "String", "source_groups" ]
+                                ]
+                              ],
+                              "output": [ "Id", "each_sg" ],
+                              "cond": [
+                                "Log_and",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "cidrnetmask",
+                                                    [ [ "Id", "each_sg" ] ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Null" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Equal",
+                                        [
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "regex",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "ip_address_regex"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Id", "each_sg" ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Null" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "try",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "regex",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string",
+                                                        "ip_address_range_regex"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Id", "each_sg" ]
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Null" ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "rules",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "each_rule", [] ],
+              "input": [
+                "Cond",
+                {
+                  "if_": [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "rules" ] ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "rules" ] ]
+                  ],
+                  "else_": [ "Tuple", [] ]
+                }
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [ "Id", "each_rule" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "destination_groups" ],
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "each_dg", [] ],
+                              "input": [
+                                "Idx",
+                                [
+                                  [ "Id", "each_rule" ],
+                                  [ "String", "destination_groups" ]
+                                ]
+                              ],
+                              "output": [
+                                "Cond",
+                                {
+                                  "if_": [
+                                    "Fun_call",
+                                    [
+                                      "contains",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "destination_groups"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Id", "each_dg" ]
+                                      ]
+                                    ]
+                                  ],
+                                  "then_": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "data" ],
+                                                  [
+                                                    "A_string",
+                                                    "nsxt_policy_group"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "A_string", "policy_groups" ]
+                                            ]
+                                          ],
+                                          [ "Id", "each_dg" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "path" ]
+                                    ]
+                                  ],
+                                  "else_": [ "Id", "each_dg" ]
+                                }
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "source_groups" ],
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "each_sg", [] ],
+                              "input": [
+                                "Idx",
+                                [
+                                  [ "Id", "each_rule" ],
+                                  [ "String", "source_groups" ]
+                                ]
+                              ],
+                              "output": [
+                                "Cond",
+                                {
+                                  "if_": [
+                                    "Fun_call",
+                                    [
+                                      "contains",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "source_groups" ]
+                                          ]
+                                        ],
+                                        [ "Id", "each_sg" ]
+                                      ]
+                                    ]
+                                  ],
+                                  "then_": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "data" ],
+                                                  [
+                                                    "A_string",
+                                                    "nsxt_policy_group"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "A_string", "policy_groups" ]
+                                            ]
+                                          ],
+                                          [ "Id", "each_sg" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "path" ]
+                                    ]
+                                  ],
+                                  "else_": [ "Id", "each_sg" ]
+                                }
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "nsxt_policy_group" ], [ "Lit", "policy_groups" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "setunion",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "destination_groups" ] ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "source_groups" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "nsxt_policy_service" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "nsxt_policy_service" ], [ "A_string", "this" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "flatten",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ], [ "A_string", "rules" ]
+                                ]
+                              ],
+                              [ "A_splat" ]
+                            ]
+                          ],
+                          [ "A_string", "services" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "nsxt_policy_gateway_policy" ], [ "Lit", "this" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "nsxt_policy_service" ]
+                    ]
+                  ],
+                  [ "A_string", "this" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "display_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "resource_description" ] ]
+          ]
+        ],
+        [ "Attribute", "category", [ "String", "LocalGatewayRules" ] ],
+        [
+          "Attribute",
+          "locked",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "locked" ] ] ]
+        ],
+        [
+          "Attribute",
+          "stateful",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "stateful" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tcp_strict",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tcp_strict" ] ] ]
+        ],
+        [
+          "Attribute",
+          "sequence_number",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "sequence_number" ] ] ]
+        ],
+        [
+          "Attribute",
+          "comments",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "comments" ] ] ]
+        ],
+        [
+          "Attribute",
+          "domain",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "domain" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "rule" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "rules" ] ] ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "display_name",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "display_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "description",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "description" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "destination_groups",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "destination_groups" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "destinations_excluded",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "destinations_excluded" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "source_groups",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "source_groups" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "sources_excluded",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "sources_excluded" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "disabled",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "disabled" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "action",
+                      [
+                        "Fun_call",
+                        [
+                          "upper",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "action" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "direction",
+                      [
+                        "Fun_call",
+                        [
+                          "upper",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "direction" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "logged",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "logged" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "scope",
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "scope_path" ] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "services",
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "s", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "services" ]
+                            ]
+                          ],
+                          "output": [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "data" ],
+                                          [
+                                            "A_string", "nsxt_policy_service"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "this" ]
+                                    ]
+                                  ],
+                                  [ "Id", "s" ]
+                                ]
+                              ],
+                              [ "A_string", "path" ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "tag" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Fun_call",
+                              [
+                                "coalesce",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rule" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "tags" ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "tag",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "tag" ], [ "A_string", "key" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "scope",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "tag" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "tag" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ],
+                      [ "Object", [] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "tag",
+                      [ "Attr", [ [ "Id", "tag" ], [ "A_string", "key" ] ] ]
+                    ],
+                    [
+                      "Attribute",
+                      "scope",
+                      [
+                        "Attr", [ [ "Id", "tag" ], [ "A_string", "value" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "nsxt_policy_service" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "custom_l4_services" ] ]
+                ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "resource_description" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "display_name",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "l4_port_set_entry",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+              ],
+              [
+                "Attribute",
+                "description",
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "description" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "protocol",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "protocol" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "destination_ports",
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "destination_ports" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "source_ports",
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "source_ports" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "tag" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "tags" ]
+                        ]
+                      ],
+                      [ "Object", [] ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "scope",
+                      [ "Attr", [ [ "Id", "tag" ], [ "A_string", "key" ] ] ]
+                    ],
+                    [
+                      "Attribute",
+                      "tag",
+                      [
+                        "Attr", [ [ "Id", "tag" ], [ "A_string", "value" ] ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

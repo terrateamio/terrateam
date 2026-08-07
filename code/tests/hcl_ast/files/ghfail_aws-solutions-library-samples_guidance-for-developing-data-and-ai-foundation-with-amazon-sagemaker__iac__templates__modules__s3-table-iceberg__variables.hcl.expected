@@ -1,0 +1,249 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "NAMESPACE" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The namespace to hold the table, similar to a schema name"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "BUCKET_ARN" ] ],
+      "body": [
+        [
+          "Attribute", "description", [ "String", "The S3 table bucket ARN" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "TABLE_NAME" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "The table name" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "FIELDS" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The fields used to define the table schema" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "type" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "required" ], [ "Id", "bool" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "field", [] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "FIELDS" ] ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [
+                                        "String", "^[a-zA-Z_][a-zA-Z0-9_]*$"
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "field" ],
+                                          [ "A_string", "name" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Field names must start with a letter or underscore and can only contain letters, numbers, and underscores."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "field", [] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "FIELDS" ] ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "contains",
+                                  [
+                                    [
+                                      "Tuple",
+                                      [
+                                        [ "String", "string" ],
+                                        [ "String", "long" ],
+                                        [ "String", "int" ],
+                                        [ "String", "double" ],
+                                        [ "String", "boolean" ],
+                                        [ "String", "timestamp" ],
+                                        [ "String", "date" ],
+                                        [ "String", "binary" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "field" ],
+                                        [ "A_string", "type" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^decimal\\(\\d+,\\d+\\)$"
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "field" ],
+                                              [ "A_string", "type" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Invalid field type specified. Allowed types are: string, long, int, double, boolean, timestamp, date, binary, or decimal(precision,scale)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

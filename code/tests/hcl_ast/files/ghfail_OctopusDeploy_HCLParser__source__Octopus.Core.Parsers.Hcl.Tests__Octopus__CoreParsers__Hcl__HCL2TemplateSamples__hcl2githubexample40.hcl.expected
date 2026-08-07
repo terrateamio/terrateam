@@ -1,0 +1,146 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "workers" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./workers" ] ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "network" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_ids",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "aws_subnet" ], [ "A_string", "public" ] ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "security_groups",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "worker" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "worker_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instance_type",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "worker_type" ] ] ]
+        ],
+        [
+          "Attribute",
+          "os_stream",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "os_stream" ] ] ]
+        ],
+        [
+          "Attribute",
+          "disk_size",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "disk_size" ] ] ]
+        ],
+        [
+          "Attribute",
+          "spot_price",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "worker_price" ] ] ]
+        ],
+        [
+          "Attribute",
+          "target_groups",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "worker_target_groups" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "bootstrap" ] ] ],
+              [ "A_string", "kubeconfig-kubelet" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ssh_authorized_key",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "ssh_authorized_key" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_cidr",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "service_cidr" ] ] ]
+        ],
+        [
+          "Attribute",
+          "cluster_domain_suffix",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "cluster_domain_suffix" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "snippets",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "worker_snippets" ] ] ]
+        ],
+        [
+          "Attribute",
+          "node_labels",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "worker_node_labels" ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

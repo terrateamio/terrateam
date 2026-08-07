@@ -1,0 +1,1 @@
+hcl parse: <stdin>:105,23-25: Invalid escape sequence; The symbol "0" is not a valid escape sequence selector., and 90 other diagnostic(s)

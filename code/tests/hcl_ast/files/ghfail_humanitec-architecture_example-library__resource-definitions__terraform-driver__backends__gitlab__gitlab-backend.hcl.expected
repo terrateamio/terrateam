@@ -1,0 +1,100 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ],
+        [ "Lit", "example-terraform-gitlab-backend-s3" ]
+      ],
+      "body": [
+        [ "Attribute", "driver_type", [ "String", "humanitec/terraform" ] ],
+        [
+          "Attribute",
+          "id",
+          [ "String", "example-terraform-gitlab-backend-s3" ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "String", "example-terraform-gitlab-backend-s3" ]
+        ],
+        [ "Attribute", "type", [ "String", "s3" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "files" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "main.tf" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\nresource \"random_id\" \"thing\" {\n  byte_length = 8\n}\n\noutput \"bucket\" {\n  value = random_id.thing.hex\n}\n"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "secrets_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "files" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "backend.tf" ],
+                                  [
+                                    "String",
+                                    "${resources['config.tf-runner'].outputs.backend_tf}"
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

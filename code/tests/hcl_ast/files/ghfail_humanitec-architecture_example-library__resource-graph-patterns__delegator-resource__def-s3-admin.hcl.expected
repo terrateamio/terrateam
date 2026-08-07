@@ -1,0 +1,105 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ], [ "Lit", "s3-admin" ]
+      ],
+      "body": [
+        [ "Attribute", "driver_type", [ "String", "humanitec/echo" ] ],
+        [ "Attribute", "id", [ "String", "s3-admin" ] ],
+        [ "Attribute", "name", [ "String", "s3-admin" ] ],
+        [ "Attribute", "type", [ "String", "s3" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "bucket" ],
+                            [
+                              "String",
+                              "${resources['s3.concrete'].outputs.bucket}"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "provision",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "aws-policy.s3-admin" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "is_dependent" ], [ "Bool", false ] ],
+                    [ [ "Bare", "match_dependents" ], [ "Bool", true ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition_criteria" ],
+        [ "Lit", "s3-admin_criteria_0" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "resource" ],
+                      [ "A_string", "humanitec_resource_definition" ]
+                    ]
+                  ],
+                  [ "A_string", "s3-admin" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "app_id", [ "String", "example-delegator" ] ],
+        [ "Attribute", "class", [ "String", "admin" ] ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,69 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_shield_protection" ], [ "Lit", "route53_covidportal" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "route53_covidportal" ] ],
+        [
+          "Attribute",
+          "resource_arn",
+          [
+            "Template",
+            [
+              [ "Literal", "arn:aws:route53:::hostedzone/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_route53_zone" ],
+                          [ "A_string", "covidportal" ]
+                        ]
+                      ],
+                      [ "A_string", "zone_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_shield_protection" ], [ "Lit", "alb_covidportal" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "alb_covidportal" ] ],
+        [
+          "Attribute",
+          "resource_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

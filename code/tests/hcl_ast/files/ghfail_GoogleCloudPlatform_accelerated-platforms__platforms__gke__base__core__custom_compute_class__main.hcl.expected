@@ -1,0 +1,738 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "kubeconfig_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/../../kubernetes/kubeconfig" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "kubeconfig_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "kubeconfig_file_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifests_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "manifests_directory_root" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/cluster/ccc" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifests_directory_root",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/../../kubernetes/manifests" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "template_manifests_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/manifests/ccc" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "template_manifests_source_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/templates/manifests" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "template_manifests_source_directory_contents_hash",
+          [
+            "Fun_call",
+            [
+              "sha512",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "join",
+                    [
+                      [ "String", "" ],
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "f", [] ],
+                          "input": [
+                            "Fun_call",
+                            [
+                              "fileset",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [
+                                      "A_string",
+                                      "template_manifests_source_directory"
+                                    ]
+                                  ]
+                                ],
+                                [ "String", "**" ]
+                              ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "filesha512",
+                              [
+                                [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "template_manifests_source_directory"
+                                            ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "/" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "f" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "local_file" ], [ "Lit", "kubeconfig" ] ],
+      "body": [
+        [
+          "Attribute",
+          "filename",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "kubeconfig_file" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "terraform_data" ], [ "Lit", "manifests" ] ],
+      "body": [
+        [
+          "Attribute",
+          "input",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "manifests_directory" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "manifests_directory" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "template_manifests_directory" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "template_manifests_directory" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "template_manifests_source_directory" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "template_manifests_source_directory" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template_heredoc",
+                  [
+                    "EOT",
+                    [
+                      [ "Literal", "\nmkdir -p \"" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "template_manifests_directory" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "\" && \\\nmkdir -p \"" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "manifests_directory" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "\" && \\\ncp -r \"" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [
+                                "A_string",
+                                "template_manifests_source_directory"
+                              ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "\"/* \"" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "template_manifests_directory" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "/\" && \\\ncp -r \"" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "template_manifests_directory" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "\"/* \"" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "manifests_directory" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "/\"\n" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "interpreter",
+                [ "Tuple", [ [ "String", "bash" ], [ "String", "-c" ] ] ]
+              ],
+              [
+                "Attribute",
+                "working_dir",
+                [ "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "triggers_replace",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "manifests_directory" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "manifests_directory" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "template_manifests_directory" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "template_manifests_directory" ]
+                  ]
+                ]
+              ],
+              [
+                [
+                  "Bare", "template_manifests_source_directory_contents_hash"
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string",
+                      "template_manifests_source_directory_contents_hash"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_apply_manifests" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "terraform_data" ], [ "A_string", "manifests" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute", "source", [ "String", "../../modules/kubectl_apply" ]
+        ],
+        [ "Attribute", "apply_once", [ "Bool", false ] ],
+        [ "Attribute", "apply_server_side", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifest",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "template_manifests_directory" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "manifest_includes_namespace", [ "Bool", true ] ],
+        [ "Attribute", "recursive", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "source_content_hash",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [
+                "A_string",
+                "template_manifests_source_directory_contents_hash"
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "use_kustomize", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_wait" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_apply_manifests" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "source", [ "String", "../../modules/kubectl_wait" ] ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "manifests_directory" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for",
+          [
+            "String",
+            "jsonpath={.status.conditions[?(@.type==\"Health\")].reason}=Health"
+          ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "timeout", [ "String", "180s" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "terraform_data" ], [ "Lit", "check" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "kubectl_wait" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [
+                          "A_string",
+                          "cluster_check_custom_compute_classes_healthy"
+                        ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [ [ "String", "enabled" ] ] ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "command",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\nkubectl get computeclass -o jsonpath='{range .items[*]}{.metadata.name}{\": \"}{.status.conditions[*].message}{\"\\n\"}{end}' && \nexit $(kubectl get ComputeClass -o jsonpath='{range .items[*]}{.metadata.name}{\": \"}{.status.conditions[*].message}{\"\\n\"}{end}' | grep -c 'not healthy')\n"
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "environment",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "KUBECONFIG" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "local_file" ]
+                                ]
+                              ],
+                              [ "A_string", "kubeconfig" ]
+                            ]
+                          ],
+                          [ "A_string", "filename" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "interpreter",
+                [ "Tuple", [ [ "String", "bash" ], [ "String", "-c" ] ] ]
+              ],
+              [
+                "Attribute",
+                "working_dir",
+                [ "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,28 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "foo",
+          [
+            "Tuple",
+            [
+              [
+                "Cond",
+                {
+                  "if_": [ "Equal", [ [ "Int", 1 ], [ "Int", 2 ] ] ],
+                  "then_": [ "Bool", true ],
+                  "else_": [ "Bool", false ]
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

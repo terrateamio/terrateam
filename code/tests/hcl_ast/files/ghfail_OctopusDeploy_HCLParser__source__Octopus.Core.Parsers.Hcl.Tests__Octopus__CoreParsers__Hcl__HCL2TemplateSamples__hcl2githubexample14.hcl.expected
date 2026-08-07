@@ -1,0 +1,163 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "vpc" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "cloudwatch_log_group" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Id", "aws_cloudwatch_log_group" ],
+              [ "A_string", "covidportal" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "ecs_cluster" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [ [ "Id", "aws_ecs_cluster" ], [ "A_string", "covidportal" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "route53_zone" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [ [ "Id", "aws_route53_zone" ], [ "A_string", "covidportal" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "aws_private_subnets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [ [ "Id", "aws_subnet" ], [ "A_string", "covidportal_private" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "aws_public_subnets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [ [ "Id", "aws_subnet" ], [ "A_string", "covidportal_public" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "security_group_load_balancer" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Id", "aws_security_group" ],
+              [ "A_string", "covidportal_load_balancer" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "security_group_egress" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Id", "aws_security_group" ],
+              [ "A_string", "covidportal_egress" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "aws_db_subnet_group" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Id", "aws_db_subnet_group" ], [ "A_string", "covidportal" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,97 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "iam_workshop_user_username" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "iam_workshop_user" ] ]
+              ],
+              [ "A_string", "username" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "signin_url" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "iam_workshop_user" ] ]
+              ],
+              [ "A_string", "signin_url" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "iam_workshop_user_password" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "iam_workshop_user" ] ]
+              ],
+              [ "A_string", "password" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "notebook_instance_role_arn" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "notebook_instance_role" ]
+                ]
+              ],
+              [ "A_string", "notebook_instance_role_arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

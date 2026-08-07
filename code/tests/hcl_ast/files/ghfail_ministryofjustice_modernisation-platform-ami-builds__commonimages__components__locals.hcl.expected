@@ -1,0 +1,224 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "component_template_args", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "environment_management",
+          [
+            "Fun_call",
+            [
+              "jsondecode",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [
+                              "A_string", "aws_secretsmanager_secret_version"
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "environment_management" ]
+                      ]
+                    ],
+                    [ "A_string", "secret_string" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "components_data",
+          [
+            "For_object",
+            {
+              "identifiers": [ "component_filename", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "fileset", [ [ "String", "templates" ], [ "String", "*" ] ]
+                ]
+              ],
+              "key_output": [ "Id", "component_filename" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "regexall",
+                                [
+                                  [ "String", ".*tftpl" ],
+                                  [ "Id", "component_filename" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "templatefile",
+                      [
+                        [ "Id", "component_filename" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "component_template_args" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Fun_call",
+                    [
+                      "file",
+                      [
+                        [
+                          "Template",
+                          [
+                            [ "Literal", "templates/" ],
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [ "Id", "component_filename" ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "components_yaml",
+          [
+            "For_object",
+            {
+              "identifiers": [ "component_filename", [ "data" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "components_data" ] ]
+              ],
+              "key_output": [ "Id", "component_filename" ],
+              "value_output": [
+                "Object",
+                [
+                  [ [ "Bare", "raw" ], [ "Id", "data" ] ],
+                  [
+                    [ "Bare", "yaml" ],
+                    [ "Fun_call", [ "yamldecode", [ [ "Id", "data" ] ] ] ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "owner" ],
+                [
+                  "String",
+                  "digital-studio-operations-team@digital.justice.gov.uk"
+                ]
+              ],
+              [ [ "Bare", "business-unit" ], [ "String", "HMPPS" ] ],
+              [ [ "Bare", "application" ], [ "String", "n/a" ] ],
+              [
+                [ "Bare", "branch" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "BRANCH_NAME" ] ]
+                        ],
+                        [ "String", "" ]
+                      ]
+                    ],
+                    "then_": [ "String", "n/a" ],
+                    "else_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "BRANCH_NAME" ] ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "is-production" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "BRANCH_NAME" ] ]
+                        ],
+                        [ "String", "main" ]
+                      ]
+                    ],
+                    "then_": [ "String", "true" ],
+                    "else_": [ "String", "false" ]
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "source-code" ],
+                [
+                  "String",
+                  "https://github.com/ministryofjustice/modernisation-platform-ami-builds/tree/main/commonimages/components"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

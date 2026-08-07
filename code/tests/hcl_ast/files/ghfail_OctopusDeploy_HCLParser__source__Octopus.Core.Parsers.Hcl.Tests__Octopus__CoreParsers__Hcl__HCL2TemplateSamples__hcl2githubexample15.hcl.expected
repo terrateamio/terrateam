@@ -1,0 +1,66 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [
+        [ "Attribute", "alias", [ "String", "us-east-1" ] ],
+        [ "Attribute", "region", [ "String", "us-east-1" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    { "type_": "provider", "labels": [ [ "Lit", "random" ] ], "body": [] }
+  ],
+  [
+    "Block",
+    { "type_": "provider", "labels": [ [ "Lit", "template" ] ], "body": [] }
+  ],
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "backend",
+            "labels": [ [ "Lit", "s3" ] ],
+            "body": [
+              [
+                "Attribute", "bucket", [ "String", "covid-portal-terraform" ]
+              ],
+              [
+                "Attribute",
+                "key",
+                [ "String", "aws/backend/default.tfstate" ]
+              ],
+              [ "Attribute", "region", [ "String", "ca-central-1" ] ],
+              [
+                "Attribute", "dynamodb_table", [ "String", "terraform-lock" ]
+              ],
+              [ "Attribute", "encrypt", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

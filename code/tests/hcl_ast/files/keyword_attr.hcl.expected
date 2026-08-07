@@ -1,0 +1,128 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "test_null" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "null" ] ] ],
+                  [ "A_string", "x" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "test_true" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "true" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "test_false" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "false" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "test_for" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "for" ] ] ],
+              [ "A_string", "out" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "test_in" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "in" ] ] ],
+                  [ "A_string", "x" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "test_if" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "if" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

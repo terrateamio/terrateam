@@ -1,0 +1,974 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "main" ] ],
+      "body": [
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cidr_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".0.0/16" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "public" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_vpc" ], [ "A_string", "main" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "az" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cidr_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".1.0/24" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "private" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_vpc" ], [ "A_string", "main" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "az" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cidr_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".2.0/24" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_internet_gateway" ], [ "Lit", "main" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_vpc" ], [ "A_string", "main" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route_table" ], [ "Lit", "public_to_www" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_vpc" ], [ "A_string", "main" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "route",
+            "labels": [],
+            "body": [
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [
+                "Attribute",
+                "gateway_id",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_internet_gateway" ],
+                                [ "A_string", "main" ]
+                              ]
+                            ],
+                            [ "A_string", "id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ],
+        [ "Lit", "public_association" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_subnet" ], [ "A_string", "public" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_route_table" ],
+                          [ "A_string", "public_to_www" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route_table" ], [ "Lit", "private_to_nat" ] ],
+      "body": [
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_vpc" ], [ "A_string", "main" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "route",
+            "labels": [],
+            "body": [
+              [ "Attribute", "cidr_block", [ "String", "0.0.0.0/0" ] ],
+              [
+                "Attribute",
+                "instance_id",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "aws_instance" ],
+                                [ "A_string", "bastion" ]
+                              ]
+                            ],
+                            [ "A_string", "id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ],
+        [ "Lit", "private_association" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_subnet" ], [ "A_string", "private" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_route_table" ],
+                          [ "A_string", "private_to_nat" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_security_group" ], [ "Lit", "bastion" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Bastion" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Allow inbound SSH traffic and NAT stuff" ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_vpc" ], [ "A_string", "main" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 22 ] ],
+              [ "Attribute", "to_port", [ "Int", 22 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "egress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 0 ] ],
+              [ "Attribute", "protocol", [ "String", "-1" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 0 ] ],
+              [ "Attribute", "protocol", [ "String", "-1" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "cidr_prefix" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", ".0.0/16" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "bastion" ] ],
+      "body": [
+        [
+          "Attribute",
+          "ami",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "bastion_nat_ami" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instance_type",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "bastion_nat_size" ] ] ]
+        ],
+        [
+          "Attribute",
+          "key_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "ec2_key" ] ] ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_subnet" ], [ "A_string", "public" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_security_group" ],
+                              [ "A_string", "bastion" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "associate_public_ip_address", [ "Bool", true ] ],
+        [ "Attribute", "source_dest_check", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [ [ [ "Bare", "Name" ], [ "String", "Bastion Host and NAT" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_security_group" ], [ "Lit", "worker_bee" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Worker Bee" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Allow inbound SSH traffic" ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_vpc" ], [ "A_string", "main" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 22 ] ],
+              [ "Attribute", "to_port", [ "Int", 22 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "cidr_prefix" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", ".1.0/24" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 0 ] ],
+              [ "Attribute", "protocol", [ "String", "-1" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "cidr_prefix" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", ".2.0/24" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "egress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 0 ] ],
+              [ "Attribute", "protocol", [ "String", "-1" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "worker" ] ],
+      "body": [
+        [
+          "Attribute",
+          "ami",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "worker_bee_ami" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instance_type",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "worker_bee_size" ] ] ]
+        ],
+        [
+          "Attribute",
+          "key_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "ec2_key" ] ] ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_subnet" ], [ "A_string", "private" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_security_group" ],
+                              [ "A_string", "worker_bee" ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object", [ [ [ "Bare", "Name" ], [ "String", "Worker Bee" ] ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

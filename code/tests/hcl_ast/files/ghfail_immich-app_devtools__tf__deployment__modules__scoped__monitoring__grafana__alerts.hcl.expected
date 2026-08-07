@@ -1,0 +1,162 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "grafana_rule_group" ], [ "Lit", "rule_group_0000" ]
+      ],
+      "body": [
+        [ "Attribute", "org_id", [ "Int", 1 ] ],
+        [ "Attribute", "name", [ "String", "Minutely" ] ],
+        [ "Attribute", "folder_uid", [ "String", "example-tf-dashboard" ] ],
+        [ "Attribute", "interval_seconds", [ "Int", 60 ] ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "VMetrics Accessible" ] ],
+              [ "Attribute", "condition", [ "String", "C" ] ],
+              [
+                "Block",
+                {
+                  "type_": "data",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "ref_id", [ "String", "A" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "relative_time_range",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "from", [ "Int", 21600 ] ],
+                          [ "Attribute", "to", [ "Int", 0 ] ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Attribute",
+                      "datasource_uid",
+                      [ "String", "36979063-5384-4eb9-8679-565a727cbc13" ]
+                    ],
+                    [
+                      "Attribute",
+                      "model",
+                      [
+                        "String",
+                        "{\"datasource\":{\"type\":\"prometheus\",\"uid\":\"36979063-5384-4eb9-8679-565a727cbc13\"},\"disableTextWrap\":false,\"editorMode\":\"builder\",\"expr\":\"vm_app_uptime_seconds\",\"fullMetaSearch\":false,\"includeNullMetadata\":true,\"instant\":false,\"interval\":\"\",\"intervalMs\":15000,\"legendFormat\":\"__auto\",\"maxDataPoints\":43200,\"range\":true,\"refId\":\"A\",\"useBackend\":false}"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "data",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "ref_id", [ "String", "B" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "relative_time_range",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "from", [ "Int", 0 ] ],
+                          [ "Attribute", "to", [ "Int", 0 ] ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Attribute", "datasource_uid", [ "String", "__expr__" ]
+                    ],
+                    [
+                      "Attribute",
+                      "model",
+                      [
+                        "String",
+                        "{\"conditions\":[{\"evaluator\":{\"params\":[],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"B\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"A\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"reducer\":\"last\",\"refId\":\"B\",\"type\":\"reduce\"}"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "data",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "ref_id", [ "String", "C" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "relative_time_range",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "from", [ "Int", 0 ] ],
+                          [ "Attribute", "to", [ "Int", 0 ] ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Attribute", "datasource_uid", [ "String", "__expr__" ]
+                    ],
+                    [
+                      "Attribute",
+                      "model",
+                      [
+                        "String",
+                        "{\"conditions\":[{\"evaluator\":{\"params\":[0],\"type\":\"lt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"B\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"C\",\"type\":\"threshold\"}"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [ "Attribute", "no_data_state", [ "String", "Alerting" ] ],
+              [ "Attribute", "exec_err_state", [ "String", "Alerting" ] ],
+              [ "Attribute", "for", [ "String", "1m" ] ],
+              [
+                "Attribute",
+                "annotations",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "__dashboardUid__" ],
+                      [ "String", "example-dashboard" ]
+                    ],
+                    [ [ "Bare", "__panelId__" ], [ "String", "3" ] ],
+                    [
+                      [ "Bare", "summary" ],
+                      [
+                        "String",
+                        "Victoria Metrics is inaccessible from Grafana"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "labels",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "channel" ], [ "String", "team" ] ],
+                    [ [ "Bare", "severity" ], [ "String", "1" ] ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "is_paused", [ "Bool", false ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

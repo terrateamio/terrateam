@@ -1,0 +1,396 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "name_prefix",
+          [
+            "Template",
+            [
+              [
+                "If_directive",
+                {
+                  "cond": [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                      ],
+                      [ "String", "" ]
+                    ]
+                  ],
+                  "then_": [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "prefix" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-" ]
+                  ],
+                  "else_": null,
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_dynamodb_table" ], [ "Lit", "Client" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "name_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "Client" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "billing_mode", [ "String", "PROVISIONED" ] ],
+        [ "Attribute", "read_capacity", [ "Int", 5 ] ],
+        [ "Attribute", "write_capacity", [ "Int", 5 ] ],
+        [ "Attribute", "hash_key", [ "String", "ClientId" ] ],
+        [
+          "Block",
+          {
+            "type_": "attribute",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "ClientId" ] ],
+              [ "Attribute", "type", [ "String", "S" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "attribute",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "JsonString" ] ],
+              [ "Attribute", "type", [ "String", "S" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "global_secondary_index",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "JsonString-Index" ] ],
+              [ "Attribute", "hash_key", [ "String", "JsonString" ] ],
+              [ "Attribute", "projection_type", [ "String", "ALL" ] ],
+              [ "Attribute", "read_capacity", [ "Int", 5 ] ],
+              [ "Attribute", "write_capacity", [ "Int", 5 ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_dynamodb_table" ], [ "Lit", "ApiResource" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "name_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "ApiResource" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "billing_mode", [ "String", "PROVISIONED" ] ],
+        [ "Attribute", "read_capacity", [ "Int", 5 ] ],
+        [ "Attribute", "write_capacity", [ "Int", 5 ] ],
+        [ "Attribute", "hash_key", [ "String", "Name" ] ],
+        [
+          "Block",
+          {
+            "type_": "attribute",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "Name" ] ],
+              [ "Attribute", "type", [ "String", "S" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "attribute",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "JsonString" ] ],
+              [ "Attribute", "type", [ "String", "S" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "global_secondary_index",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "JsonString-Index" ] ],
+              [ "Attribute", "hash_key", [ "String", "JsonString" ] ],
+              [ "Attribute", "projection_type", [ "String", "ALL" ] ],
+              [ "Attribute", "read_capacity", [ "Int", 5 ] ],
+              [ "Attribute", "write_capacity", [ "Int", 5 ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_dynamodb_table" ], [ "Lit", "IdentityResource" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "name_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "IdentityResource" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "billing_mode", [ "String", "PROVISIONED" ] ],
+        [ "Attribute", "read_capacity", [ "Int", 5 ] ],
+        [ "Attribute", "write_capacity", [ "Int", 5 ] ],
+        [ "Attribute", "hash_key", [ "String", "Name" ] ],
+        [
+          "Block",
+          {
+            "type_": "attribute",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "Name" ] ],
+              [ "Attribute", "type", [ "String", "S" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "attribute",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "JsonString" ] ],
+              [ "Attribute", "type", [ "String", "S" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "global_secondary_index",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "JsonString-Index" ] ],
+              [ "Attribute", "hash_key", [ "String", "JsonString" ] ],
+              [ "Attribute", "projection_type", [ "String", "ALL" ] ],
+              [ "Attribute", "read_capacity", [ "Int", 5 ] ],
+              [ "Attribute", "write_capacity", [ "Int", 5 ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_dynamodb_table" ], [ "Lit", "PersistedGrant" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "name_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "PersistedGrant" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "billing_mode", [ "String", "PROVISIONED" ] ],
+        [ "Attribute", "read_capacity", [ "Int", 5 ] ],
+        [ "Attribute", "write_capacity", [ "Int", 5 ] ],
+        [ "Attribute", "hash_key", [ "String", "Key" ] ],
+        [
+          "Block",
+          {
+            "type_": "attribute",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "Key" ] ],
+              [ "Attribute", "type", [ "String", "S" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "attribute",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "ClientId" ] ],
+              [ "Attribute", "type", [ "String", "S" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "attribute",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "Subject" ] ],
+              [ "Attribute", "type", [ "String", "S" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "attribute",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "Type" ] ],
+              [ "Attribute", "type", [ "String", "S" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "global_secondary_index",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "ClientId-Index" ] ],
+              [ "Attribute", "hash_key", [ "String", "ClientId" ] ],
+              [ "Attribute", "projection_type", [ "String", "ALL" ] ],
+              [ "Attribute", "read_capacity", [ "Int", 5 ] ],
+              [ "Attribute", "write_capacity", [ "Int", 5 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "global_secondary_index",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "Subject-Index" ] ],
+              [ "Attribute", "hash_key", [ "String", "Subject" ] ],
+              [ "Attribute", "projection_type", [ "String", "ALL" ] ],
+              [ "Attribute", "read_capacity", [ "Int", 5 ] ],
+              [ "Attribute", "write_capacity", [ "Int", 5 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "global_secondary_index",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "Type-Index" ] ],
+              [ "Attribute", "hash_key", [ "String", "Type" ] ],
+              [ "Attribute", "projection_type", [ "String", "ALL" ] ],
+              [ "Attribute", "read_capacity", [ "Int", 5 ] ],
+              [ "Attribute", "write_capacity", [ "Int", 5 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ttl",
+            "labels": [],
+            "body": [
+              [ "Attribute", "attribute_name", [ "String", "Expiration" ] ],
+              [ "Attribute", "enabled", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

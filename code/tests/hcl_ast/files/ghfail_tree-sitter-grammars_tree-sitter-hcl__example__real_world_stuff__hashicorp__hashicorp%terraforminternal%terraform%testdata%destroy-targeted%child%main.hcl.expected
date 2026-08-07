@@ -1,0 +1,34 @@
+[
+  [
+    "Block",
+    { "type_": "variable", "labels": [ [ "Lit", "in" ] ], "body": [] }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "b" ] ],
+      "body": [
+        [
+          "Attribute",
+          "foo",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "in" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "out" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "in" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

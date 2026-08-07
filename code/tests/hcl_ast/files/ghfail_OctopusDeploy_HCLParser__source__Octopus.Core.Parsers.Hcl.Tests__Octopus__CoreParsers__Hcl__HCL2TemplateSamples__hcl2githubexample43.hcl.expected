@@ -1,0 +1,1447 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_vpc_peering_connection" ], [ "Lit", "peer-nodes" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.ingress" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ]
+                          ],
+                          [ "A_string", "ingress-vpc" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "peer_vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ]
+                          ],
+                          [ "A_string", "egress-vpc" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "peer_region",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "egress_region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "ingress_vpc_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " - peered to " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "egress_vpc_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_vpc_peering_connection_accepter" ],
+        [ "Lit", "peer-nodes" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.egress" ] ],
+        [
+          "Attribute",
+          "vpc_peering_connection_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_vpc_peering_connection" ],
+                          [ "A_string", "peer-nodes" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "auto_accept", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "egress_vpc_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " - peered to " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "ingress_vpc_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route" ], [ "Lit", "ingress-egress-admin" ] ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.ingress" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "aws_route_tables" ]
+                                  ]
+                                ],
+                                [ "A_string", "ingress-admin" ]
+                              ]
+                            ],
+                            [ "A_string", "ids" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "element",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "flatten",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "data" ],
+                                          [ "A_string", "aws_route_tables" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "ingress-admin" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "ids" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_cidr_block",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ]
+                          ],
+                          [ "A_string", "egress-vpc" ]
+                        ]
+                      ],
+                      [ "A_string", "cidr_block" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_peering_connection_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_vpc_peering_connection" ],
+                          [ "A_string", "peer-nodes" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [ [ "String", "aws_vpc_peering_connection.peer-nodes" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route" ], [ "Lit", "egress-ingress-admin" ] ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.egress" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "aws_route_tables" ]
+                                  ]
+                                ],
+                                [ "A_string", "egress-admin" ]
+                              ]
+                            ],
+                            [ "A_string", "ids" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "element",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "flatten",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "data" ],
+                                          [ "A_string", "aws_route_tables" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "egress-admin" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "ids" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "destination_cidr_block",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ]
+                          ],
+                          [ "A_string", "ingress-vpc" ]
+                        ]
+                      ],
+                      [ "A_string", "cidr_block" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_peering_connection_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_vpc_peering_connection_accepter" ],
+                          [ "A_string", "peer-nodes" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [ "String", "aws_vpc_peering_connection_accepter.peer-nodes" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ], [ "Lit", "ingress-internal" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.ingress" ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "ingress_vpc_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ": internal allow " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "egress_vpc_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [
+                "Literal",
+                "Rules to allow traffic from admin network in peered VPC "
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "egress_vpc_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "." ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ]
+                          ],
+                          [ "A_string", "ingress-vpc" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 65535 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [ "A_string", "aws_subnet" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "egress-admin" ]
+                                  ]
+                                ],
+                                [ "A_splat" ]
+                              ]
+                            ],
+                            [ "A_string", "cidr_block" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 65535 ] ],
+              [ "Attribute", "protocol", [ "String", "udp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [ "A_string", "aws_subnet" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "egress-admin" ]
+                                  ]
+                                ],
+                                [ "A_splat" ]
+                              ]
+                            ],
+                            [ "A_string", "cidr_block" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Minus", [ "Int", 1 ] ] ],
+              [ "Attribute", "to_port", [ "Minus", [ "Int", 1 ] ] ],
+              [ "Attribute", "protocol", [ "String", "icmp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [ "A_string", "aws_subnet" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "egress-admin" ]
+                                  ]
+                                ],
+                                [ "A_splat" ]
+                              ]
+                            ],
+                            [ "A_string", "cidr_block" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "ingress_vpc_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", ": internal allow " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "egress_vpc_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_network_interface_sg_attachment" ],
+        [ "Lit", "ingress-bastion-nic" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.ingress" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_network_interface" ]
+                              ]
+                            ],
+                            [ "A_string", "ingress-bastion-nic" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_security_group" ],
+                          [ "A_string", "ingress-internal" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_interface_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "aws_network_interface" ]
+                                ]
+                              ],
+                              [ "A_string", "ingress-bastion-nic" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ], [ "Lit", "egress-internal" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.egress" ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "egress_vpc_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ": internal allow " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "ingress_vpc_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Template",
+            [
+              [
+                "Literal",
+                "Rules to allow traffic from admin network in peered VPC "
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "ingress_vpc_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "." ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ]
+                          ],
+                          [ "A_string", "egress-vpc" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 65535 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [ "A_string", "aws_subnet" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "ingress-admin" ]
+                                  ]
+                                ],
+                                [ "A_splat" ]
+                              ]
+                            ],
+                            [ "A_string", "cidr_block" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 65535 ] ],
+              [ "Attribute", "protocol", [ "String", "udp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [ "A_string", "aws_subnet" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "ingress-admin" ]
+                                  ]
+                                ],
+                                [ "A_splat" ]
+                              ]
+                            ],
+                            [ "A_string", "cidr_block" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Minus", [ "Int", 1 ] ] ],
+              [ "Attribute", "to_port", [ "Minus", [ "Int", 1 ] ] ],
+              [ "Attribute", "protocol", [ "String", "icmp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [ "A_string", "aws_subnet" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "ingress-admin" ]
+                                  ]
+                                ],
+                                [ "A_splat" ]
+                              ]
+                            ],
+                            [ "A_string", "cidr_block" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "egress_vpc_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", ": internal allow " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "ingress_vpc_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_network_interface_sg_attachment" ],
+        [ "Lit", "egress-bastion-nic" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.egress" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_network_interface" ]
+                              ]
+                            ],
+                            [ "A_string", "egress-bastion-nic" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "security_group_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_security_group" ],
+                          [ "A_string", "egress-internal" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_interface_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "aws_network_interface" ]
+                                ]
+                              ],
+                              [ "A_string", "egress-bastion-nic" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

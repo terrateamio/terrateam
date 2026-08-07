@@ -1,0 +1,33 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Template",
+      [
+        [ "Literal", "[" ],
+        [
+          "For_directive",
+          {
+            "vars": [ "v", null ],
+            "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
+            "body": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "v" ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "," ]
+            ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", "]" ]
+      ]
+    ]
+  ]
+]

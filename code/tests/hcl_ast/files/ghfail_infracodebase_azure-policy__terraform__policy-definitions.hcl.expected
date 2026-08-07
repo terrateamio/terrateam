@@ -1,0 +1,1421 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_policy_definition" ], [ "Lit", "fin_cost_control" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "policy_definitions" ] ]
+              ],
+              [ "A_string", "fin_cost_control" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "policy_type", [ "String", "Custom" ] ],
+        [ "Attribute", "mode", [ "String", "Indexed" ] ],
+        [
+          "Attribute",
+          "display_name",
+          [ "String", "FIN - Deny Expensive VM SKUs" ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Prevents deployment of expensive VM SKUs to control costs"
+          ]
+        ],
+        [
+          "Attribute",
+          "management_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "category" ],
+                      [ "String", "Financial Governance" ]
+                    ],
+                    [ [ "Bare", "version" ], [ "String", "1.0.0" ] ],
+                    [
+                      [ "Bare", "source" ],
+                      [ "String", "Enterprise Policy Framework" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "allowedVMSizes" ],
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "type" ], [ "String", "Array" ] ],
+                          [
+                            [ "Bare", "metadata" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "description" ],
+                                  [ "String", "Array of allowed VM sizes" ]
+                                ],
+                                [
+                                  [ "Bare", "displayName" ],
+                                  [ "String", "Allowed VM Sizes" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "defaultValue" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "allowed_vm_sizes" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_rule",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "if" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "allOf" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "field" ],
+                                      [ "String", "type" ]
+                                    ],
+                                    [
+                                      [ "Bare", "equals" ],
+                                      [
+                                        "String",
+                                        "Microsoft.Compute/virtualMachines"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "not" ],
+                                      [
+                                        "Object",
+                                        [
+                                          [
+                                            [ "Bare", "field" ],
+                                            [
+                                              "String",
+                                              "Microsoft.Compute/virtualMachines/vmSize"
+                                            ]
+                                          ],
+                                          [
+                                            [ "Bare", "in" ],
+                                            [
+                                              "String",
+                                              "[parameters('allowedVMSizes')]"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "effect" ], [ "String", "Deny" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_policy_definition" ],
+        [ "Lit", "sec_https_storage" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "policy_definitions" ] ]
+              ],
+              [ "A_string", "sec_https_storage" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "policy_type", [ "String", "Custom" ] ],
+        [ "Attribute", "mode", [ "String", "Indexed" ] ],
+        [
+          "Attribute",
+          "display_name",
+          [ "String", "SEC - Require HTTPS for Storage Accounts" ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Ensures storage accounts only allow HTTPS traffic" ]
+        ],
+        [
+          "Attribute",
+          "management_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "category" ],
+                      [ "String", "Security Governance" ]
+                    ],
+                    [ [ "Bare", "version" ], [ "String", "1.0.0" ] ],
+                    [
+                      [ "Bare", "source" ],
+                      [ "String", "Enterprise Policy Framework" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_rule",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "if" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "allOf" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "field" ],
+                                      [ "String", "type" ]
+                                    ],
+                                    [
+                                      [ "Bare", "equals" ],
+                                      [
+                                        "String",
+                                        "Microsoft.Storage/storageAccounts"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "field" ],
+                                      [
+                                        "String",
+                                        "Microsoft.Storage/storageAccounts/supportsHttpsTrafficOnly"
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "notEquals" ],
+                                      [ "Bool", true ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "effect" ], [ "String", "Deny" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_policy_definition" ],
+        [ "Lit", "sec_network_access" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "policy_definitions" ] ]
+              ],
+              [ "A_string", "sec_network_access" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "policy_type", [ "String", "Custom" ] ],
+        [ "Attribute", "mode", [ "String", "Indexed" ] ],
+        [
+          "Attribute",
+          "display_name",
+          [ "String", "SEC - Deny Public Network Access" ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "Prevents resources from having public network access"
+          ]
+        ],
+        [
+          "Attribute",
+          "management_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "category" ],
+                      [ "String", "Security Governance" ]
+                    ],
+                    [ [ "Bare", "version" ], [ "String", "1.0.0" ] ],
+                    [
+                      [ "Bare", "source" ],
+                      [ "String", "Enterprise Policy Framework" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_rule",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "if" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "allOf" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "field" ],
+                                      [ "String", "type" ]
+                                    ],
+                                    [
+                                      [ "Bare", "in" ],
+                                      [
+                                        "Tuple",
+                                        [
+                                          [
+                                            "String",
+                                            "Microsoft.Storage/storageAccounts"
+                                          ],
+                                          [
+                                            "String",
+                                            "Microsoft.KeyVault/vaults"
+                                          ],
+                                          [
+                                            "String", "Microsoft.Sql/servers"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "anyOf" ],
+                                      [
+                                        "Tuple",
+                                        [
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "allOf" ],
+                                                [
+                                                  "Tuple",
+                                                  [
+                                                    [
+                                                      "Object",
+                                                      [
+                                                        [
+                                                          [ "Bare", "field" ],
+                                                          [
+                                                            "String", "type"
+                                                          ]
+                                                        ],
+                                                        [
+                                                          [
+                                                            "Bare", "equals"
+                                                          ],
+                                                          [
+                                                            "String",
+                                                            "Microsoft.Storage/storageAccounts"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Object",
+                                                      [
+                                                        [
+                                                          [ "Bare", "field" ],
+                                                          [
+                                                            "String",
+                                                            "Microsoft.Storage/storageAccounts/publicNetworkAccess"
+                                                          ]
+                                                        ],
+                                                        [
+                                                          [
+                                                            "Bare",
+                                                            "notEquals"
+                                                          ],
+                                                          [
+                                                            "String",
+                                                            "Disabled"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "allOf" ],
+                                                [
+                                                  "Tuple",
+                                                  [
+                                                    [
+                                                      "Object",
+                                                      [
+                                                        [
+                                                          [ "Bare", "field" ],
+                                                          [
+                                                            "String", "type"
+                                                          ]
+                                                        ],
+                                                        [
+                                                          [
+                                                            "Bare", "equals"
+                                                          ],
+                                                          [
+                                                            "String",
+                                                            "Microsoft.KeyVault/vaults"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Object",
+                                                      [
+                                                        [
+                                                          [ "Bare", "field" ],
+                                                          [
+                                                            "String",
+                                                            "Microsoft.KeyVault/vaults/publicNetworkAccess"
+                                                          ]
+                                                        ],
+                                                        [
+                                                          [
+                                                            "Bare",
+                                                            "notEquals"
+                                                          ],
+                                                          [
+                                                            "String",
+                                                            "Disabled"
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "effect" ], [ "String", "Deny" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_policy_definition" ],
+        [ "Lit", "azu_naming_convention" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "policy_definitions" ] ]
+              ],
+              [ "A_string", "azu_naming_convention" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "policy_type", [ "String", "Custom" ] ],
+        [ "Attribute", "mode", [ "String", "Indexed" ] ],
+        [
+          "Attribute",
+          "display_name",
+          [ "String", "AZU - Require Naming Convention" ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enforces enterprise naming standards for Azure resources"
+          ]
+        ],
+        [
+          "Attribute",
+          "management_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "category" ],
+                      [ "String", "Azure Foundation" ]
+                    ],
+                    [ [ "Bare", "version" ], [ "String", "1.0.0" ] ],
+                    [
+                      [ "Bare", "source" ],
+                      [ "String", "Enterprise Policy Framework" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "namePattern" ],
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "type" ], [ "String", "String" ] ],
+                          [
+                            [ "Bare", "metadata" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "description" ],
+                                  [ "String", "Required naming pattern" ]
+                                ],
+                                [
+                                  [ "Bare", "displayName" ],
+                                  [ "String", "Naming Pattern" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "defaultValue" ],
+                            [
+                              "Template",
+                              [
+                                [ "Literal", "*-" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "environment" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", "-*" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_rule",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "if" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "allOf" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "field" ],
+                                      [ "String", "type" ]
+                                    ],
+                                    [
+                                      [ "Bare", "in" ],
+                                      [
+                                        "Tuple",
+                                        [
+                                          [
+                                            "String",
+                                            "Microsoft.Compute/virtualMachines"
+                                          ],
+                                          [
+                                            "String",
+                                            "Microsoft.Storage/storageAccounts"
+                                          ],
+                                          [
+                                            "String",
+                                            "Microsoft.Network/virtualNetworks"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "not" ],
+                                      [
+                                        "Object",
+                                        [
+                                          [
+                                            [ "Bare", "field" ],
+                                            [ "String", "name" ]
+                                          ],
+                                          [
+                                            [ "Bare", "like" ],
+                                            [
+                                              "String",
+                                              "[parameters('namePattern')]"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "effect" ], [ "String", "Audit" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_policy_definition" ],
+        [ "Lit", "azu_region_compliance" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "policy_definitions" ] ]
+              ],
+              [ "A_string", "azu_region_compliance" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "policy_type", [ "String", "Custom" ] ],
+        [ "Attribute", "mode", [ "String", "Indexed" ] ],
+        [
+          "Attribute",
+          "display_name",
+          [ "String", "AZU - Allow Specific Regions Only" ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Restricts resource deployment to approved Azure regions"
+          ]
+        ],
+        [
+          "Attribute",
+          "management_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "category" ],
+                      [ "String", "Azure Foundation" ]
+                    ],
+                    [ [ "Bare", "version" ], [ "String", "1.0.0" ] ],
+                    [
+                      [ "Bare", "source" ],
+                      [ "String", "Enterprise Policy Framework" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "allowedRegions" ],
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "type" ], [ "String", "Array" ] ],
+                          [
+                            [ "Bare", "metadata" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "description" ],
+                                  [
+                                    "String",
+                                    "Array of allowed Azure regions"
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "displayName" ],
+                                  [ "String", "Allowed Regions" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "defaultValue" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "allowed_regions" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_rule",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "if" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "allOf" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "field" ],
+                                      [ "String", "location" ]
+                                    ],
+                                    [
+                                      [ "Bare", "exists" ], [ "Bool", true ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "not" ],
+                                      [
+                                        "Object",
+                                        [
+                                          [
+                                            [ "Bare", "field" ],
+                                            [ "String", "location" ]
+                                          ],
+                                          [
+                                            [ "Bare", "in" ],
+                                            [
+                                              "String",
+                                              "[parameters('allowedRegions')]"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "effect" ], [ "String", "Deny" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_policy_definition" ],
+        [ "Lit", "azu_required_tags" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "policy_definitions" ] ]
+              ],
+              [ "A_string", "azu_required_tags" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "policy_type", [ "String", "Custom" ] ],
+        [ "Attribute", "mode", [ "String", "Indexed" ] ],
+        [
+          "Attribute",
+          "display_name",
+          [ "String", "AZU - Require Billing Tags" ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Requires specific tags for cost allocation and billing"
+          ]
+        ],
+        [
+          "Attribute",
+          "management_group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "category" ],
+                      [ "String", "Azure Foundation" ]
+                    ],
+                    [ [ "Bare", "version" ], [ "String", "1.0.0" ] ],
+                    [
+                      [ "Bare", "source" ],
+                      [ "String", "Enterprise Policy Framework" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parameters",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "requiredTags" ],
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "type" ], [ "String", "Array" ] ],
+                          [
+                            [ "Bare", "metadata" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "description" ],
+                                  [ "String", "Array of required tag names" ]
+                                ],
+                                [
+                                  [ "Bare", "displayName" ],
+                                  [ "String", "Required Tags" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "defaultValue" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "required_tags" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy_rule",
+          [
+            "Fun_call",
+            [
+              "jsonencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "if" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "anyOf" ],
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "tag", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "required_tags" ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "not" ],
+                                      [
+                                        "Object",
+                                        [
+                                          [
+                                            [ "Bare", "field" ],
+                                            [
+                                              "Template",
+                                              [
+                                                [ "Literal", "tags['" ],
+                                                [
+                                                  "Interpolation",
+                                                  {
+                                                    "expr": [ "Id", "tag" ],
+                                                    "strip_before": false,
+                                                    "strip_after": false
+                                                  }
+                                                ],
+                                                [ "Literal", "']" ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            [ "Bare", "exists" ],
+                                            [ "Bool", true ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "then" ],
+                      [
+                        "Object",
+                        [ [ [ "Bare", "effect" ], [ "String", "Audit" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_management_group" ],
+                  [ "A_string", "tenant_root" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

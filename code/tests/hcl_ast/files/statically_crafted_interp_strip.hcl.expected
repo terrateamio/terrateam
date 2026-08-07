@@ -1,0 +1,49 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Template",
+      [
+        [ "Literal", "a" ],
+        [
+          "Interpolation",
+          {
+            "expr": [ "Attr", [ [ "Id", "var" ], [ "A_string", "b" ] ] ],
+            "strip_before": true,
+            "strip_after": true
+          }
+        ],
+        [ "Literal", "c" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "y",
+    [
+      "Template",
+      [
+        [ "Literal", "d" ],
+        [
+          "Interpolation",
+          {
+            "expr": [ "Attr", [ [ "Id", "var" ], [ "A_string", "e" ] ] ],
+            "strip_before": true,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", " f " ],
+        [
+          "Interpolation",
+          {
+            "expr": [ "Attr", [ [ "Id", "var" ], [ "A_string", "g" ] ] ],
+            "strip_before": false,
+            "strip_after": true
+          }
+        ],
+        [ "Literal", "h" ]
+      ]
+    ]
+  ]
+]

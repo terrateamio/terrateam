@@ -1,0 +1,13 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Log_or",
+      [
+        [ "Log_and", [ [ "Bool", true ], [ "Bool", false ] ] ],
+        [ "Bool", true ]
+      ]
+    ]
+  ]
+]

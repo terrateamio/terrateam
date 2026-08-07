@@ -1,0 +1,157 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_sqs_queue" ], [ "Lit", "dead_letter_queue" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "celsus_dead_letter_queue" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_sqs_queue" ], [ "Lit", "core_queue" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "celsus_core_queue" ] ],
+        [
+          "Attribute",
+          "redrive_policy",
+          [
+            "Template",
+            [
+              [ "Literal", "{\"deadLetterTargetArn\":\"" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_sqs_queue" ],
+                          [ "A_string", "dead_letter_queue" ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "\",\"maxReceiveCount\":5}" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_sqs_queue" ], [ "Lit", "contacts_queue" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "celsus_contacts_queue" ] ],
+        [
+          "Attribute",
+          "redrive_policy",
+          [
+            "Template",
+            [
+              [ "Literal", "{\"deadLetterTargetArn\":\"" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_sqs_queue" ],
+                          [ "A_string", "dead_letter_queue" ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "\",\"maxReceiveCount\":5}" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_sqs_queue" ], [ "Lit", "lendings_queue" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "celsus_lendings_queue" ] ],
+        [
+          "Attribute",
+          "redrive_policy",
+          [
+            "Template",
+            [
+              [ "Literal", "{\"deadLetterTargetArn\":\"" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_sqs_queue" ],
+                          [ "A_string", "dead_letter_queue" ]
+                        ]
+                      ],
+                      [ "A_string", "arn" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "\",\"maxReceiveCount\":5}" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

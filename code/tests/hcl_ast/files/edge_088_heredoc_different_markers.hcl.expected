@@ -1,0 +1,14 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "a", [ "Heredoc", [ "EOT", "\ncontent a\n" ] ] ],
+        [ "Attribute", "b", [ "Heredoc", [ "EOF", "\ncontent b\n" ] ] ],
+        [ "Attribute", "c", [ "Heredoc", [ "SCRIPT", "\ncontent c\n" ] ] ]
+      ]
+    }
+  ]
+]

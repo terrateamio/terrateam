@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,1-2: Invalid argument name; Argument names must not be quoted.

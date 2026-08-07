@@ -1,0 +1,2029 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "byte_utilization_pct" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Byte utilization %" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Compares delivered bytes to maximum allowed for Nitro volumes"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('EBSByteBalance%').mean(by=['AWSUniqueId']).publish(label='A')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "unit_prefix", [ "String", "Metric" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Percent" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "gold" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Byte utilization percentage" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "%" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "write_latency" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Write latency (ms/op)" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Estimates average latency per write operation for troubleshooting"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeTotalWriteTime').sum(by=['VolumeId']).publish(label='A', enable=False)\nB = data('VolumeWriteOps').sum(by=['VolumeId']).publish(label='B', enable=False)\nC = (A/B * 1000).publish(label='C', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Ms/Op" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Intermediate: Write operations count" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "No of ops" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "emerald" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Average write latency (ms/op)" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Intermediate: Total write time" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "signalfx_time_chart" ], [ "Lit", "read_ops" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "# Read ops" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "Displays reads performed per interval for EBS volume"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeReadOps').sum().publish(label='A', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", true ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Ops" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Read operations count" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "No of ops" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "write_throughput" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Write throughput" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "Shows throughput of writes in bytes per time interval"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeWriteBytes').rate().publish(label='A', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Bytes" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Write throughput (bytes/sec)" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Byte" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "rw_bytes_breakdown" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Read/write bytes breakdown" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Compares total bytes read to bytes written across timeline"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeReadBytes').sum().publish(label='A', enable=True)\nB = data('VolumeWriteBytes').sum().publish(label='B', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "AreaChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "stacked", [ "Bool", true ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "on_chart_legend_dimension",
+          [ "String", "plot_label" ]
+        ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Bytes" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Total bytes read" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Byte" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "brown" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Total bytes written" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_unit", [ "String", "Byte" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "read_latency" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Read latency (ms/op)" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Estimates average latency per read operation as efficiency measure"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeTotalReadTime').sum(by=['VolumeId']).publish(label='A', enable=False)\nB = data('VolumeReadOps').sum(by=['VolumeId']).publish(label='B', enable=False)\nC = (A/B*1000).publish(label='C', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Ms/Op" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Read ops per volume (raw)" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "No of ops" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "brown" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Average read latency (ms/op)" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "gray" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Read time per volume (raw)" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "read_throughput" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Read throughput" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "Shows throughput of reads in bytes per time interval"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeReadBytes').rate().publish(label='A', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", true ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Bytes" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Read throughput (bytes/sec)" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Byte" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_single_value_chart" ], [ "Lit", "state" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "State" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Indicates availability and current status for workload visibility"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeReadOps').count(by=['aws_state']).publish(label='A', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "max_precision", [ "Int", 4 ] ],
+        [ "Attribute", "secondary_visualization", [ "String", "Sparkline" ] ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Volume state reporting count" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "No of ops" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "total_read_time" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Total read time" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Total seconds spent in servicing read operations" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeTotalReadTime').sum().publish(label='A', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Seconds" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Total time spent reading" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "signalfx_time_chart" ], [ "Lit", "latency_op" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Latency/op (ms)" ] ],
+        [ "Attribute", "description", [ "String", "" ] ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeWriteOps', filter=filter('namespace', 'AWS/EBS') and filter('VolumeId', 'vol-46dcc55f') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').scale(60).publish(label='A')\nB = data('VolumeTotalWriteTime', filter=filter('namespace', 'AWS/EBS') and filter('VolumeId', 'vol-46dcc55f') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').scale(60).publish(label='B', enable=False)\nC = data('VolumeReadOps', filter=filter('namespace', 'AWS/EBS') and filter('VolumeId', 'vol-46dcc55f') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').scale(60).publish(label='C')\nD = data('VolumeTotalReadTime', filter=filter('namespace', 'AWS/EBS') and filter('VolumeId', 'vol-46dcc55f') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').scale(60).publish(label='D', enable=False)\nE = (B/A).scale(1000).publish(label='E')\nF = (D/C).scale(1000).publish(label='F')\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "ColumnChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 0 ] ],
+        [ "Attribute", "time_range", [ "Int", 7200 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Ms/write - BLUE" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "min_value", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "axis_right",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Ms/read - RED" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "min_value", [ "Int", 0 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "histogram_options",
+            "labels": [],
+            "body": [ [ "Attribute", "color_theme", [ "String", "gold" ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Volumereadops - scale:60" ]
+              ],
+              [ "Attribute", "label", [ "String", "C" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Volumetotalreadtime - scale:60" ]
+              ],
+              [ "Attribute", "label", [ "String", "D" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Volumetotalwritetime - scale:60" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Volumewriteops - scale:60" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [ "Attribute", "display_name", [ "String", "Millisec/write" ] ],
+              [ "Attribute", "label", [ "String", "E" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "right" ] ],
+              [ "Attribute", "color", [ "String", "brown" ] ],
+              [ "Attribute", "display_name", [ "String", "Millisec/read" ] ],
+              [ "Attribute", "label", [ "String", "F" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "total_write_time" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Total write time" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Total seconds spent in servicing write operations" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeTotalWriteTime').sum().publish(label='A', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Seconds" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "azure" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Total write time" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "read_vs_write_ops" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Read vs write ops" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Visualizes relative load of read and write ops over time"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeReadOps').sum().publish(label='A', enable=True)\nB = data('VolumeWriteOps').sum().publish(label='B', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "AreaChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "disable_sampling", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "on_chart_legend_dimension",
+          [ "String", "plot_label" ]
+        ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Ops" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Read operations" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "No of ops" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "brown" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Write operations" ]
+              ],
+              [ "Attribute", "label", [ "String", "B" ] ],
+              [ "Attribute", "value_suffix", [ "String", "No of ops" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "signalfx_time_chart" ], [ "Lit", "avg_queue_length" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Average queue length" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Measures operations awaiting completion, highlighting saturation"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeQueueLength').mean().publish(label='A', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Queue length" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Average volume queue length" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "No of ops" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "signalfx_time_chart" ], [ "Lit", "idle_time" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "Idle time" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Indicates when disk is idle and not serving I/O" ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeIdleTime').sum().publish(label='A', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Seconds" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute", "display_name", [ "String", "Total idle time" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_unit", [ "String", "Millisecond" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "signalfx_time_chart" ], [ "Lit", "write_ops" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "# Write ops" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "Displays writes performed per interval for EBS volume"
+          ]
+        ],
+        [
+          "Attribute",
+          "program_text",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\nA = data('VolumeWriteOps').sum().publish(label='A', enable=True)\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "plot_type", [ "String", "LineChart" ] ],
+        [ "Attribute", "color_by", [ "String", "Dimension" ] ],
+        [ "Attribute", "axes_precision", [ "Int", 4 ] ],
+        [ "Attribute", "time_range", [ "Int", 900 ] ],
+        [
+          "Block",
+          {
+            "type_": "axis_left",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "high_watermark",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [ "Attribute", "label", [ "String", "Ops" ] ],
+              [
+                "Attribute",
+                "low_watermark",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ],
+              [
+                "Attribute",
+                "max_value",
+                [ "Float", 1.7976931348623157e+308 ]
+              ],
+              [
+                "Attribute",
+                "min_value",
+                [ "Minus", [ "Float", 1.7976931348623157e+308 ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "viz_options",
+            "labels": [],
+            "body": [
+              [ "Attribute", "axis", [ "String", "left" ] ],
+              [ "Attribute", "color", [ "String", "blue" ] ],
+              [
+                "Attribute",
+                "display_name",
+                [ "String", "Number of write operations" ]
+              ],
+              [ "Attribute", "label", [ "String", "A" ] ],
+              [ "Attribute", "value_suffix", [ "String", "No of ops" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "signalfx_dashboard" ], [ "Lit", "ebs" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "EBS" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "EC2/EBS volume throughput, IOPS, and latency for Forge runners."
+          ]
+        ],
+        [
+          "Attribute",
+          "dashboard_group",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "dashboard_group" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "variable",
+            "labels": [],
+            "body": [
+              [ "Attribute", "property", [ "String", "aws_tag_TenantName" ] ],
+              [ "Attribute", "alias", [ "String", "ForgeCICD Tenant Name" ] ],
+              [ "Attribute", "description", [ "String", "" ] ],
+              [ "Attribute", "values", [ "Tuple", [] ] ],
+              [ "Attribute", "value_required", [ "Bool", false ] ],
+              [
+                "Attribute",
+                "values_suggested",
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "tenant_names" ] ]
+                ]
+              ],
+              [ "Attribute", "restricted_suggestions", [ "Bool", true ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "variable" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "dynamic_variables" ] ]
+                ]
+              ],
+              [ "Attribute", "iterator", [ "Id", "var_def" ] ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "property",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "property" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "alias",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "alias" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "description",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "description" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "values" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "value_required",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "value_required" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "values_suggested",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "values_suggested" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "restricted_suggestions",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "var_def" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "restricted_suggestions" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_single_value_chart" ],
+                        [ "A_string", "state" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "read_ops" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 4 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "write_ops" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "row", [ "Int", 0 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "write_latency" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "read_latency" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 4 ] ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "latency_op" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "row", [ "Int", 1 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "read_vs_write_ops" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "write_throughput" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "read_throughput" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 4 ] ],
+              [ "Attribute", "row", [ "Int", 2 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "rw_bytes_breakdown" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "row", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "total_read_time" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 4 ] ],
+              [ "Attribute", "row", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "total_write_time" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "row", [ "Int", 3 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "byte_utilization_pct" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 0 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "idle_time" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 8 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "chart",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "chart_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "signalfx_time_chart" ],
+                        [ "A_string", "avg_queue_length" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "column", [ "Int", 4 ] ],
+              [ "Attribute", "row", [ "Int", 4 ] ],
+              [ "Attribute", "width", [ "Int", 4 ] ],
+              [ "Attribute", "height", [ "Int", 1 ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

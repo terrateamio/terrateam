@@ -1,0 +1,3165 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "annotations" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Map FLAG_NAME=>VALUE for annotations which allow client tools to store small amount of arbitrary data."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "automated_backup_configuration" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Automated backup settings for cluster." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "enabled" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "backup_window" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [ [ "Id", "string" ], [ "String", "1800s" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "location" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "weekly_schedule" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "days_of_week" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ],
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [ "String", "MONDAY" ],
+                                                  [ "String", "TUESDAY" ],
+                                                  [ "String", "WEDNESDAY" ],
+                                                  [ "String", "THURSDAY" ],
+                                                  [ "String", "FRIDAY" ],
+                                                  [ "String", "SATURDAY" ],
+                                                  [ "String", "SUNDAY" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "start_times" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "hours"
+                                                                ],
+                                                                [
+                                                                  "Id",
+                                                                  "number"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Tuple",
+                                                [
+                                                  [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [ "Bare", "hours" ],
+                                                        [ "Int", 23 ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "retention_count" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "number" ], [ "Int", 7 ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "retention_period" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "automated_backup_configuration" ]
+                          ]
+                        ],
+                        [ "A_string", "enabled" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Log_and",
+                      [
+                        [
+                          "Log_and",
+                          [
+                            [
+                              "Not",
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "automated_backup_configuration"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "retention_count" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "automated_backup_configuration"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "retention_period" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "alltrue",
+                                [
+                                  [
+                                    "For_tuple",
+                                    {
+                                      "identifiers": [ "v", [] ],
+                                      "input": [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string",
+                                                    "automated_backup_configuration"
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string", "weekly_schedule"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "start_times" ]
+                                        ]
+                                      ],
+                                      "output": [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Gte",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [ "A_string", "hours" ]
+                                                ]
+                                              ],
+                                              [ "Int", 0 ]
+                                            ]
+                                          ],
+                                          [
+                                            "Lte",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [ "A_string", "hours" ]
+                                                ]
+                                              ],
+                                              [ "Int", 23 ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "cond": null
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "setintersection",
+                                [
+                                  [
+                                    "Tuple",
+                                    [
+                                      [ "String", "MONDAY" ],
+                                      [ "String", "TUESDAY" ],
+                                      [ "String", "WEDNESDAY" ],
+                                      [ "String", "THURSDAY" ],
+                                      [ "String", "FRIDAY" ],
+                                      [ "String", "SATURDAY" ],
+                                      [ "String", "SUNDAY" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "automated_backup_configuration"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "weekly_schedule" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "days_of_week" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "toset",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "automated_backup_configuration"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "weekly_schedule" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "days_of_week" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Days of week must contains one or more days with the following format 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'. Backup window hour must be between 0 and 23. You can only specify retention_count or retention_period."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "availability_type" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Availability type for the primary replica. Either `ZONAL` or `REGIONAL`."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "REGIONAL" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "client_connection_config" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Client connection config." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "require_connectors" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "ssl_config" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "ssl_mode" ],
+                                        [ "Id", "string" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_display_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Display name of the primary cluster." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Name of the primary cluster." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "continuous_backup_configuration" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Continuous backup settings for cluster." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "enabled" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "recovery_window_days" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "number" ], [ "Int", 14 ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cross_region_replication" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Cross region replication config." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "enabled" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "promote_secondary" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "switchover_mode" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "region" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "secondary_cluster_display_name" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "secondary_cluster_name" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "secondary_instance_display_name" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "secondary_instance_name" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [
+                      [ "Bare", "secondary_machine_config" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "cpu_count" ],
+                                        [ "Id", "number" ]
+                                      ],
+                                      [
+                                        [ "Bare", "machine_type" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "string" ] ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "read_pool" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "map",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "display_name" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "node_count" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Int", 1 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "flags" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "map",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "client_connection_config"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "require_connectors"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "bool"
+                                                                    ],
+                                                                    [
+                                                                    "Bool",
+                                                                    false
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "ssl_config"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "object",
+                                                                    [
+                                                                    [
+                                                                    "Object",
+                                                                    [
+                                                                    [
+                                                                    [
+                                                                    "Bare",
+                                                                    "ssl_mode"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "machine_config" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "cpu_count"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "number"
+                                                                    ],
+                                                                    [
+                                                                    "Int", 2
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "machine_type"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Object", [] ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "network_config" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "authorized_external_networks"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "list",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "string"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Tuple",
+                                                                    []
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "enable_public_ip"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "bool"
+                                                                    ],
+                                                                    [
+                                                                    "Bool",
+                                                                    false
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Object", [] ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "query_insights_config"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "query_string_length"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "number"
+                                                                    ],
+                                                                    [
+                                                                    "Int",
+                                                                    1024
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "record_application_tags"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "bool"
+                                                                    ],
+                                                                    [
+                                                                    "Bool",
+                                                                    true
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "record_client_address"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "bool"
+                                                                    ],
+                                                                    [
+                                                                    "Bool",
+                                                                    true
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "query_plans_per_minute"
+                                                                ],
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "optional",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "number"
+                                                                    ],
+                                                                    [
+                                                                    "Int", 5
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Not",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "cross_region_replication" ]
+                            ]
+                          ],
+                          [ "A_string", "enabled" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "cross_region_replication" ]
+                              ]
+                            ],
+                            [ "A_string", "enabled" ]
+                          ]
+                        ],
+                        [
+                          "Not_equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [
+                                      "A_string", "cross_region_replication"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "region" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Region must be available when cross region replication is enabled."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Not",
+                  [
+                    "Log_and",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "cross_region_replication" ]
+                            ]
+                          ],
+                          [ "A_string", "switchover_mode" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "cross_region_replication" ]
+                            ]
+                          ],
+                          [ "A_string", "promote_secondary" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Please choose to either promote secondary cluster or align an existing cluster after switchover."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "Int", 1 ],
+                          [ "Int", 2 ],
+                          [ "Int", 4 ],
+                          [ "Int", 8 ],
+                          [ "Int", 16 ],
+                          [ "Int", 32 ],
+                          [ "Int", 64 ],
+                          [ "Int", 72 ],
+                          [ "Int", 96 ],
+                          [ "Int", 128 ]
+                        ]
+                      ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [
+                                          "A_string",
+                                          "cross_region_replication"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "A_string", "secondary_machine_config"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "cpu_count" ]
+                              ]
+                            ],
+                            [ "Int", 2 ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The number of CPU's in the VM instance must be one of [1, 2, 4, 8, 16, 32, 64, 72, 96, 128]"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "database_version" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Database type and version to create." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "POSTGRES_15" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "deletion_policy" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "AlloyDB cluster and instance deletion policy." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "deletion_protection" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Whether Terraform will be prevented from destroying the cluster. When the field is set to true or unset in Terraform state, a terraform apply or terraform destroy that would delete the cluster will fail. When the field is set to false, deleting the cluster is allowed."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "display_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "AlloyDB instance display name." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "encryption_config" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Set encryption configuration. KMS name format: 'projects/[PROJECT]/locations/[REGION]/keyRings/[RING]/cryptoKeys/[KEY_NAME]'."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "primary_kms_key_name" ], [ "Id", "string" ]
+                    ],
+                    [
+                      [ "Bare", "secondary_kms_key_name" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "flags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Map FLAG_NAME=>VALUE for database-specific tuning." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "gce_zone" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The GCE zone that the instance should serve from. This can ONLY be specified for ZONAL instances. If present for a REGIONAL instance, an error will be thrown."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "initial_user" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "AlloyDB cluster initial user credentials." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "user" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [ [ "Id", "string" ], [ "String", "postgres" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "password" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "instance_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Name of primary instance." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "labels" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Labels to be attached to all instances." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "location" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Region or zone of the cluster and instance." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "machine_config" ] ],
+      "body": [
+        [
+          "Attribute", "description", [ "String", "AlloyDB machine config." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "cpu_count" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "number" ], [ "Int", 2 ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "machine_type" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "Int", 1 ],
+                          [ "Int", 2 ],
+                          [ "Int", 4 ],
+                          [ "Int", 8 ],
+                          [ "Int", 16 ],
+                          [ "Int", 32 ],
+                          [ "Int", 64 ],
+                          [ "Int", 72 ],
+                          [ "Int", 96 ],
+                          [ "Int", 128 ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "machine_config" ]
+                            ]
+                          ],
+                          [ "A_string", "cpu_count" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The number of CPU's in the VM instance must be one of [1, 2, 4, 8, 16, 32, 64, 72, 96, 128]"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "maintenance_config" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Set maintenance window configuration." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "enabled" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "day" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [ [ "Id", "string" ], [ "String", "SUNDAY" ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "start_time" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "hours" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "number" ],
+                                              [ "Int", 23 ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Object", [] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "maintenance_config" ]
+                          ]
+                        ],
+                        [ "A_string", "enabled" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Log_and",
+                      [
+                        [
+                          "Log_and",
+                          [
+                            [
+                              "Gte",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "maintenance_config"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "start_time" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "hours" ]
+                                  ]
+                                ],
+                                [ "Int", 0 ]
+                              ]
+                            ],
+                            [
+                              "Lte",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "maintenance_config"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "start_time" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "hours" ]
+                                  ]
+                                ],
+                                [ "Int", 23 ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "contains",
+                            [
+                              [
+                                "Tuple",
+                                [
+                                  [ "String", "MONDAY" ],
+                                  [ "String", "TUESDAY" ],
+                                  [ "String", "WEDNESDAY" ],
+                                  [ "String", "THURSDAY" ],
+                                  [ "String", "FRIDAY" ],
+                                  [ "String", "SATURDAY" ],
+                                  [ "String", "SUNDAY" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "maintenance_config" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "day" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Maintenance window day must one of 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'. Maintenance window hour must be between 0 and 23."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "network_config" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Network configuration for cluster and instance. Only one between psa_config and psc_config can be used."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "psa_config" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "network" ],
+                                        [ "Id", "string" ]
+                                      ],
+                                      [
+                                        [ "Bare", "allocated_ip_range" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [ [ "Id", "string" ] ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [
+                                          "Bare",
+                                          "authorized_external_networks"
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "list",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ],
+                                              [ "Tuple", [] ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "enable_public_ip" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "bool" ],
+                                              [ "Bool", false ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [
+                                          "Bare", "enable_outbound_public_ip"
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "optional",
+                                            [
+                                              [ "Id", "bool" ],
+                                              [ "Bool", false ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "psc_config" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "object",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [
+                                          "Bare", "allowed_consumer_projects"
+                                        ],
+                                        [
+                                          "Fun_call",
+                                          [ "list", [ [ "Id", "string" ] ] ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Gt",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "length",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [
+                                                  "A_string",
+                                                  "network_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "psa_config" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string",
+                                          "authorized_external_networks"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "Bool", false ]
+                        ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "network_config" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "psa_config" ]
+                                ]
+                              ],
+                              [ "A_string", "enable_public_ip" ]
+                            ]
+                          ],
+                          [ "Bool", false ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "A list of external network authorized to access this instance is required only in case public IP is enabled for the instance."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Not_equal",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "network_config" ]
+                              ]
+                            ],
+                            [ "A_string", "psc_config" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "network_config" ]
+                              ]
+                            ],
+                            [ "A_string", "psa_config" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String", "Please specify either psa_config or psc_config."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "prefix" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Optional prefix used to generate instance names." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Not_equal",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "prefix" ] ] ],
+                    [ "String", "" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Prefix cannot be empty, please use null instead."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "project_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The ID of the project where this instances will be created."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "project_number" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The project number of the project where this instances will be created. Only used for testing purposes."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "query_insights_config" ] ],
+      "body": [
+        [
+          "Attribute", "description", [ "String", "Query insights config." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "query_string_length" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "number" ], [ "Int", 1024 ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "record_application_tags" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "record_client_address" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "query_plans_per_minute" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "number" ], [ "Int", 5 ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "read_pool" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Map of read pool instances to create in the primary cluster."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "display_name" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "node_count" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "number" ], [ "Int", 1 ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "flags" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "map", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "client_connection_config" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [
+                                                "Bare", "require_connectors"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "bool" ],
+                                                    [ "Bool", false ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "ssl_config" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "object",
+                                                        [
+                                                          [
+                                                            "Object",
+                                                            [
+                                                              [
+                                                                [
+                                                                  "Bare",
+                                                                  "ssl_mode"
+                                                                ],
+                                                                [
+                                                                  "Id",
+                                                                  "string"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "machine_config" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "cpu_count" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Int", 2 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "machine_type" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [ [ "Id", "string" ] ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "network_config" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [
+                                                "Bare",
+                                                "authorized_external_networks"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "list",
+                                                        [
+                                                          [ "Id", "string" ]
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Tuple", [] ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [ "Bare", "enable_public_ip" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "bool" ],
+                                                    [ "Bool", false ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "query_insights_config" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "object",
+                                      [
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [
+                                                "Bare", "query_string_length"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Int", 1024 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "record_application_tags"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "bool" ],
+                                                    [ "Bool", true ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "record_client_address"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "bool" ],
+                                                    [ "Bool", true ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              [
+                                                "Bare",
+                                                "query_plans_per_minute"
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "optional",
+                                                  [
+                                                    [ "Id", "number" ],
+                                                    [ "Int", 5 ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "read_pool" ] ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [ "Int", 1 ],
+                                    [ "Int", 2 ],
+                                    [ "Int", 4 ],
+                                    [ "Int", 8 ],
+                                    [ "Int", 16 ],
+                                    [ "Int", 32 ],
+                                    [ "Int", 64 ],
+                                    [ "Int", 72 ],
+                                    [ "Int", 96 ],
+                                    [ "Int", 128 ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "A_string", "machine_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "cpu_count" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The number of CPU's in the VM instance must be one of [1, 2, 4, 8, 16, 32, 64, 72, 96, 128]"
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "read_pool" ] ]
+                          ],
+                          "output": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Gt",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "length",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "v" ],
+                                                          [
+                                                            "A_string",
+                                                            "network_config"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "psa_config"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "authorized_external_networks"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Int", 0 ]
+                                      ]
+                                    ],
+                                    [ "Bool", false ]
+                                  ]
+                                ]
+                              ],
+                              "then_": [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "v" ],
+                                                [
+                                                  "A_string",
+                                                  "network_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "psa_config" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "enable_public_ip" ]
+                                      ]
+                                    ],
+                                    [ "Bool", false ]
+                                  ]
+                                ]
+                              ],
+                              "else_": [ "Bool", true ]
+                            }
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "A list of external network authorized to access this replica pool instance is required only in case public IP is enabled for the replica pool instance."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "skip_await_major_version_upgrade" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Set to true to skip awaiting on the major version upgrade of the cluster."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "subscription_type" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The subscription type of cluster. Possible values are: 'STANDARD' or 'TRIAL'."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "STANDARD" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tag_bindings" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Tag bindings for this service, in key => tag value id format."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "users" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Map of users to create in the primary instance (and replicated to other replicas). Set PASSWORD to null if you want to get an autogenerated password. The user types available are: 'ALLOYDB_BUILT_IN' or 'ALLOYDB_IAM_USER'."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "password" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "roles" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ],
+                                  [
+                                    "Tuple",
+                                    [ [ "String", "alloydbsuperuser" ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "type" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [ "Id", "string" ],
+                                  [ "String", "ALLOYDB_BUILT_IN" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "user", [] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "users" ] ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Tuple",
+                                  [
+                                    [ "String", "ALLOYDB_BUILT_IN" ],
+                                    [ "String", "ALLOYDB_IAM_USER" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "user" ], [ "A_string", "type" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "User type must one of 'ALLOYDB_BUILT_IN', 'ALLOYDB_IAM_USER'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

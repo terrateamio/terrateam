@@ -1,0 +1,3570 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "extra_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A collection of variables to use in all template rendering."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vpc_id" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "multi_az" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should all the instances be proportianently spread among all the Subnets or just stay in the first subnet"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "image_id" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_sg_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "security_group_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "key_pair" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "default_tags" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "dns_zone_id" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_dns_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Generate Route53 entries for all created resources" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "monitoring_security_group_ids" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Collection of Security Groups that need access to monitoring this component"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "monitoring_cidrs" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Collection of CIDRS that need access to monitoring this component"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "prometheus_enabled" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "jolokia_enabled" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "user_data_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A collection of variables to give to the user data template during render. These will be in addition to the vars already passed in the extra_template_vars param as well as node_count, node_name, node_dns, node_devices."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_servers" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 1 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_image_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_instance_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "t3.small" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_root_volume_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 15 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_key_pair" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_tags" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_multi_az" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should all the instances be proportianently spread among all the Subnets or just stay in the first subnet"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_security_group_ids" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_dns_zone_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_dns_ttl" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "300" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_name_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "default",
+          [ "String", "zk${format('%02f', itemcount)}" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_dns_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "${name}" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_sg_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "CP_Zookeeper" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_enable_sg_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_enable_dns_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Generate Route53 entries for all created resources" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_port_external_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 2181 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 2181 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "External Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_port_internal_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 2181 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 2181 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 2888 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 2888 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 3888 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 3888 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Internal Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_external_access_security_group_ids" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Other Security Groups you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_external_access_cidrs" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "CIDRs you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_sg_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_extra_ebs_volumes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "device_name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "encrypted" ], [ "Id", "bool" ] ],
+                          [ [ "Bare", "kms_key_id" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "size" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "type" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "tags" ],
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_vol_trans_log_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 500 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_vol_trans_log_device_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "/dev/sdf" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_vol_storage_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 500 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_vol_storage_device_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "/dev/sdg" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_prometheus_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 8079 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Prometheus Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_jolokia_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 7770 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Jolokia Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_extra_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_user_data_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "A Shell script to run upon instance startup" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "zookeeper_user_data_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A collection of variables to give to the user data template during render. These will be in addition to the vars already passed in the zookeeper_extra_template_vars param as well as node_count, node_name, node_dns, node_devices."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_servers" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 1 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_image_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_instance_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "t3.medium" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_root_volume_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 30 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_key_pair" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_tags" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_multi_az" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should all the instances be proportianently spread among all the Subnets or just stay in the first subnet"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_security_group_ids" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_dns_zone_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_dns_ttl" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "300" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_name_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "default",
+          [ "String", "kfk${format('%02f', itemcount)}" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_dns_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "${name}" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_sg_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "CP_Kafka_Broker" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_port_external_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 9091 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 9093 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 8090 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 8091 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "External Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_port_internal_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 9091 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 9092 ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 8090 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 8091 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Internal Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [
+        [ "Lit", "kafka_broker_external_access_security_group_ids" ]
+      ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Other Security Groups you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_external_access_cidrs" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "CIDRs you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_enable_sg_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_enable_dns_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Generate Route53 entries for all created resources" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_extra_ebs_volumes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "device_name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "encrypted" ], [ "Id", "bool" ] ],
+                          [ [ "Bare", "kms_key_id" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "size" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "type" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "tags" ],
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_vol_data_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 500 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_vol_data_device_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "/dev/sdf" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_vol_data_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_prometheus_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 8080 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Prometheus Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_jolokia_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 7771 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Jolokia Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_extra_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_user_data_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "A Shell script to run upon instance startup" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_broker_user_data_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A collection of variables to give to the user data template during render. These will be in addition to the vars already passed in the kafka_broker_extra_template_vars param as well as node_count, node_name, node_dns, node_devices."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_servers" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_image_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_instance_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "t3.medium" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_root_volume_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 15 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_key_pair" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_tags" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_multi_az" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should all the instances be proportianently spread among all the Subnets or just stay in the first subnet"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_security_group_ids" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_dns_zone_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_dns_ttl" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "300" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_name_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "default",
+          [ "String", "connect${format('%02f', itemcount)}" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_dns_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "${name}" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_sg_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "CP_Kafka_Connect" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_enable_sg_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_enable_dns_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Generate Route53 entries for all created resources" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_port_external_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 8083 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 8083 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "External Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_port_internal_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 8083 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 8083 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Internal Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [
+        [ "Lit", "kafka_connect_external_access_security_group_ids" ]
+      ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Other Security Groups you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_external_access_cidrs" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "CIDRs you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_extra_ebs_volumes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "device_name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "encrypted" ], [ "Id", "bool" ] ],
+                          [ [ "Bare", "kms_key_id" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "size" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "type" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "tags" ],
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_prometheus_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 8077 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Prometheus Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_jolokia_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 7773 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Jolokia Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_extra_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_user_data_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "A Shell script to run upon instance startup" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "kafka_connect_user_data_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A collection of variables to give to the user data template during render. These will be in addition to the vars already passed in the kafka_connect_extra_template_vars param as well as node_count, node_name, node_dns, node_devices."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_servers" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_image_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_instance_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "t3.medium" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_root_volume_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 15 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_key_pair" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_tags" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_multi_az" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should all the instances be proportianently spread among all the Subnets or just stay in the first subnet"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_security_group_ids" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_dns_zone_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_dns_ttl" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "300" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_name_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "default",
+          [ "String", "ccc${format('%02f', itemcount)}" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_dns_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "${name}" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_sg_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "CP_Control_Center" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_enable_sg_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_enable_dns_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Generate Route53 entries for all created resources" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_port_external_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 9021 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 9021 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "External Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_port_internal_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 9021 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 9021 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Internal Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [
+        [ "Lit", "control_center_external_access_security_group_ids" ]
+      ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Other Security Groups you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_external_access_cidrs" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "CIDRs you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_extra_ebs_volumes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "device_name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "encrypted" ], [ "Id", "bool" ] ],
+                          [ [ "Bare", "kms_key_id" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "size" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "type" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "tags" ],
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_vol_data_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 300 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_vol_data_device_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "/dev/sdf" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_extra_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_user_data_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "A Shell script to run upon instance startup" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "control_center_user_data_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A collection of variables to give to the user data template during render. These will be in addition to the vars already passed in the control_center_extra_template_vars param as well as node_count, node_name, node_dns, node_devices."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_servers" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_image_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_instance_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "t3.medium" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_root_volume_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 15 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_key_pair" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_tags" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_multi_az" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should all the instances be proportianently spread among all the Subnets or just stay in the first subnet"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_security_group_ids" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_dns_zone_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_dns_ttl" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "300" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_name_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "default",
+          [ "String", "ksql${format('%02f', itemcount)}" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_dns_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "${name}" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_sg_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "CP_KSQL" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_enable_sg_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_enable_dns_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Generate Route53 entries for all created resources" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_port_external_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 8088 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 8088 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "External Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_port_internal_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 8088 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 8088 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Internal Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_external_access_security_group_ids" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Other Security Groups you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_external_access_cidrs" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "CIDRs you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_extra_ebs_volumes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "device_name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "encrypted" ], [ "Id", "bool" ] ],
+                          [ [ "Bare", "kms_key_id" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "size" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "type" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "tags" ],
+                            [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_vol_data_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 100 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_vol_data_device_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "/dev/sdf" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_prometheus_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 8076 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Prometheus Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_jolokia_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 7774 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Jolokia Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_extra_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_user_data_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "A Shell script to run upon instance startup" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ksql_user_data_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A collection of variables to give to the user data template during render. These will be in addition to the vars already passed in the ksql_extra_template_vars param as well as node_count, node_name, node_dns, node_devices."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_servers" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_image_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_instance_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "t3.medium" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_root_volume_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 15 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_key_pair" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_tags" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_multi_az" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should all the instances be proportianently spread among all the Subnets or just stay in the first subnet"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_security_group_ids" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_dns_zone_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_dns_ttl" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "300" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_name_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "default",
+          [ "String", "rest${format('%02f', itemcount)}" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_dns_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "${name}" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_sg_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "CP_REST_Proxy" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_enable_sg_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_enable_dns_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Generate Route53 entries for all created resources" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_port_external_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 8082 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 8082 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "External Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_port_internal_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 8082 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 8082 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Internal Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [
+        [ "Lit", "rest_proxy_external_access_security_group_ids" ]
+      ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Other Security Groups you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_external_access_cidrs" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "CIDRs you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_prometheus_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 8075 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Prometheus Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_jolokia_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 7775 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Jolokia Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_extra_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_user_data_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "A Shell script to run upon instance startup" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rest_proxy_user_data_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A collection of variables to give to the user data template during render. These will be in addition to the vars already passed in the rest_proxy_extra_template_vars param as well as node_count, node_name, node_dns, node_devices."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_servers" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 0 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_image_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_instance_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "t3.medium" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_root_volume_size" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 15 ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_key_pair" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_tags" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_subnet_ids" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_multi_az" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Should all the instances be proportianently spread among all the Subnets or just stay in the first subnet"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_security_group_ids" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_dns_zone_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_dns_ttl" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "300" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_name_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "default",
+          [ "String", "sr${format('%02f', itemcount)}" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_dns_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "${name}" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_sg_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "CP_Schema_Registry" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_enable_sg_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_enable_dns_creation" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Generate Route53 entries for all created resources" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_port_external_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 8081 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 8081 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "External Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_port_internal_range" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "from" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "to" ], [ "Id", "number" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [ [ "Bare", "from" ], [ "Int", 8081 ] ],
+                  [ [ "Bare", "to" ], [ "Int", 8081 ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Internal Port Ranges to Expose" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [
+        [ "Lit", "schema_registry_external_access_security_group_ids" ]
+      ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Other Security Groups you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_external_access_cidrs" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "CIDRs you will tro grant access to the externalized ports"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_prometheus_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 8078 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Prometheus Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_jolokia_port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 7772 ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port on which the Jolokia Agent is running" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_extra_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_user_data_template" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "A Shell script to run upon instance startup" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "schema_registry_user_data_template_vars" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "map" ] ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A collection of variables to give to the user data template during render. These will be in addition to the vars already passed in the schema_registry_extra_template_vars param as well as node_count, node_name, node_dns, node_devices."
+          ]
+        ]
+      ]
+    }
+  ]
+]

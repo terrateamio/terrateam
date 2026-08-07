@@ -1,0 +1,2320 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "as_enabled", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "as_scaling",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "autoscaler_config" ]
+                      ]
+                    ],
+                    [ "A_string", "scaling_control" ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "as_signals",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "autoscaler_config" ]
+                      ]
+                    ],
+                    [ "A_string", "scaling_signals" ]
+                  ]
+                ],
+                [ "Null" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_autoscaler" ], [ "Lit", "default" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "Id", "google-beta" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_or",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "is_regional" ] ]
+                  ],
+                  [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "autoscaler_config" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [ "Int", 0 ],
+              "else_": [ "Int", 1 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "zone",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "description" ] ] ]
+        ],
+        [
+          "Attribute",
+          "target",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "google_compute_instance_group_manager" ],
+                      [ "A_string", "default" ]
+                    ]
+                  ],
+                  [ "A_int", 0 ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "autoscaling_policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "max_replicas",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "autoscaler_config" ]
+                      ]
+                    ],
+                    [ "A_string", "max_replicas" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "min_replicas",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "autoscaler_config" ]
+                      ]
+                    ],
+                    [ "A_string", "min_replicas" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "cooldown_period",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "autoscaler_config" ]
+                      ]
+                    ],
+                    [ "A_string", "cooldown_period" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "scale_down_control" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "as_scaling" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "down" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [] ],
+                          "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "time_window_sec",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_scaling" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "down" ]
+                                  ]
+                                ],
+                                [ "A_string", "time_window_sec" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "dynamic",
+                              "labels": [
+                                [ "Lit", "max_scaled_down_replicas" ]
+                              ],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "for_each",
+                                  [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "as_scaling"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "A_string", "down" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "max_replicas_fixed"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "as_scaling"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "A_string", "down" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "max_replicas_percent"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "then_": [ "Tuple", [] ],
+                                      "else_": [
+                                        "Tuple", [ [ "String", "" ] ]
+                                      ]
+                                    }
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "content",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "fixed",
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "as_scaling"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "down" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "max_replicas_fixed"
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "percent",
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "as_scaling"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "down" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "max_replicas_percent"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "scale_in_control" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "as_scaling" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "in" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [] ],
+                          "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "time_window_sec",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_scaling" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "in" ]
+                                  ]
+                                ],
+                                [ "A_string", "time_window_sec" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "dynamic",
+                              "labels": [
+                                [ "Lit", "max_scaled_in_replicas" ]
+                              ],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "for_each",
+                                  [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "as_scaling"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "A_string", "in" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "max_replicas_fixed"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "as_scaling"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "A_string", "in" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "max_replicas_percent"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "then_": [ "Tuple", [] ],
+                                      "else_": [
+                                        "Tuple", [ [ "String", "" ] ]
+                                      ]
+                                    }
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "content",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "fixed",
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "as_scaling"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "in" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "max_replicas_fixed"
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "percent",
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "as_scaling"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "in" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "max_replicas_percent"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "cpu_utilization" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "as_signals" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "cpu_utilization" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [] ],
+                          "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "target",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_signals" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "cpu_utilization" ]
+                                  ]
+                                ],
+                                [ "A_string", "target" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "predictive_method",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [ "A_string", "as_signals" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "cpu_utilization" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string", "optimize_availability"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Bool", true ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "String", "OPTIMIZE_AVAILABILITY"
+                                ],
+                                "else_": [ "Null" ]
+                              }
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "load_balancing_utilization" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "as_signals" ]
+                                    ]
+                                  ],
+                                  [
+                                    "A_string", "load_balancing_utilization"
+                                  ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [] ],
+                          "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "target",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_signals" ]
+                                      ]
+                                    ],
+                                    [
+                                      "A_string",
+                                      "load_balancing_utilization"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "target" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "metric" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Fun_call",
+                        [
+                          "toset",
+                          [
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "as_signals" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "metrics" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [] ],
+                                "else_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_signals" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "metrics" ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "name",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "metric" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "type",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "metric" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "type" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "target",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "metric" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "target_value" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "single_instance_assignment",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "metric" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "single_instance_assignment" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "filter",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "metric" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "time_series_filter" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "scaling_schedules" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Fun_call",
+                        [
+                          "toset",
+                          [
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "as_signals" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "schedules" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [] ],
+                                "else_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_signals" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "schedules" ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Attribute", "iterator", [ "Id", "schedule" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "duration_sec",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "duration_sec" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "min_required_replicas",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "min_required_replicas" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "name",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "schedule",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "cron_schedule" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "description",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "description" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "disabled",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "disabled" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "time_zone",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "timezone" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_region_autoscaler" ], [ "Lit", "default" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "Id", "google-beta" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "is_regional" ] ]
+                  ],
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "autoscaler_config" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "description" ] ] ]
+        ],
+        [
+          "Attribute",
+          "target",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Id", "google_compute_region_instance_group_manager"
+                      ],
+                      [ "A_string", "default" ]
+                    ]
+                  ],
+                  [ "A_int", 0 ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "autoscaling_policy",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "max_replicas",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "autoscaler_config" ]
+                      ]
+                    ],
+                    [ "A_string", "max_replicas" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "min_replicas",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "autoscaler_config" ]
+                      ]
+                    ],
+                    [ "A_string", "min_replicas" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "cooldown_period",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "autoscaler_config" ]
+                      ]
+                    ],
+                    [ "A_string", "cooldown_period" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "scale_down_control" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "as_scaling" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "down" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [] ],
+                          "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "time_window_sec",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_scaling" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "down" ]
+                                  ]
+                                ],
+                                [ "A_string", "time_window_sec" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "dynamic",
+                              "labels": [
+                                [ "Lit", "max_scaled_down_replicas" ]
+                              ],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "for_each",
+                                  [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "as_scaling"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "A_string", "down" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "max_replicas_fixed"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "as_scaling"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "A_string", "down" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "max_replicas_percent"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "then_": [ "Tuple", [] ],
+                                      "else_": [
+                                        "Tuple", [ [ "String", "" ] ]
+                                      ]
+                                    }
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "content",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "fixed",
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "as_scaling"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "down" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "max_replicas_fixed"
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "percent",
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "as_scaling"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "down" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "max_replicas_percent"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "scale_in_control" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "as_scaling" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "in" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [] ],
+                          "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "time_window_sec",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_scaling" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "in" ]
+                                  ]
+                                ],
+                                [ "A_string", "time_window_sec" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "dynamic",
+                              "labels": [
+                                [ "Lit", "max_scaled_in_replicas" ]
+                              ],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "for_each",
+                                  [
+                                    "Cond",
+                                    {
+                                      "if_": [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "as_scaling"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "A_string", "in" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "max_replicas_fixed"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "local" ],
+                                                          [
+                                                            "A_string",
+                                                            "as_scaling"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "A_string", "in" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "max_replicas_percent"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "then_": [ "Tuple", [] ],
+                                      "else_": [
+                                        "Tuple", [ [ "String", "" ] ]
+                                      ]
+                                    }
+                                  ]
+                                ],
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "content",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "fixed",
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "as_scaling"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "in" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "max_replicas_fixed"
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "percent",
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "as_scaling"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "in" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "max_replicas_percent"
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "cpu_utilization" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "as_signals" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "cpu_utilization" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [] ],
+                          "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "target",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_signals" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "cpu_utilization" ]
+                                  ]
+                                ],
+                                [ "A_string", "target" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "predictive_method",
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [ "A_string", "as_signals" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "cpu_utilization" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string", "optimize_availability"
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Bool", true ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "String", "OPTIMIZE_AVAILABILITY"
+                                ],
+                                "else_": [ "Null" ]
+                              }
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "load_balancing_utilization" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "as_signals" ]
+                                    ]
+                                  ],
+                                  [
+                                    "A_string", "load_balancing_utilization"
+                                  ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [ "Tuple", [] ],
+                          "else_": [ "Tuple", [ [ "String", "" ] ] ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "target",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_signals" ]
+                                      ]
+                                    ],
+                                    [
+                                      "A_string",
+                                      "load_balancing_utilization"
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "target" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "metric" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Fun_call",
+                        [
+                          "toset",
+                          [
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "as_signals" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "metrics" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [] ],
+                                "else_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_signals" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "metrics" ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "name",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "metric" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "type",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "metric" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "type" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "target",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "metric" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "target_value" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "single_instance_assignment",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "metric" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "single_instance_assignment" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "filter",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "metric" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "time_series_filter" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "dynamic",
+                  "labels": [ [ "Lit", "scaling_schedules" ] ],
+                  "body": [
+                    [
+                      "Attribute",
+                      "for_each",
+                      [
+                        "Fun_call",
+                        [
+                          "toset",
+                          [
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [ "A_string", "as_signals" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "schedules" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [ "Tuple", [] ],
+                                "else_": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "as_signals" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "schedules" ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Attribute", "iterator", [ "Id", "schedule" ] ],
+                    [
+                      "Block",
+                      {
+                        "type_": "content",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "duration_sec",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "duration_sec" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "min_required_replicas",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "min_required_replicas" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "name",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "name" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "schedule",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "schedule" ],
+                                [ "A_string", "cron_schedule" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "description",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "description" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "disabled",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "disabled" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "time_zone",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "schedule" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "timezone" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

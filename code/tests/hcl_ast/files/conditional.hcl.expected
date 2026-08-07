@@ -45,8 +45,27 @@
                         "Object",
                         [
                           [
-                            [ "Id", "identity_namespace" ],
-                            [ "String", "${var.project}.svc.id.goog" ]
+                            [ "Bare", "identity_namespace" ],
+                            [
+                              "Template",
+                              [
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "project" ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", ".svc.id.goog" ]
+                              ]
+                            ]
                           ]
                         ]
                       ]
@@ -59,7 +78,7 @@
                         "Object",
                         [
                           [
-                            [ "Id", "identity_namespace" ],
+                            [ "Bare", "identity_namespace" ],
                             [
                               "Attr",
                               [

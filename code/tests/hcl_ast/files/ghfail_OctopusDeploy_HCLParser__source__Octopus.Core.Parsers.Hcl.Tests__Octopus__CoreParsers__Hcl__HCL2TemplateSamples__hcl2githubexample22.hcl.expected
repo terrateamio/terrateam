@@ -1,0 +1,71 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "archive",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "source" ], [ "String", "hashicorp/archive" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "aws",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "source" ], [ "String", "hashicorp/aws" ] ],
+                    [ [ "Bare", "version" ], [ "String", "~> 3.0" ] ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "random",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "source" ], [ "String", "hashicorp/random" ]
+                    ],
+                    [ [ "Bare", "version" ], [ "String", "~> 2.3" ] ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "template",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "source" ],
+                      [ "String", "hashicorp/template" ]
+                    ],
+                    [ [ "Bare", "version" ], [ "String", "~> 2.1" ] ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "required_version", [ "String", ">= 0.13" ] ]
+      ]
+    }
+  ]
+]

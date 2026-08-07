@@ -1,0 +1,217 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "appgateway_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the Application Gateway created" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_gateway" ],
+                  [ "A_string", "appgateway" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "appgateway_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The resource id of the Application Gateway created" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_gateway" ],
+                  [ "A_string", "appgateway" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "appgateway_ipconfig" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The Application Gateway IP Configuration" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_gateway" ],
+                  [ "A_string", "appgateway" ]
+                ]
+              ],
+              [ "A_string", "gateway_ip_configuration" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "appgateway_frontend_ip_configuration" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The Application Gateway Frontend IP Configuration" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_gateway" ],
+                  [ "A_string", "appgateway" ]
+                ]
+              ],
+              [ "A_string", "frontend_ip_configuration" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "managed_identity_resource_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The resource id of the managed user identity" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_user_assigned_identity" ],
+                  [ "A_string", "app_gw_user_identity" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "managed_identity_principal_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The resource id of the managed user identity" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_user_assigned_identity" ],
+                  [ "A_string", "app_gw_user_identity" ]
+                ]
+              ],
+              [ "A_string", "principal_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "resource_group_name" ] ],
+      "body": [
+        [
+          "Attribute", "description", [ "String", "The resource group name" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_gateway" ],
+                  [ "A_string", "appgateway" ]
+                ]
+              ],
+              [ "A_string", "resource_group_name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

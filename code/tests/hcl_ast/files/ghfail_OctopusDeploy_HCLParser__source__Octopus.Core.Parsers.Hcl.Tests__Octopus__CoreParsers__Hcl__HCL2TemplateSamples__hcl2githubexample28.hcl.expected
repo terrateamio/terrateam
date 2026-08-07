@@ -1,0 +1,559 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "svcplan" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "resource_group_name" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_app_service_plan" ], [ "Lit", "svcplan" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "service_plan_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "svcplan" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "resource_group_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kind",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "service_plan_kind" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "reserved",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "service_plan_kind" ] ]
+                  ],
+                  [ "String", "Linux" ]
+                ]
+              ],
+              "then_": [ "Bool", true ],
+              "else_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "service_plan_reserved" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "sku",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "tier",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "service_plan_tier" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "size",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "service_plan_size" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "capacity",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "service_plan_capacity" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_monitor_autoscale_setting" ],
+        [ "Lit", "app_service_auto_scale" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "service_plan_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-autoscale" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "resource_group_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "svcplan" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "target_resource_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_app_service_plan" ],
+                  [ "A_string", "svcplan" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "profile",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "Scale on CPU usage" ] ],
+              [
+                "Block",
+                {
+                  "type_": "capacity",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "default", [ "Int", 1 ] ],
+                    [
+                      "Attribute",
+                      "minimum",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "autoscale_capacity_minimum" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "maximum",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "azurerm_app_service_plan" ],
+                              [ "A_string", "svcplan" ]
+                            ]
+                          ],
+                          [ "A_string", "maximum_number_of_workers" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "rule",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "metric_trigger",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "metric_name",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string",
+                                  "autoscale_rule_out_metric_name"
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "metric_resource_id",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "azurerm_app_service_plan" ],
+                                    [ "A_string", "svcplan" ]
+                                  ]
+                                ],
+                                [ "A_string", "id" ]
+                              ]
+                            ]
+                          ],
+                          [ "Attribute", "time_grain", [ "String", "PT1M" ] ],
+                          [
+                            "Attribute",
+                            "statistic",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string", "autoscale_rule_out_statistic"
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute", "time_window", [ "String", "PT5M" ]
+                          ],
+                          [
+                            "Attribute",
+                            "time_aggregation",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string", "autoscale_rule_out_statistic"
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "operator",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "autoscale_rule_out_operator" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "threshold",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string", "autoscale_rule_out_threshold"
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "scale_action",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "direction",
+                            [ "String", "Increase" ]
+                          ],
+                          [
+                            "Attribute", "type", [ "String", "ChangeCount" ]
+                          ],
+                          [
+                            "Attribute",
+                            "value",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string",
+                                  "autoscale_rule_out_action_change_count"
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Attribute", "cooldown", [ "String", "PT10M" ] ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "rule",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "metric_trigger",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "metric_name",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string", "autoscale_rule_in_metric_name"
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "metric_resource_id",
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "azurerm_app_service_plan" ],
+                                    [ "A_string", "svcplan" ]
+                                  ]
+                                ],
+                                [ "A_string", "id" ]
+                              ]
+                            ]
+                          ],
+                          [ "Attribute", "time_grain", [ "String", "PT1M" ] ],
+                          [
+                            "Attribute",
+                            "statistic",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "autoscale_rule_in_statistic" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute", "time_window", [ "String", "PT5M" ]
+                          ],
+                          [
+                            "Attribute",
+                            "time_aggregation",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "autoscale_rule_in_statistic" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "operator",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "autoscale_rule_in_operator" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "threshold",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "autoscale_rule_in_threshold" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "scale_action",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "direction",
+                            [ "String", "Decrease" ]
+                          ],
+                          [
+                            "Attribute", "type", [ "String", "ChangeCount" ]
+                          ],
+                          [
+                            "Attribute",
+                            "value",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [
+                                  "A_string",
+                                  "autoscale_rule_in_action_change_count"
+                                ]
+                              ]
+                            ]
+                          ],
+                          [ "Attribute", "cooldown", [ "String", "PT1M" ] ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "notification",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "email",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "send_to_subscription_administrator",
+                      [ "Bool", true ]
+                    ],
+                    [
+                      "Attribute",
+                      "send_to_subscription_co_administrator",
+                      [ "Bool", true ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

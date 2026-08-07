@@ -1,0 +1,894 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "azurerm" ] ],
+      "body": [ [ "Attribute", "version", [ "String", "~>1.5" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "aiala" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "rg-aiala-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_storage_account" ], [ "Lit", "aiala" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "aiala" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_id" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [ "Attribute", "account_kind", [ "String", "StorageV2" ] ],
+        [ "Attribute", "account_tier", [ "String", "Standard" ] ],
+        [ "Attribute", "account_replication_type", [ "String", "LRS" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_storage_container" ], [ "Lit", "gallery" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "gallery" ] ],
+        [
+          "Attribute",
+          "storage_account_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_storage_account" ],
+                  [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "container_access_type", [ "String", "private" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_storage_container" ], [ "Lit", "placepictures" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "placepictures" ] ],
+        [
+          "Attribute",
+          "storage_account_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_storage_account" ],
+                  [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "container_access_type", [ "String", "private" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_storage_container" ], [ "Lit", "profile" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "profile" ] ],
+        [
+          "Attribute",
+          "storage_account_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_storage_account" ],
+                  [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "container_access_type", [ "String", "private" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_storage_container" ], [ "Lit", "taskpictures" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "taskpictures" ] ],
+        [
+          "Attribute",
+          "storage_account_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_storage_account" ],
+                  [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "container_access_type", [ "String", "private" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_app_service_plan" ], [ "Lit", "aiala" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "aiala-app-service-plan" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [ "Attribute", "kind", [ "String", "App" ] ],
+        [
+          "Block",
+          {
+            "type_": "sku",
+            "labels": [],
+            "body": [
+              [ "Attribute", "tier", [ "String", "Shared" ] ],
+              [ "Attribute", "size", [ "String", "D1" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_app_service" ], [ "Lit", "aiala-api" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "aiala-api-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_id" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "app_service_plan_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_app_service_plan" ],
+                  [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_app_service" ], [ "Lit", "aiala-sts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "aiala-sts-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_id" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "app_service_plan_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_app_service_plan" ],
+                  [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_app_service" ], [ "Lit", "aiala-app" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "aiala-app-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_id" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "app_service_plan_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_app_service_plan" ],
+                  [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_application_insights" ], [ "Lit", "aiala" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "aiala-api-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [ "Attribute", "application_type", [ "String", "web" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_sql_server" ], [ "Lit", "aiala" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "aiala-sql-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "app_id" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [ "Attribute", "version", [ "String", "12.0" ] ],
+        [
+          "Attribute",
+          "administrator_login",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "db-login" ] ] ]
+        ],
+        [
+          "Attribute",
+          "administrator_login_password",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "db-pwd" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_sql_database" ], [ "Lit", "aiala-portal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "aiala-sql-portal-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "server_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_sql_server" ], [ "A_string", "aiala" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "create_mode", [ "String", "Default" ] ],
+        [ "Attribute", "edition", [ "String", "Basic" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_sql_database" ], [ "Lit", "aiala-sts" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "aiala-sql-sts-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [
+          "Attribute",
+          "server_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "azurerm_sql_server" ], [ "A_string", "aiala" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "create_mode", [ "String", "Default" ] ],
+        [ "Attribute", "edition", [ "String", "Basic" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_cognitive_account" ], [ "Lit", "aiala" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "aiala-vision-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "location" ] ] ]
+        ],
+        [ "Attribute", "kind", [ "String", "ComputerVision" ] ],
+        [ "Attribute", "sku_name", [ "String", "F0" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_maps_account" ], [ "Lit", "aiala" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "aiala-map-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_resource_group" ], [ "A_string", "aiala" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sku_name", [ "String", "S0" ] ]
+      ]
+    }
+  ]
+]

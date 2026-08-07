@@ -1,0 +1,339 @@
+[
+  [
+    "Block",
+    { "type_": "variable", "labels": [ [ "Lit", "name" ] ], "body": [] }
+  ],
+  [
+    "Block",
+    { "type_": "variable", "labels": [ [ "Lit", "network" ] ], "body": [] }
+  ],
+  [
+    "Block",
+    { "type_": "variable", "labels": [ [ "Lit", "region" ] ], "body": [] }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "port" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 5432 ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cpu_count" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 2 ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Mod",
+                          [
+                            [ "Int", 64 ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "cpu_count" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 0 ]
+                      ]
+                    ],
+                    [
+                      "Gte",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "cpu_count" ] ]
+                        ],
+                        [ "Int", 2 ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "cpu_count must be 2, 4, 8, 16, 32, 64" ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "username" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "postgres" ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    { "type_": "variable", "labels": [ [ "Lit", "password" ] ], "body": [] }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "settings" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "value" ], [ "Id", "string" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "setting", [] ],
+                          "input": [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "settings" ] ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "setting" ],
+                                      [ "A_string", "name" ]
+                                    ]
+                                  ],
+                                  [ "String", "max_connections" ]
+                                ]
+                              ],
+                              [
+                                "Gte",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "tonumber",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "setting" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Int", 1000 ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "max_connections minimum allowed value: 1000" ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "automated_backups" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "backup_count" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [ "Attribute", "default", [ "Int", 0 ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "backup_start_time" ] ],
+      "body": [
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [ [ "Bare", "hours" ], [ "Int", 0 ] ],
+              [ [ "Bare", "minutes" ], [ "Int", 0 ] ],
+              [ [ "Bare", "seconds" ], [ "Int", 0 ] ],
+              [ [ "Bare", "nanos" ], [ "Int", 0 ] ]
+            ]
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "backup_days" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [ [ "String", "SUNDAY" ] ] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "labels",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "lower",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "replace",
+                        [
+                          [ "Id", "value" ],
+                          [ "String", ":" ],
+                          [ "String", "_" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

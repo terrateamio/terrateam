@@ -1,0 +1,600 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "config" ] ],
+      "body": [ [ "Attribute", "type", [ "String", "map" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "active" ] ],
+      "body": [ [ "Attribute", "type", [ "String", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "versions" ] ],
+      "body": [ [ "Attribute", "type", [ "String", "map" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "standard" ] ],
+      "body": [ [ "Attribute", "type", [ "String", "map" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "selected" ] ],
+      "body": [ [ "Attribute", "type", [ "String", "list" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster-lb" ] ],
+      "body": [ [ "Attribute", "default", [ "String", "false" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "namespace" ] ],
+      "body": [ [ "Attribute", "default", [ "String", "nginx-ingress" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vip_ingress" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "versions" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../../versions" ] ],
+        [
+          "Attribute",
+          "versions",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "versions" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "addon" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../../flag" ] ],
+        [
+          "Attribute",
+          "option",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "active" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "cluster-lb" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../../flag" ] ],
+        [
+          "Attribute",
+          "option",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "cluster-lb" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "dns_annotation",
+          [
+            "Template",
+            [
+              [
+                "Literal", "external-dns.alpha.kubernetes.io/hostname: \"*."
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "standard" ] ]
+                      ],
+                      [ "String", "ingress" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "\"" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "generated" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../../condmap" ] ],
+        [
+          "Attribute",
+          "if",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "module" ], [ "A_string", "cluster-lb" ] ]
+                      ],
+                      [ "A_string", "value" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "then",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "annotations" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Fun_call",
+                          [
+                            "indent",
+                            [
+                              [ "Int", 4 ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "dns_annotation" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [ [ "Bare", "service_type" ], [ "String", "LoadBalancer" ] ],
+              [
+                [ "Bare", "publish_service" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "- --publish-service=" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "namespace" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/nginx-ingress-controller" ]
+                  ]
+                ]
+              ],
+              [ [ "Bare", "host_network" ], [ "String", "false" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "else",
+          [
+            "Object",
+            [
+              [ [ "Bare", "annotations" ], [ "String", "" ] ],
+              [ [ "Bare", "service_type" ], [ "String", "ClusterIP" ] ],
+              [
+                [ "Bare", "publish_service" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "- --publish-status-address=" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "vip_ingress" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [ [ "Bare", "host_network" ], [ "String", "true" ] ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "defaults",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "namespace" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "namespace" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "version" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "module" ],
+                                [ "A_string", "versions" ]
+                              ]
+                            ],
+                            [ "A_string", "nginx_version" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "generated",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "module" ], [ "A_string", "generated" ] ]
+                      ],
+                      [ "A_string", "value" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dummy",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "namespace" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "namespace" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [ [ "Bare", "annotations" ], [ "String", "" ] ],
+              [ [ "Bare", "service_type" ], [ "String", "" ] ],
+              [ [ "Bare", "publish_service" ], [ "String", "" ] ],
+              [ [ "Bare", "host_network" ], [ "String", "" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "config",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "merge",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "defaults" ] ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "config" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "dummy" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "dummy" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "defaults" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "defaults" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "generated" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "generated" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "manifests" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/templates/manifests" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "deploy" ] ],
+      "body": [ [ "Attribute", "value", [ "String", "" ] ] ]
+    }
+  ]
+]

@@ -1,0 +1,19 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Attr",
+      [
+        [
+          "Idx",
+          [
+            [ "Attr", [ [ "Id", "var" ], [ "A_string", "instances" ] ] ],
+            [ "Splat" ]
+          ]
+        ],
+        [ "A_string", "id" ]
+      ]
+    ]
+  ]
+]

@@ -1,0 +1,445 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "google" ] ],
+      "body": [
+        [ "Attribute", "version", [ "String", "2.6" ] ],
+        [
+          "Attribute",
+          "credentials",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "file",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "credentials_file" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_container_cluster" ], [ "Lit", "jemo-cluster" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "initial_node_count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "gcp_cluster_count" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "project_id" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "master_auth",
+            "labels": [],
+            "body": [
+              [ "Attribute", "username", [ "String", "" ] ],
+              [ "Attribute", "password", [ "String", "" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "node_config",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "oauth_scopes",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "String",
+                      "https://www.googleapis.com/auth/cloud-platform"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "metadata",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "disable-legacy-endpoints",
+                      [ "String", "true" ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Attribute",
+                "labels",
+                [ "Object", [ [ [ "Bare", "foo" ], [ "String", "bar" ] ] ] ]
+              ],
+              [
+                "Attribute",
+                "tags",
+                [ "Tuple", [ [ "String", "foo" ], [ "String", "bar" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "timeouts",
+            "labels": [],
+            "body": [
+              [ "Attribute", "create", [ "String", "30m" ] ],
+              [ "Attribute", "update", [ "String", "40m" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "client_certificate" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "google_container_cluster" ],
+                                  [ "A_string", "jemo-cluster" ]
+                                ]
+                              ],
+                              [ "A_string", "master_auth" ]
+                            ]
+                          ],
+                          [ "A_int", 0 ]
+                        ]
+                      ],
+                      [ "A_string", "client_certificate" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "client_key" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "google_container_cluster" ],
+                                  [ "A_string", "jemo-cluster" ]
+                                ]
+                              ],
+                              [ "A_string", "master_auth" ]
+                            ]
+                          ],
+                          [ "A_int", 0 ]
+                        ]
+                      ],
+                      [ "A_string", "client_key" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "cluster_ca_certificate" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "google_container_cluster" ],
+                                  [ "A_string", "jemo-cluster" ]
+                                ]
+                              ],
+                              [ "A_string", "master_auth" ]
+                            ]
+                          ],
+                          [ "A_int", 0 ]
+                        ]
+                      ],
+                      [ "A_string", "cluster_ca_certificate" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "gcp_cluster_endpoint" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "google_container_cluster" ],
+                          [ "A_string", "jemo-cluster" ]
+                        ]
+                      ],
+                      [ "A_string", "endpoint" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "gcp_cluster_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "google_container_cluster" ],
+                          [ "A_string", "jemo-cluster" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

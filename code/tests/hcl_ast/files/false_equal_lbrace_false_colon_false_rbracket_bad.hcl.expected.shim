@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,18-19: Missing attribute separator; Expected a newline or comma to mark the beginning of the next attribute.

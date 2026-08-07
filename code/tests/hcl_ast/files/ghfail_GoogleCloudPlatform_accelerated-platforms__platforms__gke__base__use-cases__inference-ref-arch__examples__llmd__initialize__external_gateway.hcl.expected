@@ -1,0 +1,1111 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_managed_ssl_certificate" ],
+        [ "Lit", "external_gateway" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "google_project_service" ],
+                      [ "A_string", "cluster" ]
+                    ]
+                  ],
+                  [ "String", "certificatemanager.googleapis.com" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "llmd_endpoints_ssl_certificate_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "google_project" ] ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "project_id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "managed",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "domains",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "llmd_endpoint" ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_compute_global_address" ],
+        [ "Lit", "external_gateway_https" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ], [ "A_string", "llmd_gateway_address_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "google_project" ] ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "project_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "local_file" ], [ "Lit", "gateway_external_https_yaml" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_compute_global_address" ],
+                  [ "A_string", "external_gateway_https" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "/templates/gateway/gateway-external-https.tftpl.yaml"
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "address_name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "google_compute_global_address" ],
+                              [ "A_string", "external_gateway_https" ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "gateway_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "llmd_gateway_name_external" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "namespace" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [
+                            "A_string",
+                            "ira_online_gpu_kubernetes_namespace_name"
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "ssl_certificate_name" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Id",
+                                "google_compute_managed_ssl_certificate"
+                              ],
+                              [ "A_string", "external_gateway" ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "external_gateway_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/gateway-external-https.yaml" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "terraform_data" ],
+        [ "Lit", "llmd_https_endpoint_undelete" ]
+      ],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template",
+                  [
+                    [ "Literal", "gcloud endpoints services undelete " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "llmd_endpoint" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " --project=" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "google_project" ]
+                                  ]
+                                ],
+                                [ "A_string", "cluster" ]
+                              ]
+                            ],
+                            [ "A_string", "project_id" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", " --quiet >/dev/null 2>&1 || exit 0" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "interpreter",
+                [ "Tuple", [ [ "String", "bash" ], [ "String", "-c" ] ] ]
+              ],
+              [
+                "Attribute",
+                "working_dir",
+                [ "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_endpoints_service" ], [ "Lit", "llmd_https" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "terraform_data" ],
+                  [ "A_string", "llmd_https_endpoint_undelete" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "openapi_config",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/templates/openapi/endpoint.tftpl.yaml" ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "endpoint" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "llmd_endpoint" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "ip_address" ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "google_compute_global_address" ],
+                              [ "A_string", "external_gateway_https" ]
+                            ]
+                          ],
+                          [ "A_string", "address" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "google_project" ] ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "project_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "service_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "llmd_endpoint" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "local_file" ], [ "Lit", "external_route" ] ],
+      "body": [
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "/templates/gateway/httproute-external.tftpl.yaml"
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "httproute_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "llmd_httproute_name_external" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "kubernetes_namespace" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [
+                            "A_string",
+                            "ira_online_gpu_kubernetes_namespace_name"
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "gateway_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "llmd_gateway_name_external" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "hostname" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "llmd_endpoint" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "service_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "gradio_service_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "service_port" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "gradio_service_port" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "file_permission", [ "String", "0644" ] ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "external_gateway_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/httproute-external.yaml" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "local_file" ], [ "Lit", "policy_iap_llmd_yaml" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "content",
+          [
+            "Fun_call",
+            [
+              "templatefile",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "/templates/gateway/gcp-backend-policy-iap-service.tftpl.yaml"
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "policy_name" ],
+                      [ "String", "gradio-policy" ]
+                    ],
+                    [
+                      [ "Bare", "service_name" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "gradio_service_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "namespace" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [
+                            "A_string",
+                            "ira_online_gpu_kubernetes_namespace_name"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "filename",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "external_gateway_manifests_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/policy-iap-llmd.yaml" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_apply_ext_gateway_res" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "google_endpoints_service" ],
+                  [ "A_string", "llmd_https" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "local_file" ],
+                  [ "A_string", "gateway_external_https_yaml" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "local_file" ],
+                  [ "A_string", "policy_iap_llmd_yaml" ]
+                ]
+              ],
+              [
+                "Attr",
+                [ [ "Id", "local_file" ], [ "A_string", "external_route" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../../../modules/kubectl_apply" ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifest",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "external_gateway_manifests_directory" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "manifest_includes_namespace", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_wait_for_gateway" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_apply_ext_gateway_res" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ], [ "A_string", "kubectl_apply_gradio" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../../../modules/kubectl_wait" ]
+        ],
+        [
+          "Attribute",
+          "for",
+          [
+            "String",
+            "jsonpath={.status.conditions[?(@.type==\"networking.gke.io/GatewayHealthy\")].status}=True"
+          ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "ira_online_gpu_kubernetes_namespace_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource",
+          [
+            "Template",
+            [
+              [ "Literal", "gateway/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "llmd_gateway_name_external" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "timeout", [ "String", "300s" ] ],
+        [ "Attribute", "wait_for_create", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "kubernetes_resources" ], [ "Lit", "gateway" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_wait_for_gateway" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "api_version",
+          [ "String", "gateway.networking.k8s.io/v1" ]
+        ],
+        [ "Attribute", "kind", [ "String", "Gateway" ] ],
+        [
+          "Attribute",
+          "field_selector",
+          [
+            "Template",
+            [
+              [ "Literal", "metadata.name==" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "llmd_gateway_name_external" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "ira_online_gpu_kubernetes_namespace_name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_iap_web_backend_service_iam_member" ],
+        [ "Lit", "service_account_iap_https_resource_accessor" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "member",
+          [
+            "Template",
+            [
+              [ "Literal", "domain:" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "iap_domain" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "cluster_project_id" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [ "String", "roles/iap.httpsResourceAccessor" ]
+        ],
+        [
+          "Attribute",
+          "web_backend_service",
+          [
+            "Fun_call",
+            [
+              "basename",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "one",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "backend", [] ],
+                          "input": [
+                            "Fun_call",
+                            [
+                              "split",
+                              [
+                                [ "String", ", " ],
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Idx",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "data" ],
+                                                            [
+                                                              "A_string",
+                                                              "kubernetes_resources"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "gateway"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "A_string", "objects" ]
+                                                  ]
+                                                ],
+                                                [ "Int", 0 ]
+                                              ]
+                                            ],
+                                            [ "A_string", "metadata" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "annotations" ]
+                                      ]
+                                    ],
+                                    [
+                                      "String",
+                                      "networking.gke.io/backend-services"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "output": [ "Id", "backend" ],
+                          "cond": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [
+                                            "A_string",
+                                            "gradio_backend_service_regex"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Id", "backend" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

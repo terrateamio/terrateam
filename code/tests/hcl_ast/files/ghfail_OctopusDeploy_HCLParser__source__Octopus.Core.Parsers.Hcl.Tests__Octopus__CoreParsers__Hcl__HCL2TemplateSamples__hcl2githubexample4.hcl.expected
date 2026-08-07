@@ -1,0 +1,140 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "covid-portal" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./modules/codedeploy" ] ],
+        [
+          "Attribute",
+          "codedeploy_service_role_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "codedeploy" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "action_on_timeout",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "manual_deploy_enabled" ] ]
+              ],
+              "then_": [ "String", "STOP_DEPLOYMENT" ],
+              "else_": [ "String", "CONTINUE_DEPLOYMENT" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "termination_wait_time_in_minutes",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "termination_wait_time_in_minutes" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_ecs_cluster" ], [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ecs_service_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_ecs_service" ], [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "lb_listener_arns",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_lb_listener" ],
+                      [ "A_string", "covidportal_https" ]
+                    ]
+                  ],
+                  [ "A_string", "arn" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "aws_lb_target_group_blue_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_lb_target_group" ],
+                  [ "A_string", "covidportal" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "aws_lb_target_group_green_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_lb_target_group" ],
+                  [ "A_string", "covidportal_2" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

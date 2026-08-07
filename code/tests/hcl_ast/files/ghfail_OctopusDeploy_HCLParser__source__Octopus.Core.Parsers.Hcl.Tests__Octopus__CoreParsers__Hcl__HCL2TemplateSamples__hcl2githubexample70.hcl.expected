@@ -1,0 +1,248 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "ec2" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "ec2_should_be_created" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "ami",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "ec2_ami" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instance_type",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "ec2_instance_type" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "public_subnet_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "ec2_security_group" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "associate_public_ip_address", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "key_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_key_pair" ], [ "A_string", "ec2_key_pair" ] ]
+              ],
+              [ "A_string", "key_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "ec2_name" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_security_group" ], [ "Lit", "ec2_security_group" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "ec2_security_group_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "ec2_security_group_description" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vpc_id" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 22 ] ],
+              [ "Attribute", "to_port", [ "Int", 22 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 80 ] ],
+              [ "Attribute", "to_port", [ "Int", 80 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ingress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 443 ] ],
+              [ "Attribute", "to_port", [ "Int", 443 ] ],
+              [ "Attribute", "protocol", [ "String", "tcp" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "egress",
+            "labels": [],
+            "body": [
+              [ "Attribute", "from_port", [ "Int", 0 ] ],
+              [ "Attribute", "to_port", [ "Int", 0 ] ],
+              [ "Attribute", "protocol", [ "String", "-1" ] ],
+              [
+                "Attribute",
+                "cidr_blocks",
+                [ "Tuple", [ [ "String", "0.0.0.0/0" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "ec2_security_group_name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_key_pair" ], [ "Lit", "ec2_key_pair" ] ],
+      "body": [
+        [
+          "Attribute",
+          "key_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "ec2_ssh_key_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "public_key",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "ec2_ssh_public_key_path" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

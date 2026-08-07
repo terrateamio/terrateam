@@ -1,0 +1,18 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Object",
+      [
+        [
+          [
+            "Computed",
+            [ "Attr", [ [ "Id", "var" ], [ "A_string", "key" ] ] ]
+          ],
+          [ "String", "value" ]
+        ]
+      ]
+    ]
+  ]
+]

@@ -1,0 +1,16 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "out" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "in" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

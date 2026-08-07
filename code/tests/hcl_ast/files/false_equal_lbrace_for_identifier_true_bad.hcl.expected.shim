@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,16-17: Invalid 'for' expression; For expression requires the 'in' keyword after its name declarations.

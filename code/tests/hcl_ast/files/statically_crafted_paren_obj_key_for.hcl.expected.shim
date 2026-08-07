@@ -1,0 +1,18 @@
+[
+  [
+    "Attribute",
+    "a",
+    [ "Object", [ [ [ "Computed", [ "Id", "for" ] ], [ "String", "v" ] ] ] ]
+  ],
+  [
+    "Attribute",
+    "b",
+    [
+      "Object",
+      [
+        [ [ "Bare", "k1" ], [ "Int", 1 ] ],
+        [ [ "Computed", [ "Id", "for" ] ], [ "Int", 2 ] ]
+      ]
+    ]
+  ]
+]

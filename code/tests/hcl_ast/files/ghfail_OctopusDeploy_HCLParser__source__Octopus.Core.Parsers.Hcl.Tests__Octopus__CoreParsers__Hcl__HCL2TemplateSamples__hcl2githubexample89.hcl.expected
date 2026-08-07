@@ -1,0 +1,662 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "core_storage_hostname" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "core_storage_hostname_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_db_instance" ], [ "A_string", "core_storage" ]
+                ]
+              ],
+              [ "A_string", "address" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Hostname for the core storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "core_storage_port" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "core_storage_port_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_db_instance" ], [ "A_string", "core_storage" ]
+                ]
+              ],
+              [ "A_string", "port" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port for the core storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "core_storage_username" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "core_storage_username_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_db_instance" ], [ "A_string", "core_storage" ]
+                ]
+              ],
+              [ "A_string", "username" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Username for the core storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "core_storage_password" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "core_storage_password_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_db_instance" ], [ "A_string", "core_storage" ]
+                ]
+              ],
+              [ "A_string", "password" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Password for the core storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "core_storage_database" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "core_storage_database_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [ "Attribute", "value", [ "String", "postgres" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Database name for the core storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "core_storage_schema" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "core_storage_schema_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [ "Attribute", "value", [ "String", "celsus_core" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Schema name for the core storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "contact_storage_hostname" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "contact_storage_hostname_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_db_instance" ], [ "A_string", "core_storage" ]
+                ]
+              ],
+              [ "A_string", "address" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Hostname for the contact storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "contact_storage_port" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "contact_storage_port_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_db_instance" ], [ "A_string", "core_storage" ]
+                ]
+              ],
+              [ "A_string", "port" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Port for the contact storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "contact_storage_username" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "contact_storage_username_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_db_instance" ], [ "A_string", "core_storage" ]
+                ]
+              ],
+              [ "A_string", "username" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Username for the contact storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "contact_storage_password" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "contact_storage_password_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_db_instance" ], [ "A_string", "core_storage" ]
+                ]
+              ],
+              [ "A_string", "password" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Password for the contact storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "contact_storage_database" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "contact_storage_database_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [ "Attribute", "value", [ "String", "postgres" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Database name for the contact storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_parameter" ], [ "Lit", "contact_storage_schema" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "contact_storage_schema_" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "SecureString" ] ],
+        [ "Attribute", "value", [ "String", "celsus_contacts" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Schema name for the contact storage" ]
+        ],
+        [ "Attribute", "overwrite", [ "String", "true" ] ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

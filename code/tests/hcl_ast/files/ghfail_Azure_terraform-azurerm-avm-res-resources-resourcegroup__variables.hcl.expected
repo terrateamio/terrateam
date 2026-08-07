@@ -1,0 +1,457 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "location" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Required. The Azure region for deployment of the this resource."
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Required. The name of the this resource." ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^[a-zA-Z0-9_().-]{1,89}[a-zA-Z0-9_()-]$"
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "ERROR_MESSAGE",
+                    "\n    The resource group name must meet the following requirements:\n    - `Between 1 and 90 characters long.` \n    - `Can only contain Alphanumerics, underscores, parentheses, hyphens, periods.`\n    - `Cannot end in a period`\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_telemetry" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "DESCRIPTION",
+              "\nThis variable controls whether or not telemetry is enabled for the module.\nFor more information see <https://aka.ms/avm/telemetryinfo>.\nIf it is set to false, then no telemetry will be collected.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "lock" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "kind" ], [ "Id", "string" ] ],
+                    [
+                      [ "Bare", "name" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "string" ], [ "Null" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "DESCRIPTION",
+              "\n  Controls the Resource Lock configuration for this resource. The following properties can be specified:\n  \n  - `kind` - (Required) The type of lock. Possible values are `\\\"CanNotDelete\\\"` and `\\\"ReadOnly\\\"`.\n  - `name` - (Optional) The name of the lock. If not specified, a name will be generated based on the `kind` value. Changing this forces the creation of a new resource.\n"
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr", [ [ "Id", "var" ], [ "A_string", "lock" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "contains",
+                        [
+                          [
+                            "Tuple",
+                            [
+                              [ "String", "CanNotDelete" ],
+                              [ "String", "ReadOnly" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "lock" ] ]
+                              ],
+                              [ "A_string", "kind" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Bool", true ]
+                  }
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Lock kind must be either `\"CanNotDelete\"` or `\"ReadOnly\"`."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "role_assignments" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "role_definition_id_or_name" ],
+                            [ "Id", "string" ]
+                          ],
+                          [ [ "Bare", "principal_id" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "description" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "skip_service_principal_aad_check" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "condition" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "condition_version" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [
+                              "Bare",
+                              "delegated_managed_identity_resource_id"
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "principal_type" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "Null" ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "DESCRIPTION",
+              "\nOptional. A map of role assignments to create on this resource. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.\n\n- `role_definition_id_or_name` - (Required) The ID or name of the role definition to assign to the principal.\n- `principal_id` - (Required) The ID of the principal to assign the role to.\n- `description` - (Optional) The description of the role assignment.\n- `skip_service_principal_aad_check` - (Optional) If set to true, skips the Azure Active Directory check for the service principal in the tenant. Defaults to false.\n- `condition` - (Optional) The condition which will be used to scope the role assignment.\n- `condition_version` - (Optional) The version of the condition syntax. Valid values are '2.0'.\n- `delegated_managed_identity_resource_id` - (Optional) The delegated Azure Resource Id which contains a Managed Identity. Changing this forces a new resource to be created. NOTE:\nthis field is only used in cross tenant scenario.\n\n> Note: only set `skip_service_principal_aad_check` to true if you are assigning a role to a service principal.\n\nExample Input:\n```hcl\nrole_assignments = {\n  \"role_assignment1\" = {\n    role_definition_id_or_name = \"Reader\"\n    principal_id = \"4179302c-702e-4de7-a061-beacd0a1be09\"\n    \n  },\n\"role_assignment2\" = {\n  role_definition_id_or_name = \"2a2b9908-6ea1-4ae2-8e65-a410df84e7d1\" // Storage Blob Data Reader Role Guid \n  principal_id = \"4179302c-702e-4de7-a061-beacd0a1be09\"\n  skip_service_principal_aad_check = false\n  condition_version = \"2.0\"\n  condition = <<-EOT\n(\n  (\n    !(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})\n  )\nOR \n  (\n  @Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId]\n  ForAnyOfAnyValues:GuidEquals {4179302c-702e-4de7-a061-beacd0a1be09}\n  )\n)\nAND\n(\n  (\n    !(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})\n  )\n  OR \n  (\n    @Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId]\n    ForAnyOfAnyValues:GuidEquals {dc887ae1-fe50-4307-be53-213ff08f3c0b}\n  )\n)\nEOT  \n  }\n}\n```\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "nullable", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "role", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "role_assignments" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^/providers/Microsoft\\.Authorization/roleDefinitions/[0-9a-fA-F-]+$"
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "role" ],
+                                              [
+                                                "A_string",
+                                                "role_definition_id_or_name"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [ "String", "^[[:alpha:]]+?" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "role" ],
+                                              [
+                                                "A_string",
+                                                "role_definition_id_or_name"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "ERROR_MESSAGE",
+                    "\n        role_definition_id_or_name must have the following format: \n         - Using the role definition Id : `/providers/Microsoft.Authorization/roleDefinitions/<role_guid>`\n         - Using the role name: Reader | \"Storage Blob Data Reader\"\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "(Optional) Tags of the resource." ]
+        ]
+      ]
+    }
+  ]
+]

@@ -43,7 +43,7 @@ arithmetic {
   div      = 1 / 10
   mod      = 11 % 5
   mod_frac = 11 % 5.1
-  sub_neg  = 2 - -2
+  sub_neg2 = 2 - -2
 }
 
 logical_binary "&&" {

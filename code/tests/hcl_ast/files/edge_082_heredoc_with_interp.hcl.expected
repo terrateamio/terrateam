@@ -1,0 +1,24 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Template_heredoc",
+      [
+        "EOT",
+        [
+          [ "Literal", "\nHello " ],
+          [
+            "Interpolation",
+            {
+              "expr": [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ],
+              "strip_before": false,
+              "strip_after": false
+            }
+          ],
+          [ "Literal", "!\n" ]
+        ]
+      ]
+    ]
+  ]
+]

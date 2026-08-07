@@ -1,0 +1,19 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "For_object",
+      {
+        "identifiers": [ "item", [] ],
+        "input": [ "Attr", [ [ "Id", "var" ], [ "A_string", "items" ] ] ],
+        "key_output": [ "Attr", [ [ "Id", "item" ], [ "A_string", "key" ] ] ],
+        "value_output": [
+          "Ellipsis",
+          [ "Attr", [ [ "Id", "item" ], [ "A_string", "value" ] ] ]
+        ],
+        "cond": null
+      }
+    ]
+  ]
+]

@@ -1,0 +1,981 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "default_name" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "operating_system" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "operating system and default user" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "sku" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "offer" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "publisher" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "version" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "ssh_user" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "ssh_public_key_file" ], [ "Id", "string" ] ],
+                    [
+                      [ "Bare", "ssh_private_key_file" ], [ "Id", "string" ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "machine" ] ],
+      "body": [
+        [
+          "Attribute", "description", [ "String", "cloud resources needed" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "type" ], [ "Id", "string" ] ],
+                    [ [ "Bare", "region" ], [ "Id", "string" ] ],
+                    [
+                      [ "Bare", "zone" ],
+                      [ "Fun_call", [ "optional", [ [ "Id", "string" ] ] ] ]
+                    ],
+                    [ [ "Bare", "instance_type" ], [ "Id", "string" ] ],
+                    [
+                      [ "Bare", "ssh_port" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "number" ], [ "Int", 22 ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "volume" ],
+                      [
+                        "Fun_call",
+                        [
+                          "object",
+                          [
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "caching" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "optional",
+                                      [
+                                        [ "Id", "string" ],
+                                        [ "String", "None" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ [ "Bare", "size_gb" ], [ "Id", "number" ] ],
+                                [ [ "Bare", "type" ], [ "Id", "string" ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "public_cidrblocks" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "service_cidrblocks" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "internal_cidrblocks" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "force_ssh_access" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Force append a service rule for ssh access" ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ports" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "list" ] ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "ssh_defined",
+          [
+            "Fun_call",
+            [
+              "anytrue",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "port", [] ],
+                    "input": [
+                      "Attr", [ [ "Id", "var" ], [ "A_string", "ports" ] ]
+                    ],
+                    "output": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "port" ], [ "A_string", "port" ] ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "machine" ] ]
+                            ],
+                            [ "A_string", "ssh_port" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "machine_ports",
+          [
+            "Fun_call",
+            [
+              "concat",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "ports" ] ] ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Log_or",
+                      [
+                        [
+                          "Not",
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "force_ssh_access" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "ssh_defined" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "then_": [ "Tuple", [] ],
+                    "else_": [
+                      "Tuple",
+                      [
+                        [
+                          "Object",
+                          [
+                            [ [ "Quoted", "access" ], [ "String", "allow" ] ],
+                            [ [ "Quoted", "type" ], [ "String", "ingress" ] ],
+                            [
+                              [ "Quoted", "defaults" ],
+                              [ "String", "service" ]
+                            ],
+                            [ [ "Quoted", "cidrs" ], [ "Tuple", [] ] ],
+                            [ [ "Quoted", "protocol" ], [ "String", "tcp" ] ],
+                            [
+                              [ "Quoted", "port" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "machine" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "ssh_port" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Quoted", "to_port" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "machine" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "ssh_port" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Quoted", "description" ],
+                              [ "String", "Force SSH Access" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Object",
+                          [
+                            [ [ "Quoted", "access" ], [ "String", "allow" ] ],
+                            [ [ "Quoted", "type" ], [ "String", "egress" ] ],
+                            [
+                              [ "Quoted", "defaults" ],
+                              [ "String", "service" ]
+                            ],
+                            [ [ "Quoted", "cidrs" ], [ "Tuple", [] ] ],
+                            [ [ "Quoted", "protocol" ], [ "String", "tcp" ] ],
+                            [
+                              [ "Quoted", "port" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "machine" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "ssh_port" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Quoted", "to_port" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "machine" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "ssh_port" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Quoted", "description" ],
+                              [ "String", "Force SSH Access" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "tags" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_name" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "zones",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "machine" ] ]
+                      ],
+                      [ "A_string", "zone" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Tuple",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "machine" ] ]
+                      ],
+                      [ "A_string", "zone" ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "public_ip_sku",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "machine" ] ]
+                      ],
+                      [ "A_string", "zone" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "String", "Basic" ],
+              "else_": [ "String", "Standard" ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "resource_name" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name_id" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    { "type_": "variable", "labels": [ [ "Lit", "subnet_id" ] ], "body": [] }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "security_group_name" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "security_group_id" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "private_key" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "public_key" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "use_agent" ] ],
+      "body": [ [ "Attribute", "default", [ "Bool", false ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "additional_volumes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "mount_point" ], [ "Id", "string" ] ],
+                          [ [ "Bare", "size_gb" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "type" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "caching" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "string" ], [ "String", "None" ] ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "iops" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "number" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "filesystem" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "mount_options" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [ "list", [ [ "Id", "string" ] ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "volume", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "additional_volumes" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "volume" ],
+                                      [ "A_string", "iops" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "contains",
+                                  [
+                                    [
+                                      "Tuple",
+                                      [
+                                        [ "String", "UltraSSD_LRS" ],
+                                        [ "String", "PremiumV2_LRS" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "volume" ],
+                                        [ "A_string", "type" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\nIOPs is only configurable with the following disk types:\nUltraSSD PremiumV2\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "volume", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "additional_volumes" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "volume" ],
+                                      [ "A_string", "caching" ]
+                                    ]
+                                  ],
+                                  [ "String", "None" ]
+                                ]
+                              ],
+                              [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "volume" ],
+                                      [ "A_string", "type" ]
+                                    ]
+                                  ],
+                                  [ "String", "UltraSSD_LRS" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "Heredoc",
+                  [
+                    "EOT",
+                    "\nCaching must be set to \"None\" when using UltraSSD_LRS\n"
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [ "Attribute", "nullable", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "additional_volumes_length",
+          [
+            "Fun_call",
+            [
+              "length",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "additional_volumes" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "additional_volumes_count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "additional_volumes_length" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "additional_volumes_map",
+          [
+            "For_object",
+            {
+              "identifiers": [ "i", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "additional_volumes" ] ]
+              ],
+              "key_output": [ "Id", "i" ],
+              "value_output": [ "Id", "v" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "premium_ssd",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "regions" ],
+                [
+                  "Tuple",
+                  [ [ "String", "eastus" ], [ "String", "westeurope" ] ]
+                ]
+              ],
+              [ [ "Bare", "value" ], [ "String", "PremiumV2_LRS" ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ultra_ssd_enabled",
+          [
+            "Fun_call",
+            [
+              "anytrue",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "volume", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "additional_volumes" ]
+                      ]
+                    ],
+                    "output": [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "volume" ], [ "A_string", "type" ] ]
+                        ],
+                        [ "String", "UltraSSD_LRS" ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "prefix", [ "String", "/dev/" ] ],
+        [ "Attribute", "base", [ "Tuple", [ [ "String", "sd" ] ] ] ],
+        [
+          "Attribute",
+          "letters",
+          [
+            "Tuple",
+            [
+              [ "String", "c" ],
+              [ "String", "d" ],
+              [ "String", "e" ],
+              [ "String", "f" ],
+              [ "String", "g" ],
+              [ "String", "h" ],
+              [ "String", "i" ],
+              [ "String", "j" ],
+              [ "String", "k" ],
+              [ "String", "l" ],
+              [ "String", "m" ],
+              [ "String", "n" ],
+              [ "String", "o" ],
+              [ "String", "p" ],
+              [ "String", "q" ],
+              [ "String", "r" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "linux_device_names",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "letter", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "letters" ] ]
+              ],
+              "output": [
+                "Fun_call",
+                [
+                  "formatlist",
+                  [
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [ [ "Id", "local" ], [ "A_string", "prefix" ] ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "%s" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [ "Id", "letter" ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ],
+                    [ "Attr", [ [ "Id", "local" ], [ "A_string", "base" ] ] ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [ "Attribute", "filesystem", [ "String", "xfs" ] ],
+        [
+          "Attribute",
+          "mount_options",
+          [
+            "Tuple",
+            [
+              [ "String", "noatime" ],
+              [ "String", "nodiratime" ],
+              [ "String", "logbsize=256k" ],
+              [ "String", "allocsize=1m" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,28 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "a", [ "Add", [ [ "Id", "x" ], [ "Id", "y" ] ] ] ],
+        [
+          "Attribute", "b", [ "Subtract", [ [ "Id", "x" ], [ "Id", "y" ] ] ]
+        ],
+        [ "Attribute", "c", [ "Mult", [ [ "Id", "x" ], [ "Id", "y" ] ] ] ],
+        [ "Attribute", "d", [ "Div", [ [ "Id", "x" ], [ "Id", "y" ] ] ] ],
+        [ "Attribute", "e", [ "Mod", [ [ "Id", "x" ], [ "Id", "y" ] ] ] ],
+        [ "Attribute", "f", [ "Log_and", [ [ "Id", "x" ], [ "Id", "y" ] ] ] ],
+        [ "Attribute", "g", [ "Log_or", [ [ "Id", "x" ], [ "Id", "y" ] ] ] ],
+        [ "Attribute", "h", [ "Equal", [ [ "Id", "x" ], [ "Id", "y" ] ] ] ],
+        [
+          "Attribute", "i", [ "Not_equal", [ [ "Id", "x" ], [ "Id", "y" ] ] ]
+        ],
+        [ "Attribute", "j", [ "Lt", [ [ "Id", "x" ], [ "Id", "y" ] ] ] ],
+        [ "Attribute", "k", [ "Gt", [ [ "Id", "x" ], [ "Id", "y" ] ] ] ],
+        [ "Attribute", "l", [ "Lte", [ [ "Id", "x" ], [ "Id", "y" ] ] ] ],
+        [ "Attribute", "m", [ "Gte", [ [ "Id", "x" ], [ "Id", "y" ] ] ] ]
+      ]
+    }
+  ]
+]

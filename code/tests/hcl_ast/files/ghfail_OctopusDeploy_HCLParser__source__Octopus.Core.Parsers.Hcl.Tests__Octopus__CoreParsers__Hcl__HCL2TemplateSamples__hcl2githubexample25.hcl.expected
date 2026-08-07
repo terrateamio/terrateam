@@ -1,0 +1,640 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "azurerm_resource_group" ], [ "Lit", "appgateway" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "resource_group_name" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "authentication_certificate_name",
+          [ "String", "gateway-public-key" ]
+        ],
+        [ "Attribute", "backend_probe_name", [ "String", "probe-1" ] ],
+        [
+          "Attribute",
+          "ssl_certificate_name",
+          [ "String", "gateway-certificate" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "azurerm_application_gateway" ], [ "Lit", "appgateway" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "appgateway_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "appgateway" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "azurerm_resource_group" ]
+                    ]
+                  ],
+                  [ "A_string", "appgateway" ]
+                ]
+              ],
+              [ "A_string", "location" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "resource_tags" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "sku",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "appgateway_sku_name" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "tier",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "appgateway_tier" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "capacity",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "appgateway_capacity" ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "gateway_ip_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_ipconfig_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "subnet_id",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "virtual_network_subnet_id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "frontend_port",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_frontend_port_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "port",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "frontend_http_port" ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "frontend_ip_configuration",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [
+                      "A_string", "appgateway_frontend_ip_configuration_name"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "public_ip_address_id",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "public_pip_id" ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "ssl_certificate",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "ssl_certificate_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "data",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_ssl_private_pfx" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "password", [ "String", "" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "authentication_certificate",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "authentication_certificate_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "data",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_ssl_public_cert" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "backend_address_pool",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_backend_address_pool_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "fqdns",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "backendpool_fqdns" ] ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "backend_http_settings",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_backend_http_setting_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "cookie_based_affinity",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "backend_http_cookie_based_affinity" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "port",
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "backend_http_port" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "protocol",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "backend_http_protocol" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "probe_name",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "backend_probe_name" ] ]
+                ]
+              ],
+              [ "Attribute", "request_timeout", [ "Int", 1 ] ],
+              [
+                "Attribute",
+                "pick_host_name_from_backend_address",
+                [ "Bool", true ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "probe",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "backend_probe_name" ] ]
+                ]
+              ],
+              [
+                "Attribute",
+                "protocol",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "backend_http_protocol" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "path", [ "String", "/" ] ],
+              [ "Attribute", "interval", [ "Int", 30 ] ],
+              [ "Attribute", "timeout", [ "Int", 30 ] ],
+              [ "Attribute", "unhealthy_threshold", [ "Int", 3 ] ],
+              [
+                "Attribute",
+                "pick_host_name_from_backend_http_settings",
+                [ "Bool", true ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "http_listener",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_listener_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "frontend_ip_configuration_name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [
+                      "A_string", "appgateway_frontend_ip_configuration_name"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "frontend_port_name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_frontend_port_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "protocol",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "http_listener_protocol" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "ssl_certificate_name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "ssl_certificate_name" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "waf_configuration",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "firewall_mode",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_waf_config_firewall_mode" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "rule_set_type", [ "String", "OWASP" ] ],
+              [ "Attribute", "rule_set_version", [ "String", "3.0" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "request_routing_rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_request_routing_rule_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "http_listener_name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_listener_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "rule_type",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "request_routing_rule_type" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "backend_address_pool_name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_backend_address_pool_name" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "backend_http_settings_name",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ],
+                    [ "A_string", "appgateway_backend_http_setting_name" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "external" ], [ "Lit", "app_gw_health" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_gateway" ],
+                  [ "A_string", "appgateway" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "program",
+          [
+            "Tuple",
+            [
+              [ "String", "az" ],
+              [ "String", "network" ],
+              [ "String", "application-gateway" ],
+              [ "String", "show-backend-health" ],
+              [ "String", "-g" ],
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "azurerm_resource_group" ]
+                        ]
+                      ],
+                      [ "A_string", "appgateway" ]
+                    ]
+                  ],
+                  [ "A_string", "name" ]
+                ]
+              ],
+              [ "String", "-n" ],
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "appgateway_name" ] ]
+              ],
+              [ "String", "-o" ],
+              [ "String", "json" ],
+              [ "String", "--query" ],
+              [
+                "String",
+                "backendAddressPools[0].backendHttpSettingsCollection[0].servers[0].{address:address,health:health}"
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

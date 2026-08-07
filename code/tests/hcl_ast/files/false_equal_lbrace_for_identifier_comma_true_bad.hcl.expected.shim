@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,17-18: Invalid 'for' expression; For expression requires value variable name after comma.

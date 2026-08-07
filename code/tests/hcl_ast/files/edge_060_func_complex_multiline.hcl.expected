@@ -1,0 +1,28 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Fun_call",
+      [
+        "merge",
+        [
+          [
+            "Object",
+            [
+              [ [ "Bare", "a" ], [ "Int", 1 ] ],
+              [ [ "Bare", "b" ], [ "Int", 2 ] ]
+            ]
+          ],
+          [
+            "Object",
+            [
+              [ [ "Bare", "c" ], [ "Int", 3 ] ],
+              [ [ "Bare", "d" ], [ "Int", 4 ] ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]

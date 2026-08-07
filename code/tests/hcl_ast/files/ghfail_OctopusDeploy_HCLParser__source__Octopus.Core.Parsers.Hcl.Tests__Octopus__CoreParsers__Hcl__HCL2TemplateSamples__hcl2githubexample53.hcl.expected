@@ -1,0 +1,721 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "vsphere" ] ],
+      "body": [
+        [
+          "Attribute",
+          "user",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vsphere_user" ] ] ]
+        ],
+        [
+          "Attribute",
+          "password",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vsphere_password" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vsphere_server",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vsphere_server" ] ] ]
+        ],
+        [ "Attribute", "allow_unverified_ssl", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "vsphere_datacenter" ], [ "Lit", "dc" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "vsphere_datacenter" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "vsphere_datastore" ], [ "Lit", "datastore" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "vsphere_datastore" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "datacenter_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "vsphere_datacenter" ]
+                    ]
+                  ],
+                  [ "A_string", "dc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "vsphere_compute_cluster" ], [ "Lit", "cluster" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "vsphere_compute_cluster" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "datacenter_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "vsphere_datacenter" ]
+                    ]
+                  ],
+                  [ "A_string", "dc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "vsphere_network" ], [ "Lit", "network" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vsphere_network" ] ] ]
+        ],
+        [
+          "Attribute",
+          "datacenter_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "vsphere_datacenter" ]
+                    ]
+                  ],
+                  [ "A_string", "dc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "vsphere_virtual_machine" ], [ "Lit", "template" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "vsphere_vm_template" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "datacenter_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "vsphere_datacenter" ]
+                    ]
+                  ],
+                  [ "A_string", "dc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "vsphere_resource_pool" ], [ "Lit", "pool" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "res_pool_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "datacenter_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "vsphere_datacenter" ]
+                    ]
+                  ],
+                  [ "A_string", "dc" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "vsphere_resource_pool" ],
+                  [ "A_string", "resource_pool" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "vsphere_resource_pool" ], [ "Lit", "resource_pool" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "res_pool_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "parent_resource_pool_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "vsphere_compute_cluster" ]
+                    ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "resource_pool_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "vsphere_virtual_machine" ], [ "Lit", "vm" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vsphere_vm_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "resource_pool_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "vsphere_resource_pool" ]
+                    ]
+                  ],
+                  [ "A_string", "pool" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "datastore_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "vsphere_datastore" ] ]
+                  ],
+                  [ "A_string", "datastore" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "num_cpus",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vm_num_cpus" ] ] ]
+        ],
+        [
+          "Attribute",
+          "memory",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vm_memory" ] ] ]
+        ],
+        [
+          "Attribute",
+          "guest_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "vsphere_virtual_machine" ]
+                    ]
+                  ],
+                  [ "A_string", "template" ]
+                ]
+              ],
+              [ "A_string", "guest_id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "firmware", [ "String", "efi" ] ],
+        [ "Attribute", "efi_secure_boot_enabled", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "scsi_type",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "vsphere_virtual_machine" ]
+                    ]
+                  ],
+                  [ "A_string", "template" ]
+                ]
+              ],
+              [ "A_string", "scsi_type" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "network_interface",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "network_id",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "vsphere_network" ]
+                          ]
+                        ],
+                        [ "A_string", "network" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "adapter_type",
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "vsphere_virtual_machine" ]
+                              ]
+                            ],
+                            [ "A_string", "template" ]
+                          ]
+                        ],
+                        [ "A_string", "network_interface_types" ]
+                      ]
+                    ],
+                    [ "Int", 0 ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "disk",
+            "labels": [],
+            "body": [
+              [ "Attribute", "label", [ "String", "disk0" ] ],
+              [
+                "Attribute",
+                "size",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "vsphere_virtual_machine" ]
+                                  ]
+                                ],
+                                [ "A_string", "template" ]
+                              ]
+                            ],
+                            [ "A_string", "disks" ]
+                          ]
+                        ],
+                        [ "A_int", 0 ]
+                      ]
+                    ],
+                    [ "A_string", "size" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "eagerly_scrub",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "vsphere_virtual_machine" ]
+                                  ]
+                                ],
+                                [ "A_string", "template" ]
+                              ]
+                            ],
+                            [ "A_string", "disks" ]
+                          ]
+                        ],
+                        [ "A_int", 0 ]
+                      ]
+                    ],
+                    [ "A_string", "eagerly_scrub" ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "thin_provisioned",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "vsphere_virtual_machine" ]
+                                  ]
+                                ],
+                                [ "A_string", "template" ]
+                              ]
+                            ],
+                            [ "A_string", "disks" ]
+                          ]
+                        ],
+                        [ "A_int", 0 ]
+                      ]
+                    ],
+                    [ "A_string", "thin_provisioned" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "cdrom",
+            "labels": [],
+            "body": [ [ "Attribute", "client_device", [ "Bool", true ] ] ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "clone",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "template_uuid",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "vsphere_virtual_machine" ]
+                          ]
+                        ],
+                        [ "A_string", "template" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "customize",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "linux_options",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "host_name",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "vm_host_name" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "domain",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "vm_domain_name" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "network_interface",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "ipv4_address",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "vm_ipv4_address" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "ipv4_netmask",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "vm_ipv4_netmask" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Attribute",
+                      "ipv4_gateway",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "vm_ipv4_gateway" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "dns_server_list",
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "vm_dns_servers" ] ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "dns_suffix_list",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "vm_dns_search_domain" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,389 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_target_group" ], [ "Lit", "covidportal" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "covidportal" ] ],
+        [ "Attribute", "port", [ "Int", 8000 ] ],
+        [ "Attribute", "protocol", [ "String", "HTTP" ] ],
+        [ "Attribute", "target_type", [ "String", "ip" ] ],
+        [ "Attribute", "deregistration_delay", [ "Int", 30 ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "health_check",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "interval", [ "Int", 10 ] ],
+              [ "Attribute", "path", [ "String", "/status/" ] ],
+              [ "Attribute", "port", [ "Int", 8000 ] ],
+              [ "Attribute", "matcher", [ "String", "301,200" ] ],
+              [ "Attribute", "timeout", [ "Int", 5 ] ],
+              [ "Attribute", "healthy_threshold", [ "Int", 2 ] ],
+              [ "Attribute", "unhealthy_threshold", [ "Int", 2 ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [ [ "Bare", "Name" ], [ "String", "covidportal" ] ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_target_group" ], [ "Lit", "covidportal_2" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "covidportal-2" ] ],
+        [ "Attribute", "port", [ "Int", 8000 ] ],
+        [ "Attribute", "protocol", [ "String", "HTTP" ] ],
+        [ "Attribute", "target_type", [ "String", "ip" ] ],
+        [ "Attribute", "deregistration_delay", [ "Int", 30 ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_vpc" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "health_check",
+            "labels": [],
+            "body": [
+              [ "Attribute", "enabled", [ "Bool", true ] ],
+              [ "Attribute", "interval", [ "Int", 10 ] ],
+              [ "Attribute", "port", [ "Int", 8000 ] ],
+              [ "Attribute", "path", [ "String", "/status/" ] ],
+              [ "Attribute", "matcher", [ "String", "301,200" ] ],
+              [ "Attribute", "timeout", [ "Int", 5 ] ],
+              [ "Attribute", "healthy_threshold", [ "Int", 2 ] ],
+              [ "Attribute", "unhealthy_threshold", [ "Int", 2 ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [ [ "Bare", "Name" ], [ "String", "covidportal-2" ] ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_lb" ], [ "Lit", "covidportal" ] ],
+      "body": [
+        [ "Attribute", "name", [ "String", "covidportal" ] ],
+        [ "Attribute", "internal", [ "Bool", false ] ],
+        [ "Attribute", "load_balancer_type", [ "String", "application" ] ],
+        [
+          "Attribute",
+          "security_groups",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "covidportal_load_balancer" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnets",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_subnet" ],
+                      [ "A_string", "covidportal_public" ]
+                    ]
+                  ],
+                  [ "A_splat" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [ [ "Bare", "Name" ], [ "String", "covidportal" ] ],
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_listener" ], [ "Lit", "covidportal_https" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_acm_certificate" ],
+                  [ "A_string", "covidportal_staging" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "load_balancer_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "port", [ "String", "443" ] ],
+        [ "Attribute", "protocol", [ "String", "HTTPS" ] ],
+        [
+          "Attribute",
+          "ssl_policy",
+          [ "String", "ELBSecurityPolicy-FS-1-2-Res-2019-08" ]
+        ],
+        [
+          "Attribute",
+          "certificate_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_acm_certificate" ],
+                  [ "A_string", "covidportal_staging" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "default_action",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "forward" ] ],
+              [
+                "Attribute",
+                "target_group_arn",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "aws_lb_target_group" ],
+                        [ "A_string", "covidportal" ]
+                      ]
+                    ],
+                    [ "A_string", "arn" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [ "Tuple", [ [ "Id", "default_action" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_lb_listener" ], [ "Lit", "covidportal_http" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "load_balancer_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "port", [ "String", "80" ] ],
+        [ "Attribute", "protocol", [ "String", "HTTP" ] ],
+        [
+          "Block",
+          {
+            "type_": "default_action",
+            "labels": [],
+            "body": [
+              [ "Attribute", "type", [ "String", "redirect" ] ],
+              [
+                "Block",
+                {
+                  "type_": "redirect",
+                  "labels": [],
+                  "body": [
+                    [ "Attribute", "port", [ "String", "443" ] ],
+                    [ "Attribute", "protocol", [ "String", "HTTPS" ] ],
+                    [ "Attribute", "status_code", [ "String", "HTTP_301" ] ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [ "Tuple", [ [ "Id", "default_action" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

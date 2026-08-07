@@ -1,0 +1,473 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "ipsec_conf",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "ike" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "config" ] ]
+                            ],
+                            [ "A_string", "ciphers" ]
+                          ]
+                        ],
+                        [ "A_string", "ipsec" ]
+                      ]
+                    ],
+                    [ "A_string", "ike" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "esp" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "config" ] ]
+                            ],
+                            [ "A_string", "ciphers" ]
+                          ]
+                        ],
+                        [ "A_string", "ipsec" ]
+                      ]
+                    ],
+                    [ "A_string", "esp" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "strongswan_log_level" ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "config" ] ] ],
+                    [ "A_string", "strongswan_log_level" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "rightsourceip" ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Fun_call",
+                              [
+                                "cidrhost",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [ "A_string", "config" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "ipsec" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "ipv4" ]
+                                    ]
+                                  ],
+                                  [ "Int", 2 ]
+                                ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "-" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Fun_call",
+                              [
+                                "cidrhost",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [ "A_string", "config" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "ipsec" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "ipv4" ]
+                                    ]
+                                  ],
+                                  [ "Minus", [ "Int", 2 ] ]
+                                ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "," ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Fun_call",
+                              [
+                                "cidrhost",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [ "A_string", "config" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "ipsec" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "ipv6" ]
+                                    ]
+                                  ],
+                                  [ "Int", 2 ]
+                                ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ],
+                        [ "Literal", "-" ],
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Fun_call",
+                              [
+                                "cidrhost",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [ "A_string", "config" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "ipsec" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "ipv6" ]
+                                    ]
+                                  ],
+                                  [ "Float", 9.223372036854776e+18 ]
+                                ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "rightdns" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Log_or",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "dns" ]
+                                  ]
+                                ],
+                                [ "A_string", "encryption" ]
+                              ]
+                            ],
+                            [ "A_string", "enabled" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "dns" ]
+                                  ]
+                                ],
+                                [ "A_string", "adblocking" ]
+                              ]
+                            ],
+                            [ "A_string", "enabled" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "then_": [
+                      "Fun_call",
+                      [
+                        "values",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "config" ] ]
+                              ],
+                              [ "A_string", "ipsec_dns" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [
+                      "Fun_call",
+                      [
+                        "concat",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "config" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "dns" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "resolvers" ]
+                                ]
+                              ],
+                              [ "A_string", "ipv4" ]
+                            ]
+                          ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "ipv6" ] ]
+                              ],
+                              "then_": [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [ "A_string", "config" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "dns" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "resolvers" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "ipv6" ]
+                                ]
+                              ],
+                              "else_": [ "Tuple", [] ]
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "strongswan",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "strongswan_conf" ],
+                [
+                  "Fun_call",
+                  [
+                    "file",
+                    [
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "path" ], [ "A_string", "module" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/files/strongswan/strongswan.conf" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ipsec_conf" ],
+                [
+                  "Fun_call",
+                  [
+                    "templatefile",
+                    [
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [ "Id", "path" ], [ "A_string", "module" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/files/strongswan/ipsec.conf" ]
+                        ]
+                      ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "vars" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "ipsec_conf" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "pki" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "pki" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

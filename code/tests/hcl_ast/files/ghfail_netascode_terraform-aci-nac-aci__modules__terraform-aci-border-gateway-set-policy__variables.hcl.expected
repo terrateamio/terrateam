@@ -1,0 +1,307 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "An alphanumeric string up to 64 characters long." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[a-zA-Z0-9_.:-]{0,64}$" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The name must be alphanumeric and up to 64 characters."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vxlan_site_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "A site ID integer up to 65535." ]
+        ],
+        [ "Attribute", "type", [ "Id", "number" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_and",
+                  [
+                    [
+                      "Log_and",
+                      [
+                        [
+                          "Gte",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "vxlan_site_id" ]
+                              ]
+                            ],
+                            [ "Int", 1 ]
+                          ]
+                        ],
+                        [
+                          "Lte",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "vxlan_site_id" ]
+                              ]
+                            ],
+                            [ "Int", 65535 ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "floor",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "vxlan_site_id" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "vxlan_site_id" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "The site_id must be an integer between 1 and 65535."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "external_data_plane_ips" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A list of external data plane IPs, each with a pod_id (1-254) and an IPv4 address."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "pod_id" ], [ "Id", "number" ] ],
+                          [ [ "Bare", "ip" ], [ "Id", "string" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "item", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "external_data_plane_ips" ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_and",
+                            [
+                              [
+                                "Log_and",
+                                [
+                                  [
+                                    "Gte",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "item" ],
+                                          [ "A_string", "pod_id" ]
+                                        ]
+                                      ],
+                                      [ "Int", 1 ]
+                                    ]
+                                  ],
+                                  [
+                                    "Lte",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "item" ],
+                                          [ "A_string", "pod_id" ]
+                                        ]
+                                      ],
+                                      [ "Int", 254 ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "item" ],
+                                              [ "A_string", "ip" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Each item must have pod_id (1-254) and a valid IPv4 address (no netmask)."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

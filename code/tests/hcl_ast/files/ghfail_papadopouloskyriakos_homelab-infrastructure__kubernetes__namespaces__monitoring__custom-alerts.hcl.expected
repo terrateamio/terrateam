@@ -1,0 +1,865 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "kubernetes_manifest" ], [ "Lit", "custom_alert_rules" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "manifest",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "apiVersion" ],
+                [ "String", "monitoring.coreos.com/v1" ]
+              ],
+              [ [ "Bare", "kind" ], [ "String", "PrometheusRule" ] ],
+              [
+                [ "Bare", "metadata" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "name" ], [ "String", "custom-alert-rules" ]
+                    ],
+                    [ [ "Bare", "namespace" ], [ "String", "monitoring" ] ],
+                    [
+                      [ "Bare", "labels" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "app.kubernetes.io/part-of" ],
+                            [ "String", "kube-prometheus" ]
+                          ],
+                          [
+                            [ "Quoted", "prometheus" ],
+                            [ "String", "monitoring" ]
+                          ],
+                          [
+                            [ "Quoted", "role" ], [ "String", "alert-rules" ]
+                          ],
+                          [
+                            [ "Quoted", "release" ],
+                            [ "String", "monitoring" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "spec" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "groups" ],
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "name" ],
+                                [ "String", "custom-oom" ]
+                              ],
+                              [
+                                [ "Bare", "rules" ],
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "ContainerOOMKilled" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\"} == 1"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "0m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "critical" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "Container {{ $labels.container }} in pod {{ $labels.pod }} ({{ $labels.namespace }}) was OOM killed"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "Container {{ $labels.container }} in pod {{ $labels.pod }} namespace {{ $labels.namespace }} was OOM killed. This indicates the container needs more memory or has a memory leak."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "REDACTED_879bd353" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "(container_memory_working_set_bytes / container_spec_memory_limit_bytes) > 0.9 and container_spec_memory_limit_bytes > 0"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "5m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "warning" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "Container {{ $labels.container }} in {{ $labels.pod }} ({{ $labels.namespace }}) using >90% memory limit"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "Container {{ $labels.container }} is using {{ $value | humanizePercentage }} of its memory limit. OOM kill is imminent."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "name" ],
+                                [ "String", "custom-ingress" ]
+                              ],
+                              [
+                                [ "Bare", "rules" ],
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "REDACTED_02123891" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "kube_endpoint_address_available{namespace!=\"\"} == 0 and kube_endpoint_info{namespace!=\"\"}"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "5m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "warning" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "Endpoint {{ $labels.endpoint }} in {{ $labels.namespace }} has no available addresses"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "The endpoint {{ $labels.endpoint }} in namespace {{ $labels.namespace }} has zero available backend addresses. Services routing to this endpoint will fail."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "REDACTED_a8a7eee8" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "sum(rate(nginx_ingress_controller_requests{status=~\"5...\"}[5m])) by (ingress, namespace) / sum(rate(nginx_ingress_controller_requests[5m])) by (ingress, namespace) > 0.1"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "5m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "warning" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "Ingress {{ $labels.ingress }} ({{ $labels.namespace }}) has >10% error rate"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "Ingress {{ $labels.ingress }} in namespace {{ $labels.namespace }} has a 5xx error rate of {{ $value | humanizePercentage }}."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "REDACTED_67797f17" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "(nginx_ingress_controller_ssl_expire_time_seconds - time()) / 86400 < 14"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "1h" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "warning" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "TLS certificate for {{ $labels.host }} expires in {{ $value | humanize }} days"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "The TLS certificate for ingress host {{ $labels.host }} expires in less than 14 days. Check cert-manager renewal."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "name" ],
+                                [ "String", "custom-cilium" ]
+                              ],
+                              [
+                                [ "Bare", "rules" ],
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "CiliumAgentNotReady" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "cilium_unreachable_nodes > 0"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "15m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "warning" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "Cilium agent on {{ $labels.instance }} has {{ $value }} unreachable nodes"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "Cilium agent reports unreachable nodes, indicating network connectivity issues in the cluster mesh."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "REDACTED_b94e0389" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "cilium_endpoint_state{endpoint_state=\"not-ready\"} > 0"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "10m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "warning" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "Cilium has {{ $value }} not-ready endpoints on {{ $labels.instance }}"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "Endpoints in not-ready state indicate pods that cannot communicate via Cilium. Check cilium-agent logs."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "REDACTED_e52ce3d8" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "increase(cilium_policy_import_errors_total[5m]) > 0"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "0m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "warning" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "Cilium policy import errors on {{ $labels.instance }}"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "Cilium failed to import network policies. Check policy syntax and cilium-agent logs."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "name" ],
+                                [ "String", "custom-nfs" ]
+                              ],
+                              [
+                                [ "Bare", "rules" ],
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "NFSMountStale" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "node_filesystem_readonly{fstype=\"nfs4\"} == 1"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "5m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "critical" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "NFS mount {{ $labels.mountpoint }} on {{ $labels.instance }} is read-only/stale"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "NFS mount at {{ $labels.mountpoint }} on node {{ $labels.instance }} is in read-only state. This typically indicates a stale NFS mount — the NFS server may be unreachable."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "NFSMountHighLatency" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "rate(node_nfs_rpc_retransmissions_total[5m]) > 0.1"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "10m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "warning" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "High NFS RPC retransmissions on {{ $labels.instance }}"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "Node {{ $labels.instance }} is experiencing NFS RPC retransmissions, indicating network issues or NFS server load."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "name" ],
+                                [ "String", "custom-apps" ]
+                              ],
+                              [
+                                [ "Bare", "rules" ],
+                                [
+                                  "Tuple",
+                                  [
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "ArgocdAppDegraded" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "argocd_app_info{health_status!=\"Healthy\",health_status!=\"Progressing\"} == 1"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "10m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "warning" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "ArgoCD app {{ $labels.name }} health is {{ $labels.health_status }}"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "ArgoCD application {{ $labels.name }} has been in {{ $labels.health_status }} state for more than 10 minutes."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "ArgocdAppOutOfSync" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "argocd_app_info{sync_status=\"OutOfSync\"} == 1"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "30m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "warning" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "ArgoCD app {{ $labels.name }} is OutOfSync for >30 minutes"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "ArgoCD application {{ $labels.name }} has been OutOfSync for more than 30 minutes. Check if auto-sync is failing."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "alert" ],
+                                          [ "String", "HighPodRestartRate" ]
+                                        ],
+                                        [
+                                          [ "Bare", "expr" ],
+                                          [
+                                            "String",
+                                            "increase(kube_pod_container_status_restarts_total[1h]) > 5"
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "for" ],
+                                          [ "String", "0m" ]
+                                        ],
+                                        [
+                                          [ "Bare", "labels" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "severity" ],
+                                                [ "String", "warning" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "annotations" ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "summary" ],
+                                                [
+                                                  "String",
+                                                  "Pod {{ $labels.pod }} ({{ $labels.namespace }}) restarted {{ $value }} times in 1h"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "description" ],
+                                                [
+                                                  "String",
+                                                  "Container {{ $labels.container }} in pod {{ $labels.pod }} namespace {{ $labels.namespace }} has restarted {{ $value }} times in the last hour. Investigate logs for crash reason."
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

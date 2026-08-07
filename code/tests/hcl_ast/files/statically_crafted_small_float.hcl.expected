@@ -1,0 +1,6 @@
+[
+  [ "Attribute", "a", [ "Float", 9.999999999999999e-309 ] ],
+  [ "Attribute", "b", [ "Float", 0.0 ] ],
+  [ "Attribute", "c", [ "Float", 4.940656458412465e-324 ] ],
+  [ "Attribute", "d", [ "Float", 1e-23 ] ]
+]

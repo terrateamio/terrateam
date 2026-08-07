@@ -1,0 +1,1002 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "kubeconfig_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/../../../kubernetes/kubeconfig" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "kubeconfig_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "kubeconfig_file_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifests_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "manifests_directory_root" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/namespace/kueue-system" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "manifests_directory_root" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/namespace" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "version_manifests_directory",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/manifests/kueue-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "kueue_version" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "local_file" ], [ "Lit", "kubeconfig" ] ],
+      "body": [
+        [
+          "Attribute",
+          "filename",
+          [
+            "Attr", [ [ "Id", "local" ], [ "A_string", "kubeconfig_file" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "terraform_data" ], [ "Lit", "namespace" ] ],
+      "body": [
+        [
+          "Attribute",
+          "input",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "manifests_dir" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "namespace_directory" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template_heredoc",
+                  [
+                    "EOT",
+                    [
+                      [ "Literal", "\nmkdir -p " ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "manifests_dir" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [
+                        "Literal",
+                        " && \\\ncp -r templates/namespace-kueue-system.yaml "
+                      ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "manifests_dir" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "/\n" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "interpreter",
+                [ "Tuple", [ [ "String", "bash" ], [ "String", "-c" ] ] ]
+              ],
+              [
+                "Attribute",
+                "working_dir",
+                [ "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "triggers_replace",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "manifests_dir" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "namespace_directory" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_apply_namespace" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "terraform_data" ], [ "A_string", "namespace" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../modules/kubectl_apply" ]
+        ],
+        [ "Attribute", "apply_server_side", [ "Bool", true ] ],
+        [ "Attribute", "delete_timeout", [ "String", "300s" ] ],
+        [ "Attribute", "error_on_delete_failure", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifest",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "namespace_directory" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/namespace-kueue-system.yaml" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "manifest_includes_namespace", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "terraform_data" ], [ "Lit", "manifests" ] ],
+      "body": [
+        [
+          "Attribute",
+          "input",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "manifests_dir" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "manifests_directory" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "version" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "kueue_version" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "version_manifests_dir" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "version_manifests_directory" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template_heredoc",
+                  [
+                    "EOT",
+                    [
+                      [ "Literal", "\nmkdir -p " ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "version_manifests_dir" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", " && \\\nmkdir -p " ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "manifests_dir" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [
+                        "Literal",
+                        " && \\\nwget https://github.com/kubernetes-sigs/kueue/releases/download/v"
+                      ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "version" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "/manifests.yaml -O " ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "version_manifests_dir" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [
+                        "Literal",
+                        "/manifests.yaml && \\\ncp -r templates/workload/* "
+                      ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "version_manifests_dir" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "/ && \\\ncp -r " ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "version_manifests_dir" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "/* " ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "manifests_dir" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "/\n" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "interpreter",
+                [ "Tuple", [ [ "String", "bash" ], [ "String", "-c" ] ] ]
+              ],
+              [
+                "Attribute",
+                "working_dir",
+                [ "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "triggers_replace",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "manifests_dir" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "manifests_directory" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "version" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "kueue_version" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "version_manifests_dir" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "version_manifests_directory" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "terraform_data" ], [ "Lit", "manifests_ap" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "terraform_data" ], [ "A_string", "manifests" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "cluster_autopilot_enabled" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple", [ [ "String", "remove-resource-type" ] ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "input",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "manifests_dir" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "manifests_directory" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "version" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "kueue_version" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "version_manifests_dir" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "version_manifests_directory" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template_heredoc",
+                  [
+                    "EOT",
+                    [
+                      [
+                        "Literal",
+                        "\nsed --expression='/- path: patch\\/gke-managed-components-toleration.yaml$/,+4d' --in-place "
+                      ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "version_manifests_dir" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [
+                        "Literal",
+                        "/kustomization.yaml && \\\nsed --expression='/- path: patch\\/gke-managed-components-toleration.yaml$/,+4d' --in-place "
+                      ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "self" ], [ "A_string", "input" ] ]
+                              ],
+                              [ "A_string", "manifests_dir" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ],
+                      [ "Literal", "/kustomization.yaml\n" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "interpreter",
+                [ "Tuple", [ [ "String", "bash" ], [ "String", "-c" ] ] ]
+              ],
+              [
+                "Attribute",
+                "working_dir",
+                [ "Attr", [ [ "Id", "path" ], [ "A_string", "module" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "triggers_replace",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "manifests_dir" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ], [ "A_string", "manifests_directory" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "version" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "kueue_version" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "version_manifests_dir" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "version_manifests_directory" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_apply_manifests" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_apply_namespace" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "terraform_data" ], [ "A_string", "manifests_ap" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../modules/kubectl_apply" ]
+        ],
+        [ "Attribute", "apply_server_side", [ "Bool", true ] ],
+        [ "Attribute", "delete_ignore_not_found", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manifest",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ],
+              [ "A_string", "version_manifests_directory" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "manifest_includes_namespace", [ "Bool", true ] ],
+        [ "Attribute", "use_kustomize", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "kubectl_wait" ] ],
+      "body": [
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "kubectl_apply_manifests" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../../modules/kubectl_wait" ]
+        ],
+        [ "Attribute", "for", [ "String", "condition=ready" ] ],
+        [
+          "Attribute",
+          "kubeconfig_file",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "local_file" ] ]
+                  ],
+                  [ "A_string", "kubeconfig" ]
+                ]
+              ],
+              [ "A_string", "filename" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "namespace", [ "String", "kueue-system" ] ],
+        [ "Attribute", "resource", [ "String", "pod" ] ],
+        [ "Attribute", "retry_on_failure", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "selector",
+          [ "String", "control-plane=controller-manager" ]
+        ],
+        [ "Attribute", "timeout", [ "String", "300s" ] ],
+        [ "Attribute", "wait_for_create", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "google_monitoring_dashboard" ],
+        [ "Lit", "kueue_monitoring_dashboard" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "dashboard_json",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      "/dashboards/kueue-monitoring-dashboard.json"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "google_project" ] ]
+                  ],
+                  [ "A_string", "cluster" ]
+                ]
+              ],
+              [ "A_string", "project_id" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [ "Tuple", [ [ "Id", "dashboard_json" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

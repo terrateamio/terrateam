@@ -1,0 +1,44 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Template",
+      [
+        [ "Literal", "pre " ],
+        [
+          "If_directive",
+          {
+            "cond": [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+            "then_": [ [ "Literal", "body" ] ],
+            "else_": null,
+            "strip_before": false,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", " post" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "y",
+    [
+      "Template",
+      [
+        [ "Literal", "pre " ],
+        [
+          "If_directive",
+          {
+            "cond": [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+            "then_": [ [ "Literal", "other" ] ],
+            "else_": null,
+            "strip_before": false,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", " post" ]
+      ]
+    ]
+  ]
+]

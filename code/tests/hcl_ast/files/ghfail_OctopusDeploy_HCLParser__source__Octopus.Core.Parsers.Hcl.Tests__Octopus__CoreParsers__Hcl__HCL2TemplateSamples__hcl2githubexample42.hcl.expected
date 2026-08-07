@@ -1,0 +1,455 @@
+[
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "aws" ] ],
+      "body": [
+        [ "Attribute", "alias", [ "String", "ingress" ] ],
+        [
+          "Attribute",
+          "region",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "ingress_region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "ingress-vpc" ] ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.ingress" ] ],
+        [
+          "Attribute",
+          "id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "ingress_vpc_id" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_subnet_ids" ], [ "Lit", "ingress-admin" ] ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.ingress" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ]
+                          ],
+                          [ "A_string", "ingress-vpc" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "tag:Name" ] ],
+              [
+                "Attribute",
+                "values",
+                [ "Tuple", [ [ "String", "*admin subnet*" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "ingress-admin" ] ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.ingress" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "aws_subnet_ids" ]
+                                  ]
+                                ],
+                                [ "A_string", "ingress-admin" ]
+                              ]
+                            ],
+                            [ "A_string", "ids" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "element",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "flatten",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "data" ],
+                                          [ "A_string", "aws_subnet_ids" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "ingress-admin" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "ids" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_route_tables" ], [ "Lit", "ingress-admin" ] ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.ingress" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "aws_vpc" ] ]
+                          ],
+                          [ "A_string", "ingress-vpc" ]
+                        ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "tag:Name" ] ],
+              [
+                "Attribute",
+                "values",
+                [ "Tuple", [ [ "String", "*admin route table*" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_network_interface" ], [ "Lit", "ingress-bastion-nic" ]
+      ],
+      "body": [
+        [ "Attribute", "provider", [ "String", "aws.ingress" ] ],
+        [
+          "Attribute",
+          "count",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "aws_subnet_ids" ]
+                                  ]
+                                ],
+                                [ "A_string", "ingress-admin" ]
+                              ]
+                            ],
+                            [ "A_string", "ids" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "attachment.instance-id" ] ],
+              [
+                "Attribute",
+                "values",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "ingress_bastion_id" ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "filter",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "subnet-id" ] ],
+              [
+                "Attribute",
+                "values",
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [
+                              "Fun_call",
+                              [
+                                "element",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "flatten",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "data" ],
+                                                    [
+                                                      "A_string",
+                                                      "aws_subnet_ids"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string", "ingress-admin"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "ids" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

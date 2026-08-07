@@ -1,0 +1,14 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Cond",
+      {
+        "if_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "enabled" ] ] ],
+        "then_": [ "String", "yes" ],
+        "else_": [ "String", "no" ]
+      }
+    ]
+  ]
+]

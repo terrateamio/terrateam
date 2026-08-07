@@ -1,0 +1,768 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_wafv2_web_acl" ], [ "Lit", "covidportal_acl" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "covid_portal" ] ],
+        [ "Attribute", "scope", [ "String", "REGIONAL" ] ],
+        [
+          "Block",
+          {
+            "type_": "default_action",
+            "labels": [],
+            "body": [
+              [ "Block", { "type_": "allow", "labels": [], "body": [] } ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [ "String", "AWSManagedRulesAmazonIpReputationList" ]
+              ],
+              [ "Attribute", "priority", [ "Int", 1 ] ],
+              [
+                "Block",
+                {
+                  "type_": "override_action",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block", { "type_": "none", "labels": [], "body": [] }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "statement",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "managed_rule_group_statement",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "name",
+                            [
+                              "String",
+                              "AWSManagedRulesAmazonIpReputationList"
+                            ]
+                          ],
+                          [ "Attribute", "vendor_name", [ "String", "AWS" ] ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "visibility_config",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "cloudwatch_metrics_enabled",
+                      [ "Bool", true ]
+                    ],
+                    [
+                      "Attribute",
+                      "metric_name",
+                      [ "String", "AWSManagedRulesAmazonIpReputationList" ]
+                    ],
+                    [
+                      "Attribute",
+                      "sampled_requests_enabled",
+                      [ "Bool", true ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [ "String", "AWSManagedRulesCommonRuleSet" ]
+              ],
+              [ "Attribute", "priority", [ "Int", 2 ] ],
+              [
+                "Block",
+                {
+                  "type_": "override_action",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block", { "type_": "none", "labels": [], "body": [] }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "statement",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "managed_rule_group_statement",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "name",
+                            [ "String", "AWSManagedRulesCommonRuleSet" ]
+                          ],
+                          [ "Attribute", "vendor_name", [ "String", "AWS" ] ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "visibility_config",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "cloudwatch_metrics_enabled",
+                      [ "Bool", true ]
+                    ],
+                    [
+                      "Attribute",
+                      "metric_name",
+                      [ "String", "AWSManagedRulesCommonRuleSet" ]
+                    ],
+                    [
+                      "Attribute",
+                      "sampled_requests_enabled",
+                      [ "Bool", true ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [ "String", "AWSManagedRulesKnownBadInputsRuleSet" ]
+              ],
+              [ "Attribute", "priority", [ "Int", 3 ] ],
+              [
+                "Block",
+                {
+                  "type_": "override_action",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block", { "type_": "none", "labels": [], "body": [] }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "statement",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "managed_rule_group_statement",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "name",
+                            [
+                              "String",
+                              "AWSManagedRulesKnownBadInputsRuleSet"
+                            ]
+                          ],
+                          [ "Attribute", "vendor_name", [ "String", "AWS" ] ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "visibility_config",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "cloudwatch_metrics_enabled",
+                      [ "Bool", true ]
+                    ],
+                    [
+                      "Attribute",
+                      "metric_name",
+                      [ "String", "AWSManagedRulesKnownBadInputsRuleSet" ]
+                    ],
+                    [
+                      "Attribute",
+                      "sampled_requests_enabled",
+                      [ "Bool", true ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "name",
+                [ "String", "AWSManagedRulesLinuxRuleSet" ]
+              ],
+              [ "Attribute", "priority", [ "Int", 4 ] ],
+              [
+                "Block",
+                {
+                  "type_": "override_action",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block", { "type_": "none", "labels": [], "body": [] }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "statement",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "managed_rule_group_statement",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "name",
+                            [ "String", "AWSManagedRulesLinuxRuleSet" ]
+                          ],
+                          [ "Attribute", "vendor_name", [ "String", "AWS" ] ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "visibility_config",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "cloudwatch_metrics_enabled",
+                      [ "Bool", true ]
+                    ],
+                    [
+                      "Attribute",
+                      "metric_name",
+                      [ "String", "AWSManagedRulesLinuxRuleSet" ]
+                    ],
+                    [
+                      "Attribute",
+                      "sampled_requests_enabled",
+                      [ "Bool", true ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "LoginPageLimit" ] ],
+              [ "Attribute", "priority", [ "Int", 101 ] ],
+              [
+                "Block",
+                {
+                  "type_": "action",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block", { "type_": "block", "labels": [], "body": [] }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "statement",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "rate_based_statement",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "limit", [ "Int", 100 ] ],
+                          [
+                            "Attribute",
+                            "aggregate_key_type",
+                            [ "String", "IP" ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "scope_down_statement",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "byte_match_statement",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "positional_constraint",
+                                        [ "String", "CONTAINS" ]
+                                      ],
+                                      [
+                                        "Block",
+                                        {
+                                          "type_": "field_to_match",
+                                          "labels": [],
+                                          "body": [
+                                            [
+                                              "Block",
+                                              {
+                                                "type_": "uri_path",
+                                                "labels": [],
+                                                "body": []
+                                              }
+                                            ]
+                                          ]
+                                        }
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "search_string",
+                                        [ "String", "/login" ]
+                                      ],
+                                      [
+                                        "Block",
+                                        {
+                                          "type_": "text_transformation",
+                                          "labels": [],
+                                          "body": [
+                                            [
+                                              "Attribute",
+                                              "priority",
+                                              [ "Int", 1 ]
+                                            ],
+                                            [
+                                              "Attribute",
+                                              "type",
+                                              [
+                                                "String",
+                                                "COMPRESS_WHITE_SPACE"
+                                              ]
+                                            ]
+                                          ]
+                                        }
+                                      ],
+                                      [
+                                        "Block",
+                                        {
+                                          "type_": "text_transformation",
+                                          "labels": [],
+                                          "body": [
+                                            [
+                                              "Attribute",
+                                              "priority",
+                                              [ "Int", 2 ]
+                                            ],
+                                            [
+                                              "Attribute",
+                                              "type",
+                                              [ "String", "LOWERCASE" ]
+                                            ]
+                                          ]
+                                        }
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "visibility_config",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "cloudwatch_metrics_enabled",
+                      [ "Bool", true ]
+                    ],
+                    [
+                      "Attribute",
+                      "metric_name",
+                      [ "String", "LoginPageRateLimit" ]
+                    ],
+                    [
+                      "Attribute",
+                      "sampled_requests_enabled",
+                      [ "Bool", true ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "PostRequestRateLimit" ] ],
+              [ "Attribute", "priority", [ "Int", 102 ] ],
+              [
+                "Block",
+                {
+                  "type_": "action",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block", { "type_": "block", "labels": [], "body": [] }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "statement",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Block",
+                      {
+                        "type_": "rate_based_statement",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "limit", [ "Int", 100 ] ],
+                          [
+                            "Attribute",
+                            "aggregate_key_type",
+                            [ "String", "IP" ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "scope_down_statement",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Block",
+                                  {
+                                    "type_": "byte_match_statement",
+                                    "labels": [],
+                                    "body": [
+                                      [
+                                        "Attribute",
+                                        "positional_constraint",
+                                        [ "String", "EXACTLY" ]
+                                      ],
+                                      [
+                                        "Block",
+                                        {
+                                          "type_": "field_to_match",
+                                          "labels": [],
+                                          "body": [
+                                            [
+                                              "Block",
+                                              {
+                                                "type_": "method",
+                                                "labels": [],
+                                                "body": []
+                                              }
+                                            ]
+                                          ]
+                                        }
+                                      ],
+                                      [
+                                        "Attribute",
+                                        "search_string",
+                                        [ "String", "post" ]
+                                      ],
+                                      [
+                                        "Block",
+                                        {
+                                          "type_": "text_transformation",
+                                          "labels": [],
+                                          "body": [
+                                            [
+                                              "Attribute",
+                                              "priority",
+                                              [ "Int", 1 ]
+                                            ],
+                                            [
+                                              "Attribute",
+                                              "type",
+                                              [ "String", "LOWERCASE" ]
+                                            ]
+                                          ]
+                                        }
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "visibility_config",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "cloudwatch_metrics_enabled",
+                      [ "Bool", true ]
+                    ],
+                    [
+                      "Attribute",
+                      "metric_name",
+                      [ "String", "PostRequestRateLimit" ]
+                    ],
+                    [
+                      "Attribute",
+                      "sampled_requests_enabled",
+                      [ "Bool", true ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "visibility_config",
+            "labels": [],
+            "body": [
+              [ "Attribute", "cloudwatch_metrics_enabled", [ "Bool", true ] ],
+              [
+                "Attribute",
+                "metric_name",
+                [ "String", "covid_portal_global_rule" ]
+              ],
+              [ "Attribute", "sampled_requests_enabled", [ "Bool", false ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_wafv2_web_acl_association" ],
+        [ "Lit", "covid_portal_assocation" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr", [ [ "Id", "aws_lb" ], [ "A_string", "covidportal" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "web_acl_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_wafv2_web_acl" ],
+                  [ "A_string", "covidportal_acl" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_wafv2_web_acl_logging_configuration" ],
+        [ "Lit", "firehose_waf_logs_portal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "log_destination_configs",
+          [
+            "Tuple",
+            [
+              [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Id", "aws_kinesis_firehose_delivery_stream"
+                              ],
+                              [ "A_string", "firehose_waf_logs" ]
+                            ]
+                          ],
+                          [ "A_string", "arn" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_wafv2_web_acl" ],
+                  [ "A_string", "covidportal_acl" ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

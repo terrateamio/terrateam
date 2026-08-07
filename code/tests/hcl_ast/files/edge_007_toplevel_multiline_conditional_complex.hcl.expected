@@ -1,0 +1,25 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Cond",
+      {
+        "if_": [
+          "Log_and",
+          [
+            [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+            [ "Attr", [ [ "Id", "var" ], [ "A_string", "b" ] ] ]
+          ]
+        ],
+        "then_": [
+          "Fun_call",
+          [
+            "func", [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "c" ] ] ] ]
+          ]
+        ],
+        "else_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "d" ] ] ]
+      }
+    ]
+  ]
+]

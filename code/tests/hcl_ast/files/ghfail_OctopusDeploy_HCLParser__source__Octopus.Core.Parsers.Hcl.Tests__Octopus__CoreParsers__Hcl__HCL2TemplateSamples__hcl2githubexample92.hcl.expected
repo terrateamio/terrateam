@@ -1,0 +1,251 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "template_file" ], [ "Lit", "user_data" ] ],
+      "body": [
+        [
+          "Attribute",
+          "template",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/userdata.sh" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_launch_configuration" ], [ "Lit", "launch_config" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "sangyul-test" ] ],
+        [
+          "Attribute",
+          "image_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "ami_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "instance_type",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "instance_type" ] ] ]
+        ],
+        [
+          "Attribute",
+          "security_groups",
+          [
+            "Tuple",
+            [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "sg" ] ] ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "user_data",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "template_file" ] ]
+                  ],
+                  [ "A_string", "user_data" ]
+                ]
+              ],
+              [ "A_string", "rendered" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [ "Attribute", "create_before_destroy", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_autoscaling_group" ], [ "Lit", "auto_group" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "sangyul-test" ] ],
+        [
+          "Attribute",
+          "launch_configuration",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_launch_configuration" ],
+                  [ "A_string", "launch_config" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_zone_identifier",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "Idx",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "subnet" ] ] ],
+                    [ "Splat" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "load_balancers",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "aws_elb" ], [ "A_string", "elb" ] ] ],
+                  [ "A_string", "name" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "health_check_type", [ "String", "ELB" ] ],
+        [ "Attribute", "min_size", [ "Int", 2 ] ],
+        [ "Attribute", "max_size", [ "Int", 4 ] ],
+        [
+          "Block",
+          {
+            "type_": "tag",
+            "labels": [],
+            "body": [
+              [ "Attribute", "key", [ "String", "Name" ] ],
+              [
+                "Attribute",
+                "value",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+              ],
+              [ "Attribute", "propagate_at_launch", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_elb" ], [ "Lit", "elb" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "security_groups",
+          [
+            "Tuple",
+            [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "sg" ] ] ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnets",
+          [
+            "Fun_call",
+            [
+              "flatten",
+              [
+                [
+                  "Idx",
+                  [
+                    [ "Attr", [ [ "Id", "var" ], [ "A_string", "subnet" ] ] ],
+                    [ "Splat" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "listener",
+            "labels": [],
+            "body": [
+              [ "Attribute", "lb_port", [ "Int", 80 ] ],
+              [ "Attribute", "lb_protocol", [ "String", "http" ] ],
+              [ "Attribute", "instance_port", [ "Int", 80 ] ],
+              [ "Attribute", "instance_protocol", [ "String", "http" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "health_check",
+            "labels": [],
+            "body": [
+              [ "Attribute", "healthy_threshold", [ "Int", 2 ] ],
+              [ "Attribute", "unhealthy_threshold", [ "Int", 2 ] ],
+              [ "Attribute", "timeout", [ "Int", 3 ] ],
+              [ "Attribute", "interval", [ "Int", 30 ] ],
+              [ "Attribute", "target", [ "String", "http:80/" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

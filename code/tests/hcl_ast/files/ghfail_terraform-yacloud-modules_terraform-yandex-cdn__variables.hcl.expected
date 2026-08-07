@@ -1,0 +1,1753 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "folder_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    (Optional) The ID of the Yandex Cloud Folder that the resources belongs to.\n\n    Allows to create bucket in different folder.\n    It will try to create bucket using IAM-token in provider config, not using access_key.\n    If omitted, folder_id specified in provider config and access_key is used.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "labels" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "A set of labels that will be applied to all resources in this module."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cname" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Primary domain name for content distribution." ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [
+                              "String",
+                              "^[a-zA-Z0-9][a-zA-Z0-9.-]{1,61}[a-zA-Z0-9]\\.[a-zA-Z]{2,}$"
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "cname" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Invalid domain name format. Must be a valid FQDN."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "secondary_hostnames" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Additional domain names for content distribution." ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "hostname", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "secondary_hostnames" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [
+                                        "String",
+                                        "^[a-zA-Z0-9][a-zA-Z0-9.-]{1,61}[a-zA-Z0-9]\\.[a-zA-Z]{2,}$"
+                                      ],
+                                      [ "Id", "hostname" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Invalid domain name format in secondary_hostnames. All values must be valid FQDNs."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "active" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    End user access to content is indicated by the following flag:\n    true - indicates that CDN content is available to clients;\n    false - indicates that content access is disabled.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "provider_type" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    CDN provider is a content delivery service provider. Possible values: \"ourcdn\" (default) or \"gcore\"\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "String", "ourcdn" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "origin_protocol" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Origin protocol for sources" ]
+        ],
+        [ "Attribute", "default", [ "String", "http" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "origin_protocol" ]
+                          ]
+                        ],
+                        [ "String", "http" ]
+                      ]
+                    ],
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "origin_protocol" ]
+                          ]
+                        ],
+                        [ "String", "https" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Invalid value for origin_protocol.type. Allowed values are 'http' or 'https'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "disable_cache" ] ],
+      "body": [
+        [ "Attribute", "description", [ "String", "Setup a cache status." ] ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "edge_cache_settings" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Content will be cached according to origin cache settings.\n    The value applies for a response with codes 200, 201, 204, 206, 301, 302, 303, 304, 307, 308\n    if an origin server does not have caching HTTP headers.\n    Responses with other codes will not be cached.\n    The default value is 345600.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "345600" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[0-9]+$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "edge_cache_settings" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "edge_cache_settings must be a numeric string containing only digits."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "edge_cache_settings_codes_enabled" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "If true, edge cache settings will be enabled" ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "edge_cache_settings_custom_values" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "edge_cache_settings_value" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "345600" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "browser_cache_settings" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Set up a cache period for the end-users browser.\n    Content will be cached due to origin settings.\n    If there are no cache settings on your origin,\n    the content will not be cached.\n    The list of HTTP response codes that can be cached in browsers:\n    200, 201, 204, 206, 301, 302, 303, 304, 307, 308.\n    Other response codes will not be cached.\n    The default value is 0.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "0" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [
+                            [ "String", "^[0-9]+$" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "browser_cache_settings" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "browser_cache_settings must be a numeric string containing only digits."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cache_http_headers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "List of HTTP headers that must be included in responses to clients."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ignore_query_params" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Files with different query parameters are cached as objects with the same key\n    regardless of the parameter value. Selected by default.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "query_params_whitelist" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Files with the specified query parameters are cached as objects with different keys,\n    files with other parameters are cached as objects with the same key.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "query_params_blacklist" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Files with the specified query parameters are cached as objects with the same key,\n    files with other parameters are cached as objects with different keys.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "slice" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Files larger than 10 MB will be requested and cached in parts\n    (no larger than 10 MB each part). It reduces time to first byte.\n    The origin must support HTTP Range requests.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "stale" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    List of errors which instruct CDN servers to serve stale content to clients. Possible values: error, http_403, http_404, http_429, http_500, http_502, http_503, http_504, invalid_header, timeout, updating.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "fetched_compressed" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Option helps you to reduce the bandwidth between origin and CDN servers.\n    Also, content delivery speed becomes higher because of reducing the time\n    for compressing files in a CDN.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "gzip_on" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    GZip compression at CDN servers reduces file size by 70% and can be as high as 90%.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "redirect_http_to_https" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Parameter for redirecting clients from HTTP to HTTPS;\n    possible values: 'true' or 'false'.\n    Available when using an SSL certificate, otherwise will be set as false.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "redirect_https_to_http" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Set up a redirect from HTTPS to HTTP." ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "custom_host_header" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Custom value for the Host header.\n    Your server must be able to process requests with the chosen header.\n    E.g.: \"ycprojektblue-storage.storage.yandexcloud.net\"\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "forward_host_header" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Choose the Forward Host header option if it is important\n    to send in the request to the Origin the same Host header\n    as was sent in the request to CDN server.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cors" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Parameter that lets browsers get access to selected resources\n    from a domain different to a domain from which the request is received.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [ [ "String", "*" ] ] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "allowed_http_methods" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    HTTP methods for your CDN content.\n    By default the following methods are allowed: GET, HEAD, PUT, PATCH, DELETE, OPTIONS.\n    In case some methods are not allowed to the user, they will get the 405 (Method Not Allowed) response.\n    If the method is not supported, the user gets the 501 (Not Implemented) response.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [ "String", "GET" ],
+              [ "String", "HEAD" ],
+              [ "String", "PUT" ],
+              [ "String", "PATCH" ],
+              [ "String", "DELETE" ],
+              [ "String", "OPTIONS" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "proxy_cache_methods_set" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Allows caching for GET, HEAD and POST requests.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "disable_proxy_force_ranges" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Disabling proxy force ranges." ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "static_request_headers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Set up custom headers that CDN servers will send in requests to origins."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "static_response_headers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Set up custom headers that CDN servers will send in response to clients."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ignore_cookie" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Set for ignoring cookie." ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "secure_key" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    The secret key. An arbitrary string from 6 to 32 characters long.\n    Required to clarify access to a resource using secure tokens\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "enable_ip_url_signing" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Optional parameter, `true` or `false`.\n    It restricts access to a CDN resource based on IP.\n    A trusted IP address is specified as a parameter outside a CDN resource when generating an [MD5](https://en.wikipedia.org/wiki/MD5) hash for a signed link.\n    If the parameter is not set, file access will be allowed from any IP.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ip_address_enabled" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "If true, IP Address ACL will be enabled" ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ip_address_acl_excepted_values" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    The list of specified IP addresses to be allowed or denied\n    depending on acl policy type.\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "ip", [] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string", "ip_address_acl_excepted_values"
+                              ]
+                            ]
+                          ],
+                          "output": [
+                            "Log_or",
+                            [
+                              [
+                                "Log_or",
+                                [
+                                  [
+                                    "Log_or",
+                                    [
+                                      [
+                                        "Log_or",
+                                        [
+                                          [
+                                            "Log_or",
+                                            [
+                                              [
+                                                "Log_or",
+                                                [
+                                                  [
+                                                    "Log_or",
+                                                    [
+                                                      [
+                                                        "Log_or",
+                                                        [
+                                                          [
+                                                            "Log_or",
+                                                            [
+                                                              [
+                                                                "Log_or",
+                                                                [
+                                                                  [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "can",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "regex",
+                                                                    [
+                                                                    [
+                                                                    "String",
+                                                                    "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "ip"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ],
+                                                                  [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "can",
+                                                                    [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "regex",
+                                                                    [
+                                                                    [
+                                                                    "String",
+                                                                    "^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "ip"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "Fun_call",
+                                                                [
+                                                                  "can",
+                                                                  [
+                                                                    [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "regex",
+                                                                    [
+                                                                    [
+                                                                    "String",
+                                                                    "^::([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}$"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "ip"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "Fun_call",
+                                                            [
+                                                              "can",
+                                                              [
+                                                                [
+                                                                  "Fun_call",
+                                                                  [
+                                                                    "regex",
+                                                                    [
+                                                                    [
+                                                                    "String",
+                                                                    "^([0-9a-fA-F]{1,4}:){1,7}:$"
+                                                                    ],
+                                                                    [
+                                                                    "Id",
+                                                                    "ip"
+                                                                    ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "Fun_call",
+                                                        [
+                                                          "can",
+                                                          [
+                                                            [
+                                                              "Fun_call",
+                                                              [
+                                                                "regex",
+                                                                [
+                                                                  [
+                                                                    "String",
+                                                                    "^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$"
+                                                                  ],
+                                                                  [
+                                                                    "Id",
+                                                                    "ip"
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "can",
+                                                      [
+                                                        [
+                                                          "Fun_call",
+                                                          [
+                                                            "regex",
+                                                            [
+                                                              [
+                                                                "String",
+                                                                "^([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}$"
+                                                              ],
+                                                              [ "Id", "ip" ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "can",
+                                                  [
+                                                    [
+                                                      "Fun_call",
+                                                      [
+                                                        "regex",
+                                                        [
+                                                          [
+                                                            "String",
+                                                            "^([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}$"
+                                                          ],
+                                                          [ "Id", "ip" ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "can",
+                                              [
+                                                [
+                                                  "Fun_call",
+                                                  [
+                                                    "regex",
+                                                    [
+                                                      [
+                                                        "String",
+                                                        "^([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}$"
+                                                      ],
+                                                      [ "Id", "ip" ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "can",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "regex",
+                                                [
+                                                  [
+                                                    "String",
+                                                    "^([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}$"
+                                                  ],
+                                                  [ "Id", "ip" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "can",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "regex",
+                                            [
+                                              [
+                                                "String",
+                                                "^[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})$"
+                                              ],
+                                              [ "Id", "ip" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "can",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "regex",
+                                        [
+                                          [
+                                            "String",
+                                            "^:((:[0-9a-fA-F]{1,4}){1,7}|:)$"
+                                          ],
+                                          [ "Id", "ip" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Invalid IP address format. Must be a valid IPv4 or IPv6 address."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ip_address_acl_policy_type" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    The policy type for ip_address_acl option,\n    one of \"allow\" or \"deny\" values.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "allow" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [ [ "String", "allow" ], [ "String", "deny" ] ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "ip_address_acl_policy_type" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "ip_address_acl_policy_type must be either 'allow' or 'deny'."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "origin_group_use_next" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    If the option is active (has true value),\n    in case the origin responds with 4XX or 5XX codes, use the next origin from the list.\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "shielding" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "ID of the shielding location for CDN protection" ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rewrite_flag" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    Defines flag for the Rewrite option (default: `BREAK`).\n    Possible values:\n    - `LAST` - Stops processing of the current set of ngx_http_rewrite_module directives and starts a search for a new location matching changed URI.\n    - `BREAK` - Stops processing of the current set of the Rewrite option.\n    - `REDIRECT` - Returns a temporary redirect with the 302 code\n    - `PERMANENT` - Returns a permanent redirect with the 301 code\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "rewrite_pattern" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    An option for changing or redirecting query paths. The value must have the following format:\n    `<source path> <destination path>`, where both paths are regular expressions which use at least one group.\n    Example: `/foo/(.*) /bar/$1`\n"
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "origin_group_origins" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n    A map of objects representing the origins for the CDN origin group. Each object contains the following fields:\n    - enabled (optional, default: true): A boolean indicating whether the origin is enabled and used as a source for the CDN.\n    - source (required): The IP address or domain name of your origin (and the port).\n    - backup (optional, default: false): A boolean specifying whether the origin is used in its origin group as a backup. A backup origin is used when one of the active origins becomes unavailable.\n\n    Example:\n    {\n      origin1 = {\n        source = \"192.168.1.1:8080\"\n        backup = false\n      }\n      origin2 = {\n        source  = \"example.com:80\"\n        enabled = true\n        backup  = true\n      }\n    }\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "map",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "enabled" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", true ] ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "source" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "backup" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "bool" ], [ "Bool", false ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Gte",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "origin_group_origins" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 1 ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "At least one origin is required in origin_group_origins."
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "alltrue",
+                    [
+                      [
+                        "For_tuple",
+                        {
+                          "identifiers": [ "origin_key", [ "origin" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "origin_group_origins" ]
+                            ]
+                          ],
+                          "output": [
+                            "Fun_call",
+                            [
+                              "can",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "regex",
+                                    [
+                                      [
+                                        "String",
+                                        "^([a-zA-Z0-9][a-zA-Z0-9.-]{1,61}[a-zA-Z0-9]\\.[a-zA-Z]{2,}|(?:[0-9]{1,3}\\.){3}[0-9]{1,3}|localhost)(?::[0-9]{1,5})?$"
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "origin" ],
+                                          [ "A_string", "source" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "Invalid origin source format. Must be in format 'domain.com[:port]' or 'ip[:port]'. Port number should be 1-65535."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cdn_ssl_certificate_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String", "ID of user certificate in Yandex Certificate Manager."
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cm_issue_ssl_certificate" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "If true, Let's Encrypt certificate will be issued for cname"
+          ]
+        ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cm_add_challenge_records" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "If true, Certificate Manager challenge records will be created at dns_zone_id."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", false ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "dns_zone_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "ID of Yandex DNS zone, where certificate manager records will be created."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ]
+]

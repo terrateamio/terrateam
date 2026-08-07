@@ -1,0 +1,219 @@
+[
+  [
+    "Attribute",
+    "greeting",
+    [
+      "Template",
+      [
+        [ "Literal", "Hello, " ],
+        [
+          "If_directive",
+          {
+            "cond": [ "Not_equal", [ [ "Id", "name" ], [ "String", "" ] ] ],
+            "then_": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "name" ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ],
+            "else_": [ [ "Literal", "stranger" ] ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", "!" ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "status",
+    [
+      "Template",
+      [
+        [
+          "If_directive",
+          {
+            "cond": [ "Id", "enabled" ],
+            "then_": [ [ "Literal", "active" ] ],
+            "else_": null,
+            "strip_before": false,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "verdict",
+    [
+      "Template",
+      [
+        [
+          "If_directive",
+          {
+            "cond": [ "Gt", [ [ "Id", "score" ], [ "Int", 0 ] ] ],
+            "then_": [ [ "Literal", "pass" ] ],
+            "else_": [ [ "Literal", "fail" ] ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "strip_both",
+    [
+      "Template",
+      [
+        [
+          "If_directive",
+          {
+            "cond": [ "Id", "cond" ],
+            "then_": [ [ "Literal", "yes" ] ],
+            "else_": null,
+            "strip_before": true,
+            "strip_after": true
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "strip_before",
+    [
+      "Template",
+      [
+        [
+          "If_directive",
+          {
+            "cond": [ "Id", "cond" ],
+            "then_": [ [ "Literal", "yes" ] ],
+            "else_": null,
+            "strip_before": true,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "strip_after",
+    [
+      "Template",
+      [
+        [
+          "If_directive",
+          {
+            "cond": [ "Id", "cond" ],
+            "then_": [ [ "Literal", "yes" ] ],
+            "else_": null,
+            "strip_before": false,
+            "strip_after": true
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "strip_neither",
+    [
+      "Template",
+      [
+        [
+          "If_directive",
+          {
+            "cond": [ "Id", "cond" ],
+            "then_": [ [ "Literal", "yes" ] ],
+            "else_": null,
+            "strip_before": false,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "nested_interp",
+    [
+      "Template",
+      [
+        [
+          "If_directive",
+          {
+            "cond": [ "Id", "cond" ],
+            "then_": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "x" ],
+                  "strip_before": true,
+                  "strip_after": true
+                }
+              ]
+            ],
+            "else_": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "y" ],
+                  "strip_before": true,
+                  "strip_after": false
+                }
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "z" ],
+                  "strip_before": false,
+                  "strip_after": true
+                }
+              ]
+            ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "combo",
+    [
+      "Template",
+      [
+        [
+          "If_directive",
+          {
+            "cond": [ "Id", "ready" ],
+            "then_": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "name" ],
+                  "strip_before": true,
+                  "strip_after": true
+                }
+              ]
+            ],
+            "else_": [ [ "Literal", "fallback" ] ],
+            "strip_before": true,
+            "strip_after": true
+          }
+        ]
+      ]
+    ]
+  ]
+]

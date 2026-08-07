@@ -1,0 +1,512 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [ "Attribute", "required_version", [ "String", ">= 0.12" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "provider",
+      "labels": [ [ "Lit", "kubernetes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "config_context",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "kubectl_config_context_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "config_path",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "kubectl_config_path" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "tiller_namespace" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./modules/k8s-namespace" ] ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tiller_namespace" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "resource_namespace" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./modules/k8s-namespace" ] ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "resource_namespace" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "tiller_service_account" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/k8s-service-account" ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "service_account_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "tiller_namespace" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "num_rbac_roles", [ "Int", 2 ] ],
+        [
+          "Attribute",
+          "rbac_roles",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "module" ],
+                            [ "A_string", "tiller_namespace" ]
+                          ]
+                        ],
+                        [ "A_string", "rbac_tiller_metadata_access_role" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "namespace" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "module" ],
+                            [ "A_string", "tiller_namespace" ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "module" ],
+                            [ "A_string", "resource_namespace" ]
+                          ]
+                        ],
+                        [ "A_string", "rbac_tiller_resource_access_role" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "namespace" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "module" ],
+                            [ "A_string", "resource_namespace" ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [ "Object", [ [ [ "Bare", "app" ], [ "String", "tiller" ] ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "tiller" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./modules/k8s-tiller" ] ],
+        [
+          "Attribute",
+          "tiller_service_account_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "tiller_service_account" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tiller_service_account_token_secret_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "module" ],
+                  [ "A_string", "tiller_service_account" ]
+                ]
+              ],
+              [ "A_string", "token_secret_name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "tiller_namespace" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tiller_image_version",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tiller_version" ] ] ]
+        ],
+        [ "Attribute", "tiller_tls_gen_method", [ "String", "provider" ] ],
+        [
+          "Attribute",
+          "tiller_tls_subject",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tls_subject" ] ] ]
+        ],
+        [
+          "Attribute",
+          "private_key_algorithm",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "private_key_algorithm" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_key_ecdsa_curve",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "private_key_ecdsa_curve" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "private_key_rsa_bits",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "private_key_rsa_bits" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "helm_client_tls_certs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "./modules/k8s-helm-client-tls-certs" ]
+        ],
+        [
+          "Attribute",
+          "ca_tls_certificate_key_pair_secret_namespace",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "tiller" ] ] ],
+              [
+                "A_string",
+                "tiller_ca_tls_certificate_key_pair_secret_namespace"
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ca_tls_certificate_key_pair_secret_name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "module" ], [ "A_string", "tiller" ] ] ],
+              [
+                "A_string", "tiller_ca_tls_certificate_key_pair_secret_name"
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tls_subject",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "client_tls_subject" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tls_certificate_key_pair_secret_namespace",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "module" ], [ "A_string", "tiller_namespace" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tls_certificate_key_pair_secret_name",
+          [
+            "Template",
+            [
+              [ "Literal", "tiller-client-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Fun_call",
+                    [
+                      "md5",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "rbac_entity_id" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-certs" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tls_certificate_key_pair_secret_labels",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "gruntwork.io/tiller-namespace" ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "module" ],
+                        [ "A_string", "tiller_namespace" ]
+                      ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Quoted", "gruntwork.io/tiller-credentials" ],
+                [ "String", "true" ]
+              ],
+              [
+                [ "Quoted", "gruntwork.io/tiller-credentials-type" ],
+                [ "String", "client" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "rbac_entity_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "grant_helm_client_rbac_user" ]
+                    ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "grant_helm_client_rbac_user" ]
+                ]
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "grant_helm_client_rbac_group" ]
+                        ]
+                      ],
+                      [ "String", "" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "grant_helm_client_rbac_group" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Not_equal",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "grant_helm_client_rbac_service_account"
+                              ]
+                            ]
+                          ],
+                          [ "String", "" ]
+                        ]
+                      ],
+                      "then_": [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "grant_helm_client_rbac_service_account"
+                          ]
+                        ]
+                      ],
+                      "else_": [ "String", "" ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

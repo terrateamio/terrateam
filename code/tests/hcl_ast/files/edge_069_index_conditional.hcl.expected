@@ -1,0 +1,20 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Idx",
+      [
+        [ "Attr", [ [ "Id", "var" ], [ "A_string", "list" ] ] ],
+        [
+          "Cond",
+          {
+            "if_": [ "Attr", [ [ "Id", "var" ], [ "A_string", "flag" ] ] ],
+            "then_": [ "Int", 0 ],
+            "else_": [ "Int", 1 ]
+          }
+        ]
+      ]
+    ]
+  ]
+]

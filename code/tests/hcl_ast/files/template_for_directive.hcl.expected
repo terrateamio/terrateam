@@ -1,0 +1,257 @@
+[
+  [
+    "Attribute",
+    "list",
+    [
+      "Template",
+      [
+        [
+          "For_directive",
+          {
+            "vars": [ "item", null ],
+            "input": [ "Id", "items" ],
+            "body": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "item" ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ", " ]
+            ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "pairs",
+    [
+      "Template",
+      [
+        [
+          "For_directive",
+          {
+            "vars": [ "v", "k" ],
+            "input": [ "Id", "map" ],
+            "body": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "k" ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "=" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "v" ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "; " ]
+            ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "strip_both",
+    [
+      "Template",
+      [
+        [
+          "For_directive",
+          {
+            "vars": [ "x", null ],
+            "input": [ "Id", "xs" ],
+            "body": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "x" ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ],
+            "strip_before": true,
+            "strip_after": true
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "strip_before",
+    [
+      "Template",
+      [
+        [
+          "For_directive",
+          {
+            "vars": [ "x", null ],
+            "input": [ "Id", "xs" ],
+            "body": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "x" ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ],
+            "strip_before": true,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "strip_after",
+    [
+      "Template",
+      [
+        [
+          "For_directive",
+          {
+            "vars": [ "x", null ],
+            "input": [ "Id", "xs" ],
+            "body": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "x" ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ],
+            "strip_before": false,
+            "strip_after": true
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "strip_neither",
+    [
+      "Template",
+      [
+        [
+          "For_directive",
+          {
+            "vars": [ "x", null ],
+            "input": [ "Id", "xs" ],
+            "body": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "x" ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "body_interp",
+    [
+      "Template",
+      [
+        [
+          "For_directive",
+          {
+            "vars": [ "v", "k" ],
+            "input": [ "Id", "map" ],
+            "body": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "k" ],
+                  "strip_before": true,
+                  "strip_after": true
+                }
+              ],
+              [ "Literal", "=" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "v" ],
+                  "strip_before": false,
+                  "strip_after": true
+                }
+              ],
+              [ "Literal", "; " ]
+            ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "pairs_stripped",
+    [
+      "Template",
+      [
+        [
+          "For_directive",
+          {
+            "vars": [ "v", "k" ],
+            "input": [ "Id", "map" ],
+            "body": [
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "k" ],
+                  "strip_before": true,
+                  "strip_after": true
+                }
+              ],
+              [ "Literal", "=" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [ "Id", "v" ],
+                  "strip_before": true,
+                  "strip_after": true
+                }
+              ],
+              [ "Literal", "; " ]
+            ],
+            "strip_before": true,
+            "strip_after": true
+          }
+        ]
+      ]
+    ]
+  ]
+]

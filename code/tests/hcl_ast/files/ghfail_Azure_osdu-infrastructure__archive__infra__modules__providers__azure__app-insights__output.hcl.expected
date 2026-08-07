@@ -1,0 +1,71 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "app_insights_app_id" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The App ID associated with this Application Insights component"
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_insights" ],
+                  [ "A_string", "appinsights" ]
+                ]
+              ],
+              [ "A_string", "app_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "app_insights_instrumentation_key" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The Instrumentation Key for this Application Insights component."
+          ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_insights" ],
+                  [ "A_string", "appinsights" ]
+                ]
+              ],
+              [ "A_string", "instrumentation_key" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "sensitive", [ "Bool", true ] ]
+      ]
+    }
+  ]
+]

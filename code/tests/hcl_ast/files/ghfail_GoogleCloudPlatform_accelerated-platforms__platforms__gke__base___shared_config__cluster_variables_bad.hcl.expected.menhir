@@ -1,0 +1,1304 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "cluster_credentials_command_gke",
+          [
+            "Template",
+            [
+              [ "Literal", "gcloud container clusters get-credentials " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "cluster_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " --dns-endpoint --location " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "cluster_region" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " --project " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "cluster_project_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_credentials_command_gkee",
+          [
+            "Template",
+            [
+              [
+                "Literal",
+                "gcloud container fleet memberships get-credentials "
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "cluster_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", " --project " ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "cluster_project_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_credentials_command",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "cluster_use_connect_gateway" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "cluster_credentials_command_gkee" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "cluster_credentials_command_gke" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_gcsfuse_user_role",
+          [
+            "Template",
+            [
+              [ "Literal", "projects/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "cluster_project_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/roles/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "cluster_gcsfuse_user_role_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_gcsfuse_user_role_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "unique_identifier_prefix_underscore" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".gcsfuse.user." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "platform_custom_role_unique_suffix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_gcsfuse_viewer_role",
+          [
+            "Template",
+            [
+              [ "Literal", "projects/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "cluster_project_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "/roles/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "cluster_gcsfuse_viewer_role_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_gcsfuse_viewer_role_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "unique_identifier_prefix_underscore" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ".gcsfuse.viewer." ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "platform_custom_role_unique_suffix" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_name",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "unique_identifier_prefix" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_node_auto_provisioning_resource_limits",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "cluster_node_auto_provisioning_enabled" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [
+                    "A_string",
+                    "cluster_node_auto_provisioning_resource_limits"
+                  ]
+                ]
+              ],
+              "else_": [ "Tuple", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_node_pool_service_account_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [
+                        "A_string",
+                        "cluster_node_pool_default_service_account_id"
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [
+                    "A_string",
+                    "cluster_node_pool_default_service_account_id"
+                  ]
+                ]
+              ],
+              "else_": [
+                "Template",
+                [
+                  [ "Literal", "vm-" ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "cluster_name" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_node_pool_service_account_project_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [
+                        "A_string",
+                        "cluster_node_pool_default_service_account_project_id"
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [
+                    "A_string",
+                    "cluster_node_pool_default_service_account_project_id"
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "cluster_project_id" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_project_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cluster_project_id" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "cluster_project_id" ] ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "platform_default_project_id" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_region",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cluster_region" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_region" ] ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "platform_default_region" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "cluster_sa_roles",
+          [
+            "Tuple",
+            [
+              [ "String", "roles/artifactregistry.reader" ],
+              [ "String", "roles/autoscaling.metricsWriter" ],
+              [ "String", "roles/container.defaultNodeServiceAccount" ],
+              [ "String", "roles/logging.logWriter" ],
+              [ "String", "roles/monitoring.metricWriter" ],
+              [ "String", "roles/monitoring.viewer" ],
+              [ "String", "roles/serviceusage.serviceUsageConsumer" ],
+              [ "String", "roles/stackdriver.resourceMetadata.writer" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "kubeconfig_file_name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "cluster_project_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "cluster_name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_addons_ray_operator_enabled" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enable the Ray Operator add-on (https://cloud.google.com/kubernetes-engine/docs/add-on/ray-on-gke/concepts/overview)"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_auto_monitoring_config_scope" ] ],
+      "body": [
+        [ "Attribute", "default", [ "String", "ALL" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Whether or not to enable GKE Auto-Monitoring. Supported values include: ALL, NONE"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [ [ "String", "ALL" ], [ "String", "NONE" ] ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "cluster_auto_monitoring_config_scope"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "'cluster_auto_monitoring_config_scope' value is invalid"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_autopilot_enabled" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Bool", false ] ],
+        [ "Attribute", "description", [ "String", "GKE Autopilot cluster" ] ],
+        [ "Attribute", "type", [ "Id", "bool" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_binary_authorization_evaluation_mode" ] ],
+      "body": [
+        [ "Attribute", "default", [ "String", "DISABLED" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Mode of operation for Binary Authorization policy evaluation. Valid values are DISABLED and PROJECT_SINGLETON_POLICY_ENFORCE."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "DISABLED" ],
+                          [ "String", "PROJECT_SINGLETON_POLICY_ENFORCE" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "cluster_binary_authorization_evaluation_mode"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "'cluster_binary_authorization_evaluation_mode' value is invalid"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_check_custom_compute_classes_healthy" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Whether to check if the Custom Compute Classes are healthy."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_confidential_nodes_enabled" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Enable Confidential GKE Nodes for this node pool, to enforce encryption of data in-use. When setting this to true, ensure that the machine types you configured for your node pools support Confidential GKE Nodes. Ref: https://cloud.google.com/kubernetes-engine/docs/how-to/confidential-gke-nodes"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_database_encryption_state" ] ],
+      "body": [
+        [ "Attribute", "default", [ "String", "DECRYPTED" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The desired state of etcd encryption. ENCRYPTED or DECRYPTED"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "DECRYPTED" ],
+                          [ "String", "ENCRYPTED" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "cluster_database_encryption_state" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "'cluster_database_encryption_state' value is invalid"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_database_encryption_key_name" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Name of CloudKMS key to use for the encryption of secrets in etcd. Ex. projects/my-project/locations/global/keyRings/my-ring/cryptoKeys/my-key"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_enable_private_endpoint" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "When true, the cluster's private endpoint is used as the cluster endpoint and access through the public endpoint is disabled. When false, either endpoint can be used. This field only applies to private clusters, when enable_private_nodes is true."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_gateway_api_config_channel" ] ],
+      "body": [
+        [ "Attribute", "default", [ "String", "CHANNEL_STANDARD" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Which Gateway Api channel should be used. CHANNEL_DISABLED, CHANNEL_EXPERIMENTAL or CHANNEL_STANDARD"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "CHANNEL_DISABLED" ],
+                          [ "String", "CHANNEL_EXPERIMENTAL" ],
+                          [ "String", "CHANNEL_STANDARD" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string", "cluster_gateway_api_config_channel"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "'cluster_gateway_api_config_channel' value is invalid"
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_gpu_driver_version" ] ],
+      "body": [
+        [ "Attribute", "default", [ "String", "LATEST" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Mode for how the GPU driver is installed." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Fun_call",
+                  [
+                    "contains",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [ "String", "DEFAULT" ],
+                          [ "String", "GPU_DRIVER_VERSION_UNSPECIFIED" ],
+                          [ "String", "INSTALLATION_DISABLED" ],
+                          [ "String", "LATEST" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "cluster_gpu_driver_version" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [ "String", "'gpu_driver_version' value is invalid" ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_master_global_access_enabled" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Whether the cluster master is accessible globally or not."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_node_auto_provisioning_enabled" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Enable node auto-provisioning on the cluster." ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [
+        [ "Lit", "cluster_node_auto_provisioning_resource_limits" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "default",
+          [
+            "Tuple",
+            [
+              [
+                "Object",
+                [ [ [ "Bare", "resource_type" ], [ "String", "cpu" ] ] ]
+              ],
+              [
+                "Object",
+                [ [ [ "Bare", "resource_type" ], [ "String", "memory" ] ] ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "nvidia-a100-80gb" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "nvidia-h100-80gb" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "nvidia-h100-mega-80gb" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [ [ "Bare", "resource_type" ], [ "String", "nvidia-l4" ] ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "nvidia-tesla-a100" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "nvidia-tesla-k80" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "nvidia-tesla-p4" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "nvidia-tesla-p100" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "nvidia-tesla-t4" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "nvidia-tesla-v100" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "tpu-v4-podslice" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "tpu-v5-lite-podslice" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "tpu-v5p-slice" ]
+                  ]
+                ]
+              ],
+              [
+                "Object",
+                [
+                  [
+                    [ "Bare", "resource_type" ],
+                    [ "String", "tpu-v6e-slice" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Resource limits to set if using node auto-provisioning."
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "maximum" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [
+                                  [ "Id", "number" ],
+                                  [ "Float", 9.223372036854776e+18 ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "minimum" ],
+                            [
+                              "Fun_call",
+                              [
+                                "optional",
+                                [ [ "Id", "number" ], [ "Int", 0 ] ]
+                              ]
+                            ]
+                          ],
+                          [ [ "Bare", "resource_type" ], [ "Id", "string" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_node_pool_default_service_account_id" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The ID of the default service account to use for the cluster node pools."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [
+        [ "Lit", "cluster_node_pool_default_service_account_project_id" ]
+      ],
+      "body": [
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The project ID of the default service account to use for the cluster node pools."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_private_endpoint_subnetwork" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Subnetwork in cluster's network where master's endpoint will be provisioned."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_project_id" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "The GCP project where the cluster resources will be created"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_region" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Region where cluster resources will be created." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_system_node_pool_machine_type" ] ],
+      "body": [
+        [ "Attribute", "default", [ "String", "n4-standard-4" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Machine type to use for the system node pool." ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "cluster_use_connect_gateway" ] ],
+      "body": [
+        [ "Attribute", "default", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Use Connect gateway to connect to the cluster, requires GKE Enterprise. (https://cloud.google.com/kubernetes-engine/enterprise/multicluster-management/gateway)"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ]
+      ]
+    }
+  ]
+]

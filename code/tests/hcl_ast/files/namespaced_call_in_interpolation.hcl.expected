@@ -1,0 +1,27 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Template",
+      [
+        [ "Literal", "before " ],
+        [
+          "Interpolation",
+          {
+            "expr": [
+              "Fun_call",
+              [
+                "provider::aws::arn_parse",
+                [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "arn" ] ] ] ]
+              ]
+            ],
+            "strip_before": false,
+            "strip_after": false
+          }
+        ],
+        [ "Literal", " after" ]
+      ]
+    ]
+  ]
+]

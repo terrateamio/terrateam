@@ -1,0 +1,268 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition" ], [ "Lit", "aws-s3" ]
+      ],
+      "body": [
+        [ "Attribute", "driver_type", [ "String", "humanitec/container" ] ],
+        [ "Attribute", "id", [ "String", "aws-s3" ] ],
+        [ "Attribute", "name", [ "String", "aws-s3" ] ],
+        [ "Attribute", "type", [ "String", "s3" ] ],
+        [ "Attribute", "driver_account", [ "String", "aws-ref-arch" ] ],
+        [
+          "Attribute",
+          "driver_inputs",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "values_string" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "job" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "image" ],
+                                  [ "String", "hashicorp/terraform:1.5.7" ]
+                                ],
+                                [
+                                  [ "Quoted", "command" ],
+                                  [
+                                    "Tuple",
+                                    [
+                                      [ "String", "/bin/sh" ],
+                                      [
+                                        "String",
+                                        "/home/runneruser/workspace/run.sh"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "shared_directory" ],
+                                  [ "String", "/home/runneruser/workspace" ]
+                                ],
+                                [
+                                  [ "Quoted", "namespace" ],
+                                  [ "String", "humanitec-runner" ]
+                                ],
+                                [
+                                  [ "Quoted", "service_account" ],
+                                  [ "String", "humanitec-runner" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "cluster" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "account" ],
+                                  [ "String", "my-org/my-aws-cloud-account" ]
+                                ],
+                                [
+                                  [ "Quoted", "cluster" ],
+                                  [
+                                    "String",
+                                    "${resources[\"k8s-cluster.default#k8s-cluster\"].values}"
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "credentials_config" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "environment" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Quoted", "AWS_ACCESS_KEY_ID" ],
+                                        [ "String", "AccessKeyId" ]
+                                      ],
+                                      [
+                                        [ "Quoted", "AWS_SECRET_ACCESS_KEY" ],
+                                        [ "String", "SecretAccessKey" ]
+                                      ],
+                                      [
+                                        [ "Quoted", "AWS_SESSION_TOKEN" ],
+                                        [ "String", "SessionToken" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Quoted", "files" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "run.sh" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\n#!/bin/sh\n\n# NOTE: This script is written to be POSIX shell compatible.\n\n# run_cmd runs the command provided in its input args.\n# If the command fails, STDERR from the command is written to ERROR_FILE and\n# also to STDERR and the script exists with exit code 1.\nrun_cmd ()\n{\n    if ! \"$@\" 2> \"$\\{ERROR_FILE}\"\n    then\n        echo\n        echo \"FAILED: $@\"\n        cat \"$\\{ERROR_FILE}\" 1>&2\n        exit 1\n    fi\n}\n\nif ! [ -d \"$\\{SCRIPTS_DIRECTORY}\" ]\nthen\n    echo \"SCRIPTS_DIRECTORY does not exist: \\\"$\\{SCRIPTS_DIRECTORY}\"\\\" > \"$\\{ERROR_FILE}\"\n    cat \"$\\{ERROR_FILE}\" 1>&2\n    exit 1\nfi\n\nrun_cmd cd \"$\\{SCRIPTS_DIRECTORY}\"\n\nif [ \"$\\{ACTION}\" = \"create\" ]\nthen\n    run_cmd terraform init -no-color\n\n    run_cmd terraform apply -auto-approve -input=false -no-color\n    \n    # Terraform can export its outputs with the following schema:\n    #   {\n    #     \"output-name\": {\n    #       \"sensitive\": bool: true of output is marked sensitive\n    #       \"type\": string: the Terraform type of the output\n    #       \"value\": any: the JSON representation of the output value\n    #     },\n    #     ...\n    #   }\n    # \n    # The container driver, expects a simple map of output-name: value\n    #\n    # The hashicorp/terraform does not provide any special tooling to\n    # manipulate JSON. However, terraform accepts inputs and JSON so can use\n    # an additional run of the terraform CLI to manipulate the JSON.\n\n    # Create a new directory do convert the JSON outputs.\n    mkdir output_parse_container\n\n    # Generate a tfvars file in JSON format without any JSON tooling with a\n    # single variable of \"in\".\n    echo '{\"in\":' > output_parse_container/terraform.tfvars.json\n    run_cmd terraform output -json >> output_parse_container/terraform.tfvars.json\n    echo '}' >> output_parse_container/terraform.tfvars.json\n\n    # Move to a different directory and therefore a different terraform context\n    # This means if we run terraform apply, it will be independent from the main\n    # request above.\n    run_cmd cd output_parse_container\n\n    # Inject the Terraform code that converts the input into 2 separate maps\n    # depending on whether the value is marked as sensitive or not.\n    echo 'variable \"in\" { type = map }\noutput \"values\" { value = {for k, v in var.in: k => v.value if !v.sensitive} }\noutput \"secrets\" { value = {for k, v in var.in: k => v.value if v.sensitive} }' > parse.tf\n\n    echo\n    echo \"Converting outputs using terraform apply\"\n\n    # This terraform apply is just operating on the terraform.tfvars.json\n    # created above. It is running in a new terraform context and so will\n    # not influence the infrastructure deployed above\n    # Note: no need to run terraform init as no providers are required\n    run_cmd terraform apply -auto-approve -input=false -no-color > /dev/null\n\n    run_cmd terraform output -json values > \"$\\{OUTPUTS_FILE}\"\n\n    run_cmd terraform output -json secrets > \"$\\{SECRET_OUTPUTS_FILE}\"\n\n    echo \"Done.\"\n\nelif [ \"$\\{ACTION}\" = \"destroy\" ]\nthen\n    run_cmd terraform init -no-color\n\n    run_cmd terraform destroy -auto-approve -input=false -no-color\n\nelse\n  echo \"unrecognized ACTION: \\\"$\\{ACTION}\"\\\" > \"$\\{ERROR_FILE}\"\n  cat \"$\\{ERROR_FILE}\" 1>&2\n  exit 1\nfi\n"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "terraform.tfvars.json" ],
+                                  [
+                                    "String",
+                                    "{\"REGION\": \"eu-west-3\", \"BUCKET\": \"${context.app.id}-${context.env.id}\"}\n"
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "backend.tf" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\nterraform {\n  backend \"s3\" {\n    bucket = \"my-s3-to-store-tf-state\"\n    key = \"$${context.res.guresid}/state/terraform.tfstate\"\n    region = \"eu-central-1\"\n  }\n}\n"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "providers.tf" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\nterraform {\n  required_providers {\n    aws = {\n      source = \"hashicorp/aws\"\n      version = \"~> 5.72.0\"\n    }\n  }\n}\n"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "vars.tf" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\nvariable \"REGION\" {\n    type = string\n}\n\nvariable \"BUCKET\" {\n    type = string\n}\n"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Quoted", "main.tf" ],
+                                  [
+                                    "Heredoc",
+                                    [
+                                      "END_OF_TEXT",
+                                      "\nprovider \"aws\" {\n  region     = var.REGION\n  default_tags {\n    tags = {\n      CreatedBy = \"Humanitec\"\n    }\n  }\n}\n\nresource \"random_string\" \"bucket_suffix\" {\n  length           = 5\n  special          = false\n  upper            = false\n}\n\nmodule \"aws_s3\" {\n  source = \"terraform-aws-modules/s3-bucket/aws\"\n  bucket = format(\"%s-%s\", var.BUCKET, random_string.bucket_suffix.result)\n  acl    = \"private\"\n  force_destroy = true\n  control_object_ownership = true\n  object_ownership         = \"BucketOwnerPreferred\"\n}\n\noutput \"region\" {\n  value = module.aws_s3.s3_bucket_region\n}\n\noutput \"bucket\" {\n  value = module.aws_s3.s3_bucket_id\n}\n"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "secret_refs" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Quoted", "cluster" ],
+                            [
+                              "Object",
+                              [
+                                [
+                                  [ "Quoted", "agent_url" ],
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Quoted", "value" ],
+                                        [
+                                          "String",
+                                          "${resources['agent.default#runner'].outputs.url}"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "humanitec_resource_definition_criteria" ],
+        [ "Lit", "aws-s3_criteria_0" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "resource_definition_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "resource" ],
+                      [ "A_string", "humanitec_resource_definition" ]
+                    ]
+                  ],
+                  [ "A_string", "aws-s3" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "env_type", [ "String", "development" ] ],
+        [ "Attribute", "app_id", [ "String", "container-test" ] ]
+      ]
+    }
+  ]
+]

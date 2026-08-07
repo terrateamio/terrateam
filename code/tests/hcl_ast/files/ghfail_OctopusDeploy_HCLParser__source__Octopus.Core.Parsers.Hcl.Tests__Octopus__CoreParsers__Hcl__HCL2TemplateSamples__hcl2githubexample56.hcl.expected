@@ -1,0 +1,420 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_metric_alarm" ], [ "Lit", "this" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "create_metric_alarm" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "alarm_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "alarm_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "alarm_description",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "alarm_description" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "actions_enabled",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "actions_enabled" ] ] ]
+        ],
+        [
+          "Attribute",
+          "alarm_actions",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "alarm_actions" ] ] ]
+        ],
+        [
+          "Attribute",
+          "ok_actions",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "ok_actions" ] ] ]
+        ],
+        [
+          "Attribute",
+          "insufficient_data_actions",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "insufficient_data_actions" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "comparison_operator",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "comparison_operator" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "evaluation_periods",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "evaluation_periods" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "threshold",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "threshold" ] ] ]
+        ],
+        [
+          "Attribute",
+          "unit",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "unit" ] ] ]
+        ],
+        [
+          "Attribute",
+          "datapoints_to_alarm",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "datapoints_to_alarm" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "treat_missing_data",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "treat_missing_data" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "evaluate_low_sample_count_percentiles",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "evaluate_low_sample_count_percentiles" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metric_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "metric_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "namespace",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "namespace" ] ] ]
+        ],
+        [
+          "Attribute",
+          "period",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "period" ] ] ]
+        ],
+        [
+          "Attribute",
+          "statistic",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "statistic" ] ] ]
+        ],
+        [
+          "Attribute",
+          "extended_statistic",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "extended_statistic" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dimensions",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "dimensions" ] ] ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "metric_query" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "metric_query" ] ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "id",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "metric_query" ],
+                                [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "id" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "label",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "metric_query" ],
+                                [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "label" ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "return_data",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "metric_query" ],
+                                [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "return_data" ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "expression",
+                      [
+                        "Fun_call",
+                        [
+                          "lookup",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "metric_query" ],
+                                [ "A_string", "value" ]
+                              ]
+                            ],
+                            [ "String", "expression" ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "dynamic",
+                        "labels": [ [ "Lit", "metric" ] ],
+                        "body": [
+                          [
+                            "Attribute",
+                            "for_each",
+                            [
+                              "Fun_call",
+                              [
+                                "lookup",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "metric_query" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "String", "metric" ],
+                                  [ "Tuple", [] ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "content",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "metric_name",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "metric" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "String", "metric_name" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "namespace",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "metric" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "String", "namespace" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "period",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "metric" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "String", "period" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "stat",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "metric" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "String", "stat" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "unit",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "metric" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "String", "unit" ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attribute",
+                                  "dimensions",
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "lookup",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "metric" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "String", "dimensions" ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

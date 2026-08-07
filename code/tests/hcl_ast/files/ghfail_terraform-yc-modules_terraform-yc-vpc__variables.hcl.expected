@@ -1,0 +1,794 @@
+[
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "create_vpc" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Shows whether a VCP object should be created. If false, an existing `vpc_id` is required."
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "create_sg" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Shows whether а security group for VCP object should be created"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "vpc_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Existing `network_id` (`vpc-id`) where resources will be created"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "network_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Prefix to be used with all the resources as an identifier"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "network_description" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Optional description of this resource. Provide this property when you create the resource."
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "terraform-created" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "folder_id" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "Null" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Folder ID where the resources will be created" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "public_subnets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n  \"Describe your public subnet preferences. For VMs with public IPs. For Multi-Folder VPC add folder_ids to subnet objects\"\n  Example:\n  public_subnets = [\n  {\n    \"v4_cidr_blocks\" : [\"10.121.0.0/16\", \"10.122.0.0/16\"],\n    \"zone\" : \"ru-central1-a\"\n    \"description\" : \"Custom public-subnet description\"\n    \"name\" : \"Custom public-subnet name\"\n  },\n  {\n    \"v4_cidr_blocks\" : [\"10.131.0.0/16\"],\n    \"zone\" : \"ru-central1-b\"\n    \"folder_id\" : \"xxxxxxx\" # For Multi-Folder VPC\n  },\n  ]\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "v4_cidr_blocks" ],
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [ [ "Bare", "zone" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "description" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "name" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "folder_id" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ], [ "A_string", "public_subnets" ]
+                          ]
+                        ],
+                        [ "Tuple", [] ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "subnet", [] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "public_subnets" ]
+                                ]
+                              ],
+                              "output": [
+                                "Log_and",
+                                [
+                                  [
+                                    "Gt",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "length",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "subnet" ],
+                                                [
+                                                  "A_string",
+                                                  "v4_cidr_blocks"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "alltrue",
+                                      [
+                                        [
+                                          "For_tuple",
+                                          {
+                                            "identifiers": [ "cidr", [] ],
+                                            "input": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "subnet" ],
+                                                [
+                                                  "A_string",
+                                                  "v4_cidr_blocks"
+                                                ]
+                                              ]
+                                            ],
+                                            "output": [
+                                              "Fun_call",
+                                              [
+                                                "can",
+                                                [
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "cidrnetmask",
+                                                      [ [ "Id", "cidr" ] ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "cond": null
+                                          }
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "All CIDR blocks must be valid IPv4 CIDR notation."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "private_subnets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n  \"Describe your private subnet preferences. For VMs without public IPs but with or without NAT gateway. For Multi-Folder VPC add folder_id to subnet object\"\n  private_subnets = [\n  {\n    \"v4_cidr_blocks\" : [\"10.221.0.0/16\"],\n    \"zone\" : \"ru-central1-a\"\n    \"description\" : \"Custom private-subnet description\"\n    \"name\" : \"Custom private-subnet name\"\n  },\n  {\n    \"v4_cidr_blocks\" : [\"10.231.0.0/16\"],\n    \"zone\" : \"ru-central1-b\"\n    \"folder_id\" : \"xxxxxxx\" # For Multi-Folder VPC\n  },\n  ]\n"
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "v4_cidr_blocks" ],
+                            [
+                              "Fun_call", [ "list", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [ [ "Bare", "zone" ], [ "Id", "string" ] ],
+                          [
+                            [ "Bare", "description" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "name" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "folder_id" ],
+                            [
+                              "Fun_call",
+                              [ "optional", [ [ "Id", "string" ] ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Block",
+          {
+            "type_": "validation",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "condition",
+                [
+                  "Log_or",
+                  [
+                    [
+                      "Equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "private_subnets" ]
+                          ]
+                        ],
+                        [ "Tuple", [] ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "alltrue",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "subnet", [] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "private_subnets" ]
+                                ]
+                              ],
+                              "output": [
+                                "Log_and",
+                                [
+                                  [
+                                    "Gt",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "length",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "subnet" ],
+                                                [
+                                                  "A_string",
+                                                  "v4_cidr_blocks"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "alltrue",
+                                      [
+                                        [
+                                          "For_tuple",
+                                          {
+                                            "identifiers": [ "cidr", [] ],
+                                            "input": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "subnet" ],
+                                                [
+                                                  "A_string",
+                                                  "v4_cidr_blocks"
+                                                ]
+                                              ]
+                                            ],
+                                            "output": [
+                                              "Fun_call",
+                                              [
+                                                "can",
+                                                [
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "cidrnetmask",
+                                                      [ [ "Id", "cidr" ] ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "cond": null
+                                          }
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "error_message",
+                [
+                  "String",
+                  "All CIDR blocks must be valid IPv4 CIDR notation."
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "create_nat_gw" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Create a NAT gateway for internet access from private subnets"
+          ]
+        ],
+        [ "Attribute", "type", [ "Id", "bool" ] ],
+        [ "Attribute", "default", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "routes_public_subnets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Describe your route preferences for public subnets" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "destination_prefix" ],
+                            [ "Id", "string" ]
+                          ],
+                          [
+                            [ "Bare", "next_hop_address" ],
+                            [ "Id", "string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "routes_private_subnets" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Describe your route preferences for public subnets" ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "list",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "object",
+                    [
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "destination_prefix" ],
+                            [ "Id", "string" ]
+                          ],
+                          [
+                            [ "Bare", "next_hop_address" ],
+                            [ "Id", "string" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Null" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "domain_name" ] ],
+      "body": [
+        [ "Attribute", "type", [ "Id", "string" ] ],
+        [ "Attribute", "default", [ "String", "internal." ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "Domain name to be added to DHCP options" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "domain_name_servers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Domain name servers to be added to DHCP options. Only ip addresses can be used"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "ntp_servers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "list", [ [ "Id", "string" ] ] ] ]
+        ],
+        [ "Attribute", "default", [ "Tuple", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "NTP Servers for subnets. Only ip addresses can be used"
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "labels" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "Set of key/value label pairs to assign." ]
+        ],
+        [
+          "Attribute",
+          "type",
+          [ "Fun_call", [ "map", [ [ "Id", "string" ] ] ] ]
+        ],
+        [
+          "Attribute",
+          "default",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "created_by" ], [ "String", "terraform-yc-module" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "s3_private_endpoint" ] ],
+      "body": [
+        [
+          "Attribute",
+          "type",
+          [
+            "Fun_call",
+            [
+              "object",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "enable" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", false ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "private_dns_records_enabled" ],
+                      [
+                        "Fun_call",
+                        [
+                          "optional", [ [ "Id", "bool" ], [ "Bool", true ] ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "subnet_v4_cidr_block" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "string" ], [ "Null" ] ] ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "address" ],
+                      [
+                        "Fun_call",
+                        [ "optional", [ [ "Id", "string" ], [ "Null" ] ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "default", [ "Object", [] ] ],
+        [
+          "Attribute",
+          "description",
+          [
+            "String",
+            "Configuration for creating a private endpoint for Yandex Object Storage. When enabled, creates a secure connection to Object Storage without going through the public internet. Specify a subnet CIDR block and an IP address for the endpoint from one of the 'privite subnet's CIDR block'. At least one private subnet must be defined when s3_private_endpoint is enabled."
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -5,28 +5,50 @@
     [
       "Object",
       [
-        [ [ "Id", "basic" ], [ "String", "\nFoo\n\nBar\n\nBaz\n\n" ] ],
         [
-          [ "Id", "indented" ],
-          [ "String", "\n    Foo\n\n    Bar\n\n    Baz\n\n" ]
+          [ "Bare", "basic" ], [ "Heredoc", [ "EOT", "\nFoo\nBar\nBaz\n" ] ]
         ],
         [
-          [ "Id", "indented_more" ],
-          [ "String", "\n    Foo\n\n      Bar\n\n    Baz\n\n" ]
+          [ "Bare", "indented" ],
+          [ "Heredoc", [ "EOT", "\n    Foo\n    Bar\n    Baz\n" ] ]
         ],
         [
-          [ "Id", "interp" ],
-          [ "String", "\n    Foo\n\n    ${bar}\n\n    Baz\n\n" ]
+          [ "Bare", "indented_more" ],
+          [ "Heredoc", [ "EOT", "\n    Foo\n      Bar\n    Baz\n" ] ]
         ],
         [
-          [ "Id", "newlines_between" ],
-          [ "String", "\nFoo\n\n\nBar\n\n\nBaz\n\n" ]
+          [ "Bare", "interp" ],
+          [
+            "Template_heredoc",
+            [
+              "EOT",
+              [
+                [ "Literal", "\n    Foo\n    " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [ "Id", "bar" ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\n    Baz\n" ]
+              ]
+            ]
+          ]
         ],
         [
-          [ "Id", "indented_newlines_between" ],
-          [ "String", "\n    Foo\n\n\n    Bar\n\n\n    Baz\n\n" ]
+          [ "Bare", "newlines_between" ],
+          [ "Heredoc", [ "EOT", "\nFoo\n\nBar\n\nBaz\n" ] ]
         ],
-        [ [ "Id", "marker_at_suffix" ], [ "String", "\n    NOT EOT\n\n" ] ]
+        [
+          [ "Bare", "indented_newlines_between" ],
+          [ "Heredoc", [ "EOT", "\n    Foo\n\n    Bar\n\n    Baz\n" ] ]
+        ],
+        [
+          [ "Bare", "marker_at_suffix" ],
+          [ "Heredoc", [ "EOT", "\n    NOT EOT\n" ] ]
+        ]
       ]
     ]
   ],
@@ -36,46 +58,125 @@
     [
       "Object",
       [
-        [ [ "Id", "basic" ], [ "String", "\nFoo\n\nBar\n\nBaz\n\n" ] ],
         [
-          [ "Id", "indented" ],
-          [ "String", "\n    Foo\n\n    Bar\n\n    Baz\n\n" ]
+          [ "Bare", "basic" ], [ "Heredoc", [ "EOT", "\nFoo\nBar\nBaz\n" ] ]
         ],
         [
-          [ "Id", "indented_more" ],
-          [ "String", "\n    Foo\n\n      Bar\n\n    Baz\n\n" ]
+          [ "Bare", "indented" ],
+          [ "Heredoc", [ "EOT", "\nFoo\nBar\nBaz\n" ] ]
         ],
         [
-          [ "Id", "indented_less" ],
-          [ "String", "\n    Foo\n\n  Bar\n\n    Baz\n\n" ]
+          [ "Bare", "indented_more" ],
+          [ "Heredoc", [ "EOT", "\nFoo\n  Bar\nBaz\n" ] ]
         ],
         [
-          [ "Id", "interp" ],
-          [ "String", "\n    Foo\n\n    ${bar}\n\n    Baz\n\n" ]
+          [ "Bare", "indented_less" ],
+          [ "Heredoc", [ "EOT", "\n  Foo\nBar\n  Baz\n" ] ]
         ],
         [
-          [ "Id", "interp_indented_more" ],
-          [ "String", "\n    Foo\n\n      ${bar}\n\n    Baz\n\n" ]
-        ],
-        [
-          [ "Id", "interp_indented_less" ],
-          [ "String", "\n    Foo\n\n  ${space_bar}\n\n    Baz\n\n" ]
-        ],
-        [ [ "Id", "tabs" ], [ "String", "\n\tFoo\n\n  Bar\n\n  Baz\n\n" ] ],
-        [
-          [ "Id", "unicode_spaces" ],
+          [ "Bare", "interp" ],
           [
-            "String",
-            "\n     Foo (there's two \"em spaces\" before Foo there)\n\n    Bar\n\n    Baz\n\n"
+            "Template_heredoc",
+            [
+              "EOT",
+              [
+                [ "Literal", "\nFoo\n" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [ "Id", "bar" ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\nBaz\n" ]
+              ]
+            ]
           ]
         ],
         [
-          [ "Id", "newlines_between" ],
-          [ "String", "\nFoo\n\n\nBar\n\n\nBaz\n\n" ]
+          [ "Bare", "interp_indented_more" ],
+          [
+            "Template_heredoc",
+            [
+              "EOT",
+              [
+                [ "Literal", "\nFoo\n  " ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [ "Id", "bar" ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\nBaz\n" ]
+              ]
+            ]
+          ]
         ],
         [
-          [ "Id", "indented_newlines_between" ],
-          [ "String", "\n    Foo\n\n\n    Bar\n\n\n    Baz\n\n" ]
+          [ "Bare", "interp_indented_less" ],
+          [
+            "Template_heredoc",
+            [
+              "EOT",
+              [
+                [ "Literal", "\n  Foo\n" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [ "Id", "space_bar" ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\n  Baz\n" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          [ "Bare", "tabs" ], [ "Heredoc", [ "EOT", "\nFoo\n Bar\n Baz\n" ] ]
+        ],
+        [
+          [ "Bare", "unicode_spaces" ],
+          [
+            "Heredoc",
+            [
+              "EOT",
+              "\n Foo (there's two \"em spaces\" before Foo there)\nBar\nBaz\n"
+            ]
+          ]
+        ],
+        [
+          [ "Bare", "newlines_between" ],
+          [ "Heredoc", [ "EOT", "\nFoo\n\nBar\n\nBaz\n" ] ]
+        ],
+        [
+          [ "Bare", "indented_newlines_between" ],
+          [ "Heredoc", [ "EOT", "\nFoo\n\nBar\n\nBaz\n" ] ]
+        ],
+        [
+          [ "Bare", "interp_multiline" ],
+          [
+            "Template_heredoc",
+            [
+              "EOT",
+              [
+                [ "Literal", "\n" ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [ "Id", "bar" ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\nbaz\n" ]
+              ]
+            ]
+          ]
         ]
       ]
     ]

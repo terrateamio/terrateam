@@ -1,0 +1,170 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "kubectl_manifest" ], [ "Lit", "vmrule_cluster" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "yaml_body",
+          [
+            "Fun_call",
+            [
+              "yamlencode",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "apiVersion" ],
+                      [ "String", "operator.victoriametrics.com/v1beta1" ]
+                    ],
+                    [ [ "Bare", "kind" ], [ "String", "VMRule" ] ],
+                    [
+                      [ "Bare", "metadata" ],
+                      [
+                        "Object",
+                        [
+                          [ [ "Bare", "name" ], [ "String", "vmrule-hpa" ] ],
+                          [
+                            [ "Bare", "namespace" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ], [ "A_string", "namespace" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "spec" ],
+                      [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "groups" ],
+                            [
+                              "Tuple",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "interval" ],
+                                      [ "String", "15s" ]
+                                    ],
+                                    [
+                                      [ "Bare", "name" ],
+                                      [ "String", "K8sHPAs" ]
+                                    ],
+                                    [
+                                      [ "Bare", "rules" ],
+                                      [
+                                        "Tuple",
+                                        [
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "expr" ],
+                                                [
+                                                  "String",
+                                                  "sum(kube_hpa_status_current_replicas / kube_hpa_spec_max_replicas) by (namespace,hpa,cluster_name) * 100"
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "record" ],
+                                                [ "String", "hpa:util" ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Object",
+                                            [
+                                              [
+                                                [ "Bare", "alert" ],
+                                                [ "String", "HPAUtil" ]
+                                              ],
+                                              [
+                                                [ "Bare", "annotations" ],
+                                                [
+                                                  "Object",
+                                                  [
+                                                    [
+                                                      [
+                                                        "Bare", "description"
+                                                      ],
+                                                      [
+                                                        "String",
+                                                        "`{{ $labels.namespace }}/{{ $labels.hpa }}` hpa in `{{ $labels.cluster_name }}` is maxed out"
+                                                      ]
+                                                    ],
+                                                    [
+                                                      [ "Bare", "summary" ],
+                                                      [
+                                                        "String",
+                                                        "High k8s HPA util"
+                                                      ]
+                                                    ],
+                                                    [
+                                                      [ "Bare", "value" ],
+                                                      [
+                                                        "String",
+                                                        "{{ $value }}"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                [ "Bare", "expr" ],
+                                                [ "String", "hpa:util > 85" ]
+                                              ],
+                                              [
+                                                [ "Bare", "for" ],
+                                                [ "String", "15m" ]
+                                              ],
+                                              [
+                                                [ "Bare", "labels" ],
+                                                [
+                                                  "Object",
+                                                  [
+                                                    [
+                                                      [ "Bare", "severity" ],
+                                                      [ "String", "warning" ]
+                                                    ],
+                                                    [
+                                                      [ "Bare", "team" ],
+                                                      [ "String", "ops" ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

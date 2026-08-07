@@ -1,0 +1,63 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "test_double_not" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Not",
+            [ "Not", [ "Attr", [ [ "Id", "var" ], [ "A_string", "x" ] ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "test_double_neg" ] ],
+      "body": [
+        [ "Attribute", "value", [ "Minus", [ "Minus", [ "Int", 42 ] ] ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "test_not_neg" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Not",
+            [ "Minus", [ "Attr", [ [ "Id", "var" ], [ "A_string", "x" ] ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "test_neg_not" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Minus",
+            [ "Not", [ "Attr", [ [ "Id", "var" ], [ "A_string", "x" ] ] ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,57 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "example" ], [ "Lit", "test" ] ],
+      "body": [
+        [
+          "Attribute",
+          "account",
+          [
+            "Attr",
+            [
+              [
+                "Fun_call",
+                [
+                  "provider::aws::arn_parse",
+                  [ [ "Attr", [ [ "Id", "var" ], [ "A_string", "arn" ] ] ] ]
+                ]
+              ],
+              [ "A_string", "account_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "decoded",
+          [
+            "Fun_call",
+            [
+              "provider::http::decode_body",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "data" ], [ "A_string", "http" ] ]
+                        ],
+                        [ "A_string", "example" ]
+                      ]
+                    ],
+                    [ "A_string", "response_body" ]
+                  ]
+                ],
+                [ "String", "application/json" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

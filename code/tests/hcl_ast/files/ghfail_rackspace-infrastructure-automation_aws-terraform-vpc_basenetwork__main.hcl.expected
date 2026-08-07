@@ -1,0 +1,2659 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [ "Attribute", "required_version", [ "String", ">= 0.13" ] ],
+        [
+          "Block",
+          {
+            "type_": "required_providers",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "aws",
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "source" ], [ "String", "hashicorp/aws" ] ],
+                    [ [ "Bare", "version" ], [ "String", ">= 4.0" ] ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "default_domain_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ], [ "A_string", "aws_region" ]
+                            ]
+                          ],
+                          [ "A_string", "current" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  [ "String", "us-east-1" ]
+                ]
+              ],
+              "then_": [ "String", "ec2.internal" ],
+              "else_": [
+                "Fun_call",
+                [
+                  "format",
+                  [
+                    [ "String", "%s.compute.internal" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_region" ]
+                              ]
+                            ],
+                            [ "A_string", "current" ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "domain_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "domain_name" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "default_domain_name" ] ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "domain_name" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "base_tags",
+          [
+            "Object",
+            [
+              [ [ "Bare", "ServiceProvider" ], [ "String", "Rackspace" ] ],
+              [
+                [ "Bare", "Environment" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "single_nat_tag",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "true" ],
+                [
+                  "Object",
+                  [ [ [ "Bare", "HA" ], [ "String", "Disabled" ] ] ]
+                ]
+              ],
+              [ [ "Bare", "false" ], [ "Object", [] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "nat_count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "single_nat" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "az_count" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "base_tags" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "azs",
+          [
+            "Fun_call",
+            [
+              "slice",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "coalescelist",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "custom_azs" ] ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "aws_availability_zones" ]
+                                ]
+                              ],
+                              [ "A_string", "available" ]
+                            ]
+                          ],
+                          [ "A_string", "names" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [ "Int", 0 ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "az_count" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "aws_availability_zones" ], [ "Lit", "available" ]
+      ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "aws_region" ], [ "Lit", "current" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpc" ], [ "Lit", "vpc" ] ],
+      "body": [
+        [
+          "Attribute",
+          "cidr_block",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cidr_range" ] ] ]
+        ],
+        [
+          "Attribute",
+          "enable_dns_hostnames",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "enable_dns_hostnames" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_dns_support",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "enable_dns_support" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "instance_tenancy",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "default_tenancy" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "single_nat_tag" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "single_nat" ] ]
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [ "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [ "Attribute", "create_before_destroy", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_vpc_dhcp_options" ], [ "Lit", "dhcp_options" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "domain_name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "domain_name" ] ] ]
+        ],
+        [
+          "Attribute",
+          "domain_name_servers",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "domain_name_servers" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "-DHCPOptions" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_vpc_dhcp_options_association" ],
+        [ "Lit", "dhcp_options_association" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "dhcp_options_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_vpc_dhcp_options" ],
+                  [ "A_string", "dhcp_options" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_internet_gateway" ], [ "Lit", "igw" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "build_igw" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Fun_call",
+                        [
+                          "format",
+                          [
+                            [ "String", "%s-IGW" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_eip" ], [ "Lit", "nat_eip" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "build_nat_gateways" ] ]
+                  ],
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "build_igw" ] ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "nat_count" ] ]
+              ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "domain", [ "String", "vpc" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Fun_call",
+                        [
+                          "format",
+                          [
+                            [ "String", "%s-NATEIP%d" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ],
+                            [
+                              "Add",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "count" ],
+                                    [ "A_string", "index" ]
+                                  ]
+                                ],
+                                [ "Int", 1 ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_internet_gateway" ], [ "A_string", "igw" ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_nat_gateway" ], [ "Lit", "nat" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "build_nat_gateways" ] ]
+                  ],
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "build_igw" ] ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "nat_count" ] ]
+              ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "allocation_id",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "aws_eip" ], [ "A_string", "nat_eip" ] ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_subnet" ],
+                            [ "A_string", "public_subnet" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "single_nat_tag" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "single_nat" ] ]
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Fun_call",
+                        [
+                          "format",
+                          [
+                            [ "String", "%s-NATGW%d" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ],
+                            [
+                              "Add",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "count" ],
+                                    [ "A_string", "index" ]
+                                  ]
+                                ],
+                                [ "Int", 1 ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_internet_gateway" ], [ "A_string", "igw" ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "public_subnet" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "build_igw" ] ]
+              ],
+              "then_": [
+                "Mult",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "az_count" ] ] ],
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "public_subnets_per_az" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "azs" ] ] ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "public_cidr_ranges" ] ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [ "Attribute", "map_public_ip_on_launch", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "public_subnet_tags" ]
+                      ]
+                    ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "public_subnet_tags" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 1 ]
+                          ]
+                        ],
+                        "then_": [ "Int", 0 ],
+                        "else_": [
+                          "Fun_call",
+                          [
+                            "floor",
+                            [
+                              [
+                                "Div",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "az_count" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "single_nat_tag" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "single_nat" ] ]
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Fun_call",
+                        [
+                          "format",
+                          [
+                            [ "String", "%s-%s%d" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "element",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "public_subnet_names" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "floor",
+                                      [
+                                        [
+                                          "Div",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "count" ],
+                                                [ "A_string", "index" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "az_count" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Add",
+                              [
+                                [
+                                  "Mod",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "count" ],
+                                        [ "A_string", "index" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "az_count" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 1 ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_subnet" ], [ "Lit", "private_subnet" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Mult",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "az_count" ] ] ],
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "private_subnets_per_az" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "availability_zone",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "azs" ] ] ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cidr_block",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "private_cidr_ranges" ] ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [ "Attribute", "map_public_ip_on_launch", [ "Bool", false ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "private_subnet_tags" ]
+                      ]
+                    ],
+                    [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Equal",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "length",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "private_subnet_tags" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 1 ]
+                          ]
+                        ],
+                        "then_": [ "Int", 0 ],
+                        "else_": [
+                          "Fun_call",
+                          [
+                            "floor",
+                            [
+                              [
+                                "Div",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "count" ],
+                                      [ "A_string", "index" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "az_count" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "single_nat_tag" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "single_nat" ] ]
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Fun_call",
+                        [
+                          "format",
+                          [
+                            [ "String", "%s-%s%d" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "element",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "private_subnet_names" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "floor",
+                                      [
+                                        [
+                                          "Div",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "count" ],
+                                                [ "A_string", "index" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "az_count" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Add",
+                              [
+                                [
+                                  "Mod",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "count" ],
+                                        [ "A_string", "index" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "az_count" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Int", 1 ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table" ], [ "Lit", "public_route_table" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "build_igw" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Fun_call",
+                        [
+                          "format",
+                          [
+                            [ "String", "%s-PublicRouteTable" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table" ], [ "Lit", "private_route_table" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "az_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Idx",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "single_nat_tag" ] ]
+                    ],
+                    [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "single_nat" ] ]
+                    ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Fun_call",
+                        [
+                          "format",
+                          [
+                            [ "String", "%s-PrivateRouteTable%d" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ],
+                            [
+                              "Add",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "count" ],
+                                    [ "A_string", "index" ]
+                                  ]
+                                ],
+                                [ "Int", 1 ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route" ], [ "Lit", "public_routes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "build_igw" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "destination_cidr_block", [ "String", "0.0.0.0/0" ] ],
+        [
+          "Attribute",
+          "gateway_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_internet_gateway" ], [ "A_string", "igw" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_route_table" ],
+                      [ "A_string", "public_route_table" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route" ], [ "Lit", "private_routes" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Log_and",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "build_nat_gateways" ] ]
+                  ],
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "build_igw" ] ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "az_count" ] ]
+              ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "destination_cidr_block", [ "String", "0.0.0.0/0" ] ],
+        [
+          "Attribute",
+          "nat_gateway_id",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_nat_gateway" ],
+                            [ "A_string", "nat" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_route_table" ],
+                            [ "A_string", "private_route_table" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ],
+        [ "Lit", "public_route_association" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "build_igw" ] ]
+              ],
+              "then_": [
+                "Mult",
+                [
+                  [ "Attr", [ [ "Id", "var" ], [ "A_string", "az_count" ] ] ],
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [ "A_string", "public_subnets_per_az" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_route_table" ],
+                      [ "A_string", "public_route_table" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_subnet" ],
+                            [ "A_string", "public_subnet" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_route_table_association" ],
+        [ "Lit", "private_route_association" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Mult",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "az_count" ] ] ],
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "private_subnets_per_az" ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_route_table" ],
+                            [ "A_string", "private_route_table" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_subnet" ],
+                            [ "A_string", "private_subnet" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_vpn_gateway" ], [ "Lit", "vpn_gateway" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "build_vpn" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "Name" ],
+                      [
+                        "Fun_call",
+                        [
+                          "format",
+                          [
+                            [ "String", "%s-VPNGateway" ],
+                            [
+                              "Attr",
+                              [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Quoted", "transitvpc:spoke" ],
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "spoke_vpc" ] ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_vpn_gateway_route_propagation" ],
+        [ "Lit", "vpn_routes_public" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "build_vpn" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_route_table" ],
+                      [ "A_string", "public_route_table" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpn_gateway_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_vpn_gateway" ],
+                      [ "A_string", "vpn_gateway" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_vpn_gateway_route_propagation" ],
+        [ "Lit", "vpn_routes_private" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "build_vpn" ] ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "length",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "private_cidr_ranges" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "route_table_id",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_route_table" ],
+                            [ "A_string", "private_route_table" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpn_gateway_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_vpn_gateway" ],
+                      [ "A_string", "vpn_gateway" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_flow_log" ], [ "Lit", "s3_vpc_log" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "build_s3_flow_logs" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "log_destination",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_s3_bucket" ],
+                      [ "A_string", "vpc_log_bucket" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "log_destination_type", [ "String", "s3" ] ],
+        [ "Attribute", "traffic_type", [ "String", "ALL" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_s3_bucket" ], [ "Lit", "vpc_log_bucket" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "build_s3_flow_logs" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "logging_bucket_name" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "force_destroy",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "logging_bucket_force_destroy" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_s3_bucket_acl" ], [ "Lit", "private_acl" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "build_s3_flow_logs" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_s3_bucket" ], [ "A_string", "vpc_log_bucket" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "acl",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "logging_bucket_access_control" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_s3_bucket_server_side_encryption_configuration" ],
+        [ "Lit", "s3_sse" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "build_s3_flow_logs" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_s3_bucket" ], [ "A_string", "vpc_log_bucket" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "apply_server_side_encryption_by_default",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "kms_master_key_id",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "logging_bucket_encryption_kms_mster_key"
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "sse_algorithm",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "logging_bucket_encryption" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_s3_bucket_lifecycle_configuration" ],
+        [ "Lit", "s3_lifecycle" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "build_s3_flow_logs" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "bucket",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_s3_bucket" ], [ "A_string", "vpc_log_bucket" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "rule",
+            "labels": [],
+            "body": [
+              [ "Attribute", "id", [ "String", "Expiration" ] ],
+              [ "Attribute", "status", [ "String", "Enabled" ] ],
+              [
+                "Attribute",
+                "prefix",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "logging_bucket_prefix" ]
+                  ]
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "expiration",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "days",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "s3_flowlog_retention" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_flow_log" ], [ "Lit", "cw_vpc_log" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "build_flow_logs" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "iam_role_arn",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_iam_role" ],
+                      [ "A_string", "flowlog_role" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "log_destination",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_cloudwatch_log_group" ],
+                      [ "A_string", "flowlog_group" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "traffic_type", [ "String", "ALL" ] ],
+        [
+          "Attribute",
+          "vpc_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "aws_vpc" ], [ "A_string", "vpc" ] ] ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_log_group" ], [ "Lit", "flowlog_group" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "build_flow_logs" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-FlowLogs" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "retention_in_days",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ], [ "A_string", "cloudwatch_flowlog_retention" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_iam_role" ], [ "Lit", "flowlog_role" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "build_flow_logs" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-FlowLogsRole" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Heredoc",
+            [
+              "EOF",
+              "\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"\",\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n        \"Service\": \"vpc-flow-logs.amazonaws.com\"\n      },\n      \"Action\": \"sts:AssumeRole\"\n    }\n  ]\n}\n"
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy" ], [ "Lit", "flowlog_policy" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "build_flow_logs" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-FlowLogsPolicy" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_iam_role" ],
+                      [ "A_string", "flowlog_role" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Template_heredoc",
+            [
+              "EOF",
+              [
+                [
+                  "Literal",
+                  "\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Action\": [\n        \"logs:CreateLogGroup\",\n        \"logs:CreateLogStream\",\n        \"logs:PutLogEvents\",\n        \"logs:DescribeLogGroups\",\n        \"logs:DescribeLogStreams\"\n      ],\n      \"Effect\": \"Allow\",\n      \"Resource\": \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Fun_call",
+                      [
+                        "replace",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "aws_cloudwatch_log_group" ],
+                                      [ "A_string", "flowlog_group" ]
+                                    ]
+                                  ],
+                                  [ "Int", 0 ]
+                                ]
+                              ],
+                              [ "A_string", "arn" ]
+                            ]
+                          ],
+                          [ "String", ":*" ],
+                          [ "String", "" ]
+                        ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", ":*\"\n    }\n  ]\n}\n" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

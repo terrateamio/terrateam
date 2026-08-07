@@ -1,0 +1,3841 @@
+[
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "oci_identity_domain" ], [ "Lit", "idp_domain" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [
+                        "A_string",
+                        "identity_domain_identity_providers_configuration"
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Not_equal",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "identity_domain_identity_providers_configuration"
+                              ]
+                            ]
+                          ],
+                          [ "String", "identity_providers" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "identity_domain_identity_providers_configuration"
+                          ]
+                        ]
+                      ],
+                      [ "String", "identity_providers" ]
+                    ]
+                  ],
+                  "else_": [ "Object", [] ]
+                }
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "domain_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "identity_domain_id" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "identity_domain_id" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [
+                        "A_string",
+                        "identity_domain_identity_providers_configuration"
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "default_identity_domain_id" ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "http" ], [ "Lit", "saml_metadata" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [
+                        "A_string",
+                        "identity_domain_identity_providers_configuration"
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Not_equal",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "identity_domain_identity_providers_configuration"
+                              ]
+                            ]
+                          ],
+                          [ "String", "identity_providers" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "identity_domain_identity_providers_configuration"
+                          ]
+                        ]
+                      ],
+                      [ "String", "identity_providers" ]
+                    ]
+                  ],
+                  "else_": [ "Object", [] ]
+                }
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "url",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "contains",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "keys",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "oci_identity_domain" ],
+                              [ "A_string", "these" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "identity_domain_id" ]
+                            ]
+                          ],
+                          [ "String", "None" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "join",
+                  [
+                    [ "String", "" ],
+                    [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "oci_identity_domain" ],
+                                    [ "A_string", "these" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "identity_domain_id" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "url" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ], [ "A_string", "metadata_uri" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "contains",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "keys",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "oci_identity_domain" ],
+                                  [ "A_string", "these" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "coalesce",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "identity_domain_identity_providers_configuration"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "A_string", "default_identity_domain_id"
+                                  ]
+                                ]
+                              ],
+                              [ "String", "None" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "join",
+                      [
+                        [ "String", "" ],
+                        [
+                          "Tuple",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "oci_identity_domain" ],
+                                        [ "A_string", "these" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string",
+                                              "identity_domain_identity_providers_configuration"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string",
+                                          "default_identity_domain_id"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "url" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "metadata_uri" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Fun_call",
+                    [
+                      "join",
+                      [
+                        [ "String", "" ],
+                        [
+                          "Tuple",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "data" ],
+                                            [
+                                              "A_string",
+                                              "oci_identity_domain"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "idp_domain" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "key" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "url" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "metadata_uri" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "oci_identity_domain" ],
+        [ "Lit", "identity_provider_domain" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "target_idps" ] ] ]
+        ],
+        [
+          "Attribute",
+          "domain_id",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "http" ], [ "Lit", "idp_signing_cert" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "target_idps" ] ] ]
+        ],
+        [
+          "Attribute",
+          "url",
+          [
+            "Fun_call",
+            [
+              "join",
+              [
+                [ "String", "" ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Fun_call",
+                      [
+                        "contains",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "keys",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "oci_identity_domain" ],
+                                    [ "A_string", "these" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "String", "None" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "oci_identity_domain" ],
+                                    [ "A_string", "these" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "each" ], [ "A_string", "value" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "url" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "data" ],
+                                        [ "A_string", "oci_identity_domain" ]
+                                      ]
+                                    ],
+                                    [
+                                      "A_string", "identity_provider_domain"
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "url" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "Tuple",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "sign_cert_uri" ] ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "oci_identity_domains_setting" ],
+                  [ "A_string", "cert_public_access_setting" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "oci_identity_domains_rule" ], [ "Lit", "default_idp_rule" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [
+                        "A_string",
+                        "identity_domain_identity_providers_configuration"
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [
+                        "A_string",
+                        "identity_domain_identity_providers_configuration"
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "identity_providers" ]
+                ]
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "idcs_endpoint",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "contains",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "keys",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "oci_identity_domain" ],
+                              [ "A_string", "these" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "identity_domain_id" ]
+                            ]
+                          ],
+                          [ "String", "None" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "oci_identity_domain" ],
+                          [ "A_string", "these" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "identity_domain_id" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "url" ]
+                ]
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "contains",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "keys",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "oci_identity_domain" ],
+                                  [ "A_string", "these" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "coalesce",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "identity_domain_identity_providers_configuration"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "A_string", "default_identity_domain_id"
+                                  ]
+                                ]
+                              ],
+                              [ "String", "None" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "oci_identity_domain" ],
+                              [ "A_string", "these" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [
+                                    "A_string",
+                                    "identity_domain_identity_providers_configuration"
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "default_identity_domain_id" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "oci_identity_domain" ]
+                                ]
+                              ],
+                              [ "A_string", "idp_domain" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [ "Attribute", "rule_id", [ "String", "DefaultIDPRule" ] ],
+        [ "Attribute", "attributes", [ "String", "return" ] ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [ [ "Id", "oci_identity_domain" ], [ "A_string", "these" ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "nameid_formats",
+          [
+            "Tuple",
+            [
+              [ "String", "saml-emailaddress" ],
+              [ "String", "saml-x509" ],
+              [ "String", "saml-kerberos" ],
+              [ "String", "saml-persistent" ],
+              [ "String", "saml-transient" ],
+              [ "String", "saml-unspecified" ],
+              [ "String", "saml-windowsnamequalifier" ],
+              [ "String", "saml-none" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "user_mapping_methods",
+          [
+            "Tuple",
+            [
+              [ "String", "NameIDToUserAttribute" ],
+              [ "String", "AssertionAttributeToUserAttribute" ],
+              [ "String", "CorrelationPolicyRule" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "hash_algorithms",
+          [ "Tuple", [ [ "String", "SHA-256" ], [ "String", "SHA-1" ] ] ]
+        ],
+        [
+          "Attribute",
+          "binding_values",
+          [ "Tuple", [ [ "String", "Redirect" ], [ "String", "Post" ] ] ]
+        ],
+        [
+          "Attribute",
+          "idp_parameter_list",
+          [
+            "Tuple",
+            [
+              [ "String", "idp_issuer_uri" ],
+              [ "String", "sso_service_url" ],
+              [ "String", "sso_service_binding" ],
+              [ "String", "idp_signing_certificate" ],
+              [ "String", "idp_logout_request_url" ],
+              [ "String", "idp_logout_response_url" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "metadata_uri", [ "String", "/fed/v1/metadata" ] ],
+        [
+          "Attribute",
+          "target_idps",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Cond",
+                {
+                  "if_": [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "identity_domain_identity_providers_configuration"
+                          ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "identity_domain_identity_providers_configuration"
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "identity_providers" ]
+                    ]
+                  ],
+                  "else_": [ "Object", [] ]
+                }
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Attr",
+                [ [ "Id", "v" ], [ "A_string", "identity_domain_idp_id" ] ]
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "v" ], [ "A_string", "identity_domain_idp_id" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "current_saml_idps",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Cond",
+                {
+                  "if_": [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "identity_domain_identity_providers_configuration"
+                          ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [
+                            "A_string",
+                            "identity_domain_identity_providers_configuration"
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "identity_providers" ]
+                    ]
+                  ],
+                  "else_": [ "Object", [] ]
+                }
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "For_tuple",
+                {
+                  "identifiers": [ "ret", [] ],
+                  "input": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "oci_identity_domains_rule" ]
+                                ]
+                              ],
+                              [ "A_string", "default_idp_rule" ]
+                            ]
+                          ],
+                          [ "Id", "k" ]
+                        ]
+                      ],
+                      [ "A_string", "return" ]
+                    ]
+                  ],
+                  "output": [
+                    "Attr", [ [ "Id", "ret" ], [ "A_string", "value" ] ]
+                  ],
+                  "cond": [
+                    "Equal",
+                    [
+                      [ "Attr", [ [ "Id", "ret" ], [ "A_string", "name" ] ] ],
+                      [ "String", "SamlIDPs" ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "v" ],
+                      [ "A_string", "add_to_default_idp_policy" ]
+                    ]
+                  ],
+                  [ "Bool", true ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "oci_identity_domains_identity_provider" ],
+        [ "Lit", "these" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [
+                        "A_string",
+                        "identity_domain_identity_providers_configuration"
+                      ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "var" ],
+                      [
+                        "A_string",
+                        "identity_domain_identity_providers_configuration"
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "identity_providers" ]
+                ]
+              ],
+              "else_": [ "Object", [] ]
+            }
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "user_mapping_method" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "user_mapping_methods" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "user_mapping_method" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "else_": [ "Bool", true ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "Template",
+                        [
+                          [
+                            "Literal",
+                            "VALIDATION FAILURE in identity provider \""
+                          ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [
+                            "Literal",
+                            "\": invalid value for \"user_mapping_method\" attribute. Valid values are "
+                          ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Fun_call",
+                                [
+                                  "join",
+                                  [
+                                    [ "String", "," ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "user_mapping_methods"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "." ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "signature_hash_algorithm" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "hash_algorithms" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [
+                                      "A_string", "signature_hash_algorithm"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "else_": [ "Bool", true ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "Template",
+                        [
+                          [
+                            "Literal",
+                            "VALIDATION FAILURE in identity provider \""
+                          ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [
+                            "Literal",
+                            "\": invalid value for \"signature_hash_algorithm\" attribute. Valid values are "
+                          ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Fun_call",
+                                [
+                                  "join",
+                                  [
+                                    [ "String", "," ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "hash_algorithms" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "." ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "sso_service_binding" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "binding_values" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "sso_service_binding" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "else_": [ "Bool", true ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "Template",
+                        [
+                          [
+                            "Literal",
+                            "VALIDATION FAILURE in identity provider \""
+                          ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [
+                            "Literal",
+                            "\": invalid value for \"sso_service_binding\" attribute. Valid values are "
+                          ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Fun_call",
+                                [
+                                  "join",
+                                  [
+                                    [ "String", "," ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "binding_values" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "." ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Not_equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "idp_logout_binding" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Fun_call",
+                            [
+                              "contains",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "binding_values" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "idp_logout_binding" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "else_": [ "Bool", true ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "Template",
+                        [
+                          [
+                            "Literal",
+                            "VALIDATION FAILURE in identity provider \""
+                          ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [
+                            "Literal",
+                            "\": invalid value for \"idp_logout_binding\" attribute. Valid values are "
+                          ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Fun_call",
+                                [
+                                  "join",
+                                  [
+                                    [ "String", "," ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "binding_values" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "." ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Log_and",
+                            [
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "idp_metadata_file" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              [
+                                "Equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "identity_domain_idp_id"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "then_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Log_and",
+                                [
+                                  [
+                                    "Log_and",
+                                    [
+                                      [
+                                        "Log_and",
+                                        [
+                                          [
+                                            "Log_and",
+                                            [
+                                              [
+                                                "Log_and",
+                                                [
+                                                  [
+                                                    "Not_equal",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id", "each"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "value"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "idp_issuer_uri"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Null" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "Not_equal",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Attr",
+                                                            [
+                                                              [
+                                                                "Id", "each"
+                                                              ],
+                                                              [
+                                                                "A_string",
+                                                                "value"
+                                                              ]
+                                                            ]
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "sso_service_url"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [ "Null" ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Not_equal",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [ "Id", "each" ],
+                                                          [
+                                                            "A_string",
+                                                            "value"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "idp_signing_certificate"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Null" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "Not_equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "each" ],
+                                                      [ "A_string", "value" ]
+                                                    ]
+                                                  ],
+                                                  [
+                                                    "A_string",
+                                                    "idp_logout_request_url"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Not_equal",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "each" ],
+                                                  [ "A_string", "value" ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "idp_logout_response_url"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Null" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Not_equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string", "sso_service_binding"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "then_": [ "Bool", true ],
+                              "else_": [ "Bool", false ]
+                            }
+                          ],
+                          "else_": [ "Bool", true ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "Template",
+                        [
+                          [
+                            "Literal",
+                            "VALIDATION FAILURE in identity provider \""
+                          ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [
+                            "Literal",
+                            "\": when not using \"idp_metadata_file\" attribute, at least the following parameters should be provided: "
+                          ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Fun_call",
+                                [
+                                  "join",
+                                  [
+                                    [ "String", "," ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "idp_parameter_list" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "idcs_endpoint",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "contains",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "keys",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "oci_identity_domain" ],
+                              [ "A_string", "these" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "identity_domain_id" ]
+                            ]
+                          ],
+                          [ "String", "None" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "oci_identity_domain" ],
+                          [ "A_string", "these" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "identity_domain_id" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "url" ]
+                ]
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "contains",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "keys",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "oci_identity_domain" ],
+                                  [ "A_string", "these" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Fun_call",
+                          [
+                            "coalesce",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "identity_domain_identity_providers_configuration"
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "A_string", "default_identity_domain_id"
+                                  ]
+                                ]
+                              ],
+                              [ "String", "None" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "oci_identity_domain" ],
+                              [ "A_string", "these" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [
+                                    "A_string",
+                                    "identity_domain_identity_providers_configuration"
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "default_identity_domain_id" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "data" ],
+                                  [ "A_string", "oci_identity_domain" ]
+                                ]
+                              ],
+                              [ "A_string", "idp_domain" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "url" ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "partner_name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "enabled" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "schemas",
+          [
+            "Tuple",
+            [
+              [
+                "String",
+                "urn:ietf:params:scim:schemas:oracle:idcs:IdentityProvider"
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "description" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "icon_url",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "icon_file" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "file",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "icon_file" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name_id_format",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "name_id_format" ]
+                  ]
+                ],
+                [ "String", "saml-emailaddress" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "user_mapping_method",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "user_mapping_method" ]
+                  ]
+                ],
+                [ "String", "NameIDToUserAttribute" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "user_mapping_store_attribute",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "user_mapping_store_attribute" ]
+                  ]
+                ],
+                [ "String", "username" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "metadata",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_metadata_file" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [
+                "Fun_call",
+                [
+                  "file",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "idp_metadata_file" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "partner_provider_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_metadata_file" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "identity_domain_idp_id" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_issuer_uri" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Fun_call",
+                        [
+                          "contains",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "keys",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "oci_identity_domain" ],
+                                      [ "A_string", "these" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "coalesce",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "identity_domain_idp_id"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "None" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "then_": [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "oci_identity_domain" ],
+                                          [ "A_string", "these" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "identity_domain_idp_id"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "url" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/fed" ]
+                        ]
+                      ],
+                      "else_": [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "data" ],
+                                              [
+                                                "A_string",
+                                                "oci_identity_domain"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "identity_provider_domain"
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "url" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/fed" ]
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "idp_sso_url",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_metadata_file" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "identity_domain_idp_id" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "sso_service_url" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Fun_call",
+                        [
+                          "contains",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "keys",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "oci_identity_domain" ],
+                                      [ "A_string", "these" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "coalesce",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "identity_domain_idp_id"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "None" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "then_": [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "oci_identity_domain" ],
+                                          [ "A_string", "these" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "identity_domain_idp_id"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "url" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/fed/v1/idp/sso" ]
+                        ]
+                      ],
+                      "else_": [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "data" ],
+                                              [
+                                                "A_string",
+                                                "oci_identity_domain"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "identity_provider_domain"
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "url" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/fed/v1/idp/sso" ]
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "authn_request_binding",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_metadata_file" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "sso_service_binding" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "signing_certificate",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_metadata_file" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "identity_domain_idp_id" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_signing_certificate" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "jsondecode",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Idx",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "data" ],
+                                                        [
+                                                          "A_string", "http"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "idp_signing_cert"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "each" ],
+                                                    [ "A_string", "key" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "response_body" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "keys" ]
+                                ]
+                              ],
+                              [ "Int", 0 ]
+                            ]
+                          ],
+                          [ "A_string", "x5c" ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "encryption_certificate",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_metadata_file" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "idp_encryption_certificate" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "logout_enabled",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_metadata_file" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "enable_global_logout" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "logout_request_url",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_metadata_file" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "identity_domain_idp_id" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_logout_request_url" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Fun_call",
+                        [
+                          "contains",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "keys",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "oci_identity_domain" ],
+                                      [ "A_string", "these" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "coalesce",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "identity_domain_idp_id"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "None" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "then_": [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "oci_identity_domain" ],
+                                          [ "A_string", "these" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "identity_domain_idp_id"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "url" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/fed/v1/idp/slo" ]
+                        ]
+                      ],
+                      "else_": [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "data" ],
+                                              [
+                                                "A_string",
+                                                "oci_identity_domain"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "identity_provider_domain"
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "url" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/fed/v1/idp/slo" ]
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "logout_response_url",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_metadata_file" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "identity_domain_idp_id" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_logout_response_url" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Fun_call",
+                        [
+                          "contains",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "keys",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "oci_identity_domain" ],
+                                      [ "A_string", "these" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "coalesce",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string", "identity_domain_idp_id"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "String", "None" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "then_": [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "oci_identity_domain" ],
+                                          [ "A_string", "these" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "each" ],
+                                              [ "A_string", "value" ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "identity_domain_idp_id"
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "url" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/fed/v1/idp/slo" ]
+                        ]
+                      ],
+                      "else_": [
+                        "Template",
+                        [
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "data" ],
+                                              [
+                                                "A_string",
+                                                "oci_identity_domain"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "identity_provider_domain"
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "url" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/fed/v1/idp/slo" ]
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "logout_binding",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "idp_metadata_file" ]
+                    ]
+                  ],
+                  [ "Null" ]
+                ]
+              ],
+              "then_": [ "Null" ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "idp_logout_binding" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "signature_hash_algorithm",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "signature_hash_algorithm" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "include_signing_cert_in_signature",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "send_signing_certificate" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "shown_on_login_page",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "add_to_default_idp_policy" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "oci_identity_domains_setting" ],
+                  [ "A_string", "cert_public_access_setting" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "provisioner",
+            "labels": [ [ "Lit", "local-exec" ] ],
+            "body": [
+              [
+                "Attribute",
+                "command",
+                [
+                  "Template",
+                  [
+                    [ "Literal", "[ " ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "add_to_default_idp_policy" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      " = false ] && (exit 0) || oci identity-domains rule patch --schemas '[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"]' --endpoint "
+                    ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Id",
+                                      "oci_identity_domains_identity_provider"
+                                    ],
+                                    [ "A_string", "these" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "idcs_endpoint" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Literal",
+                      " --rule-id \"DefaultIDPRule\" --operations '[{\"op\": \"add\",\"path\": \"return\",\"value\": [{\"name\":\"SamlIDPs\",\"value\":\"["
+                    ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Equal",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "each" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [
+                                      "A_string", "add_to_default_idp_policy"
+                                    ]
+                                  ]
+                                ],
+                                [ "Bool", true ]
+                              ]
+                            ],
+                            "then_": [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Log_and",
+                                  [
+                                    [
+                                      "Not_equal",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string", "current_saml_idps"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Not_equal",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string",
+                                                  "current_saml_idps"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "each" ],
+                                                [ "A_string", "key" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "Tuple", [] ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "then_": [
+                                  "Fun_call",
+                                  [
+                                    "join",
+                                    [
+                                      [ "String", "," ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "concat",
+                                          [
+                                            [
+                                              "Tuple",
+                                              [
+                                                [
+                                                  "Template",
+                                                  [
+                                                    [ "Literal", "\\\"" ],
+                                                    [
+                                                      "Interpolation",
+                                                      {
+                                                        "expr": [
+                                                          "Fun_call",
+                                                          [
+                                                            "trim",
+                                                            [
+                                                              [
+                                                                "Idx",
+                                                                [
+                                                                  [
+                                                                    "Idx",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "local"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "current_saml_idps"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "each"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "key"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ],
+                                                                  [
+                                                                    "Int", 0
+                                                                  ]
+                                                                ]
+                                                              ],
+                                                              [
+                                                                "String",
+                                                                "[]\""
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "strip_before": false,
+                                                        "strip_after": false
+                                                      }
+                                                    ],
+                                                    [ "Literal", "\\\"" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Tuple",
+                                              [
+                                                [
+                                                  "Template",
+                                                  [
+                                                    [ "Literal", "\\\"" ],
+                                                    [
+                                                      "Interpolation",
+                                                      {
+                                                        "expr": [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Idx",
+                                                              [
+                                                                [
+                                                                  "Attr",
+                                                                  [
+                                                                    [
+                                                                    "Id",
+                                                                    "oci_identity_domains_identity_provider"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "these"
+                                                                    ]
+                                                                  ]
+                                                                ],
+                                                                [
+                                                                  "Attr",
+                                                                  [
+                                                                    [
+                                                                    "Id",
+                                                                    "each"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "key"
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "id"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        "strip_before": false,
+                                                        "strip_after": false
+                                                      }
+                                                    ],
+                                                    [ "Literal", "\\\"" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "else_": [
+                                  "Template",
+                                  [
+                                    [ "Literal", "\\\"" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Idx",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Id",
+                                                      "oci_identity_domains_identity_provider"
+                                                    ],
+                                                    [ "A_string", "these" ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "each" ],
+                                                    [ "A_string", "key" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "id" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "\\\"" ]
+                                  ]
+                                ]
+                              }
+                            ],
+                            "else_": [ "String", "none" ]
+                          }
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "]\"}]}]'" ]
+                  ]
+                ]
+              ],
+              [ "Attribute", "on_failure", [ "Id", "fail" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

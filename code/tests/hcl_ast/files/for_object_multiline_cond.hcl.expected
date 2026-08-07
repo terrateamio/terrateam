@@ -1,0 +1,162 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "fluent_bit_package_download_commands" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "For_object",
+            {
+              "identifiers": [ "forwarder_name", [ "forwarder_config" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "fluent_bit_forwarders" ] ]
+              ],
+              "key_output": [ "Id", "forwarder_name" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "forwarder_config" ], [ "A_string", "os" ]
+                        ]
+                      ],
+                      [ "String", "windows" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "module" ],
+                              [ "A_string", "windows_forwarder_package" ]
+                            ]
+                          ],
+                          [ "Id", "forwarder_name" ]
+                        ]
+                      ],
+                      [ "A_string", "fluent_bit_package_download_command" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "module" ],
+                              [ "A_string", "linux_forwarder_package" ]
+                            ]
+                          ],
+                          [ "Id", "forwarder_name" ]
+                        ]
+                      ],
+                      [ "A_string", "fluent_bit_package_download_command" ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "ca_loadbalancer_certs" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "For_object",
+            {
+              "identifiers": [ "forwarder_name", [ "forwarder_config" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "fluent_bit_forwarders" ] ]
+              ],
+              "key_output": [ "Id", "forwarder_name" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "forwarder_config" ], [ "A_string", "os" ]
+                        ]
+                      ],
+                      [ "String", "windows" ]
+                    ]
+                  ],
+                  "then_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "module" ],
+                              [ "A_string", "windows_forwarder_package" ]
+                            ]
+                          ],
+                          [ "Id", "forwarder_name" ]
+                        ]
+                      ],
+                      [ "A_string", "ca_loadbalancer_cert" ]
+                    ]
+                  ],
+                  "else_": [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "module" ],
+                              [ "A_string", "linux_forwarder_package" ]
+                            ]
+                          ],
+                          [ "Id", "forwarder_name" ]
+                        ]
+                      ],
+                      [ "A_string", "ca_loadbalancer_cert" ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,629 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_iam_role" ], [ "Lit", "automation" ] ],
+      "body": [
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "automation_assume_role" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-wireguard-automation-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ], [ "A_string", "aws_region" ]
+                            ]
+                          ],
+                          [ "A_string", "current" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy_attachment" ], [ "Lit", "automation" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "policy_arn",
+          [
+            "String",
+            "arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole"
+          ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-wireguard-automation-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ], [ "A_string", "aws_region" ]
+                            ]
+                          ],
+                          [ "A_string", "current" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_iam_role" ], [ "Lit", "events" ] ],
+      "body": [
+        [
+          "Attribute",
+          "assume_role_policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "events_assume_role" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "name" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", "-wireguard-events-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ], [ "A_string", "aws_region" ]
+                            ]
+                          ],
+                          [ "A_string", "current" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy" ], [ "Lit", "automation_invoke" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "allow_automation_invoke" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "events" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_event_rule" ],
+        [ "Lit", "catch_wireguard_instance" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "String", "capture-wireguard-instance-launch" ]
+        ],
+        [
+          "Attribute",
+          "event_pattern",
+          [
+            "Template_heredoc",
+            [
+              "PATTERN",
+              [
+                [
+                  "Literal",
+                  "\n{\n  \"source\": [\n    \"aws.autoscaling\"\n  ],\n  \"detail-type\": [\n    \"EC2 Instance Launch Successful\",\n    \"EC2 Instance-launch Lifecycle Action\"\n  ],\n  \"detail\": {\n    \"AutoScalingGroupName\": [\n      \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "autoscaling_group_name" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "\"\n    ]\n  }\n}\n" ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_iam_role_policy" ], [ "Lit", "automation_actions" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "role",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "automation" ] ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "policy",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ],
+                      [ "A_string", "aws_iam_policy_document" ]
+                    ]
+                  ],
+                  [ "A_string", "automation_actions" ]
+                ]
+              ],
+              [ "A_string", "json" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_cloudwatch_event_target" ], [ "Lit", "automation" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "arn",
+          [
+            "Template",
+            [
+              [ "Literal", "arn:aws:ssm:" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ], [ "A_string", "aws_region" ]
+                            ]
+                          ],
+                          [ "A_string", "current" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ":" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "aws_caller_identity" ]
+                            ]
+                          ],
+                          [ "A_string", "self" ]
+                        ]
+                      ],
+                      [ "A_string", "account_id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ":automation-definition/" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "aws_ssm_document" ],
+                          [ "A_string", "register_wireguard_dns" ]
+                        ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [ "Literal", ":$DEFAULT" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "rule",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "aws_cloudwatch_event_rule" ],
+                  [ "A_string", "catch_wireguard_instance" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "target_id", [ "String", "register-wireguard-dns" ] ],
+        [
+          "Attribute",
+          "role_arn",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "aws_iam_role" ], [ "A_string", "events" ] ]
+              ],
+              [ "A_string", "arn" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "input_transformer",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "input_paths",
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Quoted", "instanceId" ],
+                      [ "String", "$.detail.EC2InstanceId" ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Attribute",
+                "input_template",
+                [ "String", "{\"instanceId\": [<instanceId>]}" ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_ssm_document" ], [ "Lit", "register_wireguard_dns" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "registerWireguardDNS" ] ],
+        [ "Attribute", "document_type", [ "String", "Automation" ] ],
+        [ "Attribute", "document_format", [ "String", "YAML" ] ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Template_heredoc",
+            [
+              "DOC",
+              [
+                [
+                  "Literal",
+                  "\n---\ndescription: Register regional Wireguard VPN\nschemaVersion: \"0.3\"\nassumeRole: \""
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_iam_role" ],
+                            [ "A_string", "automation" ]
+                          ]
+                        ],
+                        [ "A_string", "arn" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "\"\nparameters:\n  instanceId:\n    type: String\n    description: The ID of the Wireguard instance.\n    default: \"\"\nmainSteps:\n- name: GetLaunchedInstance\n  action: aws:executeAwsApi\n  inputs:\n    Service: ec2\n    Api: DescribeInstances\n    InstanceIds:\n      - \"{{ instanceId }}\"\n  outputs:\n    - Name: PublicIp\n      Selector: \"$.Reservations[0].Instances[0].PublicIpAddress\"\n      Type: String\n- name: RegisterWireguardDNS\n  action: aws:executeAwsApi\n  inputs:\n    Service: route53\n    Api: ChangeResourceRecordSets\n    HostedZoneId: "
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "hosted_zone_id" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "\n    ChangeBatch:\n      Comment: Updates the regional Wireguard record\n      Changes:\n        - Action: UPSERT\n          ResourceRecordSet:\n            Name: vpn."
+                ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "aws_region" ]
+                              ]
+                            ],
+                            [ "A_string", "current" ]
+                          ]
+                        ],
+                        [ "A_string", "name" ]
+                      ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [ "Literal", "." ],
+                [
+                  "Interpolation",
+                  {
+                    "expr": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "domain_name" ] ]
+                    ],
+                    "strip_before": false,
+                    "strip_after": false
+                  }
+                ],
+                [
+                  "Literal",
+                  "\n            Type: A\n            TTL: 60\n            ResourceRecords:\n              - Value: \"{{ GetLaunchedInstance.PublicIp }}\"\n  isEnd: true\n"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

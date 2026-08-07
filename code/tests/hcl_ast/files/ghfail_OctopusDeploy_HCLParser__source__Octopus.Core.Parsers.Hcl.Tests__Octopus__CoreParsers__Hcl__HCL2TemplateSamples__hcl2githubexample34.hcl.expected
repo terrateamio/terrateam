@@ -1,0 +1,589 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_route53_record" ], [ "Lit", "etcds" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "controller_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "zone_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "dns_zone_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Fun_call",
+            [
+              "format",
+              [
+                [ "String", "%s-etcd%d.%s." ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "dns_zone" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "type", [ "String", "A" ] ],
+        [ "Attribute", "ttl", [ "Int", 300 ] ],
+        [
+          "Attribute",
+          "records",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "aws_instance" ],
+                              [ "A_string", "controllers" ]
+                            ]
+                          ],
+                          [ "A_splat" ]
+                        ]
+                      ],
+                      [ "A_string", "private_ip" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "controllers" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "controller_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "Name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-controller-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "instance_type",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "controller_type" ] ] ]
+        ],
+        [
+          "Attribute",
+          "ami",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "data" ], [ "A_string", "aws_ami" ] ] ],
+                  [ "A_string", "fedora-coreos" ]
+                ]
+              ],
+              [ "A_string", "image_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "user_data",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "data" ], [ "A_string", "ct_config" ] ]
+                          ],
+                          [ "A_string", "controller-ignitions" ]
+                        ]
+                      ],
+                      [ "A_splat" ]
+                    ]
+                  ],
+                  [ "A_string", "rendered" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "root_block_device",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "volume_type",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "disk_type" ] ] ]
+              ],
+              [
+                "Attribute",
+                "volume_size",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "disk_size" ] ] ]
+              ],
+              [
+                "Attribute",
+                "iops",
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "disk_iops" ] ] ]
+              ],
+              [ "Attribute", "encrypted", [ "Bool", true ] ]
+            ]
+          }
+        ],
+        [ "Attribute", "associate_public_ip_address", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "subnet_id",
+          [
+            "Fun_call",
+            [
+              "element",
+              [
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "aws_subnet" ], [ "A_string", "public" ]
+                          ]
+                        ],
+                        [ "A_splat" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpc_security_group_ids",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "aws_security_group" ],
+                      [ "A_string", "controller" ]
+                    ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [ "Tuple", [ [ "Id", "ami" ], [ "Id", "user_data" ] ] ]
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "ct_config" ], [ "Lit", "controller-ignitions" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "controller_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "content",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ],
+                              [ "A_string", "template_file" ]
+                            ]
+                          ],
+                          [ "A_string", "controller-configs" ]
+                        ]
+                      ],
+                      [ "A_splat" ]
+                    ]
+                  ],
+                  [ "A_string", "rendered" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+            ]
+          ]
+        ],
+        [ "Attribute", "strict", [ "Bool", true ] ],
+        [
+          "Attribute",
+          "snippets",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "controller_snippets" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "template_file" ], [ "Lit", "controller-configs" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "controller_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "template",
+          [
+            "Fun_call",
+            [
+              "file",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "module" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/fcc/controller.yaml" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vars",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "etcd_name" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "etcd" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "etcd_domain" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-etcd" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "count" ], [ "A_string", "index" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "." ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "dns_zone" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "etcd_initial_cluster" ],
+                [
+                  "Fun_call",
+                  [
+                    "join",
+                    [
+                      [ "String", "," ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "data" ],
+                                      [ "A_string", "template_file" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "etcds" ]
+                                ]
+                              ],
+                              [ "A_splat" ]
+                            ]
+                          ],
+                          [ "A_string", "rendered" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "kubeconfig" ],
+                [
+                  "Fun_call",
+                  [
+                    "indent",
+                    [
+                      [ "Int", 10 ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "module" ], [ "A_string", "bootstrap" ]
+                            ]
+                          ],
+                          [ "A_string", "kubeconfig-kubelet" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "ssh_authorized_key" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "ssh_authorized_key" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "cluster_dns_service_ip" ],
+                [
+                  "Fun_call",
+                  [
+                    "cidrhost",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "service_cidr" ] ]
+                      ],
+                      [ "Int", 10 ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "cluster_domain_suffix" ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "var" ], [ "A_string", "cluster_domain_suffix" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "template_file" ], [ "Lit", "etcds" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "controller_count" ] ] ]
+        ],
+        [
+          "Attribute",
+          "template",
+          [
+            "String",
+            "etcd${index}=https://${cluster_name}-etcd${index}.${dns_zone}:2380"
+          ]
+        ],
+        [
+          "Attribute",
+          "vars",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "index" ],
+                [ "Attr", [ [ "Id", "count" ], [ "A_string", "index" ] ] ]
+              ],
+              [
+                [ "Bare", "cluster_name" ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "cluster_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "dns_zone" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "dns_zone" ] ] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

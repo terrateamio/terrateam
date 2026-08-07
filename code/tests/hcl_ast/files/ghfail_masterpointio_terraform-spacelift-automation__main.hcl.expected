@@ -1,0 +1,5634 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [ "Attribute", "default_workspace_name", [ "String", "default" ] ],
+        [ "Attribute", "root_space_id", [ "String", "root" ] ],
+        [
+          "Attribute",
+          "_multi_instance_structure",
+          [
+            "Equal",
+            [
+              [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "root_module_structure" ] ]
+              ],
+              [ "String", "MultiInstance" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "_multi_instance_stack_files_raw",
+          [
+            "Fun_call",
+            [
+              "fileset",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "root" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "root_modules_path" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [ "String", "**/stacks/*.yaml" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "_single_instance_stack_files_raw",
+          [
+            "Fun_call",
+            [
+              "fileset",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "path" ], [ "A_string", "root" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "/" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "root_modules_path" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [ "String", "**/stack.yaml" ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "_multi_instance_stack_files",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "file", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "_multi_instance_stack_files_raw" ]
+                ]
+              ],
+              "output": [ "Id", "file" ],
+              "cond": [
+                "Not",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [ [ "String", "\\.terraform/" ], [ "Id", "file" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_single_instance_stack_files",
+          [
+            "For_tuple",
+            {
+              "identifiers": [ "file", [] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "_single_instance_stack_files_raw" ]
+                ]
+              ],
+              "output": [ "Id", "file" ],
+              "cond": [
+                "Not",
+                [
+                  "Fun_call",
+                  [
+                    "can",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "regex",
+                          [ [ "String", "\\.terraform/" ], [ "Id", "file" ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_all_stack_files",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "_multi_instance_structure" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "_multi_instance_stack_files" ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "_single_instance_stack_files" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_all_root_modules",
+          [
+            "Fun_call",
+            [
+              "distinct",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "file", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ], [ "A_string", "_all_stack_files" ]
+                      ]
+                    ],
+                    "output": [
+                      "Cond",
+                      {
+                        "if_": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "_multi_instance_structure" ]
+                          ]
+                        ],
+                        "then_": [
+                          "Fun_call",
+                          [
+                            "dirname",
+                            [
+                              [
+                                "Fun_call",
+                                [ "dirname", [ [ "Id", "file" ] ] ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        "else_": [
+                          "Fun_call", [ "dirname", [ [ "Id", "file" ] ] ]
+                        ]
+                      }
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enabled_root_modules",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "var" ], [ "A_string", "all_root_modules_enabled" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "_all_root_modules" ] ]
+              ],
+              "else_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "enabled_root_modules" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_multi_instance_root_module_yaml_decoded",
+          [
+            "For_object",
+            {
+              "identifiers": [ "module", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "enabled_root_modules" ] ]
+              ],
+              "key_output": [ "Id", "module" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "yaml_file", [] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "fileset",
+                      [
+                        [
+                          "Template",
+                          [
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "path" ], [ "A_string", "root" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ],
+                            [ "Literal", "/" ],
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "root_modules_path" ]
+                                  ]
+                                ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ],
+                            [ "Literal", "/" ],
+                            [
+                              "Interpolation",
+                              {
+                                "expr": [ "Id", "module" ],
+                                "strip_before": false,
+                                "strip_after": false
+                              }
+                            ],
+                            [ "Literal", "/stacks" ]
+                          ]
+                        ],
+                        [ "String", "*.yaml" ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [ "Id", "yaml_file" ],
+                  "value_output": [
+                    "Fun_call",
+                    [
+                      "yamldecode",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "file",
+                            [
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "path" ],
+                                          [ "A_string", "root" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [ "Literal", "/" ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "root_modules_path" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [ "Literal", "/" ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [ "Id", "module" ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [ "Literal", "/stacks/" ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [ "Id", "yaml_file" ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "cond": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "_multi_instance_structure" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_single_instance_root_module_yaml_decoded",
+          [
+            "For_object",
+            {
+              "identifiers": [ "module", [] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "enabled_root_modules" ] ]
+              ],
+              "key_output": [ "Id", "module" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [
+                      "Computed",
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "default_workspace_name" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Fun_call",
+                      [
+                        "yamldecode",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "file",
+                              [
+                                [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "path" ],
+                                            [ "A_string", "root" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "/" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "var" ],
+                                            [
+                                              "A_string", "root_modules_path"
+                                            ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "/" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "module" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "/stack.yaml" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not",
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [ "A_string", "_multi_instance_structure" ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_root_module_yaml_decoded",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string", "_multi_instance_root_module_yaml_decoded"
+                    ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [ "Id", "local" ],
+                    [
+                      "A_string", "_single_instance_root_module_yaml_decoded"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "_common_configs",
+          [
+            "For_object",
+            {
+              "identifiers": [ "module", [ "files" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "_root_module_yaml_decoded" ]
+                ]
+              ],
+              "key_output": [ "Id", "module" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "lookup",
+                  [
+                    [ "Id", "files" ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "common_config_file" ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_default_tf_workspace_enabled",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "_multi_instance_structure" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "default_tf_workspace_enabled" ]
+                ]
+              ],
+              "else_": [ "Bool", true ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_root_module_stack_configs",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Ellipsis",
+                  [
+                    "For_tuple",
+                    {
+                      "identifiers": [ "module", [ "files" ] ],
+                      "input": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "_root_module_yaml_decoded" ]
+                        ]
+                      ],
+                      "output": [
+                        "For_object",
+                        {
+                          "identifiers": [ "file", [ "content" ] ],
+                          "input": [ "Id", "files" ],
+                          "key_output": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "_multi_instance_structure" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [ "Id", "module" ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [ "Literal", "-" ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Fun_call",
+                                        [
+                                          "trimsuffix",
+                                          [
+                                            [ "Id", "file" ],
+                                            [ "String", ".yaml" ]
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ],
+                              "else_": [ "Id", "module" ]
+                            }
+                          ],
+                          "value_output": [
+                            "Fun_call",
+                            [
+                              "merge",
+                              [
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Quoted", "project_root" ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "try",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "content" ],
+                                                    [
+                                                      "A_string",
+                                                      "stack_settings"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string", "project_root"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "replace",
+                                                [
+                                                  [
+                                                    "Fun_call",
+                                                    [
+                                                      "format",
+                                                      [
+                                                        [ "String", "%s/%s" ],
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "var" ],
+                                                            [
+                                                              "A_string",
+                                                              "root_modules_path"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [ "Id", "module" ]
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "String", "../" ],
+                                                  [ "String", "" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Quoted", "root_module" ],
+                                      [ "Id", "module" ]
+                                    ],
+                                    [
+                                      [ "Quoted", "terraform_workspace" ],
+                                      [
+                                        "Cond",
+                                        {
+                                          "if_": [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "content" ],
+                                                        [
+                                                          "A_string",
+                                                          "automation_settings"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "default_tf_workspace_enabled"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "_default_tf_workspace_enabled"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          "then_": [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string",
+                                                "default_workspace_name"
+                                              ]
+                                            ]
+                                          ],
+                                          "else_": [
+                                            "Fun_call",
+                                            [
+                                              "trimsuffix",
+                                              [
+                                                [ "Id", "file" ],
+                                                [ "String", ".yaml" ]
+                                              ]
+                                            ]
+                                          ]
+                                        }
+                                      ]
+                                    ],
+                                    [
+                                      [ "Quoted", "tfvars_file_name" ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "trimsuffix",
+                                          [
+                                            [ "Id", "file" ],
+                                            [ "String", ".yaml" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Id", "content" ]
+                              ]
+                            ]
+                          ],
+                          "cond": [
+                            "Not_equal",
+                            [
+                              [ "Id", "file" ],
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "common_config_file" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        }
+                      ],
+                      "cond": null
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "configs",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr", [ [ "Id", "module" ], [ "A_string", "deep" ] ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [
+                "Attr", [ [ "Id", "value" ], [ "A_string", "merged" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_configs",
+          [
+            "For_object",
+            {
+              "identifiers": [ "key", [ "value" ] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "configs" ] ]
+              ],
+              "key_output": [ "Id", "key" ],
+              "value_output": [
+                "Attr",
+                [ [ "Id", "value" ], [ "A_string", "stack_settings" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "stacks",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "keys",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "stack_configs" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "_dependency_labels",
+          [
+            "For_object",
+            {
+              "identifiers": [ "stack", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "stacks" ] ]
+              ],
+              "key_output": [ "Id", "stack" ],
+              "value_output": [
+                "Tuple",
+                [
+                  [
+                    "Template",
+                    [
+                      [ "Literal", "depends-on:spacelift-automation-" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [ "Id", "terraform" ],
+                              [ "A_string", "workspace" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Attr",
+                [
+                  [ "Id", "var" ],
+                  [ "A_string", "dependency_labels_enabled" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_folder_labels",
+          [
+            "For_object",
+            {
+              "identifiers": [ "stack", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "stacks" ] ]
+              ],
+              "key_output": [ "Id", "stack" ],
+              "value_output": [
+                "Tuple",
+                [
+                  [
+                    "Cond",
+                    {
+                      "if_": [
+                        "Attr",
+                        [
+                          [ "Id", "local" ],
+                          [ "A_string", "_multi_instance_structure" ]
+                        ]
+                      ],
+                      "then_": [
+                        "Template",
+                        [
+                          [ "Literal", "folder:" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "configs" ]
+                                        ]
+                                      ],
+                                      [ "Id", "stack" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "root_module" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ],
+                          [ "Literal", "/" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "configs" ]
+                                        ]
+                                      ],
+                                      [ "Id", "stack" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "tfvars_file_name" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ],
+                      "else_": [
+                        "Template",
+                        [
+                          [ "Literal", "folder:" ],
+                          [
+                            "Interpolation",
+                            {
+                              "expr": [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [ "A_string", "configs" ]
+                                        ]
+                                      ],
+                                      [ "Id", "stack" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "root_module" ]
+                                ]
+                              ],
+                              "strip_before": false,
+                              "strip_after": false
+                            }
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [
+            "For_object",
+            {
+              "identifiers": [ "stack", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "stacks" ] ]
+              ],
+              "key_output": [ "Id", "stack" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "compact",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "flatten",
+                        [
+                          [
+                            "Tuple",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "lookup",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "_folder_labels" ]
+                                      ]
+                                    ],
+                                    [ "Id", "stack" ],
+                                    [ "Tuple", [] ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "lookup",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "_dependency_labels" ]
+                                      ]
+                                    ],
+                                    [ "Id", "stack" ],
+                                    [ "Tuple", [] ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "stack_configs"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "stack" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "labels" ]
+                                      ]
+                                    ],
+                                    [ "Tuple", [] ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [ [ "Id", "var" ], [ "A_string", "labels" ] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "before_init",
+          [
+            "For_object",
+            {
+              "identifiers": [ "stack", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "stacks" ] ]
+              ],
+              "key_output": [ "Id", "stack" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "configs" ]
+                                      ]
+                                    ],
+                                    [ "Id", "stack" ]
+                                  ]
+                                ],
+                                [ "A_string", "automation_settings" ]
+                              ]
+                            ],
+                            [ "A_string", "tfvars_enabled" ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "_multi_instance_structure" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "then_": [
+                    "Fun_call",
+                    [
+                      "compact",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "concat",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "before_init" ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "stack_configs"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "stack" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "before_init" ]
+                                      ]
+                                    ],
+                                    [ "Tuple", [] ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Tuple",
+                                [
+                                  [
+                                    "Template",
+                                    [
+                                      [ "Literal", "cp tfvars/" ],
+                                      [
+                                        "Interpolation",
+                                        {
+                                          "expr": [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Idx",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "local" ],
+                                                      [
+                                                        "A_string", "configs"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "Id", "stack" ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "tfvars_file_name"
+                                              ]
+                                            ]
+                                          ],
+                                          "strip_before": false,
+                                          "strip_after": false
+                                        }
+                                      ],
+                                      [
+                                        "Literal",
+                                        ".tfvars spacelift.auto.tfvars"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "else_": [
+                    "Fun_call",
+                    [
+                      "compact",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "concat",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "before_init" ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "stack_configs"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "stack" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "before_init" ]
+                                      ]
+                                    ],
+                                    [ "Tuple", [] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_property_resolver",
+          [
+            "For_object",
+            {
+              "identifiers": [ "stack", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "stacks" ] ]
+              ],
+              "key_output": [ "Id", "stack" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "autoretry" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "autoretry" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "autoretry" ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "additional_project_globs" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "additional_project_globs" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "additional_project_globs" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "autodeploy" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "autodeploy" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "autodeploy" ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "branch" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "branch" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "branch" ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "enable_local_preview" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "enable_local_preview" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "enable_local_preview" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "enable_well_known_secret_masking" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [
+                                "A_string",
+                                "enable_well_known_secret_masking"
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string",
+                                "enable_well_known_secret_masking"
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "github_action_deploy" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "github_action_deploy" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "github_action_deploy" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "manage_state" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "manage_state" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "manage_state" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "protect_from_deletion" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "protect_from_deletion" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "protect_from_deletion" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "repository" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "repository" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [ [ "Id", "var" ], [ "A_string", "repository" ] ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "runner_image" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "runner_image" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ], [ "A_string", "runner_image" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "terraform_smart_sanitization" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "terraform_smart_sanitization" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "terraform_smart_sanitization" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "terraform_version" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "terraform_version" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "terraform_version" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "worker_pool_id" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "worker_pool_id" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "worker_pool_id" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "aws_integration_id" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "resource_id_resolver" ]
+                              ]
+                            ],
+                            [ "A_string", "aws_integration" ]
+                          ]
+                        ],
+                        [ "Id", "stack" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "drift_detection_ignore_state" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "drift_detection_ignore_state" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "drift_detection_ignore_state" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "drift_detection_reconcile" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "drift_detection_reconcile" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "drift_detection_reconcile" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "drift_detection_schedule" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "drift_detection_schedule" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "drift_detection_schedule" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "drift_detection_timezone" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "drift_detection_timezone" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "drift_detection_timezone" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "destructor_deactivated" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "destructor_deactivated" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "destructor_deactivated" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_array_merger",
+          [
+            "For_object",
+            {
+              "identifiers": [ "stack", [] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "stacks" ] ]
+              ],
+              "key_output": [ "Id", "stack" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "after_apply" ],
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "stack_configs"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "stack" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "after_apply" ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "after_apply" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "after_destroy" ],
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "stack_configs"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "stack" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "after_destroy" ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "after_destroy" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "after_init" ],
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "stack_configs"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "stack" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "after_init" ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "after_init" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "after_perform" ],
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "stack_configs"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "stack" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "after_perform" ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "after_perform" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "after_plan" ],
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "stack_configs"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "stack" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "after_plan" ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "after_plan" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "after_run" ],
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "stack_configs"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "stack" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "after_run" ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "after_run" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "before_apply" ],
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "stack_configs"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "stack" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "before_apply" ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "before_apply" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "before_destroy" ],
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "stack_configs"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "stack" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "before_destroy" ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "before_destroy" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "before_perform" ],
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "stack_configs"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "stack" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "before_perform" ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "before_perform" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "before_plan" ],
+                    [
+                      "Fun_call",
+                      [
+                        "compact",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "concat",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "local" ],
+                                                  [
+                                                    "A_string",
+                                                    "stack_configs"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "stack" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "before_plan" ]
+                                        ]
+                                      ],
+                                      [ "Tuple", [] ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "var" ],
+                                    [ "A_string", "before_plan" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name_to_id_mappings",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "space" ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "space", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "spacelift_spaces" ]
+                              ]
+                            ],
+                            [ "A_string", "all" ]
+                          ]
+                        ],
+                        [ "A_string", "spaces" ]
+                      ]
+                    ],
+                    "key_output": [
+                      "Attr", [ [ "Id", "space" ], [ "A_string", "name" ] ]
+                    ],
+                    "value_output": [
+                      "Attr",
+                      [ [ "Id", "space" ], [ "A_string", "space_id" ] ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "worker_pool" ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "pool", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "spacelift_worker_pools" ]
+                              ]
+                            ],
+                            [ "A_string", "all" ]
+                          ]
+                        ],
+                        [ "A_string", "worker_pools" ]
+                      ]
+                    ],
+                    "key_output": [
+                      "Attr", [ [ "Id", "pool" ], [ "A_string", "name" ] ]
+                    ],
+                    "value_output": [
+                      "Attr",
+                      [ [ "Id", "pool" ], [ "A_string", "worker_pool_id" ] ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ],
+              [
+                [ "Bare", "aws_integration" ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "integration", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "data" ],
+                                [ "A_string", "spacelift_aws_integrations" ]
+                              ]
+                            ],
+                            [ "A_string", "all" ]
+                          ]
+                        ],
+                        [ "A_string", "integrations" ]
+                      ]
+                    ],
+                    "key_output": [
+                      "Attr",
+                      [ [ "Id", "integration" ], [ "A_string", "name" ] ]
+                    ],
+                    "value_output": [
+                      "Attr",
+                      [
+                        [ "Id", "integration" ],
+                        [ "A_string", "integration_id" ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_id_resolver_config",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "space" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "id_attr" ], [ "String", "space_id" ] ],
+                    [ [ "Bare", "name_attr" ], [ "String", "space_name" ] ],
+                    [
+                      [ "Bare", "default_value" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "local" ], [ "A_string", "root_space_id" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "worker_pool" ],
+                [
+                  "Object",
+                  [
+                    [ [ "Bare", "id_attr" ], [ "String", "worker_pool_id" ] ],
+                    [
+                      [ "Bare", "name_attr" ],
+                      [ "String", "worker_pool_name" ]
+                    ],
+                    [ [ "Bare", "default_value" ], [ "Null" ] ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "aws_integration" ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "id_attr" ],
+                      [ "String", "aws_integration_id" ]
+                    ],
+                    [
+                      [ "Bare", "name_attr" ],
+                      [ "String", "aws_integration_name" ]
+                    ],
+                    [ [ "Bare", "default_value" ], [ "Null" ] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "var_lookup",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "space_id" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "space_id" ] ] ]
+              ],
+              [
+                [ "Bare", "space_name" ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "space_name" ] ] ]
+              ],
+              [
+                [ "Bare", "worker_pool_id" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "worker_pool_id" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "worker_pool_name" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "worker_pool_name" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "aws_integration_id" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "aws_integration_id" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "aws_integration_name" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "aws_integration_name" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_id_resolver",
+          [
+            "For_object",
+            {
+              "identifiers": [ "resource_type", [ "config" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "resource_id_resolver_config" ]
+                ]
+              ],
+              "key_output": [ "Id", "resource_type" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "stack", [] ],
+                  "input": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "stacks" ] ]
+                  ],
+                  "key_output": [ "Id", "stack" ],
+                  "value_output": [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "coalesce",
+                            [
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string", "stack_configs"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "stack" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "config" ],
+                                            [ "A_string", "id_attr" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string",
+                                                  "name_to_id_mappings"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "resource_type" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Idx",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "stack_configs"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Id", "stack" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "config" ],
+                                                [ "A_string", "name_attr" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "var_lookup" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "config" ],
+                                      [ "A_string", "id_attr" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                "Fun_call",
+                                [
+                                  "try",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [
+                                                  "A_string",
+                                                  "name_to_id_mappings"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Id", "resource_type" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "local" ],
+                                                [ "A_string", "var_lookup" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "config" ],
+                                                [ "A_string", "name_attr" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "config" ],
+                            [ "A_string", "default_value" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "aws_integration_stacks",
+          [
+            "For_object",
+            {
+              "identifiers": [ "stack", [ "config" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "stack_configs" ] ]
+              ],
+              "key_output": [ "Id", "stack" ],
+              "value_output": [ "Id", "config" ],
+              "cond": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "config" ],
+                        [ "A_string", "aws_integration_enabled" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "aws_integration_enabled" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "drift_detection_stacks",
+          [
+            "For_object",
+            {
+              "identifiers": [ "stack", [ "config" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "stack_configs" ] ]
+              ],
+              "key_output": [ "Id", "stack" ],
+              "value_output": [ "Id", "config" ],
+              "cond": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "config" ],
+                        [ "A_string", "drift_detection_enabled" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ],
+                        [ "A_string", "drift_detection_enabled" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "destructor_stacks",
+          [
+            "For_object",
+            {
+              "identifiers": [ "stack", [ "config" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "stack_configs" ] ]
+              ],
+              "key_output": [ "Id", "stack" ],
+              "value_output": [ "Id", "config" ],
+              "cond": [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "config" ],
+                        [ "A_string", "destructor_enabled" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "var" ], [ "A_string", "destructor_enabled" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "role_attachment_stacks",
+          [
+            "For_object",
+            {
+              "identifiers": [ "stack", [ "config" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "stack_configs" ] ]
+              ],
+              "key_output": [ "Id", "stack" ],
+              "value_output": [ "Id", "config" ],
+              "cond": [
+                "Log_or",
+                [
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "config" ],
+                                [ "A_string", "role_attachment_role_slug" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ], [ "A_string", "role_attachment" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "_role_attachment_slugs",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "stack", [] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "keys",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "role_attachment_stacks" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "output": [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "local" ],
+                                      [ "A_string", "stack_configs" ]
+                                    ]
+                                  ],
+                                  [ "Id", "stack" ]
+                                ]
+                              ],
+                              [ "A_string", "role_attachment_role_slug" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "var" ],
+                                  [ "A_string", "role_attachment" ]
+                                ]
+                              ],
+                              [ "A_string", "role_slug" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "_external_role_attachment_slugs",
+          [
+            "Fun_call",
+            [
+              "toset",
+              [
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "slug", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "local" ],
+                        [ "A_string", "_role_attachment_slugs" ]
+                      ]
+                    ],
+                    "output": [ "Id", "slug" ],
+                    "cond": [
+                      "Not",
+                      [
+                        "Fun_call",
+                        [
+                          "contains",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "keys",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "managed_roles" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Id", "slug" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "_role_slug_to_id",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "slug", [ "role" ] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "data" ],
+                            [ "A_string", "spacelift_role" ]
+                          ]
+                        ],
+                        [ "A_string", "attachments" ]
+                      ]
+                    ],
+                    "key_output": [ "Id", "slug" ],
+                    "value_output": [
+                      "Attr", [ [ "Id", "role" ], [ "A_string", "id" ] ]
+                    ],
+                    "cond": null
+                  }
+                ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "key", [ "role" ] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [ "Id", "spacelift_role" ], [ "A_string", "managed" ]
+                      ]
+                    ],
+                    "key_output": [ "Id", "key" ],
+                    "value_output": [
+                      "Attr", [ [ "Id", "role" ], [ "A_string", "id" ] ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "deep" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "cloudposse/config/yaml//modules/deepmerge" ]
+        ],
+        [ "Attribute", "version", [ "String", "1.0.2" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [
+              [ "Id", "local" ], [ "A_string", "_root_module_stack_configs" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "maps",
+          [
+            "Tuple",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "local" ], [ "A_string", "_common_configs" ] ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "root_module" ]
+                    ]
+                  ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "jsondecode",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "data" ],
+                                          [
+                                            "A_string",
+                                            "jsonschema_validator"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "runtime_overrides" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "root_module" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "A_string", "validated" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Object", [] ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [ "Attribute", "append_list_enabled", [ "Bool", true ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "spacelift_stack" ], [ "Lit", "default" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "stacks" ] ] ]
+        ],
+        [
+          "Attribute",
+          "additional_project_globs",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "additional_project_globs" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "after_apply",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "stack_array_merger" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "after_apply" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "after_destroy",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "stack_array_merger" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "after_destroy" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "after_init",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "stack_array_merger" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "after_init" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "after_perform",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "stack_array_merger" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "after_perform" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "after_plan",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "stack_array_merger" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "after_plan" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "after_run",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "stack_array_merger" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "after_run" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "autodeploy",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "autodeploy" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "autoretry",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "autoretry" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "before_apply",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "stack_array_merger" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "before_apply" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "before_destroy",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "stack_array_merger" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "before_destroy" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "before_init",
+          [
+            "Idx",
+            [
+              [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "before_init" ] ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "before_perform",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "stack_array_merger" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "before_perform" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "before_plan",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ], [ "A_string", "stack_array_merger" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "before_plan" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "branch",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "branch" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_local_preview",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "enable_local_preview" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "enable_well_known_secret_masking",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "enable_well_known_secret_masking" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "github_action_deploy",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "github_action_deploy" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [
+            "Idx",
+            [
+              [ "Attr", [ [ "Id", "local" ], [ "A_string", "labels" ] ] ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "manage_state",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "manage_state" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+        ],
+        [
+          "Attribute",
+          "project_root",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "configs" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "project_root" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "protect_from_deletion",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "protect_from_deletion" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "repository",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "repository" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "runner_image",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "runner_image" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "space_id",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "resource_id_resolver" ]
+                    ]
+                  ],
+                  [ "A_string", "space" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "terraform_smart_sanitization",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "terraform_smart_sanitization" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "terraform_version",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "terraform_version" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "terraform_workflow_tool",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "terraform_workflow_tool" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "terraform_workspace",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "configs" ] ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "terraform_workspace" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "worker_pool_id",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "resource_id_resolver" ]
+                    ]
+                  ],
+                  [ "A_string", "worker_pool" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "stack_configs" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "description" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "templatestring",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "description" ]
+                              ]
+                            ],
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "local" ],
+                                    [ "A_string", "configs" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ],
+                [
+                  "String",
+                  "Managed by spacelift-automation Terraform root module."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "github_enterprise" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "github_enterprise" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "github_enterprise" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "namespace",
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "github_enterprise" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "String", "namespace" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "id",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "github_enterprise" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "String", "id" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "azure_devops" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "azure_devops" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "azure_devops" ] ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "project",
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "azure_devops" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "String", "project" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "id",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "azure_devops" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "String", "id" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "raw_git" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "raw_git" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "raw_git" ] ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "namespace",
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "raw_git" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "String", "namespace" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "url",
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "raw_git" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "String", "url" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "gitlab" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "gitlab" ] ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "gitlab" ] ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "namespace",
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "gitlab" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "String", "namespace" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "id",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "gitlab" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "String", "id" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "bitbucket_cloud" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "bitbucket_cloud" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "bitbucket_cloud" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "namespace",
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "bitbucket_cloud" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "String", "namespace" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "id",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "bitbucket_cloud" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "String", "id" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "bitbucket_datacenter" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Not_equal",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "bitbucket_datacenter" ]
+                          ]
+                        ],
+                        [ "Null" ]
+                      ]
+                    ],
+                    "then_": [
+                      "Tuple",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "bitbucket_datacenter" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "else_": [ "Tuple", [] ]
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "namespace",
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "bitbucket_datacenter" ],
+                              [ "A_string", "value" ]
+                            ]
+                          ],
+                          [ "String", "namespace" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "id",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "bitbucket_datacenter" ],
+                                    [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "String", "id" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "spacelift_stack_destructor" ], [ "Lit", "default" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "destructor_stacks" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "spacelift_stack" ], [ "A_string", "default" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "deactivated",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "destructor_deactivated" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "spacelift_drift_detection" ],
+                  [ "A_string", "default" ]
+                ]
+              ],
+              [
+                "Attr",
+                [
+                  [ "Id", "spacelift_aws_integration_attachment" ],
+                  [ "A_string", "default" ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "spacelift_aws_integration_attachment" ],
+        [ "Lit", "default" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "aws_integration_stacks" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "integration_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "aws_integration_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "spacelift_stack" ], [ "A_string", "default" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "read",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "aws_integration_attachment_read" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "write",
+          [
+            "Attr",
+            [
+              [ "Id", "var" ],
+              [ "A_string", "aws_integration_attachment_write" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "spacelift_drift_detection" ], [ "Lit", "default" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "drift_detection_stacks" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "spacelift_stack" ], [ "A_string", "default" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ignore_state",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "drift_detection_ignore_state" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "reconcile",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "drift_detection_reconcile" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "schedule",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "drift_detection_schedule" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "timezone",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "local" ],
+                      [ "A_string", "stack_property_resolver" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "drift_detection_timezone" ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Block",
+                {
+                  "type_": "precondition",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "condition",
+                      [
+                        "Fun_call",
+                        [
+                          "alltrue",
+                          [
+                            [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "schedule", [] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Idx",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "local" ],
+                                            [
+                                              "A_string",
+                                              "stack_property_resolver"
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "each" ],
+                                            [ "A_string", "key" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "A_string", "drift_detection_schedule"
+                                    ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Fun_call",
+                                  [
+                                    "can",
+                                    [
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "regex",
+                                          [
+                                            [
+                                              "String",
+                                              "^([0-9,\\-*/]+\\s+){4}[0-9,\\-*/]+$"
+                                            ],
+                                            [ "Id", "schedule" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "error_message",
+                      [
+                        "String",
+                        "Invalid cron schedule format for drift detection"
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "spacelift_role" ], [ "Lit", "managed" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "managed_roles" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "description" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "actions",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "actions" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "spacelift_space" ], [ "Lit", "default" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "spaces" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+        ],
+        [
+          "Attribute",
+          "description",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "description" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "inherit_entities",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "inherit_entities" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "labels",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "labels" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "parent_space_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "parent_space_id" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "spacelift_role_attachment" ], [ "Lit", "default" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "local" ], [ "A_string", "role_attachment_stacks" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "stack_id",
+          [
+            "Attr",
+            [
+              [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "spacelift_stack" ], [ "A_string", "default" ]
+                    ]
+                  ],
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "space_id",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "stack_configs" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "role_attachment_space_id" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ],
+                [
+                  "Fun_call",
+                  [
+                    "try",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "role_attachment" ]
+                            ]
+                          ],
+                          [ "A_string", "space_id" ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "spacelift_stack" ],
+                            [ "A_string", "default" ]
+                          ]
+                        ],
+                        [
+                          "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                        ]
+                      ]
+                    ],
+                    [ "A_string", "space_id" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "role_id",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "_role_slug_to_id" ] ]
+              ],
+              [
+                "Fun_call",
+                [
+                  "try",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Idx",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "stack_configs" ]
+                              ]
+                            ],
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "key" ] ]
+                            ]
+                          ]
+                        ],
+                        [ "A_string", "role_attachment_role_slug" ]
+                      ]
+                    ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "role_attachment" ]
+                          ]
+                        ],
+                        [ "A_string", "role_slug" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

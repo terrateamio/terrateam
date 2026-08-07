@@ -1,0 +1,1 @@
+hcl parse: <stdin>:1,25-28: Invalid 'for' expression; Key expression is required when building an object.

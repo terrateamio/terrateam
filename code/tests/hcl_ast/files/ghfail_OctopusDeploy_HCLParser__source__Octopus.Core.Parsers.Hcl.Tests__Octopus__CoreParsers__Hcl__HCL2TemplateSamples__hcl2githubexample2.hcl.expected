@@ -1,0 +1,56 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "aws_acm_certificate" ], [ "Lit", "covidportal_staging" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "domain_name",
+          [ "String", "covid-hcportal.cdssandbox.xyz" ]
+        ],
+        [
+          "Attribute",
+          "subject_alternative_names",
+          [ "Tuple", [ [ "String", "*.covid-hcportal.cdssandbox.xyz" ] ] ]
+        ],
+        [ "Attribute", "validation_method", [ "String", "DNS" ] ],
+        [
+          "Attribute",
+          "tags",
+          [
+            "Object",
+            [
+              [
+                [
+                  "Computed",
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "billing_tag_key" ] ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "billing_tag_value" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [ "Attribute", "create_before_destroy", [ "Bool", true ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

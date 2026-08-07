@@ -1,0 +1,5 @@
+[
+  [ "Attribute", "x", [ "Id", "in" ] ],
+  [ "Attribute", "y", [ "Id", "if" ] ],
+  [ "Attribute", "z", [ "Id", "for" ] ]
+]

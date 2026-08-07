@@ -1,0 +1,1303 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "grafana_rule_group" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "alertsfile_map" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "folder_uid",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "folder_uid" ] ] ]
+        ],
+        [
+          "Attribute",
+          "org_id",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "org_id" ] ] ]
+        ],
+        [
+          "Attribute",
+          "interval_seconds",
+          [
+            "Add",
+            [
+              [
+                "Add",
+                [
+                  [
+                    "Mult",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "parseint",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "formatdate",
+                                [
+                                  [ "String", "s" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "timeadd",
+                                      [
+                                        [ "String", "1970-01-01T00:00:00Z" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "try",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "each" ],
+                                                      [ "A_string", "value" ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "interval" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string",
+                                                    "default_evaluation_interval_duration"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 10 ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 1 ]
+                    ]
+                  ],
+                  [
+                    "Mult",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "parseint",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "formatdate",
+                                [
+                                  [ "String", "m" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "timeadd",
+                                      [
+                                        [ "String", "1970-01-01T00:00:00Z" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "try",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "each" ],
+                                                      [ "A_string", "value" ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "interval" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string",
+                                                    "default_evaluation_interval_duration"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Int", 10 ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 60 ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "Mult",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "parseint",
+                      [
+                        [
+                          "Fun_call",
+                          [
+                            "formatdate",
+                            [
+                              [ "String", "h" ],
+                              [
+                                "Fun_call",
+                                [
+                                  "timeadd",
+                                  [
+                                    [ "String", "1970-01-01T00:00:00Z" ],
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "try",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "each" ],
+                                                  [ "A_string", "value" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "interval" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "default_evaluation_interval_duration"
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [ "Int", 10 ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 3600 ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "disable_provenance",
+          [
+            "Attr", [ [ "Id", "var" ], [ "A_string", "disable_provenance" ] ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "rule" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "rule", [] ],
+                    "input": [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                        ],
+                        [ "A_string", "rules" ]
+                      ]
+                    ],
+                    "key_output": [
+                      "Attr", [ [ "Id", "rule" ], [ "A_string", "alert" ] ]
+                    ],
+                    "value_output": [ "Id", "rule" ],
+                    "cond": null
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "name",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "rule" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "alert" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "for",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "coalesce",
+                                [
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Idx",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "var" ],
+                                                    [
+                                                      "A_string", "overrides"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "rule" ],
+                                                        [
+                                                          "A_string", "value"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "A_string", "alert" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "for" ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "rule" ],
+                                                [ "A_string", "value" ]
+                                              ]
+                                            ],
+                                            [ "A_string", "for" ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "condition",
+                      [ "String", "ALERTCONDITION" ]
+                    ],
+                    [
+                      "Attribute",
+                      "annotations",
+                      [
+                        "For_object",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Fun_call",
+                            [
+                              "merge",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "rule" ],
+                                        [ "A_string", "value" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "annotations" ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [ "A_string", "overrides" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [ "A_string", "value" ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "alert" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "annotations" ]
+                                        ]
+                                      ],
+                                      [ "Object", [] ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "key_output": [ "Id", "k" ],
+                          "value_output": [
+                            "Fun_call",
+                            [
+                              "replace",
+                              [
+                                [ "Id", "v" ],
+                                [ "String", "$value" ],
+                                [ "String", "$values.QUERY_RESULT.Value" ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "labels",
+                      [
+                        "Fun_call",
+                        [
+                          "merge",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "rule" ], [ "A_string", "value" ]
+                                  ]
+                                ],
+                                [ "A_string", "labels" ]
+                              ]
+                            ],
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [ "A_string", "overrides" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "rule" ],
+                                                  [ "A_string", "value" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "alert" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "labels" ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "exec_err_state",
+                      [
+                        "Fun_call",
+                        [
+                          "coalesce",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [ "A_string", "overrides" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "rule" ],
+                                                  [ "A_string", "value" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "alert" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "exec_err_state" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ],
+                            [ "String", "Error" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "is_paused",
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "var" ],
+                                        [ "A_string", "overrides" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "rule" ],
+                                            [ "A_string", "value" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "alert" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "is_paused" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "no_data_state",
+                      [
+                        "Fun_call",
+                        [
+                          "coalesce",
+                          [
+                            [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [ "A_string", "overrides" ]
+                                            ]
+                                          ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "rule" ],
+                                                  [ "A_string", "value" ]
+                                                ]
+                                              ],
+                                              [ "A_string", "alert" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "no_data_state" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ]
+                            ],
+                            [ "String", "OK" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "data",
+                        "labels": [],
+                        "body": [
+                          [ "Attribute", "ref_id", [ "String", "QUERY" ] ],
+                          [
+                            "Block",
+                            {
+                              "type_": "relative_time_range",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "from",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "alert_relative_time_range_from"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Attribute", "to", [ "Int", 0 ] ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Attribute",
+                            "datasource_uid",
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "datasource_uid" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Attribute",
+                            "model",
+                            [
+                              "Fun_call",
+                              [
+                                "jsonencode",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Bare", "editorMode" ],
+                                        [ "String", "code" ]
+                                      ],
+                                      [
+                                        [ "Bare", "expr" ],
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "coalesce",
+                                            [
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "try",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Idx",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id", "var"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "overrides"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Attr",
+                                                                  [
+                                                                    [
+                                                                    "Id",
+                                                                    "rule"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "value"
+                                                                    ]
+                                                                  ]
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "alert"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string", "expr"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "rule" ],
+                                                      [ "A_string", "value" ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "expr" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Bare", "intervalMs" ],
+                                        [ "Int", 1000 ]
+                                      ],
+                                      [
+                                        [ "Bare", "maxDataPoints" ],
+                                        [ "Int", 43200 ]
+                                      ],
+                                      [
+                                        [ "Bare", "refId" ],
+                                        [ "String", "QUERY" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "data",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "ref_id",
+                            [ "String", "QUERY_RESULT" ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "relative_time_range",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "from",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "alert_relative_time_range_from"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Attribute", "to", [ "Int", 0 ] ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Attribute",
+                            "datasource_uid",
+                            [ "String", "__expr__" ]
+                          ],
+                          [
+                            "Attribute",
+                            "model",
+                            [
+                              "Fun_call",
+                              [
+                                "jsonencode",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Quoted", "conditions" ],
+                                        [
+                                          "Tuple",
+                                          [
+                                            [
+                                              "Object",
+                                              [
+                                                [
+                                                  [ "Quoted", "evaluator" ],
+                                                  [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [
+                                                          "Quoted", "params"
+                                                        ],
+                                                        [
+                                                          "Tuple",
+                                                          [ [ "Int", 0 ] ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [ "Quoted", "type" ],
+                                                        [ "String", "gt" ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  [ "Quoted", "operator" ],
+                                                  [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [ "Quoted", "type" ],
+                                                        [ "String", "and" ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  [ "Quoted", "query" ],
+                                                  [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [
+                                                          "Quoted", "params"
+                                                        ],
+                                                        [ "Tuple", [] ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  [ "Quoted", "reducer" ],
+                                                  [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [
+                                                          "Quoted", "params"
+                                                        ],
+                                                        [ "Tuple", [] ]
+                                                      ],
+                                                      [
+                                                        [ "Quoted", "type" ],
+                                                        [ "String", "avg" ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  [ "Quoted", "type" ],
+                                                  [ "String", "query" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Quoted", "datasource" ],
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Quoted", "name" ],
+                                              [ "String", "Expression" ]
+                                            ],
+                                            [
+                                              [ "Quoted", "type" ],
+                                              [ "String", "__expr__" ]
+                                            ],
+                                            [
+                                              [ "Quoted", "uid" ],
+                                              [ "String", "__expr__" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Quoted", "expression" ],
+                                        [ "String", "QUERY" ]
+                                      ],
+                                      [
+                                        [ "Quoted", "intervalMs" ],
+                                        [ "Int", 1000 ]
+                                      ],
+                                      [
+                                        [ "Quoted", "maxDataPoints" ],
+                                        [ "Int", 43200 ]
+                                      ],
+                                      [
+                                        [ "Quoted", "reducer" ],
+                                        [ "String", "last" ]
+                                      ],
+                                      [
+                                        [ "Quoted", "refId" ],
+                                        [ "String", "QUERY_RESULT" ]
+                                      ],
+                                      [
+                                        [ "Quoted", "type" ],
+                                        [ "String", "reduce" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "Block",
+                      {
+                        "type_": "data",
+                        "labels": [],
+                        "body": [
+                          [
+                            "Attribute",
+                            "ref_id",
+                            [ "String", "ALERTCONDITION" ]
+                          ],
+                          [
+                            "Block",
+                            {
+                              "type_": "relative_time_range",
+                              "labels": [],
+                              "body": [
+                                [
+                                  "Attribute",
+                                  "from",
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [
+                                        "A_string",
+                                        "alert_relative_time_range_from"
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Attribute", "to", [ "Int", 0 ] ]
+                              ]
+                            }
+                          ],
+                          [
+                            "Attribute",
+                            "datasource_uid",
+                            [ "String", "__expr__" ]
+                          ],
+                          [
+                            "Attribute",
+                            "model",
+                            [
+                              "Fun_call",
+                              [
+                                "jsonencode",
+                                [
+                                  [
+                                    "Object",
+                                    [
+                                      [
+                                        [ "Quoted", "conditions" ],
+                                        [
+                                          "Tuple",
+                                          [
+                                            [
+                                              "Object",
+                                              [
+                                                [
+                                                  [ "Quoted", "evaluator" ],
+                                                  [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [
+                                                          "Quoted", "params"
+                                                        ],
+                                                        [
+                                                          "Tuple",
+                                                          [
+                                                            [
+                                                              "Fun_call",
+                                                              [
+                                                                "coalesce",
+                                                                [
+                                                                  [
+                                                                    "Fun_call",
+                                                                    [
+                                                                    "try",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Idx",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "var"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "overrides"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Attr",
+                                                                    [
+                                                                    [
+                                                                    "Id",
+                                                                    "rule"
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "value"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "alert"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "A_string",
+                                                                    "alert_threshold"
+                                                                    ]
+                                                                    ]
+                                                                    ],
+                                                                    [
+                                                                    "Null"
+                                                                    ]
+                                                                    ]
+                                                                    ]
+                                                                  ],
+                                                                  [
+                                                                    "Int", 0
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        [ "Quoted", "type" ],
+                                                        [ "String", "gt" ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  [ "Quoted", "operator" ],
+                                                  [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [ "Quoted", "type" ],
+                                                        [ "String", "and" ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  [ "Quoted", "query" ],
+                                                  [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [
+                                                          "Quoted", "params"
+                                                        ],
+                                                        [
+                                                          "Tuple",
+                                                          [
+                                                            [
+                                                              "String",
+                                                              "QUERY_RESULT"
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  [ "Quoted", "reducer" ],
+                                                  [
+                                                    "Object",
+                                                    [
+                                                      [
+                                                        [
+                                                          "Quoted", "params"
+                                                        ],
+                                                        [ "Tuple", [] ]
+                                                      ],
+                                                      [
+                                                        [ "Quoted", "type" ],
+                                                        [ "String", "last" ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  [ "Quoted", "type" ],
+                                                  [ "String", "query" ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Quoted", "datasource" ],
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Quoted", "type" ],
+                                              [ "String", "__expr__" ]
+                                            ],
+                                            [
+                                              [ "Quoted", "uid" ],
+                                              [ "String", "__expr__" ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        [ "Quoted", "expression" ],
+                                        [ "String", "QUERY_RESULT" ]
+                                      ],
+                                      [
+                                        [ "Quoted", "hide" ],
+                                        [ "Bool", false ]
+                                      ],
+                                      [
+                                        [ "Quoted", "intervalMs" ],
+                                        [ "Int", 1000 ]
+                                      ],
+                                      [
+                                        [ "Quoted", "maxDataPoints" ],
+                                        [ "Int", 43200 ]
+                                      ],
+                                      [
+                                        [ "Quoted", "refId" ],
+                                        [ "String", "ALERTCONDITION" ]
+                                      ],
+                                      [
+                                        [ "Quoted", "type" ],
+                                        [ "String", "threshold" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,2127 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "firewall_policy_id",
+          [
+            "For_object",
+            {
+              "identifiers": [ "vnet_name", [ "policy" ] ],
+              "input": [
+                "Attr", [ [ "Id", "module" ], [ "A_string", "fw_policies" ] ]
+              ],
+              "key_output": [ "Id", "vnet_name" ],
+              "value_output": [
+                "Attr", [ [ "Id", "policy" ], [ "A_string", "resource_id" ] ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "firewall_ip_configurations",
+          [
+            "For_object",
+            {
+              "identifiers": [ "vnet_key", [ "vnet_value" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Id", "local" ],
+                  [ "A_string", "firewall_merged_ip_configurations" ]
+                ]
+              ],
+              "key_output": [ "Id", "vnet_key" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "ip_config_key", [ "ip_config_value" ] ],
+                  "input": [ "Id", "vnet_value" ],
+                  "key_output": [ "Id", "ip_config_key" ],
+                  "value_output": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "name" ],
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Cond",
+                                {
+                                  "if_": [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "ip_config_value" ],
+                                          [ "A_string", "name" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  "then_": [ "Id", "ip_config_key" ],
+                                  "else_": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "ip_config_value" ],
+                                      [ "A_string", "name" ]
+                                    ]
+                                  ]
+                                }
+                              ],
+                              [ "Id", "ip_config_key" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "public_ip_address_id" ],
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Idx",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "module" ],
+                                    [ "A_string", "fw_default_ips" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "ip_config_value" ],
+                                    [ "A_string", "public_ip_key" ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ "A_string", "public_ip_id" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "subnet_id" ],
+                        [
+                          "Cond",
+                          {
+                            "if_": [
+                              "Attr",
+                              [
+                                [ "Id", "ip_config_value" ],
+                                [ "A_string", "is_default" ]
+                              ]
+                            ],
+                            "then_": [
+                              "Attr",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [
+                                          "A_string",
+                                          "hub_virtual_network_subnets"
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "ip_config_value" ],
+                                        [ "A_string", "subnet_key" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "A_string", "resource_id" ]
+                              ]
+                            ],
+                            "else_": [ "Null" ]
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "firewall_merged_ip_configurations",
+          [
+            "For_object",
+            {
+              "identifiers": [ "vnet_key", [ "vnet_value" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "hub_virtual_networks" ] ]
+              ],
+              "key_output": [ "Id", "vnet_key" ],
+              "value_output": [
+                "Cond",
+                {
+                  "if_": [
+                    "Gt",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "length",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "vnet_value" ],
+                                    [ "A_string", "firewall" ]
+                                  ]
+                                ],
+                                [ "A_string", "ip_configurations" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  "then_": [
+                    "For_object",
+                    {
+                      "identifiers": [
+                        "ip_config_key", [ "ip_config_value" ]
+                      ],
+                      "input": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "vnet_value" ],
+                              [ "A_string", "firewall" ]
+                            ]
+                          ],
+                          [ "A_string", "ip_configurations" ]
+                        ]
+                      ],
+                      "key_output": [ "Id", "ip_config_key" ],
+                      "value_output": [
+                        "Object",
+                        [
+                          [
+                            [ "Bare", "public_ip_key" ],
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [ "Id", "ip_config_key" ],
+                                    [ "String", "default" ]
+                                  ]
+                                ],
+                                "then_": [ "Id", "vnet_key" ],
+                                "else_": [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "vnet_key" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-" ],
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [ "Id", "ip_config_key" ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          ],
+                          [
+                            [ "Bare", "subnet_key" ],
+                            [
+                              "Template",
+                              [
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [ "Id", "vnet_key" ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ],
+                                [ "Literal", "-" ],
+                                [
+                                  "Interpolation",
+                                  {
+                                    "expr": [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [
+                                          "A_string", "firewall_subnet_name"
+                                        ]
+                                      ]
+                                    ],
+                                    "strip_before": false,
+                                    "strip_after": false
+                                  }
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "is_default" ],
+                            [
+                              "Log_or",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "ip_config_value" ],
+                                    [ "A_string", "is_default" ]
+                                  ]
+                                ],
+                                [
+                                  "Log_and",
+                                  [
+                                    [
+                                      "Fun_call",
+                                      [
+                                        "alltrue",
+                                        [
+                                          [
+                                            "For_tuple",
+                                            {
+                                              "identifiers": [
+                                                "ip_config", []
+                                              ],
+                                              "input": [
+                                                "Fun_call",
+                                                [
+                                                  "values",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [
+                                                              "Id",
+                                                              "vnet_value"
+                                                            ],
+                                                            [
+                                                              "A_string",
+                                                              "firewall"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "ip_configurations"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              "output": [
+                                                "Not",
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "ip_config" ],
+                                                    [
+                                                      "A_string",
+                                                      "is_default"
+                                                    ]
+                                                  ]
+                                                ]
+                                              ],
+                                              "cond": null
+                                            }
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      "Log_or",
+                                      [
+                                        [
+                                          "Equal",
+                                          [
+                                            [
+                                              "Fun_call",
+                                              [
+                                                "length",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Attr",
+                                                        [
+                                                          [
+                                                            "Id",
+                                                            "vnet_value"
+                                                          ],
+                                                          [
+                                                            "A_string",
+                                                            "firewall"
+                                                          ]
+                                                        ]
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "ip_configurations"
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            [ "Int", 1 ]
+                                          ]
+                                        ],
+                                        [
+                                          "Equal",
+                                          [
+                                            [ "Id", "ip_config_key" ],
+                                            [ "String", "default" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          [
+                            [ "Bare", "name" ],
+                            [
+                              "Cond",
+                              {
+                                "if_": [
+                                  "Equal",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "ip_config_value" ],
+                                        [ "A_string", "name" ]
+                                      ]
+                                    ],
+                                    [ "Null" ]
+                                  ]
+                                ],
+                                "then_": [ "Id", "ip_config_key" ],
+                                "else_": [
+                                  "Attr",
+                                  [
+                                    [ "Id", "ip_config_value" ],
+                                    [ "A_string", "name" ]
+                                  ]
+                                ]
+                              }
+                            ]
+                          ],
+                          [
+                            [ "Bare", "public_ip_config" ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "ip_config_value" ],
+                                [ "A_string", "public_ip_config" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      "cond": null
+                    }
+                  ],
+                  "else_": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "default" ],
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "public_ip_key" ],
+                              [ "Id", "vnet_key" ]
+                            ],
+                            [
+                              [ "Bare", "subnet_key" ],
+                              [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [ "Id", "vnet_key" ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [ "Literal", "-" ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [
+                                            "A_string",
+                                            "firewall_subnet_name"
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            ],
+                            [ [ "Bare", "is_default" ], [ "Bool", true ] ],
+                            [
+                              [ "Bare", "name" ],
+                              [
+                                "Cond",
+                                {
+                                  "if_": [
+                                    "Equal",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "vnet_value" ],
+                                                  [ "A_string", "firewall" ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "default_ip_configuration"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "name" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ],
+                                  "then_": [ "String", "default" ],
+                                  "else_": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "vnet_value" ],
+                                              [ "A_string", "firewall" ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "default_ip_configuration"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "A_string", "name" ]
+                                    ]
+                                  ]
+                                }
+                              ]
+                            ],
+                            [
+                              [ "Bare", "public_ip_config" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "vnet_value" ],
+                                          [ "A_string", "firewall" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string",
+                                        "default_ip_configuration"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "public_ip_config" ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "vnet_value" ], [ "A_string", "firewall" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "firewalls",
+          [
+            "For_object",
+            {
+              "identifiers": [ "vnet_name", [ "vnet" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "hub_virtual_networks" ] ]
+              ],
+              "key_output": [ "Id", "vnet_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "vnet" ],
+                                  [ "A_string", "firewall" ]
+                                ]
+                              ],
+                              [ "A_string", "name" ]
+                            ]
+                          ],
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "fw-" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "vnet_name" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "sku_name" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "vnet" ], [ "A_string", "firewall" ] ]
+                        ],
+                        [ "A_string", "sku_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "sku_tier" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "vnet" ], [ "A_string", "firewall" ] ]
+                        ],
+                        [ "A_string", "sku_tier" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "subnet_address_prefix" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "vnet" ], [ "A_string", "firewall" ] ]
+                        ],
+                        [ "A_string", "subnet_address_prefix" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "firewall_policy_id" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "local" ],
+                                  [ "A_string", "firewall_policy_id" ]
+                                ]
+                              ],
+                              [ "Id", "vnet_name" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "vnet" ],
+                                  [ "A_string", "firewall" ]
+                                ]
+                              ],
+                              [ "A_string", "firewall_policy_id" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "resource_group_name" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "resource_group_names" ]
+                          ]
+                        ],
+                        [ "Id", "vnet_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_ip_ranges" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "vnet" ], [ "A_string", "firewall" ] ]
+                        ],
+                        [ "A_string", "private_ip_ranges" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "tags" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "vnet" ], [ "A_string", "firewall" ] ]
+                        ],
+                        [ "A_string", "tags" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "management_ip_enabled" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "vnet" ],
+                                  [ "A_string", "firewall" ]
+                                ]
+                              ],
+                              [ "A_string", "management_ip_enabled" ]
+                            ]
+                          ],
+                          [ "Bool", true ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "management_ip_configuration" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "coalesce",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "vnet" ],
+                                                  [ "A_string", "firewall" ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "management_ip_configuration"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "name" ]
+                                        ]
+                                      ],
+                                      [ "String", "defaultMgmt" ]
+                                    ]
+                                  ]
+                                ],
+                                [ "String", "defaultMgmt" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "zones" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "vnet" ], [ "A_string", "firewall" ] ]
+                        ],
+                        [ "A_string", "zones" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "legacy_list_based_ip_configuration_enabled" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "vnet" ],
+                                  [ "A_string", "firewall" ]
+                                ]
+                              ],
+                              [
+                                "A_string",
+                                "legacy_list_based_ip_configuration_enabled"
+                              ]
+                            ]
+                          ],
+                          [ "Bool", false ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Not_equal",
+                [
+                  [
+                    "Attr", [ [ "Id", "vnet" ], [ "A_string", "firewall" ] ]
+                  ],
+                  [ "Null" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "fw_default_ip_configuration_pip",
+          [
+            "For_object",
+            {
+              "identifiers": [ "public_ip", [] ],
+              "input": [
+                "Fun_call",
+                [
+                  "flatten",
+                  [
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "vnet_key", [ "vnet_value" ] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [
+                              "A_string", "firewall_merged_ip_configurations"
+                            ]
+                          ]
+                        ],
+                        "output": [
+                          "For_tuple",
+                          {
+                            "identifiers": [
+                              "ip_config_key", [ "ip_config_value" ]
+                            ],
+                            "input": [ "Id", "vnet_value" ],
+                            "output": [
+                              "Object",
+                              [
+                                [
+                                  [ "Bare", "composite_key" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "ip_config_value" ],
+                                      [ "A_string", "public_ip_key" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "location" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "var" ],
+                                              [
+                                                "A_string",
+                                                "hub_virtual_networks"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "Id", "vnet_key" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "location" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "name" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "coalesce",
+                                      [
+                                        [
+                                          "Fun_call",
+                                          [
+                                            "try",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [
+                                                    "Attr",
+                                                    [
+                                                      [
+                                                        "Id",
+                                                        "ip_config_value"
+                                                      ],
+                                                      [
+                                                        "A_string",
+                                                        "public_ip_config"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  [ "A_string", "name" ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "Template",
+                                          [
+                                            [ "Literal", "pip-fw-" ],
+                                            [
+                                              "Interpolation",
+                                              {
+                                                "expr": [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Id", "ip_config_value"
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "public_ip_key"
+                                                    ]
+                                                  ]
+                                                ],
+                                                "strip_before": false,
+                                                "strip_after": false
+                                              }
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "resource_group_name" ],
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "local" ],
+                                          [
+                                            "A_string",
+                                            "resource_group_names"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Id", "vnet_key" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "ip_version" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "ip_config_value" ],
+                                                [
+                                                  "A_string",
+                                                  "public_ip_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "ip_version" ]
+                                          ]
+                                        ],
+                                        [ "String", "IPv4" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "sku_tier" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "ip_config_value" ],
+                                                [
+                                                  "A_string",
+                                                  "public_ip_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "sku_tier" ]
+                                          ]
+                                        ],
+                                        [ "String", "Regional" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "tags" ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "var" ],
+                                                  [
+                                                    "A_string",
+                                                    "hub_virtual_networks"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Id", "vnet_key" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "firewall" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "tags" ]
+                                    ]
+                                  ]
+                                ],
+                                [
+                                  [ "Bare", "zones" ],
+                                  [
+                                    "Fun_call",
+                                    [
+                                      "try",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "ip_config_value" ],
+                                                [
+                                                  "A_string",
+                                                  "public_ip_config"
+                                                ]
+                                              ]
+                                            ],
+                                            [ "A_string", "zones" ]
+                                          ]
+                                        ],
+                                        [ "Null" ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "cond": null
+                          }
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "key_output": [
+                "Attr",
+                [ [ "Id", "public_ip" ], [ "A_string", "composite_key" ] ]
+              ],
+              "value_output": [ "Id", "public_ip" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "fw_management_ip_configuration_pip",
+          [
+            "For_object",
+            {
+              "identifiers": [ "vnet_name", [ "vnet" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "hub_virtual_networks" ] ]
+              ],
+              "key_output": [ "Id", "vnet_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "location" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "vnet" ], [ "A_string", "location" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Fun_call",
+                      [
+                        "coalesce",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "vnet" ],
+                                                [ "A_string", "firewall" ]
+                                              ]
+                                            ],
+                                            [
+                                              "A_string",
+                                              "management_ip_configuration"
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "public_ip_config" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "name" ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ]
+                          ],
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "pip-fw-mgmt-" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "vnet_name" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "resource_group_name" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "resource_group_names" ]
+                          ]
+                        ],
+                        [ "Id", "vnet_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "ip_version" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "vnet" ],
+                                          [ "A_string", "firewall" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string",
+                                        "management_ip_configuration"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "public_ip_config" ]
+                                ]
+                              ],
+                              [ "A_string", "ip_version" ]
+                            ]
+                          ],
+                          [ "String", "IPv4" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "sku_tier" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "vnet" ],
+                                          [ "A_string", "firewall" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string",
+                                        "management_ip_configuration"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "public_ip_config" ]
+                                ]
+                              ],
+                              [ "A_string", "sku_tier" ]
+                            ]
+                          ],
+                          [ "String", "Regional" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "tags" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "vnet" ], [ "A_string", "firewall" ] ]
+                        ],
+                        [ "A_string", "tags" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "zones" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "vnet" ],
+                                          [ "A_string", "firewall" ]
+                                        ]
+                                      ],
+                                      [
+                                        "A_string",
+                                        "management_ip_configuration"
+                                      ]
+                                    ]
+                                  ],
+                                  [ "A_string", "public_ip_config" ]
+                                ]
+                              ],
+                              [ "A_string", "zones" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Log_and",
+                [
+                  [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "vnet" ], [ "A_string", "firewall" ] ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ],
+                  [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "vnet" ], [ "A_string", "firewall" ]
+                              ]
+                            ],
+                            [ "A_string", "management_ip_enabled" ]
+                          ]
+                        ],
+                        [ "Bool", true ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "fw_policies",
+          [
+            "For_object",
+            {
+              "identifiers": [ "vnet_name", [ "vnet" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "hub_virtual_networks" ] ]
+              ],
+              "key_output": [ "Id", "vnet_name" ],
+              "value_output": [
+                "Object",
+                [
+                  [
+                    [ "Bare", "name" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "name" ]
+                            ]
+                          ],
+                          [
+                            "Template",
+                            [
+                              [ "Literal", "fwp-" ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [ "Id", "vnet_name" ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "location" ],
+                    [
+                      "Attr",
+                      [ [ "Id", "vnet" ], [ "A_string", "location" ] ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "resource_group_name" ],
+                    [
+                      "Idx",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "local" ],
+                            [ "A_string", "resource_group_names" ]
+                          ]
+                        ],
+                        [ "Id", "vnet_name" ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "sku" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "sku" ]
+                            ]
+                          ],
+                          [ "String", "Standard" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "auto_learn_private_ranges_enabled" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [
+                                "A_string",
+                                "auto_learn_private_ranges_enabled"
+                              ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "base_policy_id" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "base_policy_id" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "dns" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "dns" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "threat_intelligence_allowlist" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "threat_intelligence_allowlist" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "explicit_proxy" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "explicit_proxy" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "identity" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "identity" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "insights" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "insights" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "intrusion_detection" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "intrusion_detection" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "private_ip_ranges" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "private_ip_ranges" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "sql_redirect_allowed" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "sql_redirect_allowed" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "threat_intelligence_mode" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "threat_intelligence_mode" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "timeouts" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "timeouts" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "tls_certificate" ],
+                    [
+                      "Fun_call",
+                      [
+                        "try",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vnet" ],
+                                      [ "A_string", "firewall" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "firewall_policy" ]
+                                ]
+                              ],
+                              [ "A_string", "tls_certificate" ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    [ "Bare", "tags" ],
+                    [
+                      "Attr",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "vnet" ], [ "A_string", "firewall" ] ]
+                        ],
+                        [ "A_string", "tags" ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": [
+                "Log_and",
+                [
+                  [
+                    "Log_and",
+                    [
+                      [
+                        "Not_equal",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "vnet" ], [ "A_string", "firewall" ] ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ],
+                      [
+                        "Not_equal",
+                        [
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "vnet" ],
+                                        [ "A_string", "firewall" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "firewall_policy" ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ]
+                          ],
+                          [ "Null" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "Equal",
+                    [
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "vnet" ],
+                                    [ "A_string", "firewall" ]
+                                  ]
+                                ],
+                                [ "A_string", "firewall_policy_id" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ]
+]

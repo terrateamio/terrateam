@@ -1,0 +1,4647 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_password" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Fun_call",
+                [
+                  "anytrue",
+                  [
+                    [
+                      "For_tuple",
+                      {
+                        "identifiers": [ "_", [ "v" ] ],
+                        "input": [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "test_infrastructure" ]
+                          ]
+                        ],
+                        "output": [
+                          "Equal",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "v" ],
+                                    [ "A_string", "authentication" ]
+                                  ]
+                                ],
+                                [ "A_string", "password" ]
+                              ]
+                            ],
+                            [ "Null" ]
+                          ]
+                        ],
+                        "cond": null
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "length", [ "Int", 16 ] ],
+        [
+          "Attribute",
+          "min_lower",
+          [ "Subtract", [ [ "Int", 16 ], [ "Int", 4 ] ] ]
+        ],
+        [ "Attribute", "min_numeric", [ "Int", 1 ] ],
+        [ "Attribute", "min_special", [ "Int", 1 ] ],
+        [ "Attribute", "min_upper", [ "Int", 1 ] ],
+        [ "Attribute", "override_special", [ "String", "_%@" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "create_resource_group" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Id", "var" ], [ "A_string", "resource_group_name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "location",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "azurerm_resource_group" ], [ "Lit", "this" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "create_resource_group" ] ]
+              ],
+              "then_": [ "Int", 0 ],
+              "else_": [ "Int", 1 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "resource_group_name" ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "resource_group",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "create_resource_group" ] ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "azurerm_resource_group" ],
+                      [ "A_string", "this" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "else_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "data" ],
+                          [ "A_string", "azurerm_resource_group" ]
+                        ]
+                      ],
+                      [ "A_string", "this" ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "vnet" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../modules/vnet" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vnets" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "create_virtual_network" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "name_prefix" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "create_virtual_network",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "create_virtual_network" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "resource_group_name" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "resource_group" ] ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "address_space",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "address_space" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "dns_servers",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "dns_servers" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vnet_encryption",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "vnet_encryption" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "ddos_protection_plan_id",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "ddos_protection_plan_id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "subnets",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "subnets" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "network_security_groups",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "network_security_groups" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [ "Id", "v" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "name_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "route_tables",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "route_tables" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [ "Id", "v" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "name_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "vnet_peering" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../modules/vnet_peering" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "vnet_peerings" ] ] ]
+        ],
+        [
+          "Attribute",
+          "local_peer_config",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "name" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "peer-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "local_vnet_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-to-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "remote_vnet_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "resource_group_name" ],
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "local_resource_group_name" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "resource_group" ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "vnet_name" ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "local_vnet_name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "remote_peer_config",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "name" ],
+                [
+                  "Template",
+                  [
+                    [ "Literal", "peer-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "remote_vnet_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-to-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "local_vnet_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "resource_group_name" ],
+                [
+                  "Fun_call",
+                  [
+                    "coalesce",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "remote_resource_group_name" ]
+                        ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "local" ],
+                              [ "A_string", "resource_group" ]
+                            ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Bare", "vnet_name" ],
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "remote_vnet_name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [ [ "Attr", [ [ "Id", "module" ], [ "A_string", "vnet" ] ] ] ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "public_ip" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../modules/public_ip" ] ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "public_ip_addresses",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "public_ips" ] ]
+                  ],
+                  [ "A_string", "public_ip_addresses" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [ "Id", "v" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "name_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "resource_group_name" ],
+                          [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "v" ],
+                                    [ "A_string", "resource_group_name" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "resource_group" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "name" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "public_ip_prefixes",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [
+                    "Attr", [ [ "Id", "var" ], [ "A_string", "public_ips" ] ]
+                  ],
+                  [ "A_string", "public_ip_prefixes" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [ "Id", "v" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "name_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "resource_group_name" ],
+                          [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "v" ],
+                                    [ "A_string", "resource_group_name" ]
+                                  ]
+                                ],
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "local" ],
+                                        [ "A_string", "resource_group" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "name" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "remote_virtual_network_ids",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "entry", [] ],
+                    "input": [
+                      "Fun_call",
+                      [
+                        "flatten",
+                        [
+                          [
+                            "For_tuple",
+                            {
+                              "identifiers": [ "val", [] ],
+                              "input": [
+                                "For_object",
+                                {
+                                  "identifiers": [ "k", [ "v" ] ],
+                                  "input": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "module" ],
+                                      [ "A_string", "test_infrastructure" ]
+                                    ]
+                                  ],
+                                  "key_output": [ "Id", "k" ],
+                                  "value_output": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "vnet_ids" ]
+                                    ]
+                                  ],
+                                  "cond": null
+                                }
+                              ],
+                              "output": [
+                                "For_tuple",
+                                {
+                                  "identifiers": [ "k", [ "v" ] ],
+                                  "input": [ "Id", "val" ],
+                                  "output": [
+                                    "Object",
+                                    [
+                                      [ [ "Bare", "key" ], [ "Id", "k" ] ],
+                                      [ [ "Bare", "val" ], [ "Id", "v" ] ]
+                                    ]
+                                  ],
+                                  "cond": null
+                                }
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ]
+                      ]
+                    ],
+                    "key_output": [
+                      "Attr", [ [ "Id", "entry" ], [ "A_string", "key" ] ]
+                    ],
+                    "value_output": [
+                      "Attr", [ [ "Id", "entry" ], [ "A_string", "val" ] ]
+                    ],
+                    "cond": null
+                  }
+                ],
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "k", [ "v" ] ],
+                    "input": [
+                      "Attr", [ [ "Id", "module" ], [ "A_string", "vnet" ] ]
+                    ],
+                    "key_output": [ "Id", "k" ],
+                    "value_output": [
+                      "Attr",
+                      [ [ "Id", "v" ], [ "A_string", "virtual_network_id" ] ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "route_tables",
+          [
+            "For_object",
+            {
+              "identifiers": [ "wan_key", [ "wan" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "virtual_wans" ] ]
+              ],
+              "key_output": [ "Id", "wan_key" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "rt_item", [] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "flatten",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "hub_key", [ "hub" ] ],
+                            "input": [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "wan" ],
+                                      [ "A_string", "virtual_hubs" ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "rt_key", [ "rt" ] ],
+                                "input": [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "hub" ],
+                                          [ "A_string", "route_tables" ]
+                                        ]
+                                      ],
+                                      [ "Object", [] ]
+                                    ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Object",
+                                  [
+                                    [ [ "Bare", "key" ], [ "Id", "rt_key" ] ],
+                                    [
+                                      [ "Bare", "hub_key" ],
+                                      [ "Id", "hub_key" ]
+                                    ],
+                                    [
+                                      [ "Bare", "name" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "rt" ],
+                                          [ "A_string", "name" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "labels" ],
+                                      [
+                                        "Fun_call",
+                                        [
+                                          "try",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "rt" ],
+                                                [ "A_string", "labels" ]
+                                              ]
+                                            ],
+                                            [ "Tuple", [] ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [
+                    "Attr", [ [ "Id", "rt_item" ], [ "A_string", "key" ] ]
+                  ],
+                  "value_output": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "name" ],
+                        [
+                          "Attr",
+                          [ [ "Id", "rt_item" ], [ "A_string", "name" ] ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "labels" ],
+                        [
+                          "Attr",
+                          [ [ "Id", "rt_item" ], [ "A_string", "labels" ] ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "hub_key" ],
+                        [
+                          "Attr",
+                          [ [ "Id", "rt_item" ], [ "A_string", "hub_key" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "connections",
+          [
+            "For_object",
+            {
+              "identifiers": [ "wan_key", [ "wan" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "virtual_wans" ] ]
+              ],
+              "key_output": [ "Id", "wan_key" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "conn_item", [] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "flatten",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "hub_key", [ "hub" ] ],
+                            "input": [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "wan" ],
+                                      [ "A_string", "virtual_hubs" ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "conn_key", [ "conn" ] ],
+                                "input": [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "hub" ],
+                                          [ "A_string", "connections" ]
+                                        ]
+                                      ],
+                                      [ "Object", [] ]
+                                    ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "key" ], [ "Id", "conn_key" ]
+                                    ],
+                                    [
+                                      [ "Bare", "hub_key" ],
+                                      [ "Id", "hub_key" ]
+                                    ],
+                                    [
+                                      [ "Bare", "name" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "conn" ],
+                                          [ "A_string", "name" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "connection_type" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "conn" ],
+                                          [ "A_string", "connection_type" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "vpn_site_key" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "conn" ],
+                                          [ "A_string", "vpn_site_key" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "routing" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "conn" ],
+                                          [ "A_string", "routing" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "vpn_link" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "conn" ],
+                                          [ "A_string", "vpn_link" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "remote_virtual_network_id" ],
+                                      [
+                                        "Cond",
+                                        {
+                                          "if_": [
+                                            "Equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "conn" ],
+                                                  [
+                                                    "A_string",
+                                                    "connection_type"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "String", "Vnet" ]
+                                            ]
+                                          ],
+                                          "then_": [
+                                            "Fun_call",
+                                            [
+                                              "lookup",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "local" ],
+                                                    [
+                                                      "A_string",
+                                                      "remote_virtual_network_ids"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "conn" ],
+                                                    [
+                                                      "A_string",
+                                                      "remote_virtual_network_key"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ]
+                                          ],
+                                          "else_": [ "Null" ]
+                                        }
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [
+                    "Attr", [ [ "Id", "conn_item" ], [ "A_string", "key" ] ]
+                  ],
+                  "value_output": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "hub_key" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "conn_item" ], [ "A_string", "hub_key" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "name" ],
+                        [
+                          "Attr",
+                          [ [ "Id", "conn_item" ], [ "A_string", "name" ] ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "connection_type" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "conn_item" ],
+                            [ "A_string", "connection_type" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "remote_virtual_network_id" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "conn_item" ],
+                            [ "A_string", "remote_virtual_network_id" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "vpn_site_key" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "conn_item" ],
+                            [ "A_string", "vpn_site_key" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "routing" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "conn_item" ], [ "A_string", "routing" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "vpn_link" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "conn_item" ], [ "A_string", "vpn_link" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "vpn_sites",
+          [
+            "For_object",
+            {
+              "identifiers": [ "wan_key", [ "wan" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "virtual_wans" ] ]
+              ],
+              "key_output": [ "Id", "wan_key" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "site_item", [] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "flatten",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "hub_key", [ "hub" ] ],
+                            "input": [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "wan" ],
+                                      [ "A_string", "virtual_hubs" ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "site_key", [ "site" ] ],
+                                "input": [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "hub" ],
+                                          [ "A_string", "vpn_sites" ]
+                                        ]
+                                      ],
+                                      [ "Object", [] ]
+                                    ]
+                                  ]
+                                ],
+                                "output": [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "key" ], [ "Id", "site_key" ]
+                                    ],
+                                    [
+                                      [ "Bare", "name" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "site" ],
+                                          [ "A_string", "name" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "region" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "site" ],
+                                          [ "A_string", "region" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "resource_group_name" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "site" ],
+                                          [
+                                            "A_string", "resource_group_name"
+                                          ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "address_cidrs" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "site" ],
+                                          [ "A_string", "address_cidrs" ]
+                                        ]
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "link" ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "site" ],
+                                          [ "A_string", "link" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [
+                    "Attr", [ [ "Id", "site_item" ], [ "A_string", "key" ] ]
+                  ],
+                  "value_output": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "name" ],
+                        [
+                          "Attr",
+                          [ [ "Id", "site_item" ], [ "A_string", "name" ] ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "region" ],
+                        [
+                          "Attr",
+                          [ [ "Id", "site_item" ], [ "A_string", "region" ] ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "resource_group_name" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "site_item" ],
+                            [ "A_string", "resource_group_name" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "address_cidrs" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "site_item" ],
+                            [ "A_string", "address_cidrs" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "link" ],
+                        [
+                          "Attr",
+                          [ [ "Id", "site_item" ], [ "A_string", "link" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "virtual_wan" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../modules/vwan" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "virtual_wans" ] ] ]
+        ],
+        [
+          "Attribute",
+          "virtual_wan_name",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "create" ]
+                ]
+              ],
+              "then_": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [ [ "Id", "var" ], [ "A_string", "name_prefix" ] ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ],
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "name" ]
+                        ]
+                      ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "name" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "resource_group_name" ]
+                  ]
+                ],
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "resource_group" ] ]
+                    ],
+                    [ "A_string", "name" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [
+            "Fun_call",
+            [
+              "coalesce",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "region" ]
+                  ]
+                ],
+                [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_hubs",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "virtual_hubs" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "route_tables",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "route_tables" ] ]
+                ],
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "connections",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "connections" ] ]
+                ],
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "vpn_sites",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr", [ [ "Id", "local" ], [ "A_string", "vpn_sites" ] ]
+                ],
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "routing_intent",
+          [
+            "For_object",
+            {
+              "identifiers": [ "vwan_key", [ "vwan" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "virtual_wans" ] ]
+              ],
+              "key_output": [ "Id", "vwan_key" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "hub_key", [ "hub" ] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "try",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "vwan" ], [ "A_string", "virtual_hubs" ]
+                          ]
+                        ],
+                        [ "Object", [] ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [ "Id", "hub_key" ],
+                  "value_output": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "virtual_hub_id" ],
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "module" ],
+                                              [ "A_string", "virtual_wan" ]
+                                            ]
+                                          ],
+                                          [ "Id", "vwan_key" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "virtual_hub_ids" ]
+                                    ]
+                                  ],
+                                  [ "Id", "hub_key" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "routing_intent" ],
+                        [
+                          "Object",
+                          [
+                            [
+                              [ "Bare", "routing_intent_name" ],
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "hub" ],
+                                      [ "A_string", "routing_intent" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "routing_intent_name" ]
+                                ]
+                              ]
+                            ],
+                            [
+                              [ "Bare", "routing_policy" ],
+                              [
+                                "For_tuple",
+                                {
+                                  "identifiers": [ "policy", [] ],
+                                  "input": [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "hub" ],
+                                          [ "A_string", "routing_intent" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "routing_policy" ]
+                                    ]
+                                  ],
+                                  "output": [
+                                    "Fun_call",
+                                    [
+                                      "merge",
+                                      [
+                                        [ "Id", "policy" ],
+                                        [
+                                          "Object",
+                                          [
+                                            [
+                                              [ "Bare", "next_hop_id" ],
+                                              [
+                                                "Fun_call",
+                                                [
+                                                  "try",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Idx",
+                                                          [
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "module"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "cloudngfw"
+                                                                ]
+                                                              ]
+                                                            ],
+                                                            [
+                                                              "Attr",
+                                                              [
+                                                                [
+                                                                  "Id",
+                                                                  "policy"
+                                                                ],
+                                                                [
+                                                                  "A_string",
+                                                                  "next_hop_key"
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string",
+                                                          "palo_alto_virtual_network_appliance_id"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "Null" ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "cond": null
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "cond": [
+                    "Not_equal",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "hub" ], [ "A_string", "routing_intent" ] ]
+                      ],
+                      [ "Null" ]
+                    ]
+                  ]
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "routes",
+          [
+            "For_object",
+            {
+              "identifiers": [ "vwan_key", [ "vwan" ] ],
+              "input": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "virtual_wans" ] ]
+              ],
+              "key_output": [ "Id", "vwan_key" ],
+              "value_output": [
+                "For_object",
+                {
+                  "identifiers": [ "route_item", [] ],
+                  "input": [
+                    "Fun_call",
+                    [
+                      "flatten",
+                      [
+                        [
+                          "For_tuple",
+                          {
+                            "identifiers": [ "hub_key", [ "hub" ] ],
+                            "input": [
+                              "Fun_call",
+                              [
+                                "try",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "vwan" ],
+                                      [ "A_string", "virtual_hubs" ]
+                                    ]
+                                  ],
+                                  [ "Object", [] ]
+                                ]
+                              ]
+                            ],
+                            "output": [
+                              "For_tuple",
+                              {
+                                "identifiers": [ "rt_key", [ "rt" ] ],
+                                "input": [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "hub" ],
+                                          [ "A_string", "route_tables" ]
+                                        ]
+                                      ],
+                                      [ "Object", [] ]
+                                    ]
+                                  ]
+                                ],
+                                "output": [
+                                  "For_tuple",
+                                  {
+                                    "identifiers": [
+                                      "route_key", [ "route" ]
+                                    ],
+                                    "input": [
+                                      "Fun_call",
+                                      [
+                                        "try",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "rt" ],
+                                              [ "A_string", "routes" ]
+                                            ]
+                                          ],
+                                          [ "Object", [] ]
+                                        ]
+                                      ]
+                                    ],
+                                    "output": [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "route_key" ],
+                                          [ "Id", "route_key" ]
+                                        ],
+                                        [
+                                          [ "Bare", "name" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "route" ],
+                                              [ "A_string", "name" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "destinations_type" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "route" ],
+                                              [
+                                                "A_string",
+                                                "destinations_type"
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "destinations" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "route" ],
+                                              [ "A_string", "destinations" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "next_hop_type" ],
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "route" ],
+                                              [ "A_string", "next_hop_type" ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "next_hop_key" ],
+                                          [
+                                            "Fun_call",
+                                            [
+                                              "try",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "route" ],
+                                                    [
+                                                      "A_string",
+                                                      "next_hop_key"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          [ "Bare", "route_table_key" ],
+                                          [ "Id", "rt_key" ]
+                                        ],
+                                        [
+                                          [ "Bare", "hub_key" ],
+                                          [ "Id", "hub_key" ]
+                                        ]
+                                      ]
+                                    ],
+                                    "cond": null
+                                  }
+                                ],
+                                "cond": null
+                              }
+                            ],
+                            "cond": null
+                          }
+                        ]
+                      ]
+                    ]
+                  ],
+                  "key_output": [
+                    "Attr",
+                    [ [ "Id", "route_item" ], [ "A_string", "route_key" ] ]
+                  ],
+                  "value_output": [
+                    "Object",
+                    [
+                      [
+                        [ "Bare", "name" ],
+                        [
+                          "Attr",
+                          [ [ "Id", "route_item" ], [ "A_string", "name" ] ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "destinations_type" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "route_item" ],
+                            [ "A_string", "destinations_type" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "destinations" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "route_item" ],
+                            [ "A_string", "destinations" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "next_hop_type" ],
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "route_item" ],
+                            [ "A_string", "next_hop_type" ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "next_hop_id" ],
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "module" ],
+                                          [ "A_string", "cloudngfw" ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "route_item" ],
+                                          [ "A_string", "next_hop_key" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  [
+                                    "A_string",
+                                    "palo_alto_virtual_network_appliance_id"
+                                  ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
+                        [ "Bare", "route_table_id" ],
+                        [
+                          "Fun_call",
+                          [
+                            "try",
+                            [
+                              [
+                                "Idx",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Idx",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "module" ],
+                                              [ "A_string", "virtual_wan" ]
+                                            ]
+                                          ],
+                                          [ "Id", "vwan_key" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "route_table_ids" ]
+                                    ]
+                                  ],
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "route_item" ],
+                                      [ "A_string", "route_table_key" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  "cond": null
+                }
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "vwan_routes" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../modules/vwan_routes" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "virtual_wans" ] ] ]
+        ],
+        [
+          "Attribute",
+          "routes",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [ "Attr", [ [ "Id", "local" ], [ "A_string", "routes" ] ] ],
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "routing_intent",
+          [
+            "Fun_call",
+            [
+              "lookup",
+              [
+                [
+                  "Attr",
+                  [ [ "Id", "local" ], [ "A_string", "routing_intent" ] ]
+                ],
+                [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ],
+                [ "Object", [] ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "vnets",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [ "Attr", [ [ "Id", "module" ], [ "A_string", "vnet" ] ] ],
+                [
+                  "Ellipsis",
+                  [
+                    "For_tuple",
+                    {
+                      "identifiers": [ "env", [] ],
+                      "input": [
+                        "Attr",
+                        [
+                          [ "Id", "module" ],
+                          [ "A_string", "test_infrastructure" ]
+                        ]
+                      ],
+                      "output": [
+                        "Attr", [ [ "Id", "env" ], [ "A_string", "vnets" ] ]
+                      ],
+                      "cond": null
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "cloudngfw" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "../../modules/cloudngfw" ] ],
+        [
+          "Attribute",
+          "for_each",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cloudngfws" ] ] ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name_prefix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "name" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [ [ "Id", "local" ], [ "A_string", "resource_group" ] ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "attachment_type",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "attachment_type" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_network_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "attachment_type" ]
+                    ]
+                  ],
+                  [ "String", "vnet" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "local" ], [ "A_string", "vnets" ] ]
+                      ],
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "virtual_network_key" ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "A_string", "virtual_network_id" ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "untrusted_subnet_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "attachment_type" ]
+                    ]
+                  ],
+                  [ "String", "vnet" ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "vnets" ] ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "virtual_network_key" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "subnet_ids" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "untrusted_subnet_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "trusted_subnet_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "attachment_type" ]
+                    ]
+                  ],
+                  [ "String", "vnet" ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "local" ], [ "A_string", "vnets" ] ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "virtual_network_key" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "subnet_ids" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "trusted_subnet_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "virtual_hub_id",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "attachment_type" ]
+                    ]
+                  ],
+                  [ "String", "vwan" ]
+                ]
+              ],
+              "then_": [
+                "Idx",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Idx",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "module" ],
+                              [ "A_string", "virtual_wan" ]
+                            ]
+                          ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                              ],
+                              [ "A_string", "virtual_wan_key" ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [ "A_string", "virtual_hub_ids" ]
+                    ]
+                  ],
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                      ],
+                      [ "A_string", "virtual_hub_key" ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [ "Null" ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "management_mode",
+          [
+            "Attr",
+            [
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+              [ "A_string", "management_mode" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "cloudngfw_config",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Attr",
+                  [
+                    [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                    [ "A_string", "cloudngfw_config" ]
+                  ]
+                ],
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "public_ip_name" ],
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "cloudngfw_config" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "public_ip_keys" ]
+                                ]
+                              ],
+                              [ "Null" ]
+                            ]
+                          ],
+                          "then_": [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "cloudngfw_config" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "create_public_ip" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "name_prefix" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Fun_call",
+                                        [
+                                          "coalesce",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "each" ],
+                                                        [
+                                                          "A_string", "value"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "A_string",
+                                                      "cloudngfw_config"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "A_string",
+                                                  "public_ip_name"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Template",
+                                              [
+                                                [
+                                                  "Interpolation",
+                                                  {
+                                                    "expr": [
+                                                      "Attr",
+                                                      [
+                                                        [
+                                                          "Attr",
+                                                          [
+                                                            [ "Id", "each" ],
+                                                            [
+                                                              "A_string",
+                                                              "value"
+                                                            ]
+                                                          ]
+                                                        ],
+                                                        [
+                                                          "A_string", "name"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    "strip_before": false,
+                                                    "strip_after": false
+                                                  }
+                                                ],
+                                                [ "Literal", "-pip" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ],
+                              "else_": [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "each" ],
+                                          [ "A_string", "value" ]
+                                        ]
+                                      ],
+                                      [ "A_string", "cloudngfw_config" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "public_ip_name" ]
+                                ]
+                              ]
+                            }
+                          ],
+                          "else_": [ "Null" ]
+                        }
+                      ]
+                    ],
+                    [
+                      [ "Bare", "public_ip_ids" ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "For_object",
+                              {
+                                "identifiers": [ "k", [ "v" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "public_ip" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "pip_ids" ]
+                                  ]
+                                ],
+                                "key_output": [ "Id", "k" ],
+                                "value_output": [ "Id", "v" ],
+                                "cond": [
+                                  "Fun_call",
+                                  [
+                                    "contains",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "each" ],
+                                                  [ "A_string", "value" ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "cloudngfw_config"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "public_ip_keys" ]
+                                        ]
+                                      ],
+                                      [ "Id", "k" ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "egress_nat_ip_ids" ],
+                      [
+                        "Fun_call",
+                        [
+                          "try",
+                          [
+                            [
+                              "For_object",
+                              {
+                                "identifiers": [ "k", [ "v" ] ],
+                                "input": [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "module" ],
+                                        [ "A_string", "public_ip" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "pip_ids" ]
+                                  ]
+                                ],
+                                "key_output": [ "Id", "k" ],
+                                "value_output": [ "Id", "v" ],
+                                "cond": [
+                                  "Fun_call",
+                                  [
+                                    "contains",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "each" ],
+                                                  [ "A_string", "value" ]
+                                                ]
+                                              ],
+                                              [
+                                                "A_string",
+                                                "cloudngfw_config"
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string", "egress_nat_ip_keys"
+                                          ]
+                                        ]
+                                      ],
+                                      [ "Id", "k" ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            ],
+                            [ "Null" ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "destination_nats" ],
+                      [
+                        "For_object",
+                        {
+                          "identifiers": [ "k", [ "v" ] ],
+                          "input": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "each" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "cloudngfw_config" ]
+                                ]
+                              ],
+                              [ "A_string", "destination_nats" ]
+                            ]
+                          ],
+                          "key_output": [ "Id", "k" ],
+                          "value_output": [
+                            "Fun_call",
+                            [
+                              "merge",
+                              [
+                                [ "Id", "v" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [
+                                        "Bare",
+                                        "frontend_public_ip_address_id"
+                                      ],
+                                      [
+                                        "Cond",
+                                        {
+                                          "if_": [
+                                            "Not_equal",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [
+                                                    "A_string",
+                                                    "frontend_public_ip_key"
+                                                  ]
+                                                ]
+                                              ],
+                                              [ "Null" ]
+                                            ]
+                                          ],
+                                          "then_": [
+                                            "Fun_call",
+                                            [
+                                              "lookup",
+                                              [
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "module" ],
+                                                        [
+                                                          "A_string",
+                                                          "public_ip"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [ "A_string", "pip_ids" ]
+                                                  ]
+                                                ],
+                                                [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "v" ],
+                                                    [
+                                                      "A_string",
+                                                      "frontend_public_ip_key"
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "Null" ]
+                                              ]
+                                            ]
+                                          ],
+                                          "else_": [ "Null" ]
+                                        }
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          "cond": null
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "test_vm_authentication",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "test_infrastructure" ] ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [
+                      "Attr",
+                      [ [ "Id", "v" ], [ "A_string", "authentication" ] ]
+                    ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "password" ],
+                          [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "A_string", "authentication" ]
+                                      ]
+                                    ],
+                                    [ "A_string", "password" ]
+                                  ]
+                                ],
+                                [
+                                  "Fun_call",
+                                  [
+                                    "try",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "random_password" ],
+                                                  [ "A_string", "this" ]
+                                                ]
+                                              ],
+                                              [ "Int", 0 ]
+                                            ]
+                                          ],
+                                          [ "A_string", "result" ]
+                                        ]
+                                      ],
+                                      [ "Null" ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "test_infrastructure" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [ "String", "../../modules/test_infrastructure" ]
+        ],
+        [
+          "Attribute",
+          "for_each",
+          [
+            "Attr",
+            [ [ "Id", "var" ], [ "A_string", "test_infrastructure" ] ]
+          ]
+        ],
+        [
+          "Attribute",
+          "resource_group_name",
+          [
+            "Fun_call",
+            [
+              "try",
+              [
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "name_prefix" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [ [ "Id", "each" ], [ "A_string", "value" ] ]
+                            ],
+                            [ "A_string", "resource_group_name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "local" ],
+                                [ "A_string", "resource_group" ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-testenv" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "vnets",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "vnets" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [ "Id", "v" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "name_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "hub_vnet_name" ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Cond",
+                                  {
+                                    "if_": [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "vnets" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "v" ],
+                                                [
+                                                  "A_string", "hub_vnet_key"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string",
+                                          "create_virtual_network"
+                                        ]
+                                      ]
+                                    ],
+                                    "then_": [
+                                      "Template",
+                                      [
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "name_prefix" ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ],
+                                        [
+                                          "Interpolation",
+                                          {
+                                            "expr": [
+                                              "Attr",
+                                              [
+                                                [
+                                                  "Idx",
+                                                  [
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "var" ],
+                                                        [
+                                                          "A_string", "vnets"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "v" ],
+                                                        [
+                                                          "A_string",
+                                                          "hub_vnet_key"
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ],
+                                                [ "A_string", "name" ]
+                                              ]
+                                            ],
+                                            "strip_before": false,
+                                            "strip_after": false
+                                          }
+                                        ]
+                                      ]
+                                    ],
+                                    "else_": [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Idx",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "var" ],
+                                                [ "A_string", "vnets" ]
+                                              ]
+                                            ],
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "v" ],
+                                                [
+                                                  "A_string", "hub_vnet_key"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        [ "A_string", "name" ]
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [ "Null" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "hub_resource_group_name" ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Fun_call",
+                                  [
+                                    "coalesce",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Idx",
+                                            [
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "module" ],
+                                                  [ "A_string", "vnet" ]
+                                                ]
+                                              ],
+                                              [
+                                                "Attr",
+                                                [
+                                                  [ "Id", "v" ],
+                                                  [
+                                                    "A_string",
+                                                    "hub_vnet_key"
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          [
+                                            "A_string",
+                                            "virtual_network_resource_group"
+                                          ]
+                                        ]
+                                      ],
+                                      [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "local" ],
+                                              [
+                                                "A_string", "resource_group"
+                                              ]
+                                            ]
+                                          ],
+                                          [ "A_string", "name" ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "network_security_groups" ],
+                          [
+                            "For_object",
+                            {
+                              "identifiers": [ "kv", [ "vv" ] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "v" ],
+                                  [ "A_string", "network_security_groups" ]
+                                ]
+                              ],
+                              "key_output": [ "Id", "kv" ],
+                              "value_output": [
+                                "Fun_call",
+                                [
+                                  "merge",
+                                  [
+                                    [ "Id", "vv" ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "name" ],
+                                          [
+                                            "Template",
+                                            [
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "var" ],
+                                                      [
+                                                        "A_string",
+                                                        "name_prefix"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ],
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "vv" ],
+                                                      [ "A_string", "name" ]
+                                                    ]
+                                                  ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ],
+                        [
+                          [ "Bare", "route_tables" ],
+                          [
+                            "For_object",
+                            {
+                              "identifiers": [ "kv", [ "vv" ] ],
+                              "input": [
+                                "Attr",
+                                [
+                                  [ "Id", "v" ],
+                                  [ "A_string", "route_tables" ]
+                                ]
+                              ],
+                              "key_output": [ "Id", "kv" ],
+                              "value_output": [
+                                "Fun_call",
+                                [
+                                  "merge",
+                                  [
+                                    [ "Id", "vv" ],
+                                    [
+                                      "Object",
+                                      [
+                                        [
+                                          [ "Bare", "name" ],
+                                          [
+                                            "Template",
+                                            [
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "var" ],
+                                                      [
+                                                        "A_string",
+                                                        "name_prefix"
+                                                      ]
+                                                    ]
+                                                  ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ],
+                                              [
+                                                "Interpolation",
+                                                {
+                                                  "expr": [
+                                                    "Attr",
+                                                    [
+                                                      [ "Id", "vv" ],
+                                                      [ "A_string", "name" ]
+                                                    ]
+                                                  ],
+                                                  "strip_before": false,
+                                                  "strip_after": false
+                                                }
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "cond": null
+                            }
+                          ]
+                        ],
+                        [
+                          [ "Bare", "local_peer_config" ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "v" ],
+                                    [ "A_string", "local_peer_config" ]
+                                  ]
+                                ],
+                                [ "Object", [] ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "remote_peer_config" ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "v" ],
+                                    [ "A_string", "remote_peer_config" ]
+                                  ]
+                                ],
+                                [ "Object", [] ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "load_balancers",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "load_balancers" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [ "Id", "v" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "name_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "backend_name" ],
+                          [
+                            "Fun_call",
+                            [
+                              "coalesce",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "v" ],
+                                    [ "A_string", "backend_name" ]
+                                  ]
+                                ],
+                                [
+                                  "Template",
+                                  [
+                                    [
+                                      "Interpolation",
+                                      {
+                                        "expr": [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [ "A_string", "name" ]
+                                          ]
+                                        ],
+                                        "strip_before": false,
+                                        "strip_after": false
+                                      }
+                                    ],
+                                    [ "Literal", "-backend" ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "public_ip_name" ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "frontend_ips" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "create_public_ip" ]
+                                ]
+                              ],
+                              "then_": [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "name_prefix" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [
+                                            "Attr",
+                                            [
+                                              [ "Id", "v" ],
+                                              [ "A_string", "frontend_ips" ]
+                                            ]
+                                          ],
+                                          [ "A_string", "public_ip_name" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ],
+                              "else_": [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "frontend_ips" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "public_ip_name" ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ],
+                        [
+                          [ "Bare", "public_ip_id" ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "module" ],
+                                            [ "A_string", "public_ip" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "pip_ids" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [ "A_string", "frontend_ips" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "public_ip_key" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "public_ip_address" ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "module" ],
+                                            [ "A_string", "public_ip" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "pip_ip_addresses" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [ "A_string", "frontend_ips" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "public_ip_key" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "public_ip_prefix_id" ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "module" ],
+                                            [ "A_string", "public_ip" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "ippre_ids" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [ "A_string", "frontend_ips" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string", "public_ip_prefix_key"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "public_ip_prefix_address" ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "module" ],
+                                            [ "A_string", "public_ip" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "ippre_ip_prefixes" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [ "A_string", "frontend_ips" ]
+                                          ]
+                                        ],
+                                        [
+                                          "A_string", "public_ip_prefix_key"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "authentication",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "local" ], [ "A_string", "test_vm_authentication" ]
+                ]
+              ],
+              [ "Attr", [ [ "Id", "each" ], [ "A_string", "key" ] ] ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "spoke_vms",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "spoke_vms" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [ "Id", "v" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "name_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "interface_name" ],
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "name_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Fun_call",
+                                    [
+                                      "coalesce",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [ "A_string", "interface_name" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Template",
+                                          [
+                                            [
+                                              "Interpolation",
+                                              {
+                                                "expr": [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "v" ],
+                                                    [ "A_string", "name" ]
+                                                  ]
+                                                ],
+                                                "strip_before": false,
+                                                "strip_after": false
+                                              }
+                                            ],
+                                            [ "Literal", "-nic" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "disk_name" ],
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "name_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Fun_call",
+                                    [
+                                      "coalesce",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "v" ],
+                                            [ "A_string", "disk_name" ]
+                                          ]
+                                        ],
+                                        [
+                                          "Template",
+                                          [
+                                            [
+                                              "Interpolation",
+                                              {
+                                                "expr": [
+                                                  "Attr",
+                                                  [
+                                                    [ "Id", "v" ],
+                                                    [ "A_string", "name" ]
+                                                  ]
+                                                ],
+                                                "strip_before": false,
+                                                "strip_after": false
+                                              }
+                                            ],
+                                            [ "Literal", "-osdisk" ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "bastions",
+          [
+            "For_object",
+            {
+              "identifiers": [ "k", [ "v" ] ],
+              "input": [
+                "Attr",
+                [
+                  [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ],
+                  [ "A_string", "bastions" ]
+                ]
+              ],
+              "key_output": [ "Id", "k" ],
+              "value_output": [
+                "Fun_call",
+                [
+                  "merge",
+                  [
+                    [ "Id", "v" ],
+                    [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "name" ],
+                          [
+                            "Template",
+                            [
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [
+                                      [ "Id", "var" ],
+                                      [ "A_string", "name_prefix" ]
+                                    ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ],
+                              [
+                                "Interpolation",
+                                {
+                                  "expr": [
+                                    "Attr",
+                                    [ [ "Id", "v" ], [ "A_string", "name" ] ]
+                                  ],
+                                  "strip_before": false,
+                                  "strip_after": false
+                                }
+                              ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "public_ip_name" ],
+                          [
+                            "Cond",
+                            {
+                              "if_": [
+                                "Not_equal",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "v" ],
+                                      [ "A_string", "public_ip_key" ]
+                                    ]
+                                  ],
+                                  [ "Null" ]
+                                ]
+                              ],
+                              "then_": [ "Null" ],
+                              "else_": [
+                                "Template",
+                                [
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Attr",
+                                        [
+                                          [ "Id", "var" ],
+                                          [ "A_string", "name_prefix" ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ],
+                                  [
+                                    "Interpolation",
+                                    {
+                                      "expr": [
+                                        "Fun_call",
+                                        [
+                                          "coalesce",
+                                          [
+                                            [
+                                              "Attr",
+                                              [
+                                                [ "Id", "v" ],
+                                                [
+                                                  "A_string",
+                                                  "public_ip_name"
+                                                ]
+                                              ]
+                                            ],
+                                            [
+                                              "Template",
+                                              [
+                                                [
+                                                  "Interpolation",
+                                                  {
+                                                    "expr": [
+                                                      "Attr",
+                                                      [
+                                                        [ "Id", "v" ],
+                                                        [
+                                                          "A_string", "name"
+                                                        ]
+                                                      ]
+                                                    ],
+                                                    "strip_before": false,
+                                                    "strip_after": false
+                                                  }
+                                                ],
+                                                [ "Literal", "-pip" ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      "strip_before": false,
+                                      "strip_after": false
+                                    }
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        ],
+                        [
+                          [ "Bare", "public_ip_id" ],
+                          [
+                            "Fun_call",
+                            [
+                              "try",
+                              [
+                                [
+                                  "Idx",
+                                  [
+                                    [
+                                      "Attr",
+                                      [
+                                        [
+                                          "Attr",
+                                          [
+                                            [ "Id", "module" ],
+                                            [ "A_string", "public_ip" ]
+                                          ]
+                                        ],
+                                        [ "A_string", "pip_ids" ]
+                                      ]
+                                    ],
+                                    [
+                                      "Attr",
+                                      [
+                                        [ "Id", "v" ],
+                                        [ "A_string", "public_ip_key" ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                [ "Null" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "tags",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "tags" ] ] ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [
+            "Tuple",
+            [ [ "Attr", [ [ "Id", "module" ], [ "A_string", "vnet" ] ] ] ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,165 @@
+[
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "appgateway_name" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The name of the Application Gateway created" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_gateway" ],
+                  [ "A_string", "appgateway" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "appgateway_ipconfig" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The Application Gateway IP Configuration" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_gateway" ],
+                  [ "A_string", "appgateway" ]
+                ]
+              ],
+              [ "A_string", "gateway_ip_configuration" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "appgateway_frontend_ip_configuration" ] ],
+      "body": [
+        [
+          "Attribute",
+          "description",
+          [ "String", "The Application Gateway Frontend IP Configuration" ]
+        ],
+        [
+          "Attribute",
+          "value",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "azurerm_application_gateway" ],
+                  [ "A_string", "appgateway" ]
+                ]
+              ],
+              [ "A_string", "frontend_ip_configuration" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "appgateway_health_probe_backend_status" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "data" ], [ "A_string", "external" ] ]
+                      ],
+                      [ "A_string", "app_gw_health" ]
+                    ]
+                  ],
+                  [ "A_string", "result" ]
+                ]
+              ],
+              [ "String", "health" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "output",
+      "labels": [ [ "Lit", "app_gateway_health_probe_backend_address" ] ],
+      "body": [
+        [
+          "Attribute",
+          "value",
+          [
+            "Idx",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "data" ], [ "A_string", "external" ] ]
+                      ],
+                      [ "A_string", "app_gw_health" ]
+                    ]
+                  ],
+                  [ "A_string", "result" ]
+                ]
+              ],
+              [ "String", "address" ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+]

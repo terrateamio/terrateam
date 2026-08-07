@@ -1,0 +1,1346 @@
+[
+  [
+    "Block",
+    {
+      "type_": "locals",
+      "labels": [],
+      "body": [
+        [
+          "Attribute",
+          "postfix",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "name_postfix" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "name_postfix" ] ]
+              ],
+              "else_": [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "random_pet" ], [ "A_string", "deploy" ] ]
+                  ],
+                  [ "A_string", "id" ]
+                ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "domain",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cf_domain_name" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Attr",
+                [
+                  [
+                    "Idx",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "data" ], [ "A_string", "hsdp_config" ]
+                            ]
+                          ],
+                          [ "A_string", "cf" ]
+                        ]
+                      ],
+                      [ "Int", 0 ]
+                    ]
+                  ],
+                  [ "A_string", "domain" ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "cf_domain_name" ] ]
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "hostnames",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [ [ "Id", "var" ], [ "A_string", "hostnames" ] ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [
+                "Tuple",
+                [
+                  [
+                    "Template",
+                    [
+                      [ "Literal", "kong-" ],
+                      [
+                        "Interpolation",
+                        {
+                          "expr": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "random_pet" ],
+                                  [ "A_string", "deploy" ]
+                                ]
+                              ],
+                              [ "A_string", "id" ]
+                            ]
+                          ],
+                          "strip_before": false,
+                          "strip_after": false
+                        }
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "else_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "hostnames" ] ]
+              ]
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "random_pet" ], [ "Lit", "deploy" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "hsdp_config" ], [ "Lit", "cf" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "cf_domain_name" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [ "Attribute", "service", [ "String", "cf" ] ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "cloudfoundry_org" ], [ "Lit", "org" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cf_org_name" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "cloudfoundry_space" ], [ "Lit", "space" ] ],
+      "body": [
+        [
+          "Attribute",
+          "org",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "data" ], [ "A_string", "cloudfoundry_org" ] ]
+                  ],
+                  [ "A_string", "org" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "cf_space_name" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [ [ "Lit", "cloudfoundry_domain" ], [ "Lit", "domain" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [ "Attr", [ [ "Id", "local" ], [ "A_string", "domain" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "data",
+      "labels": [
+        [ "Lit", "cloudfoundry_domain" ], [ "Lit", "internal_domain" ]
+      ],
+      "body": [ [ "Attribute", "name", [ "String", "apps.internal" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "cloudfoundry_app" ], [ "Lit", "kong" ] ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Template",
+            [
+              [ "Literal", "tf-kong-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "postfix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "space",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "cloudfoundry_space" ]
+                    ]
+                  ],
+                  [ "A_string", "space" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "memory",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "memory" ] ] ]
+        ],
+        [
+          "Attribute",
+          "disk_quota",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "disk" ] ] ]
+        ],
+        [
+          "Attribute",
+          "docker_image",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "kong_image" ] ] ]
+        ],
+        [
+          "Attribute",
+          "docker_credentials",
+          [
+            "Object",
+            [
+              [
+                [ "Bare", "username" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "docker_username" ] ]
+                ]
+              ],
+              [
+                [ "Bare", "password" ],
+                [
+                  "Attr",
+                  [ [ "Id", "var" ], [ "A_string", "docker_password" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "lifecycle",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "ignore_changes",
+                [ "Tuple", [ [ "Id", "instances" ] ] ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "strategy",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "strategy" ] ] ]
+        ],
+        [ "Attribute", "health_check_type", [ "String", "process" ] ],
+        [
+          "Attribute",
+          "command",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Not_equal",
+                [
+                  [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "start_command" ] ]
+                  ],
+                  [ "String", "" ]
+                ]
+              ],
+              "then_": [
+                "Attr", [ [ "Id", "var" ], [ "A_string", "start_command" ] ]
+              ],
+              "else_": [
+                "Cond",
+                {
+                  "if_": [
+                    "Attr",
+                    [ [ "Id", "var" ], [ "A_string", "enable_postgres" ] ]
+                  ],
+                  "then_": [
+                    "String",
+                    "/entrypoint.sh /usr/local/bin/kong migrations bootstrap && /entrypoint.sh /usr/local/bin/kong migrations up && /entrypoint.sh /usr/local/bin/kong migrations finish && /entrypoint.sh kong docker-start"
+                  ],
+                  "else_": [ "String", "/entrypoint.sh kong docker-start" ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "environment",
+          [
+            "Fun_call",
+            [
+              "merge",
+              [
+                [
+                  "Object",
+                  [
+                    [
+                      [ "Bare", "KONG_PLUGINS" ],
+                      [
+                        "Fun_call",
+                        [
+                          "join",
+                          [
+                            [ "String", "," ],
+                            [
+                              "Attr",
+                              [
+                                [ "Id", "var" ],
+                                [ "A_string", "kong_plugins" ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      [ "Bare", "KONG_TRUSTED_IPS" ],
+                      [ "String", "0.0.0.0/0" ]
+                    ],
+                    [
+                      [ "Bare", "KONG_REAL_IP_HEADER" ],
+                      [ "String", "X-Forwarded-For" ]
+                    ],
+                    [
+                      [ "Bare", "KONG_REAL_IP_RECURSIVE" ],
+                      [ "String", "on" ]
+                    ],
+                    [
+                      [ "Bare", "KONG_PROXY_LISTEN" ],
+                      [
+                        "String",
+                        "0.0.0.0:8080 reuseport backlog=16384,0.0.0.0:8000 reuseport backlog=16384,0.0.0.0:8443 http2 ssl reuseport backlog=16384,0.0.0.0:8444 http2 ssl reuseport backlog=16384"
+                      ]
+                    ],
+                    [
+                      [ "Bare", "KONG_ADMIN_LISTEN" ],
+                      [ "String", "0.0.0.0:8001" ]
+                    ],
+                    [
+                      [ "Bare", "KONG_NGINX_WORKER_PROCESSES" ],
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "kong_nginx_worker_processes" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "Cond",
+                  {
+                    "if_": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "enable_postgres" ] ]
+                    ],
+                    "then_": [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "KONG_DATABASE" ],
+                          [ "String", "postgres" ]
+                        ],
+                        [
+                          [ "Bare", "KONG_PG_USER" ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "module" ],
+                                          [ "A_string", "postgres" ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ],
+                                  [ "A_string", "credentials" ]
+                                ]
+                              ],
+                              [ "A_string", "username" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "KONG_PG_PASSWORD" ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "module" ],
+                                          [ "A_string", "postgres" ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ],
+                                  [ "A_string", "credentials" ]
+                                ]
+                              ],
+                              [ "A_string", "password" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "KONG_PG_HOST" ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "module" ],
+                                          [ "A_string", "postgres" ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ],
+                                  [ "A_string", "credentials" ]
+                                ]
+                              ],
+                              [ "A_string", "hostname" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "KONG_PG_DATABASE" ],
+                          [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Idx",
+                                    [
+                                      [
+                                        "Attr",
+                                        [
+                                          [ "Id", "module" ],
+                                          [ "A_string", "postgres" ]
+                                        ]
+                                      ],
+                                      [ "Int", 0 ]
+                                    ]
+                                  ],
+                                  [ "A_string", "credentials" ]
+                                ]
+                              ],
+                              [ "A_string", "db_name" ]
+                            ]
+                          ]
+                        ],
+                        [ [ "Bare", "KONG_PG_SSL" ], [ "String", "on" ] ],
+                        [
+                          [ "Bare", "KONG_PG_SSL_VERIFY" ],
+                          [ "String", "off" ]
+                        ]
+                      ]
+                    ],
+                    "else_": [
+                      "Object",
+                      [
+                        [ [ "Bare", "KONG_DATABASE" ], [ "String", "off" ] ],
+                        [
+                          [ "Bare", "KONG_DECLARATIVE_CONFIG_STRING" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [
+                                "A_string", "kong_declarative_config_string"
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "Attr", [ [ "Id", "var" ], [ "A_string", "environment" ] ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "routes" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "For_object",
+                  {
+                    "identifiers": [ "i", [ "h" ] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "local" ], [ "A_string", "hostnames" ] ]
+                    ],
+                    "key_output": [
+                      "Template",
+                      [
+                        [
+                          "Interpolation",
+                          {
+                            "expr": [ "Id", "i" ],
+                            "strip_before": false,
+                            "strip_after": false
+                          }
+                        ]
+                      ]
+                    ],
+                    "value_output": [ "Id", "h" ],
+                    "cond": null
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "route",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Idx",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "cloudfoundry_route" ],
+                                  [ "A_string", "kong" ]
+                                ]
+                              ],
+                              [
+                                "Attr",
+                                [ [ "Id", "routes" ], [ "A_string", "key" ] ]
+                              ]
+                            ]
+                          ],
+                          [ "A_string", "id" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "routes",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "route",
+                [
+                  "Attr",
+                  [
+                    [
+                      "Attr",
+                      [
+                        [ "Id", "cloudfoundry_route" ],
+                        [ "A_string", "kong_internal" ]
+                      ]
+                    ],
+                    [ "A_string", "id" ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "labels",
+          [
+            "Object",
+            [
+              [ [ "Quoted", "variant.tva/exporter" ], [ "Bool", true ] ],
+              [ [ "Quoted", "variant.tva/rules" ], [ "Bool", true ] ],
+              [
+                [ "Quoted", "variant.tva/autoscaler" ],
+                [
+                  "Gt",
+                  [
+                    [
+                      "Fun_call",
+                      [
+                        "length",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "var" ],
+                              [ "A_string", "kong_autoscaler_config" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [ "Int", 0 ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "annotations",
+          [
+            "Object",
+            [
+              [
+                [ "Quoted", "variant.autoscaler.json" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Attr",
+                        [
+                          [ "Id", "var" ],
+                          [ "A_string", "kong_autoscaler_config" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                [ "Quoted", "prometheus.exporter.instance_name" ],
+                [
+                  "Template",
+                  [
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "cloudfoundry_org" ]
+                                  ]
+                                ],
+                                [ "A_string", "org" ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "." ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [
+                            [
+                              "Attr",
+                              [
+                                [
+                                  "Attr",
+                                  [
+                                    [ "Id", "data" ],
+                                    [ "A_string", "cloudfoundry_space" ]
+                                  ]
+                                ],
+                                [ "A_string", "space" ]
+                              ]
+                            ],
+                            [ "A_string", "name" ]
+                          ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", ".kong-" ],
+                    [
+                      "Interpolation",
+                      {
+                        "expr": [
+                          "Attr",
+                          [ [ "Id", "local" ], [ "A_string", "postfix" ] ]
+                        ],
+                        "strip_before": false,
+                        "strip_after": false
+                      }
+                    ],
+                    [ "Literal", "-${1}" ]
+                  ]
+                ]
+              ],
+              [
+                [ "Quoted", "prometheus.exporter.port" ],
+                [ "String", "8001" ]
+              ],
+              [
+                [ "Quoted", "prometheus.exporter.path" ],
+                [ "String", "/metrics" ]
+              ],
+              [
+                [ "Quoted", "prometheus.rules.json" ],
+                [
+                  "Fun_call",
+                  [
+                    "jsonencode",
+                    [
+                      [
+                        "Tuple",
+                        [
+                          [
+                            "Object",
+                            [
+                              [
+                                [ "Bare", "alert" ],
+                                [ "String", "KongDataStoreReachable" ]
+                              ],
+                              [
+                                [ "Bare", "expr" ],
+                                [ "String", "kong_datastore_reachable < 1" ]
+                              ],
+                              [ [ "Bare", "for" ], [ "String", "5m" ] ],
+                              [
+                                [ "Bare", "labels" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "severity" ],
+                                      [ "String", "critical" ]
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              [
+                                [ "Bare", "annotations" ],
+                                [
+                                  "Object",
+                                  [
+                                    [
+                                      [ "Bare", "summary" ],
+                                      [
+                                        "String",
+                                        "Instance {{ $labels.instance }} data store probably not reachable"
+                                      ]
+                                    ],
+                                    [
+                                      [ "Bare", "description" ],
+                                      [
+                                        "String",
+                                        "{{ $labels.instance }} data store is not reachable for 5 minutes or longer"
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "postgres" ] ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Attr",
+                [ [ "Id", "var" ], [ "A_string", "enable_postgres" ] ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "source",
+          [ "String", "philips-labs/postgres-service/hsdp" ]
+        ],
+        [ "Attribute", "version", [ "String", "0.3.0" ] ],
+        [
+          "Attribute",
+          "cf_space_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "cloudfoundry_space" ]
+                    ]
+                  ],
+                  [ "A_string", "space" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "plan",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "db_plan" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "cloudfoundry_route" ], [ "Lit", "kong" ] ],
+      "body": [
+        [
+          "Attribute",
+          "for_each",
+          [
+            "For_object",
+            {
+              "identifiers": [ "i", [ "h" ] ],
+              "input": [
+                "Attr", [ [ "Id", "local" ], [ "A_string", "hostnames" ] ]
+              ],
+              "key_output": [
+                "Template",
+                [
+                  [
+                    "Interpolation",
+                    {
+                      "expr": [ "Id", "i" ],
+                      "strip_before": false,
+                      "strip_after": false
+                    }
+                  ]
+                ]
+              ],
+              "value_output": [ "Id", "h" ],
+              "cond": null
+            }
+          ]
+        ],
+        [
+          "Attribute",
+          "domain",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "cloudfoundry_domain" ]
+                    ]
+                  ],
+                  [ "A_string", "domain" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "space",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "cloudfoundry_space" ]
+                    ]
+                  ],
+                  [ "A_string", "space" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "hostname",
+          [ "Attr", [ [ "Id", "each" ], [ "A_string", "value" ] ] ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "cloudfoundry_route" ], [ "Lit", "kong_internal" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "domain",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "cloudfoundry_domain" ]
+                    ]
+                  ],
+                  [ "A_string", "internal_domain" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "space",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [
+                    "Attr",
+                    [
+                      [ "Id", "data" ], [ "A_string", "cloudfoundry_space" ]
+                    ]
+                  ],
+                  [ "A_string", "space" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "hostname",
+          [
+            "Template",
+            [
+              [ "Literal", "tf-kong-" ],
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr", [ [ "Id", "local" ], [ "A_string", "postfix" ] ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "cloudfoundry_network_policy" ], [ "Lit", "kong" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "count",
+          [
+            "Cond",
+            {
+              "if_": [
+                "Gt",
+                [
+                  [
+                    "Fun_call",
+                    [
+                      "length",
+                      [
+                        [
+                          "Attr",
+                          [
+                            [ "Id", "var" ],
+                            [ "A_string", "network_policies" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ],
+                  [ "Int", 0 ]
+                ]
+              ],
+              "then_": [ "Int", 1 ],
+              "else_": [ "Int", 0 ]
+            }
+          ]
+        ],
+        [
+          "Block",
+          {
+            "type_": "dynamic",
+            "labels": [ [ "Lit", "policy" ] ],
+            "body": [
+              [
+                "Attribute",
+                "for_each",
+                [
+                  "For_tuple",
+                  {
+                    "identifiers": [ "p", [] ],
+                    "input": [
+                      "Attr",
+                      [ [ "Id", "var" ], [ "A_string", "network_policies" ] ]
+                    ],
+                    "output": [
+                      "Object",
+                      [
+                        [
+                          [ "Bare", "destination_app" ],
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "p" ],
+                              [ "A_string", "destination_app" ]
+                            ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "port" ],
+                          [
+                            "Attr", [ [ "Id", "p" ], [ "A_string", "port" ] ]
+                          ]
+                        ],
+                        [
+                          [ "Bare", "protocol" ],
+                          [
+                            "Attr",
+                            [ [ "Id", "p" ], [ "A_string", "protocol" ] ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    "cond": null
+                  }
+                ]
+              ],
+              [
+                "Block",
+                {
+                  "type_": "content",
+                  "labels": [],
+                  "body": [
+                    [
+                      "Attribute",
+                      "source_app",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [
+                              [ "Id", "cloudfoundry_app" ],
+                              [ "A_string", "kong" ]
+                            ]
+                          ],
+                          [ "A_string", "id_bg" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "destination_app",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "policy" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "destination_app" ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "protocol",
+                      [
+                        "Cond",
+                        {
+                          "if_": [
+                            "Equal",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [
+                                    "Attr",
+                                    [
+                                      [ "Id", "policy" ],
+                                      [ "A_string", "value" ]
+                                    ]
+                                  ],
+                                  [ "A_string", "protocol" ]
+                                ]
+                              ],
+                              [ "String", "" ]
+                            ]
+                          ],
+                          "then_": [ "String", "tcp" ],
+                          "else_": [
+                            "Attr",
+                            [
+                              [
+                                "Attr",
+                                [
+                                  [ "Id", "policy" ], [ "A_string", "value" ]
+                                ]
+                              ],
+                              [ "A_string", "protocol" ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "Attribute",
+                      "port",
+                      [
+                        "Attr",
+                        [
+                          [
+                            "Attr",
+                            [ [ "Id", "policy" ], [ "A_string", "value" ] ]
+                          ],
+                          [ "A_string", "port" ]
+                        ]
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    }
+  ]
+]

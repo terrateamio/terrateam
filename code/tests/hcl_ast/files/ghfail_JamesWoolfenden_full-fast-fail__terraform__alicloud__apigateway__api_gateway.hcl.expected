@@ -1,0 +1,121 @@
+[
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "alicloud_api_gateway_group" ], [ "Lit", "apiGroup" ]
+      ],
+      "body": [
+        [ "Attribute", "name", [ "String", "ApiGatewayGroup" ] ],
+        [
+          "Attribute",
+          "description",
+          [ "String", "description of the api group" ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [
+        [ "Lit", "alicloud_api_gateway_api" ], [ "Lit", "apiGatewayApi" ]
+      ],
+      "body": [
+        [
+          "Attribute",
+          "name",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "alicloud_api_gateway_group" ],
+                  [ "A_string", "apiGroup" ]
+                ]
+              ],
+              [ "A_string", "name" ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "group_id",
+          [
+            "Attr",
+            [
+              [
+                "Attr",
+                [
+                  [ "Id", "alicloud_api_gateway_group" ],
+                  [ "A_string", "apiGroup" ]
+                ]
+              ],
+              [ "A_string", "id" ]
+            ]
+          ]
+        ],
+        [ "Attribute", "description", [ "String", "your description" ] ],
+        [ "Attribute", "auth_type", [ "String", "APP" ] ],
+        [ "Attribute", "force_nonce_check", [ "Bool", false ] ],
+        [
+          "Block",
+          {
+            "type_": "request_config",
+            "labels": [],
+            "body": [
+              [ "Attribute", "protocol", [ "String", "HTTP" ] ],
+              [ "Attribute", "method", [ "String", "GET" ] ],
+              [ "Attribute", "path", [ "String", "/test/path1" ] ],
+              [ "Attribute", "mode", [ "String", "MAPPING" ] ]
+            ]
+          }
+        ],
+        [ "Attribute", "service_type", [ "String", "HTTP" ] ],
+        [
+          "Block",
+          {
+            "type_": "http_service_config",
+            "labels": [],
+            "body": [
+              [
+                "Attribute",
+                "address",
+                [
+                  "String", "http://apigateway-backend.alicloudapi.com:8080"
+                ]
+              ],
+              [ "Attribute", "method", [ "String", "GET" ] ],
+              [ "Attribute", "path", [ "String", "/web/cloudapi" ] ],
+              [ "Attribute", "timeout", [ "Int", 12 ] ],
+              [ "Attribute", "aone_name", [ "String", "cloudapi-openapi" ] ]
+            ]
+          }
+        ],
+        [
+          "Block",
+          {
+            "type_": "request_parameters",
+            "labels": [],
+            "body": [
+              [ "Attribute", "name", [ "String", "aaa" ] ],
+              [ "Attribute", "type", [ "String", "STRING" ] ],
+              [ "Attribute", "required", [ "String", "OPTIONAL" ] ],
+              [ "Attribute", "in", [ "String", "QUERY" ] ],
+              [ "Attribute", "in_service", [ "String", "QUERY" ] ],
+              [ "Attribute", "name_service", [ "String", "testparams" ] ]
+            ]
+          }
+        ],
+        [
+          "Attribute",
+          "stage_names",
+          [ "Tuple", [ [ "String", "RELEASE" ], [ "String", "TEST" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

@@ -1,0 +1,95 @@
+[
+  [
+    "Block",
+    {
+      "type_": "terraform",
+      "labels": [],
+      "body": [
+        [
+          "Block",
+          {
+            "type_": "backend",
+            "labels": [ [ "Lit", "gcs" ] ],
+            "body": [
+              [
+                "Attribute",
+                "bucket",
+                [ "String", "patinando-net-int-tfstate" ]
+              ],
+              [ "Attribute", "prefix", [ "String", "service-edge" ] ]
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "project" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "region" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "run_service_name" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "variable",
+      "labels": [ [ "Lit", "image" ] ],
+      "body": [ [ "Attribute", "type", [ "Id", "string" ] ] ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "cloud_run" ] ],
+      "body": [
+        [
+          "Attribute",
+          "source",
+          [
+            "String",
+            "git::https://github.com/CallePuzzle/terraform-google-cloud-run.git?ref=1.1.1"
+          ]
+        ],
+        [
+          "Attribute",
+          "project",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "project" ] ] ]
+        ],
+        [
+          "Attribute",
+          "region",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "region" ] ] ]
+        ],
+        [
+          "Attribute",
+          "image",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "image" ] ] ]
+        ],
+        [
+          "Attribute",
+          "run_service_name",
+          [ "Attr", [ [ "Id", "var" ], [ "A_string", "run_service_name" ] ] ]
+        ]
+      ]
+    }
+  ]
+]

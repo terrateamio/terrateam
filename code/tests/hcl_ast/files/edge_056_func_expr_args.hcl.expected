@@ -1,0 +1,28 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Fun_call",
+      [
+        "max",
+        [
+          [
+            "Add",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "a" ] ] ],
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "b" ] ] ]
+            ]
+          ],
+          [
+            "Mult",
+            [
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "c" ] ] ],
+              [ "Attr", [ [ "Id", "var" ], [ "A_string", "d" ] ] ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]

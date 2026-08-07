@@ -1,0 +1,28 @@
+[
+  [
+    "Attribute",
+    "x",
+    [
+      "Object",
+      [
+        [
+          [ "Expr", [ "Tuple", [ [ "Int", 1 ], [ "Int", 2 ] ] ] ],
+          [ "String", "a" ]
+        ]
+      ]
+    ]
+  ],
+  [
+    "Attribute",
+    "y",
+    [
+      "Object",
+      [
+        [
+          [ "Expr", [ "Object", [ [ [ "Bare", "a" ], [ "Int", 1 ] ] ] ] ],
+          [ "String", "b" ]
+        ]
+      ]
+    ]
+  ]
+]

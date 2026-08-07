@@ -1,0 +1,83 @@
+[
+  [
+    "Block",
+    {
+      "type_": "module",
+      "labels": [ [ "Lit", "a" ] ],
+      "body": [
+        [ "Attribute", "source", [ "String", "./child" ] ],
+        [
+          "Attribute",
+          "in",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [
+                        "Attr",
+                        [ [ "Id", "aws_instance" ], [ "A_string", "b" ] ]
+                      ],
+                      [ "A_string", "id" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "b" ] ],
+      "body": []
+    }
+  ],
+  [
+    "Block",
+    {
+      "type_": "resource",
+      "labels": [ [ "Lit", "aws_instance" ], [ "Lit", "c" ] ],
+      "body": [
+        [
+          "Attribute",
+          "some_input",
+          [
+            "Template",
+            [
+              [
+                "Interpolation",
+                {
+                  "expr": [
+                    "Attr",
+                    [
+                      [ "Attr", [ [ "Id", "module" ], [ "A_string", "a" ] ] ],
+                      [ "A_string", "out" ]
+                    ]
+                  ],
+                  "strip_before": false,
+                  "strip_after": false
+                }
+              ]
+            ]
+          ]
+        ],
+        [
+          "Attribute",
+          "depends_on",
+          [ "Tuple", [ [ "String", "aws_instance.b" ] ] ]
+        ]
+      ]
+    }
+  ]
+]
