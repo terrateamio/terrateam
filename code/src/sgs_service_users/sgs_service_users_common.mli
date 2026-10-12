@@ -5,8 +5,9 @@
     caller the same thing, and only the log line above it differs. *)
 val respond_internal_error : data:string -> ('a, 'b) Brtl_ctx.t -> ('a, Brtl_rspnc.t) Brtl_ctx.t
 
-(** Answer [404] for a user id that names no active user. *)
-val respond_user_not_found : ('a, 'b) Brtl_ctx.t -> ('a, Brtl_rspnc.t) Brtl_ctx.t
+(** Answer [404] for [user_id], an id that names no active user. *)
+val respond_user_not_found :
+  src:Logs.src -> user_id:Uuidm.t -> ('a, 'b) Brtl_ctx.t -> ('a, Brtl_rspnc.t) Brtl_ctx.t
 
 (** Which write {!Sgs_user.guard_last_instance_admin} refused. [Demote] is a write that ends the
     grant but leaves the user in place. [Delete] takes the whole user with it. *)
@@ -14,9 +15,32 @@ type last_admin_action =
   | Demote
   | Delete
 
-(** Answer [400] for a write the last-admin guard refused. *)
+(** Answer [400] for a write on [user_id] the last-admin guard refused. *)
 val respond_last_admin_protected :
-  action:last_admin_action -> ('a, 'b) Brtl_ctx.t -> ('a, Brtl_rspnc.t) Brtl_ctx.t
+  src:Logs.src ->
+  action:last_admin_action ->
+  user_id:Uuidm.t ->
+  ('a, 'b) Brtl_ctx.t ->
+  ('a, Brtl_rspnc.t) Brtl_ctx.t
+
+(** [guard_self_demotion ~user ~target_user_id desired_admin_status] is [Error `Self_demotion_err]
+    when [desired_admin_status] is [`No_admin] and [target_user_id] is [user]'s own id, and [Ok ()]
+    otherwise: a grant, and a write to another user's record, are never a self-demotion.
+
+    Revoking your own grant locks you out of the screen you would need to undo it, so it is refused
+    outright rather than allowed while another administrator remains: the same rule
+    [/tenants/{id}/members/set-role] applies to a self-demotion. Nothing about it needs the
+    database, so callers answer it before taking a connection. *)
+val guard_self_demotion :
+  user:'a Sgs_user.t ->
+  target_user_id:Uuidm.t ->
+  desired_admin_status:Sgs_user.instance_admin ->
+  (unit, [> `Self_demotion_err ]) result
+
+(** Answer a self-demotion by [user_id]: [400] [CANNOT_ACT_ON_SELF], the status and id
+    [/tenants/{id}/members/set-role] answers the same self-demotion with. *)
+val respond_self_demotion_refused :
+  src:Logs.src -> user_id:Uuidm.t -> ('a, 'b) Brtl_ctx.t -> ('a, Brtl_rspnc.t) Brtl_ctx.t
 
 (** Why [session] may or may not write an installation-wide [admin] grant.
 

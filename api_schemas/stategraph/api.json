@@ -6098,7 +6098,7 @@
         "additionalProperties": false,
         "properties": {
           "is_instance_admin": {
-            "description": "The installation-wide admin grant to leave the user with. True writes an unrestricted admin capability, replacing any tenants allow-list the user held; false removes an unrestricted admin capability and leaves a tenant-scoped one untouched. The value is set, not toggled: the current grant is never read to invert it, so repeating a call changes nothing. Removing your own grant is refused with 400 `CANNOT_ACT_ON_SELF`, whoever else holds one, and removing the last installation admin's with 400 `CANNOT_REMOVE_LAST_ADMIN`.",
+            "description": "The installation-wide admin grant to leave the user with. True writes an unrestricted admin capability, replacing any tenants allow-list the user held; false removes an unrestricted admin capability and leaves a tenant-scoped one untouched. The value is set, not toggled: the current grant is never read to invert it, so repeating a call changes nothing. Removing your own grant is refused with 400 `CANNOT_ACT_ON_SELF`, whoever else holds one, and removing the last installation admin's with 400 `CANNOT_REMOVE_LAST_ADMIN` (the first is checked first).",
             "type": "boolean"
           }
         },
@@ -6149,7 +6149,7 @@
             "type": "string"
           },
           "is_instance_admin": {
-            "description": "The installation-wide admin grant to leave the user with, written exactly as POST /users/set-instance-admin writes it: true writes an unrestricted admin capability, replacing any tenants allow-list the user held; false removes an unrestricted admin capability and leaves a tenant-scoped one untouched. Omit the field to leave the user's admin grant untouched. Only an admin session may send it. Removing it from the last installation admin is refused, and the refusal discards the whole update -- the other fields are written in the same transaction, so none of them lands either.",
+            "description": "The installation-wide admin grant to leave the user with. True writes an unrestricted admin capability, replacing any tenants allow-list the user held; false removes an unrestricted admin capability and leaves a tenant-scoped one untouched. The value is set, not toggled: the current grant is never read to invert it, so repeating a call changes nothing. Omit the field to leave the user's admin grant untouched. Only an admin session may send it. The same refusals as POST /users/set-instance-admin apply, in the same order: removing your own grant is refused with 400 `CANNOT_ACT_ON_SELF`, whoever else holds one, and removing the last installation admin's with 400 `CANNOT_REMOVE_LAST_ADMIN`; a sole admin removing their own grant gets the first. A refusal discards the whole update -- the other fields are written in the same transaction, so none of them lands either.",
             "type": "boolean"
           },
           "name": {

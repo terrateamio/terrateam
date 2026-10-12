@@ -86,10 +86,11 @@ let run' db ~actor_caps ~user target_user_id name email avatar_url is_instance_a
         in
         Ok (Yojson.Safe.to_string @@ Sgs_api_components_user_update_response.to_yojson response)
   in
-  (* [is_instance_admin] here writes exactly what [/users/set-instance-admin] writes, and so answers
-     to the same last-admin guard. The grant is written first and [update] runs in its transaction, so the row it
-     returns reports the grant that was just made, and a refusal discards [name], [email] and
-     [avatar_url] with it. *)
+  (* [is_instance_admin] here writes what [/users/set-instance-admin] writes, and answers to the
+     same refusals: the self-demotion one is turned away in [run], before a connection is taken,
+     and the last-admin guard below is this write's own. The grant is written first and [update]
+     runs in its transaction, so the row it returns reports the grant that was just made, and a
+     refusal discards [name], [email] and [avatar_url] with it. *)
   match is_instance_admin with
   | None -> update ()
   | Some is_instance_admin ->
@@ -131,56 +132,66 @@ let run _config storage target_user_id =
                           (Sgs_user_session.Caps.denied_body reasons))
                        ctx)
               | Sgs_user_session.Caps.Allowed -> (
-                  Pgsql_pool.with_conn storage ~f:(fun db ->
-                      run'
-                        db
-                        ~actor_caps
-                        ~user
-                        target_user_id
-                        name
-                        email
-                        avatar_url
-                        is_instance_admin)
-                  >>= function
-                  | Ok body ->
-                      Logs.info (fun m ->
-                          m
-                            "%s : USER_UPDATED Updated user %s"
-                            (Brtl_ctx.token ctx)
-                            (Uuidm.to_string target_user_id));
+                  match
+                    CCOption.map_or
+                      ~default:(Ok ())
+                      (fun desired_admin_status ->
+                        Common.guard_self_demotion ~user ~target_user_id ~desired_admin_status)
+                      is_instance_admin
+                  with
+                  | Ok () -> (
+                      Pgsql_pool.with_conn storage ~f:(fun db ->
+                          run'
+                            db
+                            ~actor_caps
+                            ~user
+                            target_user_id
+                            name
+                            email
+                            avatar_url
+                            is_instance_admin)
+                      >>= function
+                      | Ok body ->
+                          Logs.info (fun m ->
+                              m
+                                "%s : USER_UPDATED Updated user %s"
+                                (Brtl_ctx.token ctx)
+                                (Uuidm.to_string target_user_id));
+                          Abb.Future.return
+                            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx)
+                      | Error `Would_remove_last_instance_admin_err ->
+                          Abb.Future.return
+                            (Common.respond_last_admin_protected
+                               ~src
+                               ~action:Common.Demote
+                               ~user_id:target_user_id
+                               ctx)
+                      | Error
+                          (( `Forbidden_peer_or_greater_err
+                           | `Forbidden_tenant_scope_err
+                           | `Forbidden_no_tenant_visible_err ) as err) ->
+                          Logs.warn (fun m ->
+                              m
+                                "%s : USER_AUTHORITY_DENIED : Refused to update user %s"
+                                (Brtl_ctx.token ctx)
+                                (Uuidm.to_string target_user_id));
+                          Abb.Future.return (Common.respond_no_authority ~err ctx)
+                      | Error `Not_found_user_err ->
+                          Abb.Future.return
+                            (Common.respond_user_not_found ~src ~user_id:target_user_id ctx)
+                      | Error ((#Pgsql_pool.err | #Pgsql_io.err) as err) ->
+                          Abb.Future.return
+                            (Sgs_eplib.respond_db_err
+                               ~src
+                               ~body:
+                                 (Sgs_eplib.error_response_body
+                                    ~id:"INTERNAL_SERVER_ERROR"
+                                    ~data:"Failed to update user")
+                               ctx
+                               err))
+                  | Error `Self_demotion_err ->
                       Abb.Future.return
-                        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx)
-                  | Error `Would_remove_last_instance_admin_err ->
-                      Logs.warn (fun m ->
-                          m
-                            "%s : LAST_ADMIN_PROTECTED Refused to demote the last installation \
-                             admin %s"
-                            (Brtl_ctx.token ctx)
-                            (Uuidm.to_string target_user_id));
-                      Abb.Future.return
-                        (Common.respond_last_admin_protected ~action:Common.Demote ctx)
-                  | Error
-                      (( `Forbidden_peer_or_greater_err
-                       | `Forbidden_tenant_scope_err
-                       | `Forbidden_no_tenant_visible_err ) as err) ->
-                      Logs.warn (fun m ->
-                          m
-                            "%s : USER_AUTHORITY_DENIED : Refused to update user %s"
-                            (Brtl_ctx.token ctx)
-                            (Uuidm.to_string target_user_id));
-                      Abb.Future.return (Common.respond_no_authority ~err ctx)
-                  | Error `Not_found_user_err ->
-                      Abb.Future.return (Common.respond_user_not_found ctx)
-                  | Error ((#Pgsql_pool.err | #Pgsql_io.err) as err) ->
-                      Abb.Future.return
-                        (Sgs_eplib.respond_db_err
-                           ~src
-                           ~body:
-                             (Sgs_eplib.error_response_body
-                                ~id:"INTERNAL_SERVER_ERROR"
-                                ~data:"Failed to update user")
-                           ctx
-                           err)))
+                        (Common.respond_self_demotion_refused ~src ~user_id:target_user_id ctx)))
           | Error err ->
               Abb.Future.return
                 (Sgs_eplib.respond_error

@@ -65,13 +65,14 @@ let run _config storage target_user_id =
                    ~data:"Cannot delete your own account"
                    ctx)
           | Error `Would_remove_last_instance_admin_err ->
-              Logs.warn (fun m ->
-                  m
-                    "%s : LAST_ADMIN_PROTECTED Refused to delete the last installation admin %s"
-                    (Brtl_ctx.token ctx)
-                    (Uuidm.to_string target_user_id));
-              Abb.Future.return (Common.respond_last_admin_protected ~action:Common.Delete ctx)
-          | Error `Not_found_user_err -> Abb.Future.return (Common.respond_user_not_found ctx)
+              Abb.Future.return
+                (Common.respond_last_admin_protected
+                   ~src
+                   ~action:Common.Delete
+                   ~user_id:target_user_id
+                   ctx)
+          | Error `Not_found_user_err ->
+              Abb.Future.return (Common.respond_user_not_found ~src ~user_id:target_user_id ctx)
           | Error ((#Pgsql_pool.err | #Pgsql_io.err) as err) ->
               Abb.Future.return
                 (Sgs_eplib.respond_db_err
