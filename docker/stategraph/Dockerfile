@@ -112,6 +112,21 @@ RUN mkdir -p "$DUCKDB_EXTENSION_DIR" && \
 # Sgs_focus_sync worker.
 COPY --chown=${USERNAME}:${USERNAME} --chmod=755 code/src/focus_etl/load-focus-billing /usr/local/bin/load-focus-billing
 
+# Build oauth2-proxy from stategraph fork (has HTTP session storage support)
+FROM golang:1.27-alpine@sha256:4c9fe60190a2a3350ddc51de80d0224b8a6698d12bdfc999fee45ea9d6c46dbc AS oauth2-proxy-build
+RUN apk add --no-cache git make
+WORKDIR /src
+# Pinned to a commit, not a branch: a branch tip makes the image content depend on
+# when it was built rather than on this file.
+ARG OAUTH2_PROXY_REF=f6dc14cce0a4d16791fec34a0638b9c77e034cd0
+RUN git init -q . && \
+    git remote add origin https://github.com/stategraph/oauth2-proxy.git && \
+    git fetch --depth 1 origin "${OAUTH2_PROXY_REF}" && \
+    git checkout -q FETCH_HEAD
+# GOTOOLCHAIN=auto lets Go fetch a newer toolchain when go.mod asks for one this
+# image does not carry.
+RUN GOTOOLCHAIN=auto CGO_ENABLED=0 go build -ldflags="-s -w" -o /oauth2-proxy .
+
 FROM base-tenv-tofu AS base
 
 # region:apk-base
@@ -469,6 +484,44 @@ COPY --from=focus-etl /usr/local/bin/duckdb /usr/local/bin/duckdb
 COPY --from=focus-etl /usr/local/share/duckdb/extensions /usr/local/share/duckdb/extensions
 COPY --from=focus-etl --chown=${USERNAME}:${USERNAME} /usr/local/bin/load-focus-billing /usr/local/bin/load-focus-billing
 
+# The unified server's runtime, so that the server service of docker-compose-dev.yml runs the
+# topology stategraph-server-base sets up: nginx on 8080 in front of the stategraph server (8180)
+# and terrat (8181), under runit. Scripts and configuration are links into the source tree, and
+# binaries and consoles links into _build, so an edit, or a `dune build @code/stategraph` and an
+# `sv restart`, takes effect without rebuilding the image. No pricing-service runit service:
+# docker-compose-dev.yml runs its own container.
+USER root
+RUN apk add --no-cache \
+    gettext \
+    nginx \
+    nginx-mod-http-js \
+    postgresql-client \
+    py3-cryptography \
+    py3-jwt \
+    py3-requests \
+    runit
+COPY --from=oauth2-proxy-build /oauth2-proxy /usr/local/bin/oauth2-proxy
+RUN src=/tmp/mono/docker/stategraph && \
+    build=/tmp/mono/_build/default/code/src && \
+    for service in stategraph nginx terrat; do \
+      mkdir -p /etc/service/$service && \
+      ln -s $src/service/$service /etc/service/$service/run; \
+    done && \
+    mkdir -p /etc/service/nginx/control && \
+    ln -s $src/service/nginx-control-t /etc/service/nginx/control/t && \
+    ln -s $src/runit-init /usr/local/bin/runit-init && \
+    ln -s $src/orchestration-enabled /usr/local/bin/orchestration-enabled && \
+    ln -s $src/nginx.conf.template /etc/nginx/nginx.conf.template && \
+    ln -s $src/events.js /etc/nginx/events.js && \
+    ln -s $build/sgs_cli/sgs_cli.exe /usr/local/bin/stategraph-server && \
+    ln -s $build/terrat_ee/terrat_ee.exe /usr/local/bin/terrat && \
+    mkdir -p /usr/local/share/stategraph /usr/local/share/terrat/ui && \
+    ln -s /tmp/mono/code/src/sgs_terrateam_catalog/fdw_grants.sql /usr/local/share/stategraph/fdw_grants.sql && \
+    ln -s $build/hermes/ui-export /usr/local/share/stategraph/ui && \
+    ln -s $build/iris/ui-export /usr/local/share/terrat/ui/assets && \
+    chown -R ${USERNAME}:${USERNAME} /etc/service /etc/nginx /var/lib/nginx /var/log/nginx /run
+USER ${USERNAME}
+
 #########################################################################################################################
 # We're done with the development and devcontainer images at this point. Below are things only for the production image #
 #########################################################################################################################
@@ -515,21 +568,6 @@ RUN --mount=type=cache,id=${DUNE_CACHE_ID},target=/dune-cache,uid=1000,gid=1000,
     dune build code/src/sgs_cli_oss/sgs_cli_oss.exe && \
     rm -rf /dune-cache/_build && \
     cp -aT /tmp/mono/_build /dune-cache/_build
-
-# Build oauth2-proxy from stategraph fork (has HTTP session storage support)
-FROM golang:1.27-alpine@sha256:4c9fe60190a2a3350ddc51de80d0224b8a6698d12bdfc999fee45ea9d6c46dbc AS oauth2-proxy-build
-RUN apk add --no-cache git make
-WORKDIR /src
-# Pinned to a commit, not a branch: a branch tip makes the image content depend on
-# when it was built rather than on this file.
-ARG OAUTH2_PROXY_REF=f6dc14cce0a4d16791fec34a0638b9c77e034cd0
-RUN git init -q . && \
-    git remote add origin https://github.com/stategraph/oauth2-proxy.git && \
-    git fetch --depth 1 origin "${OAUTH2_PROXY_REF}" && \
-    git checkout -q FETCH_HEAD
-# GOTOOLCHAIN=auto lets Go fetch a newer toolchain when go.mod asks for one this
-# image does not carry.
-RUN GOTOOLCHAIN=auto CGO_ENABLED=0 go build -ldflags="-s -w" -o /oauth2-proxy .
 
 # Final server image, in two editions assembled from one base. The base is
 # everything edition-blind: packages, the runit tree, nginx, oauth2-proxy and

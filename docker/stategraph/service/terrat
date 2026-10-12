@@ -90,9 +90,6 @@ def assert_github_webhook_secret():
     # enforcing the secret in terrat_config.github_of_parts -- where the
     # durable fix belongs, since it is the one chokepoint both paths share --
     # would break existing OSS deployments that run without one).
-    # .github/workflows/unified-image.yml boots the image without the secret,
-    # greps the "GITHUB_WEBHOOK_SECRET must be set" sentence, and expects it on
-    # every runit restart: rewording the sentence or not exiting fails that CI.
     if os.environ.get('GITHUB_APP_ID') and not os.environ.get('GITHUB_WEBHOOK_SECRET'):
         detail = ('it is set but empty, and an empty HMAC key rejects every webhook'
                   if 'GITHUB_WEBHOOK_SECRET' in os.environ

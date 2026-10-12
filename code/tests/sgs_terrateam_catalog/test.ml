@@ -50,7 +50,7 @@
    VIEWS (a max(unlocked_at) group-by, per the 2025-05-25 and 2025-06-16
    terrat migrations). Nothing downstream cares -- create foreign table works
    over a remote view, the schema-wide revoke and the column-level grants both
-   cover views, and the unified-image drift gate reads
+   cover views, and the e2e drift test reads
    information_schema.columns, which lists them -- so they need no exception
    anywhere. They are called out only so a reader does not take "table" as a
    guarantee that every catalog entry is a base relation. *)
@@ -83,8 +83,8 @@ let deny_patterns =
    plans.data is here because its name matches no deny pattern: only this pin
    keeps it out.
 
-   The exhaustive, self-maintaining form of this check is the unified-image CI
-   gate "Check catalog matches live terrat schema", which classifies every live
+   The exhaustive, self-maintaining form of this check is the e2e test
+   orchestration_catalog_matches_live_schema, which classifies every live
    column of a cataloged table against the real terrat schema, so a newly-added
    terrat column trips CI automatically; these sentinels are a fast, DB-less
    spot-check of the known cases. *)
