@@ -11,9 +11,9 @@ website/
 webhooks/
 CODEOWNERS
 CONTRIBUTING.md
+docker/stategraph/.env
 # docker/stategraph/service/ and nginx.conf.template must STAY in the build
-# context: code/tests/nginx_terrat_routes deps on service/nginx, so excluding
-# it breaks `make test-unit` inside the image with a "no rule found" error.
+# context: code/tests/nginx_terrat_routes deps on service/nginx
 docker/stategraph/build-target.sh
 docker/stategraph/build-clean-image.sh
 docker/stategraph/find-closest-image.sh
