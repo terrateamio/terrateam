@@ -134,7 +134,8 @@ let run _config storage target_user_id =
                         (Brtl_ctx.token ctx)
                         (Uuidm.to_string target_user_id));
                   Abb.Future.return (Common.respond_no_authority ~err ctx)
-              | Error `Not_found_user_err -> Abb.Future.return (Common.respond_user_not_found ctx)
+              | Error `Not_found_user_err ->
+                  Abb.Future.return (Common.respond_user_not_found ~src ~user_id:target_user_id ctx)
               | Error `Internal_password_verification_failed_err ->
                   Logs.err (fun m ->
                       m

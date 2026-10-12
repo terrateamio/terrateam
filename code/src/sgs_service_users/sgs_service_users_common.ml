@@ -6,20 +6,46 @@
 let respond_internal_error ~data ctx =
   Sgs_eplib.respond_error ~status:`Internal_server_error ~id:"INTERNAL_SERVER_ERROR" ~data ctx
 
-let respond_user_not_found ctx =
+let respond_user_not_found ~src ~user_id ctx =
+  Logs.warn ~src (fun m ->
+      m "%s : USER_NOT_FOUND : User %s not found" (Brtl_ctx.token ctx) (Uuidm.to_string user_id));
   Sgs_eplib.respond_error ~status:`Not_found ~id:"USER_NOT_FOUND" ~data:"User not found" ctx
 
 type last_admin_action =
   | Demote
   | Delete
 
-let respond_last_admin_protected ~action ctx =
-  let id, data =
+let respond_last_admin_protected ~src ~action ~user_id ctx =
+  let verb, id, data =
     match action with
-    | Demote -> ("CANNOT_REMOVE_LAST_ADMIN", "Cannot remove admin from the last admin user")
-    | Delete -> ("CANNOT_DELETE_LAST_ADMIN", "Cannot delete the last admin user")
+    | Demote ->
+        ("demote", "CANNOT_REMOVE_LAST_ADMIN", "Cannot remove admin from the last admin user")
+    | Delete -> ("delete", "CANNOT_DELETE_LAST_ADMIN", "Cannot delete the last admin user")
   in
+  Logs.warn ~src (fun m ->
+      m
+        "%s : LAST_ADMIN_PROTECTED : Refused to %s the last installation admin %s"
+        (Brtl_ctx.token ctx)
+        verb
+        (Uuidm.to_string user_id));
   Sgs_eplib.respond_error ~status:`Bad_request ~id ~data ctx
+
+let guard_self_demotion ~user ~target_user_id ~desired_admin_status =
+  match desired_admin_status with
+  | `No_admin when Uuidm.equal (Sgs_user.id user) target_user_id -> Error `Self_demotion_err
+  | `No_admin | `Instance_admin -> Ok ()
+
+let respond_self_demotion_refused ~src ~user_id ctx =
+  Logs.warn ~src (fun m ->
+      m
+        "%s : SELF_DEMOTION_REFUSED : Refused user %s revoking their own installation admin grant"
+        (Brtl_ctx.token ctx)
+        (Uuidm.to_string user_id));
+  Sgs_eplib.respond_error
+    ~status:`Bad_request
+    ~id:"CANNOT_ACT_ON_SELF"
+    ~data:"You cannot remove your own installation admin grant"
+    ctx
 
 let instance_admin_check session =
   Sgs_user_session.Caps.admin_instance
