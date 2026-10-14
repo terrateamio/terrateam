@@ -259,14 +259,11 @@ let find_or_create_user
       (* Atomically: tenant creation, admin scope, user insert, tenant attach. The caller
          wraps this in a transaction, so a failure after the user insert does not
          leave an active user with no tenant membership and no recovery path. *)
-      (* Communism-mode deployments provision installation operators out-of-band (see
-             sgs_setup_ep_status.ml), so the installation-wide bootstrap never fires in that mode.
-             What the new user does get is administrative authority over their own tenant: the
-             tenant is created for them here and they are its only member, so they are its first
-             user by construction.  Without that grant a tenant owner has no authority over the
-             tenant they own -- they cannot delete their own states or manage their own billing.
-             Same rule aegis applies to its first user in
-             sgs_service_license_ee_ep_magic_claim.ml. *)
+      (* The installation-wide bootstrap is the default tenant's alone. A personal tenant grants its
+         new user administrative authority over it instead: they are its only member, so they are
+         its first user by construction. Without that grant a tenant owner has no authority over the
+         tenant they own -- they cannot delete their own states or manage their own billing. Same
+         rule aegis applies to its first user in sgs_service_license_ee_ep_magic_claim.ml. *)
       let name = CCOption.get_or ~default:email display_name in
       (match new_user_tenant with
         | `Personal_tenant ->

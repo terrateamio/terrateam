@@ -1,6 +1,7 @@
-(** The license service: the license status and the setup endpoints that enforce the license.
+(** The license service: the license status, the setup status, and the setup endpoint that enforces
+    the license.
 
-    Routes: [GET /api/v1/license/status], [POST /api/v1/setup/complete], [POST /api/v1/setup/admin].
+    Routes: [GET /api/v1/setup/status], [POST /api/v1/setup/admin], [GET /api/v1/license/status].
     All are unauthenticated: they run before the first user exists. Entering a key
     ([POST /api/v1/license]) and the Aegis magic-link claim ([POST /api/v1/setup/magic-claim]) are
     the enterprise build's alone and live in {!Sgs_ee_service}. *)
@@ -35,8 +36,10 @@ module type LICENSE = sig
   (** What this edition requires before setup may proceed. *)
   val requirement : requirement
 
-  (** [POST /api/v1/setup/complete]: mark setup complete. *)
-  val setup_complete : Sgs_config.t -> Sgs_storage.t -> Brtl_rtng.Handler.t
+  (** [GET /api/v1/setup/status]: whether the deployment still needs its in-app setup, and its mode,
+      the [mode] field that [api_mode] supplies ([None] omits it). *)
+  val setup_status :
+    api_mode:(unit -> string option) -> Sgs_config.t -> Sgs_storage.t -> Brtl_rtng.Handler.t
 
   (** [POST /api/v1/setup/admin]: create the first admin user. *)
   val setup_admin : Sgs_config.t -> Sgs_storage.t -> Brtl_rtng.Handler.t
@@ -46,8 +49,9 @@ module type LICENSE = sig
   val license_status : Sgs_config.t -> Sgs_storage.t -> Brtl_rtng.Handler.t
 end
 
-(** The service refuses to start when {!may_start} answers [false]. *)
-module Make (_ : LICENSE) : sig
+(** The license service of an edition, with the Cloud abstraction supplying the [mode] of
+    [GET /api/v1/setup/status]. The service refuses to start when {!may_start} answers [false]. *)
+module Make (_ : LICENSE) (_ : Sgs_cloud.S) : sig
   include Sgs_service.S with type opt = Sgs_svc_mngr.t
 
   (** Names this service in a match on {!Sgs_service.ty}. *)

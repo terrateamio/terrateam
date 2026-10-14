@@ -24,19 +24,22 @@ let may_start ~requirement config db =
 
 module type LICENSE = sig
   val requirement : requirement
-  val setup_complete : Sgs_config.t -> Sgs_storage.t -> Brtl_rtng.Handler.t
+
+  val setup_status :
+    api_mode:(unit -> string option) -> Sgs_config.t -> Sgs_storage.t -> Brtl_rtng.Handler.t
+
   val setup_admin : Sgs_config.t -> Sgs_storage.t -> Brtl_rtng.Handler.t
   val license_status : Sgs_config.t -> Sgs_storage.t -> Brtl_rtng.Handler.t
 end
 
 module Rt = struct
   let api_v1 () = Brtl_rtng.Route.(rel / "api" / "v1")
-  let setup_complete () = Brtl_rtng.Route.(api_v1 () / "setup" / "complete")
+  let setup_status () = Brtl_rtng.Route.(api_v1 () / "setup" / "status")
   let setup_admin () = Brtl_rtng.Route.(api_v1 () / "setup" / "admin")
   let license_status () = Brtl_rtng.Route.(api_v1 () / "license" / "status")
 end
 
-module Make (L : LICENSE) = struct
+module Make (L : LICENSE) (Cloud : Sgs_cloud.S) = struct
   type t = {
     config : Sgs_config.t;
     storage : Sgs_storage.t;
@@ -76,7 +79,7 @@ module Make (L : LICENSE) = struct
   let routes { config; storage } =
     Brtl_rtng.Route.
       [
-        (`POST, Rt.setup_complete () --> L.setup_complete config storage);
+        (`GET, Rt.setup_status () --> L.setup_status ~api_mode:Cloud.api_mode config storage);
         (`POST, Rt.setup_admin () --> L.setup_admin config storage);
         (`GET, Rt.license_status () --> L.license_status config storage);
       ]

@@ -27,10 +27,6 @@ type invite_delivery =
   ]
 
 module type S = sig
-  (** Who sets the installation up. [`In_app]: its first operator, through the console's setup flow.
-      [`Out_of_band]: the deployment, outside the application; setup is then always complete. *)
-  val setup : unit -> [ `In_app | `Out_of_band ]
-
   (** Which tenant a new user joins at their first sign-in. [`Default_tenant]: the default tenant;
       the first user of the installation becomes its administrator. [`Personal_tenant]: a tenant
       created for them, of which they are the only member and the administrator. *)

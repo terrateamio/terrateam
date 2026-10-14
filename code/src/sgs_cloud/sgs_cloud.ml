@@ -17,7 +17,6 @@ type invite_delivery =
   ]
 
 module type S = sig
-  val setup : unit -> [ `In_app | `Out_of_band ]
   val new_user_tenant : unit -> [ `Default_tenant | `Personal_tenant ]
   val github_app : unit -> [ `Console | `Deployment ]
   val api_mode : unit -> string option

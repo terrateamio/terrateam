@@ -21,6 +21,9 @@ module String : sig
   (** [CCList.assoc_opt ~eq:CCString.equal] *)
   val assoc_opt : string -> (string * 'a) list -> 'a option
 
+  (** [CCList.mem_assoc ~eq:CCString.equal] *)
+  val mem_assoc : string -> (string * _) list -> bool
+
   (** [CCList.sort (fun (a, _) (b, _) -> CCString.compare a b)] *)
   val sort_assoc : (string * 'a) list -> (string * 'a) list
 end
