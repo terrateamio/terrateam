@@ -58,10 +58,7 @@ let run' ?default_tenant_name ~requirement config token db email password name =
         Sgs_user_session.Session.create_login ~capabilities user db
         >>= fun session ->
         Fc.to_result @@ Sgs_user_session.Session.to_token ~key session
-        >>= fun session_token ->
-        (* Mark setup as completed *)
-        Sgs_setup_system_settings.store "setup_completed" (`Bool true) db
-        >>| fun () ->
+        >>| fun session_token ->
         Logs.info (fun m -> m "%s : SETUP_COMPLETE Setup completed" token);
         (user_id, session_token)
 
@@ -94,8 +91,7 @@ let run ~requirement config storage =
               | Ok () -> (
                   let default_tenant_name = Sgs_config.default_tenant_name config in
                   Pgsql_pool.with_conn storage ~f:(fun db ->
-                      (* Atomic: user insert, tenant attach, and the setup-completed marker
-                         must all land together or not at all. *)
+                      (* Atomic: user insert and tenant attach must land together or not at all. *)
                       Pgsql_io.tx db ~f:(fun () ->
                           run' ?default_tenant_name ~requirement config token db email password name))
                   >>= function

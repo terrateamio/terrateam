@@ -8,6 +8,7 @@
   containers
   pgsql_io
   pgsql_pool
+  sgs_cloud
   sgs_config
   sgs_service
   sgs_service_config

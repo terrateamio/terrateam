@@ -3062,6 +3062,7 @@
             "type": "string"
           },
           "needs_setup": {
+            "description": "Whether the deployment still needs its initial setup: it holds no valid license, or it has no human users and authenticates locally. OAuth users arrive through the identity provider, so licensing alone decides it there.",
             "type": "boolean"
           }
         },

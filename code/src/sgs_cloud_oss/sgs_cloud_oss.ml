@@ -1,4 +1,3 @@
-let setup () = `In_app
 let new_user_tenant () = `Default_tenant
 let github_app () = `Console
 let api_mode () = None

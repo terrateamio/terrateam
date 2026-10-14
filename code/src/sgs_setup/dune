@@ -11,7 +11,6 @@
   pgsql_io
   pgsql_pool
   sgs_api
-  sgs_cloud
   sgs_config
   sgs_eplib
   sgs_service_license
@@ -23,4 +22,4 @@
  (preprocessor_deps
   (glob_files_rec sql/*))
  (preprocess
-  (pps ppx_blob)))
+  (pps ppx_blob ppx_deriving.eq ppx_deriving.show)))
