@@ -1,0 +1,17 @@
+(library
+ (name sgs_service_terrat)
+ (wrapped false)
+ (libraries
+  abb
+  abbs
+  containers
+  logs
+  pgsql_io
+  pgsql_pool
+  sgs_service
+  sgs_svc_mngr
+  sgs_terrat_config
+  terrat_config
+  terrat_storage
+  terrat_vcs_event_evaluator2
+  terrat_vcs_service))
