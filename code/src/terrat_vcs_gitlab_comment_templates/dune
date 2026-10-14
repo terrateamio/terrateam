@@ -1,6 +1,6 @@
 (library
  (name terrat_vcs_gitlab_comment_templates)
- (libraries brtl terrat_brand terrat_plan_diff)
+ (libraries snabela terrat_brand terrat_plan_diff)
  (preprocessor_deps
   (glob_files tmpl/*.tmpl))
  (preprocess

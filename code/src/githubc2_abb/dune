@@ -1,5 +1,5 @@
 (library
  (name githubc2_abb)
- (libraries abb abb_curl abbs containers json_schema openapi)
+ (libraries abb abb_curl abbs containers openapi)
  (preprocess
   (pps ppx_deriving.show)))

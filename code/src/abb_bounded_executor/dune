@@ -1,11 +1,5 @@
 (library
  (name abb_bounded_executor)
- (libraries
-  abb_fc
-  abb_intf
-  abb_service_local
-  abb_time
-  containers
-  containers-data)
+ (libraries abb_fc abb_intf abb_service_local abb_time containers)
  (preprocess
   (pps ppx_deriving.ord)))

@@ -3,7 +3,6 @@
  (libraries
   containers
   oth
-  oth_abb
   terrat_api
   terrat_tag_query
   terrat_vcs_provider2

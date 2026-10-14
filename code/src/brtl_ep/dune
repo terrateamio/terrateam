@@ -1,4 +1,4 @@
 (library
  (name brtl_ep)
  (wrapped false)
- (libraries abbs brtl))
+ (libraries brtl))

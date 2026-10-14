@@ -1,5 +1,5 @@
 (library
  (name hcl_parser_value_json)
- (libraries containers hcl_ast hcl_parser_value sln yojson ppx_deriving)
+ (libraries containers hcl_ast hcl_parser_value yojson ppx_deriving)
  (preprocess
   (pps ppx_deriving.show ppx_deriving.ord ppx_deriving_yojson)))

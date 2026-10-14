@@ -2,24 +2,24 @@
  (name terrat_vcs_service_gitlab)
  (wrapped false)
  (libraries
-  brtl_permissions
+  ISO8601
   gitlab_webhooks
   gitlab_webhooks_decoder
+  jsonu
   logs
-  minijinja
   pgsql_pagination
   sln
   terrat_brand
   terrat_code_idx
   terrat_comment
   terrat_intra_pr_hash
+  terrat_job_context_param
+  terrat_job_type
   terrat_metrics
   terrat_output_baseline
   terrat_plan_diff
   terrat_session
   terrat_sql_of_tag_query
-  terrat_telemetry
-  terrat_vcs_access_token
   terrat_vcs_api_gitlab
   terrat_vcs_event_evaluator2
   terrat_vcs_gitlab_comment

@@ -1,6 +1,6 @@
 (library
  (name snabela)
  (wrapped false)
- (libraries process containers sedlex sln ppx_deriving)
+ (libraries containers sedlex sln ppx_deriving)
  (preprocess
   (pps sedlex.ppx ppx_deriving.show ppx_deriving.eq)))

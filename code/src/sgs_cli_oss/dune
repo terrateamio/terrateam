@@ -3,7 +3,6 @@
  (libraries
   sgs_cli_lib
   sgs_cloud_oss
-  sgs_mql
   sgs_service_auth
   sgs_service_caps
   sgs_service_config

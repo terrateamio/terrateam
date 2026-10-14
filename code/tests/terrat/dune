@@ -1,5 +1,15 @@
 (tests
  (names change_matcher3 plan_diff tag_query tag_set)
- (libraries containers oth terrat terrat_output_diff yojson)
+ (libraries
+  containers
+  oth
+  terrat_base_repo_config_v1
+  terrat_change
+  terrat_change_match3
+  terrat_output_diff
+  terrat_plan_diff
+  terrat_tag_query
+  terrat_tag_set
+  yojson)
  (preprocess
   (pps ppx_deriving.show)))

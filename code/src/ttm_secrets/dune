@@ -1,3 +1,3 @@
 (library
  (name ttm_secrets)
- (libraries cmdliner containers iter logs))
+ (libraries cmdliner containers iter))

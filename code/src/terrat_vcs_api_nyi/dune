@@ -1,6 +1,6 @@
 (library
  (name terrat_vcs_api_nyi)
- (libraries logs ppx_deriving terrat_change terrat_pull_request)
+ (libraries logs ppx_deriving terrat_pull_request)
  (flags
   (:standard -w -27-32-53))
  (preprocess

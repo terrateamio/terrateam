@@ -2,9 +2,9 @@
  (name terrat_vcs_service_github)
  (wrapped false)
  (libraries
-  brtl_permissions
+  ISO8601
+  jsonu
   logs
-  minijinja
   pgsql_io
   pgsql_pagination
   pgsql_pool
@@ -18,6 +18,8 @@
   terrat_github_webhooks
   terrat_github_webhooks_decoder
   terrat_intra_pr_hash
+  terrat_job_context_param
+  terrat_job_type
   terrat_metrics
   terrat_output_baseline
   terrat_plan_diff

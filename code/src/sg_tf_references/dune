@@ -1,5 +1,5 @@
 (library
  (name sg_tf_references)
- (libraries containers hcl_ast hcl_parser_value sln)
+ (libraries containers hcl_parser_value sln)
  (preprocess
   (pps ppx_deriving.eq ppx_deriving.ord ppx_deriving.show)))

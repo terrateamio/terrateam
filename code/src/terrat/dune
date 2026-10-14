@@ -2,54 +2,31 @@
  (name terrat)
  (wrapped false)
  (libraries
-  ISO8601
   abb
   abb_cache
   abb_curl
-  abb_flow
   abb_happy_eyeballs
   abb_keyed_concurrent_executor
-  abb_process
   abbs
-  abbs_tls
   base64
   brtl
   brtl_ep
   brtl_mw_log
-  brtl_mw_session
-  brtl_pagination
   brtl_permissions
-  brtl_static
   containers
-  containers-data
-  containers.bencode
   data_mig
-  git_config
-  githubc2
-  githubc2_abb
   infracost_pricing
   iter
-  jsonu
-  jwt
   logs
-  logs.cli
-  logs.fmt
-  lru
-  lua_pattern
   mirage-crypto-pk
-  mirage-crypto-rng.unix
-  ouuid
-  path_glob
   pgsql_pool
   ppx_deriving
   prmths
-  sha
   sln
   terrat_api
   terrat_base_repo_config_v1
   terrat_change
   terrat_change_match3
-  terrat_code_idx
   terrat_comment
   terrat_commit_check
   terrat_config
@@ -57,21 +34,17 @@
   terrat_dirspace
   terrat_metrics
   terrat_migrations_ex
-  terrat_plan_diff
   terrat_pull_request
   terrat_repo_config
   terrat_session
   terrat_storage
   terrat_tag_query
   terrat_tag_query_ast
-  terrat_tag_query_lexer
-  terrat_tag_query_parser
   terrat_tag_set
   terrat_telemetry
   terrat_user
   terrat_vcs_service
-  terrat_work_manifest3
-  x509)
+  terrat_work_manifest3)
  (preprocessor_deps
   (glob_files migrations/*.sql)
   (glob_files sql/*.sql))

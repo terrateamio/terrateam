@@ -7,8 +7,6 @@
   duration
   jwt
   pgsql_io
-  terrat_access_token_caps
-  terrat_storage
   terrat_user_caps
   uuidm)
  (preprocess

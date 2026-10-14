@@ -1,7 +1,7 @@
 (library
  (name terrat_tag_query_parser)
  (wrapped false)
- (libraries menhirLib sedlex terrat_tag_query_parser_value))
+ (libraries menhirLib terrat_tag_query_parser_value))
 
 (menhir
  (modules terrat_tag_query_parser)

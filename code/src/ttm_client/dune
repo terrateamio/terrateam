@@ -1,5 +1,5 @@
 (library
  (name ttm_client)
- (libraries abb logs openapic_abb terrat_api)
+ (libraries abb openapic_abb terrat_api)
  (preprocess
   (pps ppx_deriving.show)))

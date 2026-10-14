@@ -1,3 +1,3 @@
 (tests
  (names find_test mtch_test pattern_prop_test pattern_test substitute_test)
- (libraries containers qcheck oth lua_pattern))
+ (libraries containers qcheck-core oth lua_pattern))
