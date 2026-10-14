@@ -3,9 +3,7 @@
  (libraries
   containers
   sg_caps
-  sg_caps_json
   sg_caps_match
   sg_caps_trie
-  sg_caps_wire
   sgs_session_caps
   sln))

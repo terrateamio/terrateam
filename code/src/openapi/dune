@@ -1,5 +1,5 @@
 (library
  (name openapi)
- (libraries json_schema ppx_deriving sln)
+ (libraries ppx_deriving sln uri uritmpl)
  (preprocess
   (pps ppx_deriving.show)))

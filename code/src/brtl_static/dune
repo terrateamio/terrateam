@@ -1,3 +1,3 @@
 (library
  (name brtl_static)
- (libraries abbs brtl magic-mime))
+ (libraries brtl magic-mime))

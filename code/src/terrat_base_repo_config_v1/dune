@@ -8,7 +8,6 @@
   lua_pattern
   ppx_deriving
   sln
-  terrat_data
   terrat_repo_config
   terrat_tag_query
   yojson)

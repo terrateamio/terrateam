@@ -8,7 +8,6 @@
   kv_store_intf
   logs
   sha
-  terrat_access_token_caps
   terrat_user_caps
   ttm_client)
  (preprocess

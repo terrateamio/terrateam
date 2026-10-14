@@ -10,7 +10,6 @@
   logs
   pgsql_io
   pgsql_pool
-  sg_caps_json
   sgs_api
   sgs_cloud
   sgs_config

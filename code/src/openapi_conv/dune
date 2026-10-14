@@ -5,10 +5,7 @@
   containers
   json_schema_conv
   json_schema_flatten
-  ocaml-compiler-libs.common
-  ocaml-compiler-libs.shadow
   sln
-  tsort
   yojson
   ppx_deriving)
  (preprocess

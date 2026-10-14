@@ -1,5 +1,5 @@
 (library
  (name abb_cache)
- (libraries abb abb_fc abb_intf abb_io containers duration lru)
+ (libraries abb_fc abb_intf abb_io containers duration lru)
  (preprocess
   (pps ppx_deriving.ord ppx_deriving.show)))

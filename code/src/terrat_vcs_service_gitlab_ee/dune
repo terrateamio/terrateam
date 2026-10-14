@@ -1,6 +1,7 @@
 (library
  (name terrat_vcs_service_gitlab_ee)
  (libraries
+  jsonu
   terrat_vcs_access_token
   terrat_vcs_provider2
   terrat_vcs_service

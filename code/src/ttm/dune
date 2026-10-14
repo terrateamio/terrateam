@@ -2,11 +2,9 @@
  (name ttm)
  (libraries
   ISO8601
-  abb
   cmdliner
   logs
   logs.cli
-  logs.fmt
   logs.threaded
   mirage-crypto-rng.unix
   ttm_kv

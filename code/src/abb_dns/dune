@@ -3,8 +3,7 @@
  (libraries
   abb_fc
   abb_intf
-  abb_io
-  cstruct
+  containers
   dns-client
   dns-client.resolvconf
   logs

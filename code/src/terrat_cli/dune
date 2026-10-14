@@ -1,3 +1,11 @@
 (library
  (name terrat_cli)
- (libraries logs.threaded terrat terrat_build_info terrat_github))
+ (libraries
+  ISO8601
+  cmdliner
+  logs.cli
+  logs.threaded
+  mirage-crypto-rng.unix
+  terrat
+  terrat_build_info
+  terrat_github))

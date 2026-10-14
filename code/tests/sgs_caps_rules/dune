@@ -14,5 +14,4 @@
   sg_caps_trie
   sgs_caps_rules
   sgs_caps_rules_gen
-  sgs_session_caps
   uuidm))
