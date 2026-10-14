@@ -2,8 +2,8 @@
 let base_url_of_string s = Uri.of_string (CCString.rdrop_while (Char.equal '/') s)
 
 (* An empty value reads as unset, so the next base in the order is consulted. *)
-let base_url_of_env key =
-  match Sys.getenv_opt key with
+let base_url_of_env ~getenv key =
+  match getenv key with
   | None | Some "" -> None
   | Some s -> Some (base_url_of_string s)
 
@@ -164,63 +164,64 @@ let of_opt fail = function
   | Some v -> Ok v
   | None -> Error fail
 
-let env_str key = of_opt (`Key_error key) (Sys.getenv_opt key)
+let env_str ~getenv key = of_opt (`Key_error key) (getenv key)
 
-let vcs_call_timeout () =
-  match Sys.getenv_opt "TERRAT_VCS_CALL_TIMEOUT" with
+let vcs_call_timeout ~getenv =
+  match getenv "TERRAT_VCS_CALL_TIMEOUT" with
   | None | Some "" -> Ok default_vcs_call_timeout
   | Some timeout -> of_opt (`Key_error "TERRAT_VCS_CALL_TIMEOUT") (CCFloat.of_string_opt timeout)
 
-let infracost_sslmode () =
-  match Sys.getenv_opt "PRICING_DB_SSLMODE" with
+let infracost_sslmode ~getenv =
+  match getenv "PRICING_DB_SSLMODE" with
   | None | Some "" | Some "disable" -> Ok Infracost.Disable
   | Some "allow" | Some "prefer" -> Ok Infracost.Prefer
   | Some "require" -> Ok Infracost.Require
   | Some _ -> Error (`Key_error "PRICING_DB_SSLMODE")
 
-let infracost_env ~default key =
-  match Sys.getenv_opt key with
+let infracost_env ~getenv ~default key =
+  match getenv key with
   | None | Some "" -> default
   | Some value -> value
 
-let infracost_proxy () =
-  let infracost_pricing_api_endpoint = Sys.getenv_opt "INFRACOST_PRICING_API_ENDPOINT" in
-  let infracost_api_key = Sys.getenv_opt "SELF_HOSTED_INFRACOST_API_KEY" in
+let infracost_proxy ~getenv =
+  let infracost_pricing_api_endpoint = getenv "INFRACOST_PRICING_API_ENDPOINT" in
+  let infracost_api_key = getenv "SELF_HOSTED_INFRACOST_API_KEY" in
   match (infracost_pricing_api_endpoint, infracost_api_key) with
   | Some "", _ | _, Some "" -> None
   | Some endpoint, Some api_key ->
       Some (Infracost.Proxy { Infracost.endpoint = Uri.of_string endpoint; api_key })
   | _, _ -> None
 
-let infracost_price_book () =
+let infracost_price_book ~getenv =
   let open CCResult.Infix in
-  match Sys.getenv_opt "PRICING_DB_HOST" with
+  match getenv "PRICING_DB_HOST" with
   | None | Some "" -> Ok None
   | Some host ->
       of_opt
         (`Key_error "PRICING_DB_PORT")
-        (CCInt.of_string (infracost_env ~default:"5432" "PRICING_DB_PORT"))
+        (CCInt.of_string (infracost_env ~getenv ~default:"5432" "PRICING_DB_PORT"))
       >>= fun port ->
-      infracost_sslmode ()
+      infracost_sslmode ~getenv
       >>= fun sslmode ->
       Ok
         (Some
            (Infracost.Price_book
               {
-                Infracost.db = infracost_env ~default:"cloud_pricing" "PRICING_DB_NAME";
+                Infracost.db = infracost_env ~getenv ~default:"cloud_pricing" "PRICING_DB_NAME";
                 host;
-                password = infracost_env ~default:"stategraph" "PRICING_DB_PASSWORD";
+                password = infracost_env ~getenv ~default:"stategraph" "PRICING_DB_PASSWORD";
                 port;
                 sslmode;
-                user = infracost_env ~default:"stategraph" "PRICING_DB_USER";
+                user = infracost_env ~getenv ~default:"stategraph" "PRICING_DB_USER";
               }))
 
-let infracost () =
-  match infracost_proxy () with
+let infracost ~getenv =
+  match infracost_proxy ~getenv with
   | Some _ as proxy -> Ok proxy
-  | None -> infracost_price_book ()
+  | None -> infracost_price_book ~getenv
 
 let github_of_parts
+    ~getenv
     ~app_id
     ~app_pem_content
     ~app_client_id
@@ -237,17 +238,17 @@ let github_of_parts
     CCOption.map_or
       ~default:Github.default_github_api_base_url
       Uri.of_string
-      (Sys.getenv_opt "GITHUB_API_BASE_URL")
+      (getenv "GITHUB_API_BASE_URL")
   in
   let web_base_url =
     CCOption.map_or
       ~default:Github.default_github_web_base_url
       Uri.of_string
-      (Sys.getenv_opt "GITHUB_WEB_BASE_URL")
+      (getenv "GITHUB_WEB_BASE_URL")
   in
-  vcs_call_timeout ()
+  vcs_call_timeout ~getenv
   >>= fun call_timeout ->
-  let workflow_path_override = Sys.getenv_opt "GITHUB_WORKFLOW_PATH_OVERRIDE" in
+  let workflow_path_override = getenv "GITHUB_WORKFLOW_PATH_OVERRIDE" in
   let action_dynamic_title =
     CCOption.map_or
       ~default:[]
@@ -262,7 +263,7 @@ let github_of_parts
           | "run_type" -> Some `Run_type
           | "" -> None
           | _ -> None))
-      (Sys.getenv_opt "GITHUB_ACTION_DYNAMIC_TITLE")
+      (getenv "GITHUB_ACTION_DYNAMIC_TITLE")
   in
   Ok
     {
@@ -279,25 +280,26 @@ let github_of_parts
       workflow_path_override;
     }
 
-let load_github () =
+let load_github ~getenv =
   let open CCResult.Infix in
-  match Sys.getenv_opt "GITHUB_APP_ID" with
+  match getenv "GITHUB_APP_ID" with
   | Some "" | None -> Ok None
   | Some app_id ->
-      let webhook_secret = Sys.getenv_opt "GITHUB_WEBHOOK_SECRET" in
-      env_str "GITHUB_APP_PEM"
+      let webhook_secret = getenv "GITHUB_WEBHOOK_SECRET" in
+      env_str ~getenv "GITHUB_APP_PEM"
       >>= fun app_pem_content ->
-      env_str "GITHUB_APP_CLIENT_SECRET"
+      env_str ~getenv "GITHUB_APP_CLIENT_SECRET"
       >>= fun app_client_secret ->
-      env_str "GITHUB_APP_CLIENT_ID"
+      env_str ~getenv "GITHUB_APP_CLIENT_ID"
       >>= fun app_client_id ->
       let app_url =
         CCOption.map_or
           ~default:Github.default_github_app_url
           Uri.of_string
-          (Sys.getenv_opt "GITHUB_APP_URL")
+          (getenv "GITHUB_APP_URL")
       in
       github_of_parts
+        ~getenv
         ~app_id
         ~app_pem_content
         ~app_client_id
@@ -308,6 +310,7 @@ let load_github () =
 
 let github_of_stored ~app_id ~pem ~client_id ~client_secret ~webhook_secret ~app_url =
   github_of_parts
+    ~getenv:Sys.getenv_opt
     ~app_id
     ~app_pem_content:pem
     ~app_client_id:client_id
@@ -317,24 +320,24 @@ let github_of_stored ~app_id ~pem ~client_id ~client_secret ~webhook_secret ~app
 
 let with_github t github = { t with github = Some github }
 
-let load_gitlab () =
+let load_gitlab ~getenv =
   let open CCResult.Infix in
-  match Sys.getenv_opt "GITLAB_APP_ID" with
+  match getenv "GITLAB_APP_ID" with
   | Some "" | None -> Ok None
   | Some app_id ->
-      env_str "GITLAB_APP_SECRET"
+      env_str ~getenv "GITLAB_APP_SECRET"
       >>= fun app_secret ->
       let api_base_url =
         CCOption.map_or ~default:Gitlab.default_gitlab_api_base_url Uri.of_string
-        @@ Sys.getenv_opt "GITLAB_API_BASE_URL"
+        @@ getenv "GITLAB_API_BASE_URL"
       in
       let web_base_url =
         CCOption.map_or ~default:Gitlab.default_gitlab_web_base_url Uri.of_string
-        @@ Sys.getenv_opt "GITLAB_WEB_BASE_URL"
+        @@ getenv "GITLAB_WEB_BASE_URL"
       in
-      env_str "GITLAB_ACCESS_TOKEN"
+      env_str ~getenv "GITLAB_ACCESS_TOKEN"
       >>= fun access_token ->
-      vcs_call_timeout ()
+      vcs_call_timeout ~getenv
       >>= fun call_timeout ->
       (* #899 TODO Access Token will be removed once migration is over *)
       Ok
@@ -346,22 +349,22 @@ let is_cookie_name_char = function
   | '!' | '#' | '$' | '%' | '&' | '\'' | '*' | '+' | '-' | '.' | '^' | '_' | '`' | '|' | '~' -> true
   | _ -> false
 
-let load_session_cookie_name () =
-  match Sys.getenv_opt "TERRAT_SESSION_COOKIE_NAME" with
+let load_session_cookie_name ~getenv =
+  match getenv "TERRAT_SESSION_COOKIE_NAME" with
   | None | Some "" -> Ok "session"
   | Some name when CCString.for_all is_cookie_name_char name -> Ok name
   | Some _ -> Error (`Key_error "TERRAT_SESSION_COOKIE_NAME: must be a valid cookie name")
 
-let load_gc () =
+let load_gc ~getenv =
   let dynamic_gc' () =
     let open CCOption.Infix in
-    Sys.getenv_opt "TERRAT_GC_MIN_SPACE_OVERHEAD"
+    getenv "TERRAT_GC_MIN_SPACE_OVERHEAD"
     >>= fun min_space_overhead ->
-    Sys.getenv_opt "TERRAT_GC_MAX_SPACE_OVERHEAD"
+    getenv "TERRAT_GC_MAX_SPACE_OVERHEAD"
     >>= fun max_space_overhead ->
-    Sys.getenv_opt "TERRAT_GC_HEAP_SPACE_OVERHEAD_START_MB"
+    getenv "TERRAT_GC_HEAP_SPACE_OVERHEAD_START_MB"
     >>= fun heap_start ->
-    Sys.getenv_opt "TERRAT_GC_HEAP_SPACE_OVERHEAD_REALLY_MB"
+    getenv "TERRAT_GC_HEAP_SPACE_OVERHEAD_REALLY_MB"
     >>= fun heap_really -> Some (min_space_overhead, max_space_overhead, heap_start, heap_really)
   in
   let dynamic_gc () =
@@ -389,11 +392,11 @@ let load_gc () =
   let open CCResult.Infix in
   dynamic_gc () >>= fun dynamic_gc -> Ok { Gc.dynamic_gc }
 
-let create () =
+let of_env getenv =
   let open CCResult.Infix in
   (* Required: the UI needs it, and it is the console base of a repository
      whose brand is [Terrateam]. *)
-  env_str "TERRAT_UI_BASE"
+  env_str ~getenv "TERRAT_UI_BASE"
   >>= fun _ ->
   (* Validated here so a typo fails boot; the value itself is read by
      [Terrat_brand.fallback] for a repository that has no brand of its own. *)
@@ -401,72 +404,68 @@ let create () =
   >>= fun _ ->
   of_opt
     (`Key_error "TERRAT_PORT")
-    (CCInt.of_string (CCOption.get_or ~default:"8080" (Sys.getenv_opt "TERRAT_PORT")))
+    (CCInt.of_string (CCOption.get_or ~default:"8080" (getenv "TERRAT_PORT")))
   >>= fun port ->
-  env_str "DB_HOST"
+  env_str ~getenv "DB_HOST"
   >>= fun db_host ->
   of_opt
     (`Key_error "DB_PORT")
-    (CCInt.of_string (CCOption.get_or ~default:"5432" (Sys.getenv_opt "DB_PORT")))
+    (CCInt.of_string (CCOption.get_or ~default:"5432" (getenv "DB_PORT")))
   >>= fun db_port ->
-  let db_idle_tx_timeout = CCOption.get_or ~default:"180s" (Sys.getenv_opt "DB_IDLE_TX_TIMEOUT") in
-  let db_lock_timeout = CCOption.get_or ~default:"120s" (Sys.getenv_opt "DB_LOCK_TIMEOUT") in
-  env_str "DB_USER"
+  let db_idle_tx_timeout = CCOption.get_or ~default:"180s" (getenv "DB_IDLE_TX_TIMEOUT") in
+  let db_lock_timeout = CCOption.get_or ~default:"120s" (getenv "DB_LOCK_TIMEOUT") in
+  env_str ~getenv "DB_USER"
   >>= fun db_user ->
-  env_str "DB_PASS"
+  env_str ~getenv "DB_PASS"
   >>= fun db_password ->
-  env_str "DB_NAME"
+  env_str ~getenv "DB_NAME"
   >>= fun db ->
   of_opt
     (`Key_error "DB_CONNECT_TIMEOUT")
-    (CCFloat.of_string_opt (CCOption.get_or ~default:"120" (Sys.getenv_opt "DB_CONNECT_TIMEOUT")))
+    (CCFloat.of_string_opt (CCOption.get_or ~default:"120" (getenv "DB_CONNECT_TIMEOUT")))
   >>= fun db_connect_timeout ->
   of_opt
     (`Key_error "DB_MAX_POOL_SIZE")
-    (CCInt.of_string (CCOption.get_or ~default:"100" (Sys.getenv_opt "DB_MAX_POOL_SIZE")))
+    (CCInt.of_string (CCOption.get_or ~default:"100" (getenv "DB_MAX_POOL_SIZE")))
   >>= fun db_max_pool_size ->
-  env_str "TERRAT_API_BASE"
+  env_str ~getenv "TERRAT_API_BASE"
   >>= fun api_base ->
-  env_str "TERRAT_PYTHON_EXEC"
+  env_str ~getenv "TERRAT_PYTHON_EXEC"
   >>= fun python_exec ->
   of_opt
     (`Key_error "TERRAT_EVENT_EVALUATOR_SLOTS")
-    (CCInt.of_string
-       (CCOption.get_or ~default:"20" (Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_SLOTS")))
+    (CCInt.of_string (CCOption.get_or ~default:"20" (getenv "TERRAT_EVENT_EVALUATOR_SLOTS")))
   >>= fun event_evaluator_slots ->
-  infracost ()
+  infracost ~getenv
   >>= fun infracost ->
-  let nginx_status_uri = CCOption.map Uri.of_string (Sys.getenv_opt "NGINX_STATUS_URI") in
-  let admin_token = Sys.getenv_opt "TERRAT_ADMIN_TOKEN" in
+  let nginx_status_uri = CCOption.map Uri.of_string (getenv "NGINX_STATUS_URI") in
+  let admin_token = getenv "TERRAT_ADMIN_TOKEN" in
   let telemetry_uri =
-    CCOption.map_or
-      ~default:default_telemetry_uri
-      Uri.of_string
-      (Sys.getenv_opt "TERRAT_TELEMETRY_URI")
+    CCOption.map_or ~default:default_telemetry_uri Uri.of_string (getenv "TERRAT_TELEMETRY_URI")
   in
   of_opt
     (`Key_error "TERRAT_TELEMETRY_LEVEL")
-    (match CCOption.get_or ~default:"anonymous" (Sys.getenv_opt "TERRAT_TELEMETRY_LEVEL") with
+    (match CCOption.get_or ~default:"anonymous" (getenv "TERRAT_TELEMETRY_LEVEL") with
     | "anonymous" -> Some (Telemetry.Anonymous telemetry_uri)
     | "disabled" -> Some Telemetry.Disabled
     | _ -> None)
   >>= fun telemetry ->
   let terrateam_web_base_url =
-    CCOption.get_or ~default:default_terrateam_web_base_url (base_url_of_env "TERRAT_WEB_BASE_URL")
+    CCOption.get_or
+      ~default:default_terrateam_web_base_url
+      (base_url_of_env ~getenv "TERRAT_WEB_BASE_URL")
   in
-  let stategraph_ui_base = base_url_of_env "STATEGRAPH_UI_BASE" in
-  let terrateam_ui_base = base_url_of_env "TERRAT_UI_BASE" in
-  let statement_timeout =
-    CCOption.get_or ~default:"5s" (Sys.getenv_opt "TERRAT_STATEMENT_TIMEOUT")
-  in
-  load_session_cookie_name ()
+  let stategraph_ui_base = base_url_of_env ~getenv "STATEGRAPH_UI_BASE" in
+  let terrateam_ui_base = base_url_of_env ~getenv "TERRAT_UI_BASE" in
+  let statement_timeout = CCOption.get_or ~default:"5s" (getenv "TERRAT_STATEMENT_TIMEOUT") in
+  load_session_cookie_name ~getenv
   >>= fun session_cookie_name ->
-  load_github ()
+  load_github ~getenv
   >>= fun github ->
-  load_gitlab ()
+  load_gitlab ~getenv
   >>= fun gitlab ->
-  let default_tier = CCOption.get_or ~default:"unlimited" @@ Sys.getenv_opt "TERRAT_DEFAULT_TIER" in
-  load_gc ()
+  let default_tier = CCOption.get_or ~default:"unlimited" @@ getenv "TERRAT_DEFAULT_TIER" in
+  load_gc ~getenv
   >>= fun gc ->
   Ok
     {
@@ -498,6 +497,7 @@ let create () =
       terrateam_web_base_url;
     }
 
+let create () = of_env Sys.getenv_opt
 let admin_token t = t.admin_token
 let api_base t = t.api_base
 let db t = t.db

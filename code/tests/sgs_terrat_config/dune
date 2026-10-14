@@ -1,0 +1,12 @@
+(test
+ (name test)
+ (libraries
+  containers
+  mirage-crypto-pk
+  mirage-crypto-rng.unix
+  oth
+  sgs_terrat_config
+  terrat_brand
+  terrat_config
+  uri
+  x509))

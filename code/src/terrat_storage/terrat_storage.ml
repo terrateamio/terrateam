@@ -85,7 +85,7 @@ let create_pool ?tls_config ?settings ~host ~user ~passwd ~port config db =
          (Terrat_config.db_lock_timeout config))
     db
 
-let create config =
+let try_create config =
   let open Abb.Future.Infix_monad in
   create_pool
     ~tls_config:(`Prefer (tls_config ()))
@@ -101,7 +101,14 @@ let create config =
         db
         Pgsql_io.Typed_sql.(sql /^ "create extension if not exists pgcrypto"))
   >>= function
-  | Ok () -> Abb.Future.return storage
+  | Ok () -> Abb.Future.return (Ok storage)
+  | Error _ as err -> Pgsql_pool.destroy storage >>| fun () -> err
+
+let create config =
+  let open Abb.Future.Infix_monad in
+  try_create config
+  >>= function
+  | Ok storage -> Abb.Future.return storage
   | Error (#Pgsql_io.err as err) ->
       Logs.err (fun m -> m "%a" Pgsql_io.pp_err err);
       raise (Failure "could not create storage")

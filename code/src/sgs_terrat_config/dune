@@ -1,0 +1,3 @@
+(library
+ (name sgs_terrat_config)
+ (libraries containers terrat_config))

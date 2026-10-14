@@ -99,6 +99,12 @@ val admin_token : t -> string option
 val api_base : t -> string
 val create : unit -> (t, [> err ]) result
 
+(** [of_env getenv] is [create ()] with each environment variable read through [getenv] instead of
+    the process environment, for example [of_env Sys.getenv_opt] is [create ()]. A process whose
+    environment names its variables differently gives the configuration its own view of them.
+    TERRAT_BRAND is the exception: it is always read from the process environment. *)
+val of_env : (string -> string option) -> (t, [> err ]) result
+
 (** The GitHub App a row of the orchestration database describes. The GitHub hosts, the call timeout
     and the workflow overrides come from the environment, as for the App of the environment. *)
 val github_of_stored :
