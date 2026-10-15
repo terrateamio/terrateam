@@ -189,6 +189,39 @@ let rec exit_when_changed ?(waited = 0.0) ~loaded storage =
       Logs.err (fun m -> m "GITHUB_APP : POLL : %a" pp_err err);
       exit_when_changed ~waited:(waited +. slept) ~loaded storage
 
+(* A process running the environment's App ignores the row entirely, so it does not watch it. Every
+   other case watches: the process exits when the stored App is no longer the one it runs, and the
+   supervisor starts it again on the new one. *)
+let resolve config storage =
+  let open Abb.Future.Infix_monad in
+  let watch ~loaded config =
+    Abb.Future.return (Ok (config, Some (fun () -> exit_when_changed ~loaded storage)))
+  in
+  match Terrat_config.github config with
+  | Some _ -> Abb.Future.return (Ok (config, None))
+  | None -> (
+      load storage
+      >>= function
+      | Ok (App (github, token)) ->
+          Logs.info (fun m ->
+              m "GITHUB_APP : LOADED : app_id=%s" (Terrat_config.Github.app_id github));
+          mark_loaded ~token storage
+          >>= fun marked ->
+          (match marked with
+          | Ok () -> ()
+          | Error err -> Logs.err (fun m -> m "GITHUB_APP : MARK_LOADED : %a" pp_err err));
+          watch ~loaded:(Some token) (Terrat_config.with_github config github)
+      | Ok No_app ->
+          Logs.info (fun m -> m "GITHUB_APP : WAITING");
+          watch ~loaded:None config
+      (* A row the process cannot run, such as a key that does not decode. It serves no GitHub and
+         watches that row, so a correction heals the deployment without an operator and nothing
+         restarts until one comes. *)
+      | Ok (Unusable (token, err)) ->
+          Logs.err (fun m -> m "GITHUB_APP : UNUSABLE : %a" pp_err err);
+          watch ~loaded:(Some token) config
+      | Error _ as err -> Abb.Future.return err)
+
 module Tests = struct
   let token ~app_id digest = { app_id; digest }
 end

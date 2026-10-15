@@ -23,3 +23,9 @@ type err =
 [@@deriving show]
 
 val run : Sgs_config.t -> Pgsql_pool.t -> (unit, [> err ]) result Abb.Future.t
+
+(** [statements sql] is the statements of [sql], each of which ends with [";\n"]. A comment line
+    stays with the statement that follows it:
+
+    {v   "-- a\ngrant x;\ngrant y;\n"  ->  [ "-- a\ngrant x"; "grant y" ] v} *)
+val statements : string -> string list

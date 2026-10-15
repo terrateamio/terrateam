@@ -21,13 +21,19 @@ type starter = {
   run : unit -> (Sgs_service.started, Sgs_service.start_err) result Abb.Future.t;
 }
 
+type state =
+  | Waiting
+  | All_started
+  | Fatal of string
+
 module Req = struct
   type 'resp t =
     | Register : starter -> unit t
     | Registered : int * Sgs_service.started -> unit t
+    | Failed : string -> unit t
     | Add : Sgs_service.started -> unit t
     | Get : 'a Sgs_service.ty -> 'a option t
-    | Pending : int t
+    | State : state t
     | Routes : (Sgs_service.started -> Sgs_service.route list) -> Sgs_service.route list t
     | Stop : unit t
 end
@@ -37,11 +43,13 @@ module Typed = Service.Make_typed (Req)
 module Svc = struct
   (* Starts run on tasks of their own and so finish in no fixed order; [next_id] numbers the
      services in registration order, so routes can be collected in that order. [pending] counts
-     the services that registered but have not reported a start yet. *)
+     the services that registered but have not reported a start yet. [fatal] is the first fatal
+     refusal. *)
   type t = {
     next_id : int;
     pending : int;
     services : (int * Sgs_service.started) list;
+    fatal : string option;
   }
 
   (* One attempt, then one second between tries, until the service starts or the manager is
@@ -55,9 +63,14 @@ module Svc = struct
         >>= Abbs_fc.when_err (fun `Chan_closed ->
             (* The manager is gone, so the service must not outlive it. *)
             Sgs_service.stop started)
-    | Error (#Sgs_service.start_err as err) ->
-        (* Any refusal, missing dependencies included, is logged and retried: the next attempt runs
-           one second later. *)
+    | Error (`Start_fatal_err msg) ->
+        (* A fatal refusal is not retried: the manager reports it to the waiters of [started]. *)
+        let msg = Printf.sprintf "Service %s cannot start : %s" starter.name msg in
+        Logs.err (fun m -> m "%s" msg);
+        Typed.call svc (Req.Failed msg) >>= fun _ -> Abb.Future.return ()
+    | Error ((`Start_err _ | `Start_missing_deps_err _) as err) ->
+        (* Any other refusal, missing dependencies included, is logged and retried: the next attempt
+           runs one second later. *)
         Logs.err (fun m ->
             m "Service %s failed to start : %a" starter.name Sgs_service.pp_start_err err);
         Abb.Sys.sleep 1.0 >>= fun () -> start_service svc id starter
@@ -91,19 +104,30 @@ module Svc = struct
         >>= fun () ->
         Abb.Future.return
           (`Continue { t with pending = t.pending - 1; services = (id, started) :: t.services })
+    | Req.Failed msg ->
+        Service.respond req (fun () -> Abb.Future.return ())
+        >>= fun () ->
+        Abb.Future.return
+          (`Continue
+             { t with pending = t.pending - 1; fatal = CCOption.or_ ~else_:(Some msg) t.fatal })
     | Req.Add started ->
         let id = t.next_id in
         Service.respond req (fun () -> Abb.Future.return ())
         >>= fun () ->
         Abb.Future.return
-          (`Continue
-             { next_id = id + 1; pending = t.pending; services = (id, started) :: t.services })
+          (`Continue { t with next_id = id + 1; services = (id, started) :: t.services })
     | Req.Get q ->
         let found = find_service q t.services in
         Service.respond req (fun () -> Abb.Future.return found)
         >>= fun () -> Abb.Future.return (`Continue t)
-    | Req.Pending ->
-        Service.respond req (fun () -> Abb.Future.return t.pending)
+    | Req.State ->
+        let state =
+          match (t.fatal, t.pending) with
+          | Some msg, _ -> Fatal msg
+          | None, 0 -> All_started
+          | None, _ -> Waiting
+        in
+        Service.respond req (fun () -> Abb.Future.return state)
         >>= fun () -> Abb.Future.return (`Continue t)
     | Req.Routes collect ->
         (* Routes come in registration order: the router matches in order, and start completion
@@ -133,7 +157,7 @@ module Svc = struct
         | `Stop -> Abb.Future.return ())
     | Error `Chan_closed -> Abb.Future.return ()
 
-  let run svc = loop { next_id = 0; pending = 0; services = [] } svc
+  let run svc = loop { next_id = 0; pending = 0; services = []; fatal = None } svc
 end
 
 type t = Typed.svc
@@ -187,14 +211,15 @@ let load ~name ty mgr =
 
 let register' t services = Abbs_fc.List_result.iter ~f:(fun service -> register t service) services
 
-(* Every caller runs its own poll of the manager's pending count, so any number of callers can
-   wait at the same time and each gets its own future. A register whose start has not finished
-   yet keeps the count positive; a service whose start never succeeds keeps the future
-   undetermined. A closed manager has nothing left to wait for. *)
+(* Every caller runs its own poll of the manager's state, so any number of callers can wait at the
+   same time and each gets its own future. A register whose start has not finished yet keeps the
+   manager waiting; a service whose start never succeeds keeps the future undetermined. A closed
+   manager has nothing left to wait for. *)
 let rec started t =
   let open Abb.Future.Infix_monad in
-  Typed.call t Req.Pending
+  Typed.call t Req.State
   >>= function
-  | Ok 0 -> Abb.Future.return ()
-  | Ok _ -> Abb.Sys.sleep 0.1 >>= fun () -> started t
-  | Error `Chan_closed -> Abb.Future.return ()
+  | Ok All_started -> Abbs_fc.return_ok ()
+  | Ok (Fatal msg) -> Abbs_fc.return_err (`Start_fatal_err msg)
+  | Ok Waiting -> Abb.Sys.sleep 0.1 >>= fun () -> started t
+  | Error `Chan_closed -> Abbs_fc.return_ok ()

@@ -1,5 +1,5 @@
 (** The GitHub App stored in the orchestration database: one row, written by the console through the
-    admin FDW channel. The environment wins over it, see [Terrat_cli]. *)
+    admin FDW channel. The environment wins over it, see {!resolve}. *)
 
 type err =
   [ Pgsql_pool.err
@@ -48,3 +48,13 @@ end
     waiting, then once a minute, with jitter so replicas do not all exit together. Never returns. *)
 val exit_when_changed :
   ?waited:float -> loaded:token option -> Terrat_storage.t -> unit Abb.Future.t
+
+(** The configuration with the GitHub App the process runs, and the watcher to fork once it runs it.
+    The App of the configuration wins, and the process then ignores the row: there is no watcher.
+    Otherwise the stored App is used and marked loaded; a row that cannot be used, or no row, leaves
+    the configuration without GitHub. The watcher is {!exit_when_changed} on what was loaded. A
+    database error says nothing about the row, so it is an error rather than a guess. *)
+val resolve :
+  Terrat_config.t ->
+  Terrat_storage.t ->
+  (Terrat_config.t * (unit -> unit Abb.Future.t) option, [> err ]) result Abb.Future.t

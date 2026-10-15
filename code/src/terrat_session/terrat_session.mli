@@ -1,4 +1,15 @@
-(** The session middleware. [cookie_name] names the browser session cookie. *)
+type err =
+  [ `No_encryption_keys_err
+  | Pgsql_pool.err
+  | Pgsql_io.err
+  ]
+
+(** The session middleware. [cookie_name] names the browser session cookie. It needs the keys of the
+    [encryption_keys] table, which the migrations create. *)
+val try_create :
+  cookie_name:string -> Terrat_storage.t -> (Brtl_mw.Mw.t, [> err ]) result Abb.Future.t
+
+(** [try_create], which fails an assertion where [try_create] returns an error. *)
 val create : cookie_name:string -> Terrat_storage.t -> Brtl_mw.Mw.t Abb.Future.t
 
 val create_user_session : Terrat_user.t -> ('a, 'b) Brtl_ctx.t -> ('a, 'b) Brtl_ctx.t

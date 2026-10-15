@@ -18,8 +18,8 @@ module Make (Cloud : Sgs_cloud.S) = struct
 
   let name = name
 
-  (* A config that fails to load refuses the start, and the manager retries it forever: the logs
-     repeat the failure until the operator fixes the environment. *)
+  (* A config that fails to load refuses the start for good: the config comes from the environment,
+     which no retry changes, and every other service needs it. *)
   let start _ =
     let github_app_managed =
       match Cloud.github_app () with
@@ -28,7 +28,8 @@ module Make (Cloud : Sgs_cloud.S) = struct
     in
     match Sgs_config.create ~github_app_managed () with
     | Ok config -> Abbs_fc.return_ok config
-    | Error (#Sgs_config.err as err) -> Abbs_fc.return_err (`Start_err (Sgs_config.show_err err))
+    | Error (#Sgs_config.err as err) ->
+        Abbs_fc.return_err (`Start_fatal_err (Sgs_config.show_err err))
 
   let routes _ = []
   let stop _ = Abb.Future.return ()
