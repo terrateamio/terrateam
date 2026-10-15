@@ -44,7 +44,7 @@ module Sql = struct
       /% Var.uuid "user_id")
 
   let delete_expired_login_sessions () =
-    Pgsql_io.Typed_sql.(sql // Ret.uuid /^ [%blob "./sql/delete_expired_login_sessions.sql"])
+    Pgsql_io.Typed_sql.(sql // Ret.bigint /^ [%blob "./sql/delete_expired_login_sessions.sql"])
 
   let select_access_token () =
     Pgsql_io.Typed_sql.(
@@ -241,5 +241,5 @@ let delete_any ~token_id db =
 
 let gc_expired_login_sessions db =
   let open Abbs_fc.Infix_result_monad in
-  Pgsql_io.Prepared_stmt.fetch db (Sql.delete_expired_login_sessions ()) ~f:CCFun.id
-  >>| CCList.length
+  Pgsql_io.Prepared_stmt.fetch db (Sql.delete_expired_login_sessions ()) ~f:Int64.to_int
+  >>| fun count -> count |> CCList.head_opt |> CCOption.get_or ~default:0
