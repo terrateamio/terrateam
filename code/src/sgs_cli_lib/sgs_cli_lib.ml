@@ -107,46 +107,40 @@ module Cmdline = struct
   let default_cmd = C.Term.(ret (const (`Help (`Pager, None))))
 end
 
-(* Runs the server with the build's services. Stopping the manager at the end stops those
-     services too. The storage service is registered with the build's services, the config service
-     among them, so every service loads both like any other dependency; the boot loads the values
-     itself for the listener. *)
+(* Runs the server with the build's services. The storage service is registered with the build's
+   services, the config service among them, so every service loads both like any other dependency;
+   the boot loads the values itself for the listener. *)
 let run_server ~services mgr =
-  let open Abb.Future.Infix_monad in
-  Sgs_svc_mngr.register' mgr ((module Sgs_service_storage) :: services)
-  >>= function
-  | Error `Register_err ->
-      Abb.Future.return (Error (`Start_err "SERVICE_MANAGER : could not register the services"))
-  | Ok () -> (
-      (* A service whose start never succeeds keeps this undetermined, so the boot waits here
-           until every service is up. *)
-      Sgs_svc_mngr.started mgr
-      >>= fun () ->
-      Abbs_fc.Result.all2
-        (Sgs_svc_mngr.load ~name:Sgs_service_config.name Sgs_service_config.Ty mgr)
-        (Sgs_svc_mngr.load ~name:Sgs_service_storage.name Sgs_service_storage.Ty mgr)
-      >>= function
-      | Ok (config, storage) -> (
-          print_endline (Sgs_config.show config);
-          Sgs_svc_mngr.routes mgr Sgs_service.routes
-          >>= function
-          | Ok routes ->
-              Abbs_fc.with_finally
-                (fun () -> Sgs_server.run ~routes config storage)
-                ~finally:(fun () -> Sgs_svc_mngr.stop mgr)
-              >>| fun () -> Ok ()
-          | Error `Routes_err ->
-              Abb.Future.return
-                (Error (`Start_err "SERVICE_MANAGER : could not collect the routes")))
-      | Error (#Sgs_service.start_err as err) -> Abb.Future.return (Error err))
+  let open Abbs_fc.Infix_result_monad in
+  Abbs_fc.Result.map_err
+    ~f:(fun `Register_err -> `Start_err "SERVICE_MANAGER : could not register the services")
+    (Sgs_svc_mngr.register' mgr ((module Sgs_service_storage) :: services))
+  >>= fun () ->
+  (* A service whose start never succeeds keeps this undetermined, so the boot waits here until
+     every service is up. *)
+  Sgs_svc_mngr.started mgr
+  >>= fun () ->
+  Abbs_fc.Result.all2
+    (Sgs_svc_mngr.load ~name:Sgs_service_config.name Sgs_service_config.Ty mgr)
+    (Sgs_svc_mngr.load ~name:Sgs_service_storage.name Sgs_service_storage.Ty mgr)
+  >>= fun (config, storage) ->
+  print_endline (Sgs_config.show config);
+  Abbs_fc.Result.map_err
+    ~f:(fun `Routes_err -> `Start_err "SERVICE_MANAGER : could not collect the routes")
+    (Sgs_svc_mngr.routes mgr Sgs_service.routes)
+  >>= fun routes -> Abb.Future.map (fun () -> Ok ()) (Sgs_server.run ~routes config storage)
 
+(* Stopping the manager stops the services it started, whether the server ran or the boot failed. *)
 let server' ~services =
   let run () =
     let open Abb.Future.Infix_monad in
     Sgs_svc_mngr.start ()
     >>= function
     | Error `Start_err -> Abbs_fc.return_err (`Start_err "Could not start the service manager")
-    | Ok mgr -> run_server ~services mgr
+    | Ok mgr ->
+        Abbs_fc.with_finally
+          (fun () -> run_server ~services mgr)
+          ~finally:(fun () -> Sgs_svc_mngr.stop mgr)
   in
   let result = Abb.Scheduler.run_with_state run in
   match result with

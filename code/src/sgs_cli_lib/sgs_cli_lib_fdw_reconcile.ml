@@ -16,10 +16,8 @@ let fdw_scope_tables_sql = [%blob "sql/fdw_scope_tables.sql"]
    password). Values come from operator env, but quote correctly anyway. *)
 let sql_literal v = "'" ^ CCString.replace ~which:`All ~sub:"'" ~by:"''" v ^ "'"
 
-(* The generator emits one statement per [;\n]; comment lines ride along with
-   the statement that follows them, which Postgres accepts. This is distinct
-   from the migration runner's [;\n\n] convention because the drop+create
-   pairs here are separated by single newlines. *)
+(* This is distinct from the migration runner's [;\n\n] convention because the
+   drop+create pairs here are separated by single newlines. *)
 let statements sql =
   sql
   |> CCString.split ~by:";\n"

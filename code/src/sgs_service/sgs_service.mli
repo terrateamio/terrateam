@@ -6,10 +6,13 @@
 (** One route-table entry: the HTTP method and the route with its handler. *)
 type route = Brtl_rtng.Method.t * Brtl_rtng.Handler.t Brtl_rtng.Route.Route.t
 
-(** Why a service refuses to start, told to the operator: the server logs it and exits. *)
+(** Why a service refuses to start, told to the operator. The manager retries [`Start_err] and
+    [`Start_missing_deps_err] every second. [`Start_fatal_err] is a refusal that a retry cannot fix:
+    the manager does not retry it, and the server logs it and exits. *)
 type start_err =
   [ `Start_err of string
   | `Start_missing_deps_err of string list
+  | `Start_fatal_err of string
   ]
 [@@deriving show]
 

@@ -1,5 +1,8 @@
 type t = Pgsql_pool.t
 
+(** The TLS mode of the pools: TLS when the server offers it, without verification. *)
+val tls_config : unit -> Otls.Tls_config.t
+
 (** The pool of the orchestration database. [create] raises [Failure] where [try_create] returns the
     error. *)
 val try_create : Terrat_config.t -> (t, [> Pgsql_io.err | Pgsql_pool.err ]) result Abb.Future.t

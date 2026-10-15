@@ -5,24 +5,6 @@
     those of {!Terrat_vcs_service.S}, unchanged: the server that serves them adds the session
     middleware. *)
 
-(** What tells one VCS from another. *)
-module type SELECT = sig
-  type vcs_config
-
-  (** The name of the service. *)
-  val name : string
-
-  (** The config of this VCS in the terrat config, [None] when the VCS is not configured. *)
-  val vcs_config : Terrat_config.t -> vcs_config option
-end
-
-(** GitHub, configured by the GitHub App of the environment only: an App that the console stored in
-    the database is not used. *)
-module Github : SELECT with type vcs_config = Terrat_config.Github.t
-
-(** GitLab. *)
-module Gitlab : SELECT with type vcs_config = Terrat_config.Gitlab.t
-
 module type S = sig
   include Sgs_service.S with type opt = Sgs_svc_mngr.t
 
@@ -33,12 +15,11 @@ module type S = sig
   val service : t -> Terrat_vcs_service.service option
 end
 
-module Make
-    (Vcs : Terrat_vcs_service.S)
-    (_ : SELECT with type vcs_config = Vcs.Service.vcs_config) : S
-
+(** GitHub, configured by the GitHub App of the environment only: an App that the console stored in
+    the database is not used. *)
 module Make_github
     (_ : Terrat_vcs_service.S with type Service.vcs_config = Terrat_config.Github.t) : S
 
+(** GitLab. *)
 module Make_gitlab
     (_ : Terrat_vcs_service.S with type Service.vcs_config = Terrat_config.Gitlab.t) : S

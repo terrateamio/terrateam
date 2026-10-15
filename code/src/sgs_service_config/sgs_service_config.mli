@@ -9,7 +9,7 @@ type 'a Sgs_service.ty += Ty : t Sgs_service.ty
 
 val name : string
 
-(** The registrable config service: its start creates the config, telling [Sgs_config.create]
-    whether the Cloud runs the GitHub App as a deployment. *)
+(** The registrable config service: its start creates the config. A config that does not load
+    refuses the start with [`Start_fatal_err]. *)
 module Make (_ : Sgs_cloud.S) :
   Sgs_service.S with type t = Sgs_config.t and type opt = Sgs_svc_mngr.t

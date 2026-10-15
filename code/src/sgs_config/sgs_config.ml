@@ -292,7 +292,11 @@ let create ?(github_app_managed = false) () =
   >>= fun ui_base ->
   env_str "DB_HOST"
   >>= fun db_host ->
-  let db_port = CCOption.map CCInt.of_string_exn @@ Sys.getenv_opt "DB_PORT" in
+  (match Sys.getenv_opt "DB_PORT" with
+    | None -> Ok None
+    | Some port ->
+        CCResult.map CCOption.return (of_opt (`Key_error "DB_PORT") (CCInt.of_string port)))
+  >>= fun db_port ->
   let db_idle_tx_timeout = CCOption.get_or ~default:"180s" (Sys.getenv_opt "DB_IDLE_TX_TIMEOUT") in
   let dwf_idle_tx_timeout =
     CCOption.get_or ~default:"600s" (Sys.getenv_opt "DWF_IDLE_TX_TIMEOUT")

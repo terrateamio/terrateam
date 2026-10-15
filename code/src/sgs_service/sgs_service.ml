@@ -3,6 +3,7 @@ type route = Brtl_rtng.Method.t * Brtl_rtng.Handler.t Brtl_rtng.Route.Route.t
 type start_err =
   [ `Start_err of string
   | `Start_missing_deps_err of string list
+  | `Start_fatal_err of string
   ]
 [@@deriving show]
 

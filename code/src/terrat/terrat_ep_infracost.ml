@@ -8,6 +8,14 @@ type backend =
   | Proxy of Terrat_config.Infracost.proxy
   | Price_book of Terrat_storage.t
 
+let create_backend config =
+  match Terrat_config.infracost config with
+  | Some (Terrat_config.Infracost.Proxy proxy) -> Abb.Future.return (Some (Proxy proxy))
+  | Some (Terrat_config.Infracost.Price_book price_book) ->
+      Terrat_storage.create_pricing config price_book
+      |> Abb.Future.map (fun pricing -> Some (Price_book pricing))
+  | None -> Abb.Future.return None
+
 module Metrics = struct
   module DefaultHistogram = Prmths.Histogram (struct
     let spec = Prmths.Histogram_spec.of_list [ 0.005; 0.5; 1.0; 5.0; 10.0; 15.0; 20.0 ]

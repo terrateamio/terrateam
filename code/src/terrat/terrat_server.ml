@@ -62,6 +62,22 @@ let maybe_add_admin_routes config storage =
         ]
   | None -> []
 
+let api_routes ~infracost config storage =
+  maybe_add_admin_routes config storage
+  @ Brtl_rtng.Route.
+      [
+        (* Ops *)
+        (`GET, Rt.health_check () --> Terrat_ep_health_check.get storage);
+        (`GET, Rt.metrics () --> Terrat_ep_metrics.get);
+        (* Tenv *)
+        (`GET, Rt.tenv_rt () --> Terrat_ep_tenv.get config storage);
+        (* Access token *)
+        (`POST, Rt.access_token_refresh_rt () --> Terrat_ep_access_token.Refresh.post config storage);
+        (* Infracost *)
+        (`POST, Rt.infracost () --> fun _ -> Terrat_ep_infracost.post infracost storage);
+      ]
+
+(* The routes do not overlap, so their order only matters for the API 404s, which come last. *)
 let rtng ~infracost config storage services =
   let routes =
     CCList.flat_map
@@ -73,28 +89,14 @@ let rtng ~infracost config storage services =
     ~default:
       (Brtl_ep.run ~content_type:"text/html" ~f:(fun ctx ->
            Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)))
-    (maybe_add_admin_routes config storage
+    (api_routes ~infracost config storage
     @ Brtl_rtng.Route.(
-        [
-          (* Ops *)
-          (`GET, Rt.health_check () --> Terrat_ep_health_check.get storage);
-          (`GET, Rt.metrics () --> Terrat_ep_metrics.get);
-          (* Tasks *)
-          (`GET, Rt.task_rt () --> Terrat_ep_tasks.get storage);
-        ]
+        [ (* Tasks *) (`GET, Rt.task_rt () --> Terrat_ep_tasks.get storage) ]
         @ routes
         @ [
-            (* Tenv *)
-            (`GET, Rt.tenv_rt () --> Terrat_ep_tenv.get config storage);
-            (* Access token *)
-            ( `POST,
-              Rt.access_token_refresh_rt () --> Terrat_ep_access_token.Refresh.post config storage
-            );
             (* User *)
             (`GET, Rt.whoami () --> Terrat_ep_whoami.get config storage services);
             (`POST, Rt.logout () --> Terrat_ep_logout.post config storage);
-            (* Infracost *)
-            (`POST, Rt.infracost () --> fun _ -> Terrat_ep_infracost.post infracost storage);
             (* Server *)
             (`GET, Rt.server_config () --> Terrat_ep_server.Config.get config);
             (* API 404s.  This is needed because for any and only UI endpoint we

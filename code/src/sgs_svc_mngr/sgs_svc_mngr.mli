@@ -27,7 +27,8 @@ val register' :
   (unit, [> register_err ]) result Abb.Future.t
 
 (** Register a service with the manager. The service is started inside of the service manager. If
-    the service fails to start, it is retried forever with a wait of 1 second between tries.
+    the service fails to start, it is retried forever with a wait of 1 second between tries, unless
+    it refuses with [`Start_fatal_err].
 
     A service should use {!Sgs_svc_mngr.get} to load any other service dependencies on startup and
     fail with [`Start_missing_deps_err] if the required services cannot be found. The service
@@ -44,9 +45,11 @@ val register :
 val add : t -> Sgs_service.started -> (unit, [> register_err ]) result Abb.Future.t
 
 (** Wait until every service registered with the manager has started. A service whose start never
-    succeeds keeps this future undetermined. A service registered while this waits is included in
-    the wait. Any number of callers can wait at the same time; each gets its own future. *)
-val started : t -> unit Abb.Future.t
+    succeeds keeps this future undetermined, and the first service that refuses with
+    [`Start_fatal_err] ends the wait with that error. A service registered while this waits is
+    included in the wait. Any number of callers can wait at the same time; each gets its own future.
+*)
+val started : t -> (unit, [> `Start_fatal_err of string ]) result Abb.Future.t
 
 (** Return a matching service if it exists, otherwise [`Service_not_found_err] if not found. *)
 val get : t -> 'a Sgs_service.ty -> ('a, [> get_err ]) result Abb.Future.t

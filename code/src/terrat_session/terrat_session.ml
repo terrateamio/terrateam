@@ -154,13 +154,19 @@ module Sql = struct
       /^ "select encode(data, 'hex') from encryption_keys order by rank")
 end
 
-let create ~cookie_name storage =
+type err =
+  [ `No_encryption_keys_err
+  | Pgsql_pool.err
+  | Pgsql_io.err
+  ]
+
+let try_create ~cookie_name storage =
   let open Abb.Future.Infix_monad in
   Pgsql_pool.with_conn storage ~f:(fun db ->
       Pgsql_io.Prepared_stmt.fetch db (Sql.select_encryption_keys ()) ~f:CCFun.id)
-  >>= function
-  | Ok [] -> assert false
-  | Error _ -> assert false
+  >>| function
+  | Ok [] -> Error `No_encryption_keys_err
+  | Error _ as err -> err
   | Ok keys ->
       let config =
         {
@@ -184,7 +190,14 @@ let create ~cookie_name storage =
               };
         }
       in
-      Abb.Future.return @@ Brtl_mw_session.create config
+      Ok (Brtl_mw_session.create config)
+
+let create ~cookie_name storage =
+  let open Abb.Future.Infix_monad in
+  try_create ~cookie_name storage
+  >>= function
+  | Ok mw -> Abb.Future.return mw
+  | Error _ -> assert false
 
 let get_session ctx = Brtl_mw_session.get_session_value key ctx
 

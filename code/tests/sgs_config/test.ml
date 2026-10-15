@@ -14,6 +14,7 @@ let set_env () =
     [
       ("STATEGRAPH_UI_BASE", "https://example.com");
       ("DB_HOST", "localhost");
+      ("DB_PORT", "5432");
       ("DB_USER", "sg");
       ("DB_PASS", "hunter2-should-not-print");
       ("DB_NAME", "sg");
@@ -66,6 +67,13 @@ let test =
           match Sgs_config.create () with
           | Error (`Key_error "STATEGRAPH_FDW_PASSWORD") -> ()
           | Ok _ -> Oth.Assert.false_ "config loaded without the FDW password"
+          | Error err -> Oth.Assert.false_ (Sgs_config.show_err err));
+      Oth.test ~name:"a DB_PORT that is not an integer is a config error" (fun _ ->
+          set_env ();
+          Unix.putenv "DB_PORT" "not-a-port";
+          match Sgs_config.create () with
+          | Error (`Key_error "DB_PORT") -> ()
+          | Ok _ -> Oth.Assert.false_ "config loaded with an invalid DB_PORT"
           | Error err -> Oth.Assert.false_ (Sgs_config.show_err err));
       Oth.test ~name:"startup config print masks the Google service account key" (fun _ ->
           set_env ();
