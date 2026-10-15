@@ -92,6 +92,13 @@ module Make (Cloud : Sgs_cloud.S) = struct
       Sgs_service_auth_login_session_gc.run
     |> Abb.Future.map (fun () -> Ok ())
     >>= fun () ->
+    Sgs_service_scheduler.register_scheduled_kind
+      scheduler
+      ~kind:(Sgs_service_scheduler.Id.of_string Sgs_service_auth_oauth2_session_gc.kind)
+      Sgs_service_scheduler.Schedule.Hourly
+      Sgs_service_auth_oauth2_session_gc.run
+    |> Abb.Future.map (fun () -> Ok ())
+    >>= fun () ->
     (* A failure to spawn oauth2-proxy does not stop the server: it serves without OAuth, as
        logged. *)
     Sgs_service_auth_oauth2_proxy.spawn config
