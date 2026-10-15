@@ -1,0 +1,23 @@
+(library
+ (name sgs_service_scheduler)
+ (libraries
+  abb
+  abbs
+  containers
+  dist_scheduler
+  duration
+  logs
+  pgsql_io
+  pgsql_pool
+  sgs_config
+  sgs_service
+  sgs_service_config
+  sgs_service_storage
+  sgs_storage
+  sgs_svc_mngr
+  uuidm
+  yojson)
+ (preprocessor_deps
+  (glob_files_rec sql/*))
+ (preprocess
+  (pps ppx_blob ppx_deriving.show)))

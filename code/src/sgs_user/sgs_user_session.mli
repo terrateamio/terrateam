@@ -62,8 +62,7 @@ module Session : sig
   (** Create a browser sign-in session: persists an [access_tokens] row of kind ['login'] carrying
       the capability snapshot and a 24 hour expiration, and returns a session whose token references
       that row. Deleting the row revokes the session — capability changes do exactly that
-      ({!Sgs_user.revoke_login_sessions}), forcing a fresh sign-in. Also sweeps already-expired
-      login rows. *)
+      ({!Sgs_user.revoke_login_sessions}), forcing a fresh sign-in. *)
   val create_login :
     ?metadata:Metadata.t ->
     capabilities:Sg_caps.t ->

@@ -14,4 +14,5 @@ let () =
         (module Tenants);
         (module Sgs_service_orchestration);
         (module Auth);
+        (module Sgs_service_scheduler);
       ]

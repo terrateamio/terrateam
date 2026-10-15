@@ -295,12 +295,9 @@ module Session = struct
   (* A browser sign-in is a DB-backed credential: an [access_tokens] row of kind ['login'] holding
      the capability snapshot, referenced by the minted JWT.  The row's expiration bounds the
      session, and deleting the row revokes it -- which is exactly what capability changes do
-     ([Sgs_user.revoke_login_sessions]) to force a fresh sign-in.  Expired rows are swept here,
-     on sign-in, rather than by a background job. *)
+     ([Sgs_user.revoke_login_sessions]) to force a fresh sign-in. *)
   let create_login ?metadata ~capabilities user db =
     let open Abbs_fc.Infix_result_monad in
-    Sgs_user_access_token.gc_expired_login_sessions db
-    >>= fun () ->
     Sgs_user_access_token.store
       ~kind:`Login
       ~expiration:login_session_duration
