@@ -58,7 +58,7 @@ val list_all :
 
 val delete_any : token_id:Uuidm.t -> Pgsql_io.t -> (unit, [> delete_err ]) result Abb.Future.t
 
-(** Delete every [`Login] row whose expiration has passed. An expired row no longer authorizes
-    anything ({!query} refuses it), so this is purely garbage collection; it is run
-    opportunistically on sign-in rather than by a background job. *)
-val gc_expired_login_sessions : Pgsql_io.t -> (unit, [> Pgsql_io.err ]) result Abb.Future.t
+(** Delete every [`Login] row whose expiration has passed, and return how many rows were deleted. An
+    expired row no longer authorizes anything ({!query} refuses it), so this is purely garbage
+    collection. *)
+val gc_expired_login_sessions : Pgsql_io.t -> (int, [> Pgsql_io.err ]) result Abb.Future.t

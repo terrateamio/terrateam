@@ -1,0 +1,5 @@
+(library
+ (name dist_scheduler)
+ (libraries abb abbs)
+ (preprocess
+  (pps ppx_deriving.show)))
