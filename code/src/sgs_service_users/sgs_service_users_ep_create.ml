@@ -5,13 +5,15 @@ module Fc = Abbs_fc
 module Common = Sgs_service_users_common
 
 module Sql = struct
+  let insert_user_with_password_sql = Mql_sql.read [%blob "./sql/insert_user_with_password.sql"]
+
   let insert_user_with_password () =
     Pgsql_io.Typed_sql.(
       sql
       //
       (* id *)
       Ret.uuid
-      /^ [%blob "./sql/insert_user_with_password.sql"]
+      /^ insert_user_with_password_sql
       /% Var.(text "name")
       /% Var.(option (text "email"))
       /% Var.(text "type")

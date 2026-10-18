@@ -51,24 +51,32 @@ let caps_ret =
         | Ok wire -> CCResult.to_opt (Sg_caps_json.of_wire wire)))
 
 module Sql = struct
+  let insert_user_sql = Mql_sql.read [%blob "./sql/insert_user.sql"]
+
   let insert_user () =
     Pgsql_io.Typed_sql.(
       sql
       //
       (* id *)
       Ret.uuid
-      /^ [%blob "./sql/insert_user.sql"]
+      /^ insert_user_sql
       /% Var.(option (text "email"))
       /% Var.(text "name")
       /% Var.(ud (text "type") Type_.to_string)
       /% Var.(option (text "password_hash"))
       /% Var.json "capability_trie")
 
+  let select_default_user_caps_sql = Mql_sql.read [%blob "./sql/select_default_user_caps.sql"]
+
   let select_default_user_caps () =
-    Pgsql_io.Typed_sql.(sql // Ret.jsonb /^ [%blob "./sql/select_default_user_caps.sql"])
+    Pgsql_io.Typed_sql.(sql // Ret.jsonb /^ select_default_user_caps_sql)
+
+  let upsert_default_user_caps_sql = Mql_sql.read [%blob "./sql/upsert_default_user_caps.sql"]
 
   let upsert_default_user_caps () =
-    Pgsql_io.Typed_sql.(sql /^ [%blob "./sql/upsert_default_user_caps.sql"] /% Var.json "value")
+    Pgsql_io.Typed_sql.(sql /^ upsert_default_user_caps_sql /% Var.json "value")
+
+  let select_user_by_user_id_sql = Mql_sql.read [%blob "./sql/select_user_by_user_id.sql"]
 
   let select_user_by_user_id () =
     Pgsql_io.Typed_sql.(
@@ -94,8 +102,11 @@ module Sql = struct
       //
       (* capability_trie *)
       caps_ret
-      /^ [%blob "./sql/select_user_by_user_id.sql"]
+      /^ select_user_by_user_id_sql
       /% Var.uuid "user_id")
+
+  let select_user_capabilities_for_update_sql =
+    Mql_sql.read [%blob "./sql/select_user_capabilities_for_update.sql"]
 
   let select_user_capabilities_for_update () =
     Pgsql_io.Typed_sql.(
@@ -106,7 +117,7 @@ module Sql = struct
       //
       (* base_capability_trie *)
       caps_ret
-      /^ [%blob "./sql/select_user_capabilities_for_update.sql"]
+      /^ select_user_capabilities_for_update_sql
       /% Var.uuid "user_id")
 
   let fetch_select_user_capabilities_for_update db user =
@@ -116,13 +127,15 @@ module Sql = struct
       ~f:(fun capabilities base_capabilities -> (capabilities, base_capabilities))
       user
 
+  let update_user_capabilities_sql = Mql_sql.read [%blob "./sql/update_user_capabilities.sql"]
+
   let update_user_capabilities () =
     Pgsql_io.Typed_sql.(
       sql
       //
       (* id *)
       Ret.uuid
-      /^ [%blob "./sql/update_user_capabilities.sql"]
+      /^ update_user_capabilities_sql
       /% Var.json "capability_trie"
       /% Var.json "base_capability_trie"
       /% Var.uuid "user_id")
@@ -136,12 +149,13 @@ module Sql = struct
       (Sg_caps_json.to_json base)
       user
 
+  let delete_user_login_sessions_sql = Mql_sql.read [%blob "./sql/delete_user_login_sessions.sql"]
+
   let delete_user_login_sessions () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ [%blob "./sql/delete_user_login_sessions.sql"]
-      /% Var.uuid "user_id"
-      /% Var.(option (uuid "except")))
+      sql /^ delete_user_login_sessions_sql /% Var.uuid "user_id" /% Var.(option (uuid "except")))
+
+  let select_base_capabilities_sql = Mql_sql.read [%blob "./sql/select_base_capabilities.sql"]
 
   let select_base_capabilities () =
     Pgsql_io.Typed_sql.(
@@ -149,15 +163,16 @@ module Sql = struct
       //
       (* base_capability_trie *)
       caps_ret
-      /^ [%blob "./sql/select_base_capabilities.sql"]
+      /^ select_base_capabilities_sql
       /% Var.uuid "user_id")
+
+  let set_capabilities_sql = Mql_sql.read [%blob "./sql/set_capabilities.sql"]
 
   let set_capabilities () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ [%blob "./sql/set_capabilities.sql"]
-      /% Var.json "capability_trie"
-      /% Var.uuid "user_id")
+      sql /^ set_capabilities_sql /% Var.json "capability_trie" /% Var.uuid "user_id")
+
+  let select_user_capabilities_sql = Mql_sql.read [%blob "./sql/select_user_capabilities.sql"]
 
   (* One query, two questions: with no [user_id] it hands back every active human user's
      capabilities, with one it hands back that user's.  A row that does not decode into a
@@ -169,15 +184,17 @@ module Sql = struct
       //
       (* capability_trie *)
       caps_ret
-      /^ [%blob "./sql/select_user_capabilities.sql"]
+      /^ select_user_capabilities_sql
       /% Var.(option (uuid "user_id")))
 
+  let lock_instance_admins_sql = Mql_sql.read [%blob "./sql/lock_instance_admins.sql"]
+
   (* Answers one boolean row that means nothing; see ./sql/lock_instance_admins.sql. *)
-  let lock_instance_admins () =
-    Pgsql_io.Typed_sql.(sql // Ret.boolean /^ [%blob "./sql/lock_instance_admins.sql"])
+  let lock_instance_admins () = Pgsql_io.Typed_sql.(sql // Ret.boolean /^ lock_instance_admins_sql)
+  let select_has_human_users_sql = Mql_sql.read [%blob "./sql/select_has_human_users.sql"]
 
   let select_has_human_users () =
-    Pgsql_io.Typed_sql.(sql // Ret.boolean /^ [%blob "./sql/select_has_human_users.sql"])
+    Pgsql_io.Typed_sql.(sql // Ret.boolean /^ select_has_human_users_sql)
 end
 
 let make ~id () = { id; v = () }

@@ -7,7 +7,8 @@ type row = {
 [@@deriving show, eq]
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let select_output_baseline_sql = Mql_sql.read [%blob "sql/select_output_baseline.sql"]
+  let select_output_current_sql = Mql_sql.read [%blob "sql/select_output_current.sql"]
 
   let select stmt =
     Pgsql_io.Typed_sql.(
@@ -18,14 +19,14 @@ module Sql = struct
       //
       (* outputs *)
       Ret.(option json)
-      /^ read stmt
+      /^ stmt
       /% Var.uuid "repo"
       /% Var.uuid "pull_request"
       /% Var.text "dir"
       /% Var.text "workspace")
 
-  let select_output_baseline () = select [%blob "sql/select_output_baseline.sql"]
-  let select_output_current () = select [%blob "sql/select_output_current.sql"]
+  let select_output_baseline () = select select_output_baseline_sql
+  let select_output_current () = select select_output_current_sql
 end
 
 let fetch stmt db ~repo ~pull_request ~dirspace:{ Terrat_dirspace.dir; workspace } =

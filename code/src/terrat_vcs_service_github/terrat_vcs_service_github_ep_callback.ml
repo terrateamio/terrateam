@@ -3,7 +3,7 @@ let src = Logs.Src.create "vcs_service_github_ep_callback"
 module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let insert_user2_sql = Mql_sql.read [%blob "sql/insert_user2.sql"]
 
   let insert_user2 () =
     Pgsql_io.Typed_sql.(
@@ -11,7 +11,9 @@ module Sql = struct
       //
       (* id *)
       Ret.uuid
-      /^ read [%blob "sql/insert_user2.sql"])
+      /^ insert_user2_sql)
+
+  let select_github_user2_sql = Mql_sql.read [%blob "sql/select_github_user2.sql"]
 
   let select_github_user2 () =
     Pgsql_io.Typed_sql.(
@@ -28,13 +30,15 @@ module Sql = struct
       //
       (* avatar_url *)
       Ret.text
-      /^ read [%blob "sql/select_github_user2.sql"]
+      /^ select_github_user2_sql
       /% Var.text "username")
+
+  let insert_github_user2_sql = Mql_sql.read [%blob "sql/insert_github_user2.sql"]
 
   let insert_github_user2 () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read [%blob "sql/insert_github_user2.sql"]
+      /^ insert_github_user2_sql
       /% Var.(option (text "avatar_url"))
       /% Var.(option (text "email"))
       /% Var.(option (timestamptz "expiration"))
@@ -45,12 +49,15 @@ module Sql = struct
       /% Var.uuid "user_id"
       /% Var.text "username")
 
+  let insert_github_user_email_sql =
+    Mql_sql.read
+      "insert into github_user_emails (username, email, is_primary) values($username, $email, \
+       $is_primary) on conflict (username, email) do update set is_primary = excluded.is_primary"
+
   let insert_github_user_email () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into github_user_emails (username, email, is_primary) values($username, $email, \
-          $is_primary) on conflict (username, email) do update set is_primary = \
-          excluded.is_primary"
+      /^ insert_github_user_email_sql
       /% Var.text "username"
       /% Var.text "email"
       /% Var.boolean "is_primary")

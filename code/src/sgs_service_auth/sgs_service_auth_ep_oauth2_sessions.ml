@@ -18,27 +18,28 @@ let src = Logs.Src.create "ep_oauth2_sessions"
 module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Sql = struct
+  let insert_session_sql = Mql_sql.read [%blob "./sql/insert_oauth2_session.sql"]
+
   let insert_session () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ [%blob "./sql/insert_oauth2_session.sql"]
+      /^ insert_session_sql
       /% Var.text "key"
       /% Var.text "namespace"
       /% Var.text "config_hash"
       /% Var.text "data"
       /% Var.text "ttl_seconds")
 
+  let select_session_sql = Mql_sql.read [%blob "./sql/select_oauth2_session.sql"]
+
   let select_session () =
     Pgsql_io.Typed_sql.(
-      sql
-      // Ret.text
-      /^ [%blob "./sql/select_oauth2_session.sql"]
-      /% Var.text "namespace"
-      /% Var.text "key")
+      sql // Ret.text /^ select_session_sql /% Var.text "namespace" /% Var.text "key")
+
+  let delete_session_sql = Mql_sql.read [%blob "./sql/delete_oauth2_session.sql"]
 
   let delete_session () =
-    Pgsql_io.Typed_sql.(
-      sql /^ [%blob "./sql/delete_oauth2_session.sql"] /% Var.text "namespace" /% Var.text "key")
+    Pgsql_io.Typed_sql.(sql /^ delete_session_sql /% Var.text "namespace" /% Var.text "key")
 end
 
 (* Request body for PUT /sessions/{key} *)

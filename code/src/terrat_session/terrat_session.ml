@@ -8,14 +8,21 @@ let key : Terrat_user.t Brtl_mw_session.Value.t Hmap.key = Brtl_mw_session.creat
 
 module Cookie = struct
   module Sql = struct
+    let load_sql = Mql_sql.read "select user_id from user_sessions2 where token = $token"
+
     let load () =
       Pgsql_io.Typed_sql.(
         sql
         //
         (* id *)
         Ret.uuid
-        /^ "select user_id from user_sessions2 where token = $token"
+        /^ load_sql
         /% Var.uuid "token")
+
+    let store_sql =
+      Mql_sql.read
+        "insert into user_sessions2 (user_id, user_agent) values ($user_id, $user_agent) returning \
+         token"
 
     let store () =
       Pgsql_io.Typed_sql.(
@@ -23,14 +30,12 @@ module Cookie = struct
         //
         (* token *)
         Ret.uuid
-        /^ "insert into user_sessions2 (user_id, user_agent) values ($user_id, $user_agent) \
-            returning token"
+        /^ store_sql
         /% Var.uuid "user_id"
         /% Var.text "user_agent")
 
-    let delete =
-      Pgsql_io.Typed_sql.(
-        sql /^ "delete from user_sessions2 where token = $token" /% Var.uuid "token")
+    let delete_sql = Mql_sql.read "delete from user_sessions2 where token = $token"
+    let delete = Pgsql_io.Typed_sql.(sql /^ delete_sql /% Var.uuid "token")
   end
 
   let default_caps = Terrat_user.Capability.[ Access_token_create; Kv_store_read; Kv_store_write ]
@@ -97,6 +102,11 @@ end
 
 module Bearer = struct
   module Sql = struct
+    let select_access_token_id_sql =
+      Mql_sql.read
+        "select id from access_tokens where id = $id union all select id from work_manifests where \
+         id = $id and state in ('queued', 'running')"
+
     (* An access token is an entry in the access tokens table OR a work manifest
        (many API calls use the work manifest id). *)
     let select_access_token_id () =
@@ -105,8 +115,7 @@ module Bearer = struct
         //
         (* id *)
         Ret.uuid
-        /^ "select id from access_tokens where id = $id union all select id from work_manifests \
-            where id = $id and state in ('queued', 'running')"
+        /^ select_access_token_id_sql
         /% Var.uuid "id")
   end
 
@@ -143,6 +152,9 @@ module Bearer = struct
 end
 
 module Sql = struct
+  let select_encryption_keys_sql =
+    Mql_sql.read "select encode(data, 'hex') from encryption_keys order by rank"
+
   let select_encryption_keys () =
     (* The hex conversion is so that there are no issues with escaping
          the string *)
@@ -151,7 +163,7 @@ module Sql = struct
       //
       (* data *)
       Ret.u Ret.text CCFun.(Cstruct.of_hex %> Cstruct.to_string %> CCOption.return)
-      /^ "select encode(data, 'hex') from encryption_keys order by rank")
+      /^ select_encryption_keys_sql)
 end
 
 type err =

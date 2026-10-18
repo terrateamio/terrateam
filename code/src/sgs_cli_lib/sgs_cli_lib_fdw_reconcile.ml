@@ -8,9 +8,12 @@ type err =
   ]
 [@@deriving show]
 
-let fdw_tables_sql = [%blob "../sgs_terrateam_catalog/fdw_tables.sql"]
-let fdw_admin_tables_sql = [%blob "sql/fdw_admin_tables.sql"]
-let fdw_scope_tables_sql = [%blob "sql/fdw_scope_tables.sql"]
+(* Each of these files holds more than one statement.  MQL decides where each statement ends,
+   thus the generator needs no convention about blank lines, and a comment does not ride along with
+   the statement that follows it. *)
+let fdw_tables_sql = Mql_sql.read_multi [%blob "../sgs_terrateam_catalog/fdw_tables.sql"]
+let fdw_admin_tables_sql = Mql_sql.read_multi [%blob "sql/fdw_admin_tables.sql"]
+let fdw_scope_tables_sql = Mql_sql.read_multi [%blob "sql/fdw_scope_tables.sql"]
 
 (* Single-quoted literal for FDW OPTIONS values (host, dbname, user,
    password). Values come from operator env, but quote correctly anyway. *)
@@ -86,21 +89,21 @@ let run config storage =
       "drop server if exists terrateam_admin_fdw cascade"
       :: (Sgs_config.fdw_provisioner_password config
          |> CCOption.map_or ~default:[] (fun password ->
-             admin_preamble config password @ statements fdw_admin_tables_sql))
+             admin_preamble config password @ fdw_admin_tables_sql))
     in
     let stmts =
       preamble config
-      @ statements fdw_tables_sql
+      @ fdw_tables_sql
       (* #2469: The tenant scope of the MQL page reads these tables. This is
          necessary only because the foreign data wrapper abstraction is leaky. *)
-      @ statements fdw_scope_tables_sql
+      @ fdw_scope_tables_sql
       @ admin_stmts
     in
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.tx db ~f:(fun () ->
             Abbs_fc.List_result.iter
               ~f:(fun stmt ->
-                let stmt_sql = Pgsql_io.Typed_sql.(sql /^ Pgsql_io.clean_string stmt) in
+                let stmt_sql = Pgsql_io.Typed_sql.(sql /^ stmt) in
                 Pgsql_io.Prepared_stmt.execute db stmt_sql)
               stmts))
     >>| function

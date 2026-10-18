@@ -1,4 +1,4 @@
 (library
  (name terrat_migrations_ex)
  (wrapped false)
- (libraries pgsql_io pgsql_pool terrat_config terrat_storage))
+ (libraries mql_sql pgsql_io pgsql_pool terrat_config terrat_storage))

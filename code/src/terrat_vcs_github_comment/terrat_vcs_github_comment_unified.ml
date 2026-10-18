@@ -8,14 +8,17 @@ let src = Logs.Src.create "vcs_github_comment_unified"
 module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let upsert_unified_comment_dirty_sql = Mql_sql.read [%blob "sql/upsert_unified_comment_dirty.sql"]
 
   let upsert_unified_comment_dirty =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read [%blob "sql/upsert_unified_comment_dirty.sql"]
+      /^ upsert_unified_comment_dirty_sql
       /% Var.uuid "work_manifest"
       /% Var.boolean "output_details")
+
+  let select_unified_comment_latest_work_manifest_sql =
+    Mql_sql.read [%blob "sql/select_unified_comment_latest_work_manifest.sql"]
 
   let select_unified_comment_latest_work_manifest =
     Pgsql_io.Typed_sql.(
@@ -23,13 +26,16 @@ module Sql = struct
       //
       (* id *)
       Ret.uuid
-      /^ read [%blob "sql/select_unified_comment_latest_work_manifest.sql"]
+      /^ select_unified_comment_latest_work_manifest_sql
       /% Var.bigint "repository"
       /% Var.bigint "pull_number")
 
+  let mark_unified_comment_dirty_sql = Mql_sql.read [%blob "sql/mark_unified_comment_dirty.sql"]
+
   let mark_unified_comment_dirty =
-    Pgsql_io.Typed_sql.(
-      sql /^ read [%blob "sql/mark_unified_comment_dirty.sql"] /% Var.uuid "work_manifest")
+    Pgsql_io.Typed_sql.(sql /^ mark_unified_comment_dirty_sql /% Var.uuid "work_manifest")
+
+  let select_unified_comment_state_sql = Mql_sql.read [%blob "sql/select_unified_comment_state.sql"]
 
   let select_unified_comment_state =
     Pgsql_io.Typed_sql.(
@@ -58,8 +64,11 @@ module Sql = struct
       //
       (* output_details *)
       Ret.boolean
-      /^ read [%blob "sql/select_unified_comment_state.sql"]
+      /^ select_unified_comment_state_sql
       /% Var.uuid "work_manifest")
+
+  let select_unified_comment_elements_sql =
+    Mql_sql.read [%blob "sql/select_unified_comment_elements.sql"]
 
   let select_unified_comment_elements () =
     Pgsql_io.Typed_sql.(
@@ -112,16 +121,20 @@ module Sql = struct
       //
       (* summary_state *)
       Ret.(option text)
-      /^ read [%blob "sql/select_unified_comment_elements.sql"]
+      /^ select_unified_comment_elements_sql
       /% Var.uuid "work_manifest")
+
+  let update_unified_comment_id_sql = Mql_sql.read [%blob "sql/update_unified_comment_id.sql"]
 
   let update_unified_comment_id =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read [%blob "sql/update_unified_comment_id.sql"]
+      /^ update_unified_comment_id_sql
       /% Var.bigint "comment_id"
       /% Var.bigint "repository"
       /% Var.bigint "pull_number")
+
+  let clear_unified_comment_dirty_sql = Mql_sql.read [%blob "sql/clear_unified_comment_dirty.sql"]
 
   let clear_unified_comment_dirty =
     Pgsql_io.Typed_sql.(
@@ -129,10 +142,14 @@ module Sql = struct
       //
       (* repository *)
       Ret.bigint
-      /^ read [%blob "sql/clear_unified_comment_dirty.sql"]
+      /^ clear_unified_comment_dirty_sql
       /% Var.bigint "repository"
       /% Var.bigint "pull_number"
       /% Var.bigint "dirty")
+
+  let try_advisory_lock_sql =
+    Mql_sql.read
+      "select pg_try_advisory_xact_lock(hashtext('github_unified_comments'), hashtext($key))"
 
   let try_advisory_lock =
     Pgsql_io.Typed_sql.(
@@ -140,8 +157,13 @@ module Sql = struct
       //
       (* locked *)
       Ret.boolean
-      /^ "select pg_try_advisory_xact_lock(hashtext('github_unified_comments'), hashtext($key))"
+      /^ try_advisory_lock_sql
       /% Var.text "key")
+
+  let advisory_lock_sql =
+    Mql_sql.read
+      "select pg_advisory_xact_lock(hashtext('github_unified_comments'), hashtext($key)) is not \
+       null"
 
   let advisory_lock =
     Pgsql_io.Typed_sql.(
@@ -154,9 +176,10 @@ module Sql = struct
          after blocking until any concurrent holder released it.  ([is null]
          here would be always false -- void is not null -- and made every
          run-start publish take the [Skip] path.) *)
-      /^ "select pg_advisory_xact_lock(hashtext('github_unified_comments'), hashtext($key)) is not \
-          null"
+      /^ advisory_lock_sql
       /% Var.text "key")
+
+  let select_unified_comment_pr_sql = Mql_sql.read [%blob "sql/select_unified_comment_pr.sql"]
 
   let select_unified_comment_pr =
     Pgsql_io.Typed_sql.(
@@ -167,7 +190,7 @@ module Sql = struct
       //
       (* pull_number *)
       Ret.bigint
-      /^ read [%blob "sql/select_unified_comment_pr.sql"]
+      /^ select_unified_comment_pr_sql
       /% Var.uuid "work_manifest")
 end
 

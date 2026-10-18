@@ -5,7 +5,7 @@ let src = Logs.Src.create "vcs_service_gitlab_ep_callback"
 module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let insert_user2_sql = Mql_sql.read [%blob "sql/insert_user2.sql"]
 
   let insert_user2 () =
     Pgsql_io.Typed_sql.(
@@ -13,7 +13,9 @@ module Sql = struct
       //
       (* id *)
       Ret.uuid
-      /^ read [%blob "sql/insert_user2.sql"])
+      /^ insert_user2_sql)
+
+  let select_gitlab_user_sql = Mql_sql.read [%blob "sql/select_gitlab_user2.sql"]
 
   let select_gitlab_user () =
     Pgsql_io.Typed_sql.(
@@ -30,13 +32,15 @@ module Sql = struct
       //
       (* avatar_url *)
       Ret.text
-      /^ read [%blob "sql/select_gitlab_user2.sql"]
+      /^ select_gitlab_user_sql
       /% Var.text "username")
+
+  let insert_gitlab_user_sql = Mql_sql.read [%blob "sql/insert_gitlab_user2.sql"]
 
   let insert_gitlab_user () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read [%blob "sql/insert_gitlab_user2.sql"]
+      /^ insert_gitlab_user_sql
       /% Var.(option (text "avatar_url"))
       /% Var.(option (text "email"))
       /% Var.(option (timestamptz "expiration"))

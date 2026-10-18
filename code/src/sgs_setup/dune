@@ -8,6 +8,7 @@
   brtl_ep
   containers
   logs
+  mql_sql
   pgsql_io
   pgsql_pool
   sgs_api

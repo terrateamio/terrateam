@@ -199,6 +199,10 @@ Set STATEGRAPH_ORCHESTRATION_ENABLED=false to stop trying, or give the database 
           Logs.err (fun m -> m "Migration failed");
           Logs.err (fun m -> m "%s" (Pgsql_pool.show_err err));
           exit 1
+      | `Det (Error (`Migration_err (`Mql_err err))) ->
+          Logs.err (fun m -> m "Migration failed - MQL could not read the migration");
+          Logs.err (fun m -> m "%s" (Mql.Ast.show_err err));
+          exit 1
       | `Det (Error (`Consistency_err consistency)) ->
           Logs.err (fun m ->
               m

@@ -49,7 +49,7 @@ let eq_uuid t n v =
 
 let eq_string t n = function
   | "" ->
-      Buffer.add_string t.q (Printf.sprintf "(%s is null or %s = ''" n n);
+      Buffer.add_string t.q (Printf.sprintf "(%s is null or %s = '')" n n);
       Ok ()
   | v ->
       CCVector.push t.strings v;

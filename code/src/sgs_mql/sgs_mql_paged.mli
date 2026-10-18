@@ -41,8 +41,13 @@ type page = {
 type query_err =
   [ Mql_to_pgsql.apply_page_err
   | Mql_to_pgsql.of_mql_err
+  | Mql_to_pgsql.audit_err
   | Pgsql_io.err
   | Pgsql_pool.err
+  | (* Rendering the compiled query back to SQL failed. Unreachable for a query
+       [Mql_to_pgsql] produced, but [Mql.Ast.to_string] reports rather than
+       raises, so the error is carried. *)
+    Mql.Ast.err
   ]
 [@@deriving show]
 
@@ -92,6 +97,11 @@ val respond :
 
 module Tests : sig
   (** The page query with the terrateam CTE block spliced in ([orchestration:true]) or not, exactly
-      as {!query} sends it modulo the user-query placeholder [{{q}}]. *)
+      as {!query} sends it modulo the body of its [q] CTE, where the query of the user goes. *)
   val select_page_sql : orchestration:bool -> string
+
+  (** The page query that {!query} sends for the compiled query of the user, which is in the [q]
+      CTE. The tests read it to make sure that the query of the user is in [q], after all the
+      tenant-scoped CTEs. *)
+  val select_page_query : orchestration:bool -> Mql.Ast.t -> (string, [> Mql.Ast.err ]) result
 end

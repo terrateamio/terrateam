@@ -30,7 +30,7 @@ type status = {
 }
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let select_app_sql = Mql_sql.read [%blob "sql/select_github_app.sql"]
 
   let select_app () =
     Pgsql_io.Typed_sql.(
@@ -56,12 +56,14 @@ module Sql = struct
       //
       (* loaded *)
       Ret.boolean
-      /^ read [%blob "sql/select_github_app.sql"])
+      /^ select_app_sql)
+
+  let insert_app_sql = Mql_sql.read [%blob "sql/insert_github_app.sql"]
 
   let insert_app () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read [%blob "sql/insert_github_app.sql"]
+      /^ insert_app_sql
       /% Var.bigint "id"
       /% Var.text "slug"
       /% Var.text "pem"
@@ -70,28 +72,26 @@ module Sql = struct
       /% Var.text "webhook_secret"
       /% Var.text "html_url")
 
-  let delete_app () =
-    Pgsql_io.Typed_sql.(sql /^ read [%blob "sql/delete_github_app.sql"] /% Var.bigint "app_id")
-
-  let delete_any () = Pgsql_io.Typed_sql.(sql /^ read [%blob "sql/delete_any_github_app.sql"])
+  let delete_app_sql = Mql_sql.read [%blob "sql/delete_github_app.sql"]
+  let delete_app () = Pgsql_io.Typed_sql.(sql /^ delete_app_sql /% Var.bigint "app_id")
+  let delete_any_sql = Mql_sql.read [%blob "sql/delete_any_github_app.sql"]
+  let delete_any () = Pgsql_io.Typed_sql.(sql /^ delete_any_sql)
+  let update_pem_sql = Mql_sql.read [%blob "sql/update_github_app_pem.sql"]
 
   let update_pem () =
-    Pgsql_io.Typed_sql.(
-      sql /^ read [%blob "sql/update_github_app_pem.sql"] /% Var.text "pem" /% Var.bigint "app_id")
+    Pgsql_io.Typed_sql.(sql /^ update_pem_sql /% Var.text "pem" /% Var.bigint "app_id")
+
+  let update_client_secret_sql = Mql_sql.read [%blob "sql/update_github_app_client_secret.sql"]
 
   let update_client_secret () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ read [%blob "sql/update_github_app_client_secret.sql"]
-      /% Var.text "client_secret"
-      /% Var.bigint "app_id")
+      sql /^ update_client_secret_sql /% Var.text "client_secret" /% Var.bigint "app_id")
+
+  let update_webhook_secret_sql = Mql_sql.read [%blob "sql/update_github_app_webhook_secret.sql"]
 
   let update_webhook_secret () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ read [%blob "sql/update_github_app_webhook_secret.sql"]
-      /% Var.text "webhook_secret"
-      /% Var.bigint "app_id")
+      sql /^ update_webhook_secret_sql /% Var.text "webhook_secret" /% Var.bigint "app_id")
 end
 
 (* The environment wins, so an App named there closes the channel: creating one

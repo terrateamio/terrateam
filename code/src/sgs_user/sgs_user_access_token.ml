@@ -30,21 +30,28 @@ let owner_type_of_string = function
   | s -> failwith ("Unknown owner_type: " ^ s)
 
 module Sql = struct
+  let insert_access_token_sql = Mql_sql.read [%blob "./sql/insert_access_token.sql"]
+
   let insert_access_token () =
     Pgsql_io.Typed_sql.(
       sql
       //
       (* id *)
       Ret.uuid
-      /^ [%blob "./sql/insert_access_token.sql"]
+      /^ insert_access_token_sql
       /% Var.json "capability_trie"
       /% Var.(option (timestamptz "expiration"))
       /% Var.text "kind"
       /% Var.text "name"
       /% Var.uuid "user_id")
 
+  let delete_expired_login_sessions_sql =
+    Mql_sql.read [%blob "./sql/delete_expired_login_sessions.sql"]
+
   let delete_expired_login_sessions () =
-    Pgsql_io.Typed_sql.(sql // Ret.bigint /^ [%blob "./sql/delete_expired_login_sessions.sql"])
+    Pgsql_io.Typed_sql.(sql // Ret.bigint /^ delete_expired_login_sessions_sql)
+
+  let select_access_token_sql = Mql_sql.read [%blob "./sql/select_access_token.sql"]
 
   let select_access_token () =
     Pgsql_io.Typed_sql.(
@@ -64,8 +71,11 @@ module Sql = struct
       //
       (* capability_trie *)
       Sgs_user.caps_ret
-      /^ [%blob "./sql/select_access_token.sql"]
+      /^ select_access_token_sql
       /% Var.uuid "access_token_id")
+
+  let select_access_tokens_by_user_sql =
+    Mql_sql.read [%blob "./sql/select_access_tokens_by_user.sql"]
 
   let select_access_tokens_by_user () =
     Pgsql_io.Typed_sql.(
@@ -91,8 +101,10 @@ module Sql = struct
       //
       (* owner_type *)
       Ret.text
-      /^ [%blob "./sql/select_access_tokens_by_user.sql"]
+      /^ select_access_tokens_by_user_sql
       /% Var.uuid "user_id")
+
+  let delete_access_token_sql = Mql_sql.read [%blob "./sql/delete_access_token.sql"]
 
   let delete_access_token () =
     Pgsql_io.Typed_sql.(
@@ -100,9 +112,11 @@ module Sql = struct
       //
       (* id *)
       Ret.uuid
-      /^ [%blob "./sql/delete_access_token.sql"]
+      /^ delete_access_token_sql
       /% Var.uuid "token_id"
       /% Var.uuid "user_id")
+
+  let select_access_tokens_all_sql = Mql_sql.read [%blob "./sql/select_access_tokens_all.sql"]
 
   let select_access_tokens_all () =
     Pgsql_io.Typed_sql.(
@@ -128,7 +142,9 @@ module Sql = struct
       //
       (* owner_type *)
       Ret.text
-      /^ [%blob "./sql/select_access_tokens_all.sql"])
+      /^ select_access_tokens_all_sql)
+
+  let delete_access_token_admin_sql = Mql_sql.read [%blob "./sql/delete_access_token_admin.sql"]
 
   let delete_access_token_admin () =
     Pgsql_io.Typed_sql.(
@@ -136,7 +152,7 @@ module Sql = struct
       //
       (* id *)
       Ret.uuid
-      /^ [%blob "./sql/delete_access_token_admin.sql"]
+      /^ delete_access_token_admin_sql
       /% Var.uuid "token_id")
 end
 

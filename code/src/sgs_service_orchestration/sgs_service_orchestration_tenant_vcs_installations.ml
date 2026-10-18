@@ -11,7 +11,7 @@ let valid_vcs_provider = function
   | _ -> false
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let select_by_tenant_sql = Mql_sql.read [%blob "sql/select_tenant_vcs_installations.sql"]
 
   let select_by_tenant () =
     Pgsql_io.Typed_sql.(
@@ -31,8 +31,10 @@ module Sql = struct
       //
       (* updated_at *)
       Ret.text
-      /^ read [%blob "sql/select_tenant_vcs_installations.sql"]
+      /^ select_by_tenant_sql
       /% Var.uuid "tenant_id")
+
+  let upsert_sql = Mql_sql.read [%blob "sql/upsert_tenant_vcs_installation.sql"]
 
   let upsert () =
     Pgsql_io.Typed_sql.(
@@ -55,10 +57,12 @@ module Sql = struct
       //
       (* previous tenant_id *)
       Ret.(option uuid)
-      /^ read [%blob "sql/upsert_tenant_vcs_installation.sql"]
+      /^ upsert_sql
       /% Var.uuid "tenant_id"
       /% Var.text "provider"
       /% Var.uuid "installation_core_id")
+
+  let link_if_unlinked_sql = Mql_sql.read [%blob "sql/link_tenant_vcs_installation_if_unlinked.sql"]
 
   let link_if_unlinked () =
     Pgsql_io.Typed_sql.(
@@ -78,10 +82,12 @@ module Sql = struct
       //
       (* updated_at *)
       Ret.text
-      /^ read [%blob "sql/link_tenant_vcs_installation_if_unlinked.sql"]
+      /^ link_if_unlinked_sql
       /% Var.uuid "tenant_id"
       /% Var.text "provider"
       /% Var.uuid "installation_core_id")
+
+  let select_by_installation_sql = Mql_sql.read [%blob "sql/select_tenant_vcs_installation.sql"]
 
   let select_by_installation () =
     Pgsql_io.Typed_sql.(
@@ -101,9 +107,11 @@ module Sql = struct
       //
       (* updated_at *)
       Ret.text
-      /^ read [%blob "sql/select_tenant_vcs_installation.sql"]
+      /^ select_by_installation_sql
       /% Var.text "provider"
       /% Var.uuid "installation_core_id")
+
+  let delete_sql = Mql_sql.read [%blob "sql/delete_tenant_vcs_installation.sql"]
 
   let delete () =
     Pgsql_io.Typed_sql.(
@@ -111,7 +119,7 @@ module Sql = struct
       //
       (* provider, one row per deleted mapping *)
       Ret.text
-      /^ read [%blob "sql/delete_tenant_vcs_installation.sql"]
+      /^ delete_sql
       /% Var.uuid "tenant_id"
       /% Var.text "provider"
       /% Var.uuid "installation_core_id")

@@ -2,6 +2,28 @@ let json_of_caps = [%to_yojson: Terrat_user.Capability.t list]
 let caps_of_json = CCFun.([%of_yojson: Terrat_user.Capability.t list] %> CCResult.to_opt)
 
 module Sql = struct
+  let select_key_query =
+    Mql_sql.read_ast
+      {|
+            select
+              committed,
+              to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+              $data,
+              version,
+              data_size,
+              read_caps,
+              write_caps
+            from kv_store
+            where
+              namespace = $namespace
+              and key = $key
+              and idx = $idx
+              and (committed or not $committed)
+              and (read_caps is null or $user_caps::jsonb @> read_caps)
+            order by key, idx
+            limit 1
+          |}
+
   let select_key data =
     Pgsql_io.Typed_sql.(
       sql
@@ -26,28 +48,7 @@ module Sql = struct
       //
       (* write_caps *)
       Ret.(option @@ u json caps_of_json)
-      /^ CCString.replace
-           ~sub:"{{ data }}"
-           ~by:data
-           {|
-            select
-              committed,
-              to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
-              {{ data }},
-              version,
-              data_size,
-              read_caps,
-              write_caps
-            from kv_store
-            where
-              namespace = $namespace
-              and key = $key
-              and idx = $idx
-              and (committed or not $committed)
-              and (read_caps is null or $user_caps::jsonb @> read_caps)
-            order by key, idx
-            limit 1
-          |}
+      /^ data
       /% Var.text "namespace"
       /% Var.text "key"
       /% Var.smallint "idx"
@@ -56,19 +57,9 @@ module Sql = struct
       /% Var.(str_array (jsonpath "jsonpaths"))
       /% Var.(ud (json "user_caps") json_of_caps))
 
-  let upsert_key () =
-    Pgsql_io.Typed_sql.(
-      sql
-      //
-      (* created_at *)
-      Ret.text
-      //
-      (* version *)
-      Ret.smallint
-      //
-      (* size *)
-      Ret.integer
-      /^ {|
+  let upsert_key_sql =
+    Mql_sql.read
+      {|
           insert into kv_store (
             namespace,
             key,
@@ -100,16 +91,8 @@ module Sql = struct
             version,
             data_size
           |}
-      /% Var.text "namespace"
-      /% Var.text "key"
-      /% Var.smallint "idx"
-      /% Var.json "data"
-      /% Var.boolean "committed"
-      /% Var.(option @@ ud (json "read_caps") json_of_caps)
-      /% Var.(option @@ ud (json "write_caps") json_of_caps)
-      /% Var.(ud (json "user_caps") json_of_caps))
 
-  let cas_insert () =
+  let upsert_key () =
     Pgsql_io.Typed_sql.(
       sql
       //
@@ -121,7 +104,19 @@ module Sql = struct
       //
       (* size *)
       Ret.integer
-      /^ {|
+      /^ upsert_key_sql
+      /% Var.text "namespace"
+      /% Var.text "key"
+      /% Var.smallint "idx"
+      /% Var.json "data"
+      /% Var.boolean "committed"
+      /% Var.(option @@ ud (json "read_caps") json_of_caps)
+      /% Var.(option @@ ud (json "write_caps") json_of_caps)
+      /% Var.(ud (json "user_caps") json_of_caps))
+
+  let cas_insert_sql =
+    Mql_sql.read
+      {|
           insert into kv_store (
             namespace,
             key,
@@ -146,17 +141,8 @@ module Sql = struct
             version,
             data_size
           |}
-      /% Var.text "namespace"
-      /% Var.text "key"
-      /% Var.smallint "idx"
-      /% Var.json "data"
-      /% Var.boolean "committed"
-      /% Var.(option (smallint "version"))
-      /% Var.(option @@ ud (json "read_caps") json_of_caps)
-      /% Var.(option @@ ud (json "write_caps") json_of_caps)
-      /% Var.(ud (json "user_caps") json_of_caps))
 
-  let cas_update () =
+  let cas_insert () =
     Pgsql_io.Typed_sql.(
       sql
       //
@@ -168,7 +154,20 @@ module Sql = struct
       //
       (* size *)
       Ret.integer
-      /^ {|
+      /^ cas_insert_sql
+      /% Var.text "namespace"
+      /% Var.text "key"
+      /% Var.smallint "idx"
+      /% Var.json "data"
+      /% Var.boolean "committed"
+      /% Var.(option (smallint "version"))
+      /% Var.(option @@ ud (json "read_caps") json_of_caps)
+      /% Var.(option @@ ud (json "write_caps") json_of_caps)
+      /% Var.(ud (json "user_caps") json_of_caps))
+
+  let cas_update_sql =
+    Mql_sql.read
+      {|
           update kv_store set
             data = $data,
             version = version + 1,
@@ -187,6 +186,20 @@ module Sql = struct
             version,
             data_size
           |}
+
+  let cas_update () =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* created_at *)
+      Ret.text
+      //
+      (* version *)
+      Ret.smallint
+      //
+      (* size *)
+      Ret.integer
+      /^ cas_update_sql
       /% Var.text "namespace"
       /% Var.text "key"
       /% Var.smallint "idx"
@@ -197,13 +210,9 @@ module Sql = struct
       /% Var.(option @@ ud (json "write_caps") json_of_caps)
       /% Var.(ud (json "user_caps") json_of_caps))
 
-  let delete () =
-    Pgsql_io.Typed_sql.(
-      sql
-      //
-      (* version *)
-      Ret.smallint
-      /^ {|
+  let delete_sql =
+    Mql_sql.read
+      {|
           delete from kv_store
           where
             namespace = $namespace
@@ -214,22 +223,23 @@ module Sql = struct
           returning
             version
           |}
+
+  let delete () =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* version *)
+      Ret.smallint
+      /^ delete_sql
       /% Var.text "namespace"
       /% Var.text "key"
       /% Var.(option (smallint "idx"))
       /% Var.(option (smallint "version"))
       /% Var.(ud (json "user_caps") json_of_caps))
 
-  let count () =
-    Pgsql_io.Typed_sql.(
-      sql
-      //
-      (* count *)
-      Ret.integer
-      //
-      (* max_idx *)
-      Ret.integer
-      /^ {|
+  let count_sql =
+    Mql_sql.read
+      {|
           select
             count(idx),
             max(idx)
@@ -241,18 +251,25 @@ module Sql = struct
             and (read_caps is null or $user_caps::jsonb @> read_caps)
           group by (namespace, key)
           |}
+
+  let count () =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* count *)
+      Ret.integer
+      //
+      (* max_idx *)
+      Ret.integer
+      /^ count_sql
       /% Var.text "namespace"
       /% Var.text "key"
       /% Var.boolean "committed"
       /% Var.(ud (json "user_caps") json_of_caps))
 
-  let size () =
-    Pgsql_io.Typed_sql.(
-      sql
-      //
-      (* size *)
-      Ret.bigint
-      /^ {|
+  let size_sql =
+    Mql_sql.read
+      {|
           select
             sum(data_size)
           from kv_store
@@ -263,13 +280,65 @@ module Sql = struct
             and ($idx is null or idx = $idx)
             and (read_caps is null or $user_caps::jsonb @> read_caps)
           |}
+
+  let size () =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* size *)
+      Ret.bigint
+      /^ size_sql
       /% Var.text "namespace"
       /% Var.text "key"
       /% Var.(option (smallint "idx"))
       /% Var.boolean "committed"
       /% Var.(ud (json "user_caps") json_of_caps))
 
-  let iter data cmp =
+  let iter_query =
+    Mql_sql.read_ast
+      {|
+            select
+              key,
+              committed,
+              to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+              $data,
+              idx,
+              version,
+              data_size,
+              read_caps,
+              write_caps
+            from kv_store
+            where
+              namespace = $namespace
+              and $cmp
+              and (not $prefix or starts_with(key, $key))
+              and (committed or not $committed)
+              and (read_caps is null or $user_caps::jsonb @> read_caps)
+            order by key, idx
+            limit $limit
+          |}
+
+  (* The two queries write [$data] in the select list, and [iter] also writes [$cmp] as one part
+     of its where clause.  MQL reads each whole query when the module loads.  [eval_select] builds
+     the column list, and the caller chooses the comparison, at the request; each tree takes the
+     place of its variable. *)
+  let read_expr e = Mql.Ast.expr_of_string ~variables:true e
+
+  let select_key_sql data =
+    let open CCResult.Infix in
+    read_expr data
+    >>= fun d -> Mql_sql.subst_var ~name:"data" d select_key_query >>= Mql.Ast.to_string
+
+  let iter_sql data cmp =
+    let open CCResult.Infix in
+    read_expr data
+    >>= fun d ->
+    read_expr cmp
+    >>= fun c ->
+    Mql_sql.subst_var ~name:"data" d iter_query
+    >>= fun q -> Mql_sql.subst_var ~name:"cmp" c q >>= Mql.Ast.to_string
+
+  let iter data =
     Pgsql_io.Typed_sql.(
       sql
       //
@@ -299,32 +368,7 @@ module Sql = struct
       //
       (* write_caps *)
       Ret.(option @@ u json caps_of_json)
-      /^ (CCString.replace ~sub:"{{ data }}" ~by:data
-         @@ CCString.replace
-              ~sub:"{{ cmp }}"
-              ~by:cmp
-              {|
-            select
-              key,
-              committed,
-              to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
-              {{ data }},
-              idx,
-              version,
-              data_size,
-              read_caps,
-              write_caps
-            from kv_store
-            where
-              namespace = $namespace
-              and {{ cmp }}
-              and (not $prefix or starts_with(key, $key))
-              and (committed or not $committed)
-              and (read_caps is null or $user_caps::jsonb @> read_caps)
-            order by key, idx
-            limit $limit
-          |}
-         )
+      /^ data
       /% Var.text "namespace"
       /% Var.text "key"
       /% Var.(option (smallint "idx"))
@@ -335,19 +379,9 @@ module Sql = struct
       /% Var.(str_array (jsonpath "jsonpaths"))
       /% Var.(ud (json "user_caps") json_of_caps))
 
-  let commit () =
-    Pgsql_io.Typed_sql.(
-      sql
-      //
-      (* namespace *)
-      Ret.text
-      //
-      (* key *)
-      Ret.text
-      //
-      (* idx *)
-      Ret.smallint
-      /^ {|
+  let commit_sql =
+    Mql_sql.read
+      {|
           with keys as (
             select namespace, key, idx
             from unnest($namespaces, $keys, $indices) as t(namespace, key, idx)
@@ -365,13 +399,31 @@ module Sql = struct
             kv_store.key,
             kv_store.idx
           |}
+
+  let commit () =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* namespace *)
+      Ret.text
+      //
+      (* key *)
+      Ret.text
+      //
+      (* idx *)
+      Ret.smallint
+      /^ commit_sql
       /% Var.(str_array (text "namespaces"))
       /% Var.(str_array (text "keys"))
       /% Var.(array (option (smallint "indices")))
       /% Var.(ud (json "user_caps") json_of_caps))
 end
 
-type err = Pgsql_io.err [@@deriving show]
+type err =
+  [ Pgsql_io.err
+  | `Mql_err of Mql.Ast.err
+  ]
+[@@deriving show]
 
 type t' = {
   db : Pgsql_io.t;
@@ -442,31 +494,34 @@ let eval_select select =
 let get ?select ?(idx = 0) ?(committed = true) ~key:(namespace, key) t =
   let open Abb.Future.Infix_monad in
   let data, obj_keys, jsonpaths = eval_select select in
-  Pgsql_io.Prepared_stmt.fetch
-    t.db
-    (Sql.select_key data)
-    ~f:(fun committed created_at data version size read_caps write_caps ->
-      {
-        Record.committed;
-        created_at;
-        data;
-        idx;
-        key = (namespace, key);
-        size = CCInt32.to_int size;
-        version;
-        read_caps;
-        write_caps;
-      })
-    namespace
-    key
-    idx
-    committed
-    obj_keys
-    jsonpaths
-    t.user_caps
-  >>= function
-  | Ok r -> Abb.Future.return (Ok (CCOption.of_list r))
-  | Error #Pgsql_io.err as err -> Abb.Future.return err
+  match Sql.select_key_sql data with
+  | Error err -> Abb.Future.return (Error (`Mql_err err))
+  | Ok data -> (
+      Pgsql_io.Prepared_stmt.fetch
+        t.db
+        (Sql.select_key data)
+        ~f:(fun committed created_at data version size read_caps write_caps ->
+          {
+            Record.committed;
+            created_at;
+            data;
+            idx;
+            key = (namespace, key);
+            size = CCInt32.to_int size;
+            version;
+            read_caps;
+            write_caps;
+          })
+        namespace
+        key
+        idx
+        committed
+        obj_keys
+        jsonpaths
+        t.user_caps
+      >>= function
+      | Ok r -> Abb.Future.return (Ok (CCOption.of_list r))
+      | Error #Pgsql_io.err as err -> Abb.Future.return err)
 
 let set ?read_caps ?write_caps ?(idx = 0) ?(committed = true) ~key:(namespace, key) data t =
   let open Abb.Future.Infix_monad in
@@ -595,33 +650,36 @@ let iter
     if inclusive then "(key >= $key and ($idx is null or (key = $key and idx >= $idx)))"
     else "(key > $key or (key = $key and ($idx is not null and idx > $idx)))"
   in
-  Pgsql_io.Prepared_stmt.fetch
-    t.db
-    (Sql.iter data cmp)
-    ~f:(fun key committed created_at data idx version size read_caps write_caps ->
-      {
-        Record.committed;
-        created_at;
-        data;
-        idx;
-        key = (namespace, key);
-        size = CCInt32.to_int size;
-        version;
-        read_caps;
-        write_caps;
-      })
-    namespace
-    key
-    idx
-    committed
-    prefix
-    limit
-    obj_keys
-    jsonpaths
-    t.user_caps
-  >>= function
-  | Ok r -> Abb.Future.return (Ok r)
-  | Error #Pgsql_io.err as err -> Abb.Future.return err
+  match Sql.iter_sql data cmp with
+  | Error err -> Abb.Future.return (Error (`Mql_err err))
+  | Ok data -> (
+      Pgsql_io.Prepared_stmt.fetch
+        t.db
+        (Sql.iter data)
+        ~f:(fun key committed created_at data idx version size read_caps write_caps ->
+          {
+            Record.committed;
+            created_at;
+            data;
+            idx;
+            key = (namespace, key);
+            size = CCInt32.to_int size;
+            version;
+            read_caps;
+            write_caps;
+          })
+        namespace
+        key
+        idx
+        committed
+        prefix
+        limit
+        obj_keys
+        jsonpaths
+        t.user_caps
+      >>= function
+      | Ok r -> Abb.Future.return (Ok r)
+      | Error #Pgsql_io.err as err -> Abb.Future.return err)
 
 let commit ~keys t =
   let open Abb.Future.Infix_monad in

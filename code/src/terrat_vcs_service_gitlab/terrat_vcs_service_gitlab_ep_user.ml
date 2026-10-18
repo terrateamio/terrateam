@@ -4,7 +4,7 @@ module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Whoami = struct
   module Sql = struct
-    let read s = Pgsql_io.clean_string s
+    let select_gitlab_user_sql = Mql_sql.read [%blob "sql/select_gitlab_user2_by_user_id.sql"]
 
     let select_gitlab_user () =
       Pgsql_io.Typed_sql.(
@@ -24,7 +24,7 @@ module Whoami = struct
         //
         (* gitlab user id *)
         Ret.bigint
-        /^ read [%blob "sql/select_gitlab_user2_by_user_id.sql"]
+        /^ select_gitlab_user_sql
         /% Var.uuid "user_id")
   end
 

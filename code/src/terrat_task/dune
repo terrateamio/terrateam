@@ -1,3 +1,3 @@
 (library
  (name terrat_task)
- (libraries abb abbs pgsql_io terrat_storage uuidm))
+ (libraries abb abbs mql_sql pgsql_io terrat_storage uuidm))

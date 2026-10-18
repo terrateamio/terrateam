@@ -24,13 +24,16 @@ module Http = Abb_curl.Make (Abb)
 module Cache = Abb_cache.Make (Abb)
 
 module Sql = struct
+  let validate_work_manifest_sql =
+    Mql_sql.read "select id from work_manifests where id = $id and state = 'running'"
+
   let validate_work_manifest =
     Pgsql_io.Typed_sql.(
       sql
       //
       (* id *)
       Ret.uuid
-      /^ "select id from work_manifests where id = $id and state = 'running'"
+      /^ validate_work_manifest_sql
       /% Var.uuid "id")
 end
 

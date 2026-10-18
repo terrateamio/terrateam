@@ -5,6 +5,7 @@
   abb_fc
   logs
   minijinja
+  mql_sql
   pgsql_io
   pgsql_pool
   sln

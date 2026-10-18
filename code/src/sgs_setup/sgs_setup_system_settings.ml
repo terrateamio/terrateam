@@ -1,11 +1,13 @@
 module Sql = struct
+  let select_system_setting_sql = Mql_sql.read [%blob "./sql/select_system_setting.sql"]
+
   let select_system_setting () =
-    Pgsql_io.Typed_sql.(
-      sql // Ret.jsonb /^ [%blob "./sql/select_system_setting.sql"] /% Var.text "key")
+    Pgsql_io.Typed_sql.(sql // Ret.jsonb /^ select_system_setting_sql /% Var.text "key")
+
+  let upsert_system_setting_sql = Mql_sql.read [%blob "./sql/upsert_system_setting.sql"]
 
   let upsert_system_setting () =
-    Pgsql_io.Typed_sql.(
-      sql /^ [%blob "./sql/upsert_system_setting.sql"] /% Var.text "key" /% Var.json "value")
+    Pgsql_io.Typed_sql.(sql /^ upsert_system_setting_sql /% Var.text "key" /% Var.json "value")
 end
 
 let fetch key db =

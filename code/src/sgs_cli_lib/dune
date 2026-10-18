@@ -9,6 +9,8 @@
   logs.cli
   logs.threaded
   mirage-crypto-rng.unix
+  mql
+  mql_sql
   sg_caps
   sg_caps_json
   sg_caps_trie

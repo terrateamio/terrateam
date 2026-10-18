@@ -6,13 +6,17 @@ let terrateam_github_action_workflow_path = ".github/workflows/terrateam.yml"
 let chunk_size = 500
 
 module Sql = struct
+  let insert_installation_repos_sql =
+    Mql_sql.read
+      "insert into github_installation_repositories (id, installation_id, owner, name, setup) \
+       select * from unnest($id, $installation_id, $owner, $name, $setup) on conflict (id) do \
+       update set (installation_id, owner, name, setup) = (excluded.installation_id, \
+       excluded.owner, excluded.name, excluded.setup)"
+
   let insert_installation_repos () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into github_installation_repositories (id, installation_id, owner, name, setup) \
-          select * from unnest($id, $installation_id, $owner, $name, $setup) on conflict (id) do \
-          update set (installation_id, owner, name, setup) = (excluded.installation_id, \
-          excluded.owner, excluded.name, excluded.setup)"
+      /^ insert_installation_repos_sql
       /% Var.(array (bigint "id"))
       /% Var.(array (bigint "installation_id"))
       /% Var.(str_array (text "owner"))

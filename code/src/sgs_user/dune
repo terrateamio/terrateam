@@ -18,6 +18,7 @@
   logs
   mirage-crypto-pk
   mirage-crypto-rng
+  mql_sql
   pgsql_io
   pgsql_pool
   ppx_deriving

@@ -20,7 +20,8 @@ module Metrics = struct
 end
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let select_installation_by_webhook_secret_sql =
+    Mql_sql.read [%blob "sql/select_installation_by_webhook_secret.sql"]
 
   let select_installation_by_webhook_secret () =
     Pgsql_io.Typed_sql.(
@@ -31,17 +32,22 @@ module Sql = struct
       //
       (* state *)
       Ret.text
-      /^ read [%blob "sql/select_installation_by_webhook_secret.sql"]
+      /^ select_installation_by_webhook_secret_sql
       /% Var.text "webhook_secret")
 
+  let update_installation_to_installed_sql =
+    Mql_sql.read [%blob "sql/update_installation_to_installed.sql"]
+
   let update_installation_to_installed () =
-    Pgsql_io.Typed_sql.(
-      sql /^ read [%blob "sql/update_installation_to_installed.sql"] /% Var.bigint "installation_id")
+    Pgsql_io.Typed_sql.(sql /^ update_installation_to_installed_sql /% Var.bigint "installation_id")
+
+  let insert_installation_repository_sql =
+    Mql_sql.read [%blob "sql/insert_installation_repository.sql"]
 
   let insert_installation_repository () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read [%blob "sql/insert_installation_repository.sql"]
+      /^ insert_installation_repository_sql
       /% Var.bigint "id"
       /% Var.bigint "installation_id"
       /% Var.text "owner"

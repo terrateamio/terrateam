@@ -12,6 +12,7 @@
   digestif
   logs
   mirage-crypto-rng
+  mql_sql
   pgsql_io
   pgsql_pool
   sg_caps_ops

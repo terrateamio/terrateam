@@ -120,6 +120,10 @@ module Account = struct
   module User = struct
     module Create = struct
       module Sql = struct
+        let select_user_by_name_sql =
+          Mql_sql.read
+            "select id from users where name = $name and type = 'user' order by created_at limit 1"
+
         (* --reuse-existing lookups: there is no UNIQUE on users.name nor on
            tenants.name, so repeated runs of [test accounts users create]
            accumulate rows. Picking the oldest row keeps the choice stable
@@ -131,9 +135,11 @@ module Account = struct
             //
             (* id *)
             Ret.uuid
-            /^ "select id from users where name = $name and type = 'user' order by created_at \
-                limit 1"
+            /^ select_user_by_name_sql
             /% Var.text "name")
+
+        let select_tenant_by_name_sql =
+          Mql_sql.read "select id from tenants where name = $name order by created_at limit 1"
 
         let select_tenant_by_name () =
           Pgsql_io.Typed_sql.(
@@ -141,15 +147,15 @@ module Account = struct
             //
             (* id *)
             Ret.uuid
-            /^ "select id from tenants where name = $name order by created_at limit 1"
+            /^ select_tenant_by_name_sql
             /% Var.text "name")
+
+        let set_user_password_sql =
+          Mql_sql.read "update users set password_hash = $password_hash where id = $user_id"
 
         let set_user_password () =
           Pgsql_io.Typed_sql.(
-            sql
-            /^ "update users set password_hash = $password_hash where id = $user_id"
-            /% Var.text "password_hash"
-            /% Var.uuid "user_id")
+            sql /^ set_user_password_sql /% Var.text "password_hash" /% Var.uuid "user_id")
       end
 
       module Args = struct
@@ -335,13 +341,15 @@ module Account = struct
     module Api_key = struct
       module Create = struct
         module Sql = struct
+          let select_user_id_by_email_sql = Mql_sql.read "select id from users where email = $email"
+
           let select_user_id_by_email () =
-            Pgsql_io.Typed_sql.(
-              sql // Ret.uuid /^ "select id from users where email = $email" /% Var.text "email")
+            Pgsql_io.Typed_sql.(sql // Ret.uuid /^ select_user_id_by_email_sql /% Var.text "email")
+
+          let select_user_id_by_id_sql = Mql_sql.read "select id from users where id = $id"
 
           let select_user_id_by_id () =
-            Pgsql_io.Typed_sql.(
-              sql // Ret.uuid /^ "select id from users where id = $id" /% Var.uuid "id")
+            Pgsql_io.Typed_sql.(sql // Ret.uuid /^ select_user_id_by_id_sql /% Var.uuid "id")
         end
 
         module Args = struct

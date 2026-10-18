@@ -27,4 +27,4 @@ select
     step,
     state
 from q
-{{where}}
+where $where

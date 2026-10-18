@@ -1,3 +1,12 @@
+let update_gitlab_token_sql =
+  Mql_sql.read "update gitlab_installations set access_token = $access_token_from_terrat_config"
+
+let insert_encryption_key_sql =
+  Mql_sql.read "insert into encryption_keys (rank, data) values(0, decode($data, 'base64'))"
+
+(* A long migration must not be timed out. *)
+let no_idle_tx_timeout_sql = Mql_sql.read "set idle_in_transaction_session_timeout = 0"
+
 module Migrate = struct
   type tx = Pgsql_io.t
 
@@ -10,29 +19,31 @@ module Migrate = struct
   type err =
     [ Pgsql_io.err
     | Pgsql_pool.err
+    | `Mql_err of Mql.Ast.err
     ]
 
-  let create_migrations_table_sql =
-    Pgsql_io.Typed_sql.(
-      sql
-      /^ "create table if not exists migrations (date timestamp default now(), name varchar(256) \
-          primary key)")
+  let create_migrations_table_sql_text =
+    Mql_sql.read
+      "create table if not exists migrations (date timestamp default now(), name varchar(256) \
+       primary key)"
 
-  let add_migration_sql =
-    Pgsql_io.Typed_sql.(sql /^ "insert into migrations (name) values($name)" /% Var.varchar "name")
+  let create_migrations_table_sql = Pgsql_io.Typed_sql.(sql /^ create_migrations_table_sql_text)
+  let add_migration_sql_text = Mql_sql.read "insert into migrations (name) values($name)"
+  let add_migration_sql = Pgsql_io.Typed_sql.(sql /^ add_migration_sql_text /% Var.varchar "name")
+
+  let get_migrations_sql_text =
+    Mql_sql.read "select name from migrations order by date asc for update"
 
   (* Get all the migrations but also lock the table so that no other migrations
      may happen at the same time. *)
-  let get_migrations_sql =
-    Pgsql_io.Typed_sql.(
-      sql // Ret.varchar /^ "select name from migrations order by date asc for update")
+  let get_migrations_sql = Pgsql_io.Typed_sql.(sql // Ret.varchar /^ get_migrations_sql_text)
 
   let tx { config; storage; tx = _ } f =
     let open Abb.Future.Infix_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
         let open Abbs_fc.Infix_result_monad in
         (* Ensure we do not get timed out on a long operation *)
-        let idle_tx_sql = Pgsql_io.Typed_sql.(sql /^ "set idle_in_transaction_session_timeout=0") in
+        let idle_tx_sql = Pgsql_io.Typed_sql.(sql /^ no_idle_tx_timeout_sql) in
         Pgsql_io.Prepared_stmt.execute db idle_tx_sql
         >>= fun () ->
         let open Abb.Future.Infix_monad in
@@ -73,41 +84,60 @@ end
 
 module Mig = Data_mig.Make (Migrate)
 
-let run_sql ?(mode = `Tx) sql_contents { Migrate.config = _; storage; tx = db } =
-  let conn ~f =
-    let open Abbs_fc.Infix_result_monad in
-    match mode with
-    | `Tx -> f db >>| fun () -> `Sync
-    | `Notx -> Pgsql_pool.with_conn storage ~f >>| fun () -> `Sync
-    | `Async -> Abbs_fc.return_ok (`Async (fun _ -> Pgsql_pool.with_conn storage ~f))
-  in
-  let stmts =
-    sql_contents
-    |> CCString.split ~by:";\n\n"
-    |> CCList.filter CCFun.(CCString.trim %> CCString.is_empty %> not)
-  in
-  conn ~f:(fun db ->
-      Abbs_fc.List_result.iter
-        ~f:(fun stmt ->
-          let open Abbs_fc.Infix_result_monad in
-          let open Pgsql_io in
-          Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
-          (* Ensure we do not get timed out on a long operation *)
-          let idle_tx_sql = Typed_sql.(sql /^ "set idle_in_transaction_session_timeout=0") in
-          Prepared_stmt.execute db idle_tx_sql
-          >>= fun () ->
-          let stmt_sql = Typed_sql.(sql /^ Pgsql_io.clean_string stmt) in
-          Prepared_stmt.execute db stmt_sql)
-        stmts)
+(* [Terrat_migrations_ex_*] each name a closed error row, which does not hold
+   [`Mql_err].  Widen one into [Migrate.err] here, at the three places that call
+   into that library. *)
+let widen_ex_err f =
+  let open Abb.Future.Infix_monad in
+  f >>| CCResult.map_err (fun err -> (err :> Migrate.err))
+
+(* The statements of one migration.  {!Mql_sql} decides where a statement ends, so a
+   semicolon inside a function body or a string literal is not a boundary and the
+   file needs no blank line after a statement -- which is what the old
+   [CCString.split ~by:";\n\n"] needed, and why [Pgsql_io.split_statements] is
+   still written that way.  MQL also discards comments, so [Pgsql_io.clean_string]
+   has nothing left to remove.
+
+   What executes is what MQL renders from the AST, not the text of the file: every
+   migration makes a round trip through MQL, and one MQL cannot read is an
+   error. *)
+let read_stmts = Mql_sql.read_multi_result ~variables:false
+
+(* [sql_contents] is read here, where [run_sql] is applied to its blob, so the
+   whole migration stream is parsed once when [migrations] below is built. *)
+let run_sql ?(mode = `Tx) sql_contents =
+  let stmts = read_stmts sql_contents in
+  fun { Migrate.config = _; storage; tx = db } ->
+    let conn ~f =
+      let open Abbs_fc.Infix_result_monad in
+      match mode with
+      | `Tx -> f db >>| fun () -> `Sync
+      | `Notx -> Pgsql_pool.with_conn storage ~f >>| fun () -> `Sync
+      | `Async -> Abbs_fc.return_ok (`Async (fun _ -> Pgsql_pool.with_conn storage ~f))
+    in
+    match stmts with
+    | Ok stmts ->
+        conn ~f:(fun db ->
+            Abbs_fc.List_result.iter
+              ~f:(fun stmt ->
+                let open Abbs_fc.Infix_result_monad in
+                let open Pgsql_io in
+                Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
+                (* Ensure we do not get timed out on a long operation *)
+                let idle_tx_sql = Typed_sql.(sql /^ no_idle_tx_timeout_sql) in
+                Prepared_stmt.execute db idle_tx_sql
+                >>= fun () ->
+                let stmt_sql = Typed_sql.(sql /^ stmt) in
+                Prepared_stmt.execute db stmt_sql)
+              stmts)
+    | Error err -> Abbs_fc.return_err (`Mql_err err)
 
 let add_encryption_key { Migrate.config = _; storage = _; tx = db } =
   let open Abbs_fc.Infix_result_monad in
   let key = Mirage_crypto_rng.generate 64 in
   let insert_encryption_key =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ "insert into encryption_keys (rank, data) values(0, decode($data, 'base64'))"
-      /% Var.(ud (text "data") Base64.encode_exn))
+      sql /^ insert_encryption_key_sql /% Var.(ud (text "data") Base64.encode_exn))
   in
   Pgsql_io.Prepared_stmt.execute db insert_encryption_key key >>| fun () -> `Sync
 
@@ -116,9 +146,7 @@ let add_gitlab_token_from_config { Migrate.config; storage = _; tx = db } =
   let module Gc = Terrat_config.Gitlab in
   let add_gitlab_token_from_config () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ "update gitlab_installations set access_token = $access_token_from_terrat_config"
-      /% Var.text "access_token_from_terrat_config")
+      sql /^ update_gitlab_token_sql /% Var.text "access_token_from_terrat_config")
   in
   match Terrat_config.gitlab config with
   | Some gc ->
@@ -207,7 +235,8 @@ let migrations =
     ("add-repo-tree-id-column", run_sql [%blob "migrations/2025-05-13-add-repo-tree-id-column.sql"]);
     ( "refactor-fill-in-missing-core-ids",
       fun { Migrate.config; storage; tx = _ } ->
-        Abbs_fc.return_ok (`Async (fun _ -> Terrat_migrations_ex_150.fill_in_all (config, storage)))
+        Abbs_fc.return_ok
+          (`Async (fun _ -> widen_ex_err (Terrat_migrations_ex_150.fill_in_all (config, storage))))
     );
     ( "refactor-remove-null-constraints-on-core-tables",
       run_sql [%blob "migrations/2025-05-19-refactor-remove-null-constraints.sql"] );
@@ -233,7 +262,8 @@ let migrations =
       run_sql [%blob "migrations/2025-07-07-refactor-github-dirspace-locking-phase-2.sql"] );
     ( "refactor-github-dirspace-locking-phase-3.1",
       fun { Migrate.config; storage; tx = _ } ->
-        Abbs_fc.return_ok (`Async (fun _ -> Terrat_migrations_ex_568.run_github (config, storage)))
+        Abbs_fc.return_ok
+          (`Async (fun _ -> widen_ex_err (Terrat_migrations_ex_568.run_github (config, storage))))
     );
     ( "refactor-gihtub-dirspace-locking-phase-3.2",
       run_sql [%blob "migrations/2025-07-09-refactor-github-dirspace-locking-phase-3.sql"] );
@@ -241,7 +271,8 @@ let migrations =
       run_sql [%blob "migrations/2025-07-14-refactor-gitlab-dirspace-locking-phase-1.sql"] );
     ( "refactor-gitlab-dirspace-locking-phase-2",
       fun { Migrate.config; storage; tx = _ } ->
-        Abbs_fc.return_ok (`Async (fun _ -> Terrat_migrations_ex_568.run_gitlab (config, storage)))
+        Abbs_fc.return_ok
+          (`Async (fun _ -> widen_ex_err (Terrat_migrations_ex_568.run_gitlab (config, storage))))
     );
     ( "refactor-gitlab-dirspace-locking-phase-3",
       run_sql [%blob "migrations/2025-07-14-refactor-gitlab-dirspace-locking-phase-3.sql"] );

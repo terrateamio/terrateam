@@ -8,6 +8,7 @@
   hcl_parser_value
   hcl_parser_value_json
   logs
+  mql_sql
   pgsql_io
   sg_caps_json
   sg_caps_legacy_conversion

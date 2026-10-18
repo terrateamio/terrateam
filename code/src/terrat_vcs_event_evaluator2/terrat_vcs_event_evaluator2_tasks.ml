@@ -3018,6 +3018,7 @@ struct
             | `Closed
             | #Pgsql_io.err
             | #Pgsql_pool.err
+            | `Mql_err _
             | `Missing_dep_err _
             | `Msg_err _
             | `Unexpected_err _

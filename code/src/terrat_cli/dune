@@ -6,6 +6,7 @@
   logs.cli
   logs.threaded
   mirage-crypto-rng.unix
+  mql
   terrat
   terrat_build_info
   terrat_github))

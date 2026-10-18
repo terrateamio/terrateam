@@ -1,6 +1,7 @@
 module Sql = struct
   let change_dirspaces_update_sql =
-    {|
+    Mql_sql.read
+      {|
      with limited as (
        select * from change_dirspaces where repo is null limit 10000
      )
@@ -15,12 +16,15 @@ module Sql = struct
 
   let change_dirspaces_update = Pgsql_io.Typed_sql.(sql /^ change_dirspaces_update_sql)
 
+  let change_dirspaces_while__sql =
+    Mql_sql.read "select repo from change_dirspaces where repo is null limit 1"
+
   let change_dirspaces_while_ =
-    Pgsql_io.Typed_sql.(
-      sql // Ret.(option uuid) /^ "select repo from change_dirspaces where repo is null limit 1")
+    Pgsql_io.Typed_sql.(sql // Ret.(option uuid) /^ change_dirspaces_while__sql)
 
   let code_indexes_update_sql =
-    {|
+    Mql_sql.read
+      {|
      with limited as (
        select * from code_indexes where installation is null limit 10000
      )
@@ -35,14 +39,14 @@ module Sql = struct
 
   let code_indexes_update = Pgsql_io.Typed_sql.(sql /^ code_indexes_update_sql)
 
-  let code_indexes_while_ =
-    Pgsql_io.Typed_sql.(
-      sql
-      // Ret.(option uuid)
-      /^ "select installation from code_indexes where installation is null limit 1")
+  let code_indexes_while__sql =
+    Mql_sql.read "select installation from code_indexes where installation is null limit 1"
+
+  let code_indexes_while_ = Pgsql_io.Typed_sql.(sql // Ret.(option uuid) /^ code_indexes_while__sql)
 
   let drift_schedules_update_sql =
-    {|
+    Mql_sql.read
+      {|
      with limited as (
        select * from drift_schedules where repo is null limit 10000
      )
@@ -57,12 +61,15 @@ module Sql = struct
 
   let drift_schedules_update = Pgsql_io.Typed_sql.(sql /^ drift_schedules_update_sql)
 
+  let drift_schedules_while__sql =
+    Mql_sql.read "select repo from drift_schedules where repo is null limit 1"
+
   let drift_schedules_while_ =
-    Pgsql_io.Typed_sql.(
-      sql // Ret.(option uuid) /^ "select repo from drift_schedules where repo is null limit 1")
+    Pgsql_io.Typed_sql.(sql // Ret.(option uuid) /^ drift_schedules_while__sql)
 
   let drift_unlocks_update_sql =
-    {|
+    Mql_sql.read
+      {|
      with limited as (
        select * from drift_unlocks where repo is null limit 10000
      )
@@ -77,12 +84,15 @@ module Sql = struct
 
   let drift_unlocks_update = Pgsql_io.Typed_sql.(sql /^ drift_unlocks_update_sql)
 
+  let drift_unlocks_while__sql =
+    Mql_sql.read "select repo from drift_unlocks where repo is null limit 1"
+
   let drift_unlocks_while_ =
-    Pgsql_io.Typed_sql.(
-      sql // Ret.(option uuid) /^ "select repo from drift_unlocks where repo is null limit 1")
+    Pgsql_io.Typed_sql.(sql // Ret.(option uuid) /^ drift_unlocks_while__sql)
 
   let gate_approvals_update_sql =
-    {|
+    Mql_sql.read
+      {|
      with limited as (
        select * from gate_approvals where pull_request is null limit 10000
      )
@@ -97,14 +107,15 @@ module Sql = struct
 
   let gate_approvals_update = Pgsql_io.Typed_sql.(sql /^ gate_approvals_update_sql)
 
+  let gate_approvals_while__sql =
+    Mql_sql.read "select pull_request from gate_approvals where pull_request is null limit 1"
+
   let gate_approvals_while_ =
-    Pgsql_io.Typed_sql.(
-      sql
-      // Ret.(option uuid)
-      /^ "select pull_request from gate_approvals where pull_request is null limit 1")
+    Pgsql_io.Typed_sql.(sql // Ret.(option uuid) /^ gate_approvals_while__sql)
 
   let gates_update_sql =
-    {|
+    Mql_sql.read
+      {|
      with limited as (
        select * from gates where pull_request is null limit 10000
      )
@@ -119,14 +130,14 @@ module Sql = struct
 
   let gates_update = Pgsql_io.Typed_sql.(sql /^ gates_update_sql)
 
-  let gates_while_ =
-    Pgsql_io.Typed_sql.(
-      sql
-      // Ret.(option uuid)
-      /^ "select pull_request from gates where pull_request is null limit 1")
+  let gates_while__sql =
+    Mql_sql.read "select pull_request from gates where pull_request is null limit 1"
+
+  let gates_while_ = Pgsql_io.Typed_sql.(sql // Ret.(option uuid) /^ gates_while__sql)
 
   let pull_request_unlocks_update_sql =
-    {|
+    Mql_sql.read
+      {|
      with limited as (
        select * from pull_request_unlocks where pull_request is null limit 10000
      )
@@ -141,14 +152,15 @@ module Sql = struct
 
   let pull_request_unlocks_update = Pgsql_io.Typed_sql.(sql /^ pull_request_unlocks_update_sql)
 
+  let pull_request_unlocks_while__sql =
+    Mql_sql.read "select pull_request from pull_request_unlocks where pull_request is null limit 1"
+
   let pull_request_unlocks_while_ =
-    Pgsql_io.Typed_sql.(
-      sql
-      // Ret.(option uuid)
-      /^ "select pull_request from pull_request_unlocks where pull_request is null limit 1")
+    Pgsql_io.Typed_sql.(sql // Ret.(option uuid) /^ pull_request_unlocks_while__sql)
 
   let repo_configs_update_sql =
-    {|
+    Mql_sql.read
+      {|
      with limited as (
        select * from repo_configs where installation is null limit 10000
      )
@@ -163,14 +175,14 @@ module Sql = struct
 
   let repo_configs_update = Pgsql_io.Typed_sql.(sql /^ repo_configs_update_sql)
 
-  let repo_configs_while_ =
-    Pgsql_io.Typed_sql.(
-      sql
-      // Ret.(option uuid)
-      /^ "select installation from repo_configs where installation is null limit 1")
+  let repo_configs_while__sql =
+    Mql_sql.read "select installation from repo_configs where installation is null limit 1"
+
+  let repo_configs_while_ = Pgsql_io.Typed_sql.(sql // Ret.(option uuid) /^ repo_configs_while__sql)
 
   let repo_trees_update_sql =
-    {|
+    Mql_sql.read
+      {|
      with limited as (
        select * from repo_trees where installation is null limit 10000
      )
@@ -185,14 +197,14 @@ module Sql = struct
 
   let repo_trees_update = Pgsql_io.Typed_sql.(sql /^ repo_trees_update_sql)
 
-  let repo_trees_while_ =
-    Pgsql_io.Typed_sql.(
-      sql
-      // Ret.(option uuid)
-      /^ "select installation from repo_trees where installation is null limit 1")
+  let repo_trees_while__sql =
+    Mql_sql.read "select installation from repo_trees where installation is null limit 1"
+
+  let repo_trees_while_ = Pgsql_io.Typed_sql.(sql // Ret.(option uuid) /^ repo_trees_while__sql)
 
   let work_manifests_repos_update_sql =
-    {|
+    Mql_sql.read
+      {|
      with limited as (
        select * from work_manifests where repo is null and pull_number is null limit 10000
      )
@@ -206,14 +218,16 @@ module Sql = struct
 
   let work_manifests_repos_update = Pgsql_io.Typed_sql.(sql /^ work_manifests_repos_update_sql)
 
+  let work_manifests_repos_while__sql =
+    Mql_sql.read
+      "select repo from work_manifests where repo is null and pull_number is null limit 1"
+
   let work_manifests_repos_while_ =
-    Pgsql_io.Typed_sql.(
-      sql
-      // Ret.(option uuid)
-      /^ "select repo from work_manifests where repo is null and pull_number is null limit 1")
+    Pgsql_io.Typed_sql.(sql // Ret.(option uuid) /^ work_manifests_repos_while__sql)
 
   let work_manifests_pull_requests_update_sql =
-    {|
+    Mql_sql.read
+      {|
      with limited as (
      select * from work_manifests where pull_request is null and pull_number is not null limit 10000
      )
@@ -233,7 +247,8 @@ module Sql = struct
     Pgsql_io.Typed_sql.(sql /^ work_manifests_pull_requests_update_sql)
 
   let work_manifests_pull_requets_while_sql =
-    {|
+    Mql_sql.read
+      {|
      select pull_request from work_manifests as wm
      inner join github_repositories_map as grm
        on grm.repository_id = wm.repository

@@ -23,22 +23,30 @@ module Logs = (val Logs.src_log src : Logs.LOG)
 module Http = Abb_curl.Make (Abb)
 
 module Sql = struct
+  let find_user_by_external_id_sql =
+    Mql_sql.read
+      "select id from users where auth_origin = $auth_origin and external_id = $external_id"
+
   let find_user_by_external_id () =
     Pgsql_io.Typed_sql.(
       sql
       // Ret.uuid
-      /^ "select id from users where auth_origin = $auth_origin and external_id = $external_id"
+      /^ find_user_by_external_id_sql
       /% Var.text "auth_origin"
       /% Var.text "external_id")
+
+  let create_user_sql =
+    Mql_sql.read
+      "insert into users (name, type, auth_origin, auth_config_hash, external_id, email, \
+       display_name, avatar_url, capability_trie, base_capability_trie) values ($name, 'user', \
+       $auth_origin, $auth_config_hash, $external_id, $email, $display_name, $avatar_url, \
+       $capability_trie, $capability_trie) returning id"
 
   let create_user () =
     Pgsql_io.Typed_sql.(
       sql
       // Ret.uuid
-      /^ "insert into users (name, type, auth_origin, auth_config_hash, external_id, email, \
-          display_name, avatar_url, capability_trie, base_capability_trie) values ($name, 'user', \
-          $auth_origin, $auth_config_hash, $external_id, $email, $display_name, $avatar_url, \
-          $capability_trie, $capability_trie) returning id"
+      /^ create_user_sql
       /% Var.text "name"
       /% Var.text "auth_origin"
       /% Var.text "auth_config_hash"
@@ -48,12 +56,12 @@ module Sql = struct
       /% Var.(option (text "avatar_url"))
       /% Var.json "capability_trie")
 
+  let update_user_avatar_sql =
+    Mql_sql.read "update users set avatar_url = $avatar_url where id = $user_id"
+
   let update_user_avatar () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ "update users set avatar_url = $avatar_url where id = $user_id"
-      /% Var.(option (text "avatar_url"))
-      /% Var.uuid "user_id")
+      sql /^ update_user_avatar_sql /% Var.(option (text "avatar_url")) /% Var.uuid "user_id")
 end
 
 (* User info returned from oauth2-proxy /oauth2/userinfo *)

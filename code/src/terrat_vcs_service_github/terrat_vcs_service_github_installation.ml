@@ -1,12 +1,12 @@
 let chunk_size = 500
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let insert_installation_repos_sql = Mql_sql.read [%blob "sql/upsert_installation_repos.sql"]
 
   let insert_installation_repos () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read [%blob "sql/upsert_installation_repos.sql"]
+      /^ insert_installation_repos_sql
       /% Var.(array (bigint "id"))
       /% Var.(array (bigint "installation_id"))
       /% Var.(str_array (text "owner"))

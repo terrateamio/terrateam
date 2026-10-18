@@ -24,7 +24,7 @@ let on_connect idle_tx_timeout conn =
      Pgsql_io.Prepared_stmt.execute
        conn
        Pgsql_io.Typed_sql.(
-         sql /^ Printf.sprintf "set idle_in_transaction_session_timeout='%s'" idle_tx_timeout)
+         sql /^ Mql_sql.set ~name:"idle_in_transaction_session_timeout" idle_tx_timeout)
      >>= function
      | Ok () -> Abb.Future.return ()
      | Error (#Pgsql_io.err as err) ->

@@ -48,13 +48,16 @@ module Metrics = struct
 end
 
 module Sql = struct
+  let verify_work_manifest_sql =
+    Mql_sql.read "select id from work_manifests where state = 'running' and id = $id"
+
   let verify_work_manifest =
     Pgsql_io.Typed_sql.(
       sql
       //
       (* id *)
       Ret.uuid
-      /^ "select id from work_manifests where state = 'running' and id = $id"
+      /^ verify_work_manifest_sql
       /% Var.uuid "id")
 end
 

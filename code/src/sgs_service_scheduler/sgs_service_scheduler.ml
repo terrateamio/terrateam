@@ -77,6 +77,8 @@ module Sched_s = struct
   end
 
   module Sql = struct
+    let claim_due_sql = Mql_sql.read [%blob "./sql/claim_due.sql"]
+
     let claim_due () =
       Pgsql_io.Typed_sql.(
         sql
@@ -92,10 +94,14 @@ module Sched_s = struct
         //
         (* data *)
         Ret.jsonb
-        /^ [%blob "./sql/claim_due.sql"])
+        /^ claim_due_sql)
+
+    let advance_last_run_at_sql = Mql_sql.read [%blob "./sql/advance_last_run_at.sql"]
 
     let advance_last_run_at () =
-      Pgsql_io.Typed_sql.(sql /^ [%blob "./sql/advance_last_run_at.sql"] /% Var.uuid "id")
+      Pgsql_io.Typed_sql.(sql /^ advance_last_run_at_sql /% Var.uuid "id")
+
+    let insert_schedule_sql = Mql_sql.read [%blob "./sql/insert_schedule.sql"]
 
     let insert_schedule () =
       Pgsql_io.Typed_sql.(
@@ -103,22 +109,25 @@ module Sched_s = struct
         //
         (* id *)
         Ret.uuid
-        /^ [%blob "./sql/insert_schedule.sql"]
+        /^ insert_schedule_sql
         /% Var.ud (Var.text "schedule") Schedule.to_string
         /% Var.text "kind"
         /% Var.json "data")
 
+    let update_schedule_sql = Mql_sql.read [%blob "./sql/update_schedule.sql"]
+
     let update_schedule () =
       Pgsql_io.Typed_sql.(
         sql
-        /^ [%blob "./sql/update_schedule.sql"]
+        /^ update_schedule_sql
         /% Var.ud (Var.text "schedule") Schedule.to_string
         /% Var.text "kind"
         /% Var.json "data"
         /% Var.uuid "id")
 
-    let delete_schedule () =
-      Pgsql_io.Typed_sql.(sql /^ [%blob "./sql/delete_schedule.sql"] /% Var.uuid "id")
+    let delete_schedule_sql = Mql_sql.read [%blob "./sql/delete_schedule.sql"]
+    let delete_schedule () = Pgsql_io.Typed_sql.(sql /^ delete_schedule_sql /% Var.uuid "id")
+    let select_schedule_by_id_sql = Mql_sql.read [%blob "./sql/select_schedule_by_id.sql"]
 
     let select_schedule_by_id () =
       Pgsql_io.Typed_sql.(
@@ -135,19 +144,21 @@ module Sched_s = struct
         //
         (* data *)
         Ret.jsonb
-        /^ [%blob "./sql/select_schedule_by_id.sql"]
+        /^ select_schedule_by_id_sql
         /% Var.uuid "id")
+
+    let upsert_task_sql = Mql_sql.read [%blob "./sql/upsert_task.sql"]
 
     let upsert_task () =
       Pgsql_io.Typed_sql.(
         sql
-        /^ [%blob "./sql/upsert_task.sql"]
+        /^ upsert_task_sql
         /% Var.text "kind"
         /% Var.ud (Var.text "schedule") Schedule.to_string
         /% Var.json "data")
 
-    let miss_task () =
-      Pgsql_io.Typed_sql.(sql // Ret.integer /^ [%blob "./sql/miss_task.sql"] /% Var.uuid "id")
+    let miss_task_sql = Mql_sql.read [%blob "./sql/miss_task.sql"]
+    let miss_task () = Pgsql_io.Typed_sql.(sql // Ret.integer /^ miss_task_sql /% Var.uuid "id")
   end
 
   module Store = struct

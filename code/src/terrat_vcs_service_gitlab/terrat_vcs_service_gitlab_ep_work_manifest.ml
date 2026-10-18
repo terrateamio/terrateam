@@ -6,13 +6,16 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
   module Evaluator2 = Terrat_vcs_event_evaluator2.Make (P)
 
   module Sql = struct
+    let select_running_work_manifest_sql =
+      Mql_sql.read "select id from work_manifests where id = $id and state in ('queued', 'running')"
+
     let select_running_work_manifest () =
       Pgsql_io.Typed_sql.(
         sql
         //
         (* id *)
         Ret.uuid
-        /^ "select id from work_manifests where id = $id and state in ('queued', 'running')"
+        /^ select_running_work_manifest_sql
         /% Var.uuid "id")
   end
 
@@ -201,14 +204,17 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         end in
         CCFun.(P.of_yojson %> CCResult.to_opt)
 
+      let select_workspaces_sql =
+        Mql_sql.read
+          "select dirspaces from work_manifests where id = $id and state in ('queued', 'running')"
+
       let select_workspaces =
         Pgsql_io.Typed_sql.(
           sql
           //
           (* dirspaces *)
           Ret.(u json dirspaces)
-          /^ "select dirspaces from work_manifests where id = $id and state in ('queued', \
-              'running')"
+          /^ select_workspaces_sql
           /% Var.uuid "id")
     end
 
