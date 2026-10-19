@@ -18,8 +18,9 @@
     "pre-commit": "npm run type-check && npm run check-api-types && npm run knip",
     "quality-check": "npm run pre-commit",
     "knip": "knip",
-    "test": "npm run type-check && npm run check-api-types && npm run check && npm run knip",
-    "download-icons": "python3 scripts/download-icons.py"
+    "test": "npm run type-check && npm run check-api-types && npm run check && npm run knip && npm run test:unit",
+    "download-icons": "python3 scripts/download-icons.py",
+    "test:unit": "node --test 'src/**/*.test.ts'"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
