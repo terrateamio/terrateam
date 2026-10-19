@@ -1,10 +1,6 @@
 # Build output
 _build
-docs/dist/
 code/src/pricing_service/pricing-service
-
-# Generated types
-docs/.astro/
 
 # Dependencies
 node_modules/

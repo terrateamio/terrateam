@@ -1,0 +1,5 @@
+{
+  "title": "Governance",
+  "order": 7,
+  "description": "Govern Stategraph Orchestration with role-based access control, Gatekeeper approvals, drift detection, and centralized configuration."
+}

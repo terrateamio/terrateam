@@ -1,0 +1,5 @@
+{
+  "title": "External tools",
+  "order": 5,
+  "description": "Add OPA and Conftest policies, Infracost cost estimates, webhooks, AI integrations, and extra packages to Stategraph Orchestration runs."
+}

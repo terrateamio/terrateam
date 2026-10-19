@@ -1,0 +1,5 @@
+{
+  "title": "Operations",
+  "order": 2,
+  "description": "Operate a self-hosted Stategraph server: environment variables, upgrades, health checks, and metrics for observability."
+}

@@ -1,0 +1,5 @@
+{
+  "title": "Configuration keys",
+  "order": 1,
+  "description": "Every top-level key in the Stategraph Orchestration configuration file, with its type, default value, and examples."
+}

@@ -1,0 +1,5 @@
+{
+  "title": "Administration",
+  "order": 4,
+  "description": "Run and operate a self-hosted Stategraph server, and control who can sign in and what each user and token can do."
+}
