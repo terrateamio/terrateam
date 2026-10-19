@@ -5,20 +5,17 @@ module Fc = Abbs_fc
 module Common = Sgs_service_users_common
 
 module Sql = struct
+  let select_user_password_hash_sql = Mql_sql.read [%blob "./sql/select_user_password_hash.sql"]
+
   let select_user_password_hash () =
     Pgsql_io.Typed_sql.(
-      sql
-      // Ret.(option text)
-      /^ [%blob "./sql/select_user_password_hash.sql"]
-      /% Var.uuid "user_id")
+      sql // Ret.(option text) /^ select_user_password_hash_sql /% Var.uuid "user_id")
+
+  let update_user_password_sql = Mql_sql.read [%blob "./sql/update_user_password.sql"]
 
   let update_user_password () =
     Pgsql_io.Typed_sql.(
-      sql
-      // Ret.uuid
-      /^ [%blob "./sql/update_user_password.sql"]
-      /% Var.uuid "user_id"
-      /% Var.text "password_hash")
+      sql // Ret.uuid /^ update_user_password_sql /% Var.uuid "user_id" /% Var.text "password_hash")
 end
 
 let run' db ~actor_caps user target_user_id current_password new_password =

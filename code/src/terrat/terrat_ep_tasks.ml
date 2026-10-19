@@ -1,4 +1,9 @@
 module Sql = struct
+  let select_task_sql =
+    Mql_sql.read
+      "select name, state, to_char(updated_at, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') from tasks where \
+       id = $id and user_id = $user_id"
+
   let select_task () =
     Pgsql_io.Typed_sql.(
       sql
@@ -12,8 +17,7 @@ module Sql = struct
       //
       (* updated_at *)
       Ret.text
-      /^ "select name, state, to_char(updated_at, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') from tasks \
-          where id = $id and user_id = $user_id"
+      /^ select_task_sql
       /% Var.uuid "id"
       /% Var.uuid "user_id")
 end

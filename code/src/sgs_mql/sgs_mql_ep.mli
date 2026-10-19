@@ -77,4 +77,11 @@ module Tests : sig
   val response_json : Yojson.Safe.t
 
   val response_json_orchestration : Yojson.Safe.t
+
+  (** The HTTP status that {!run} gives for an error of the MQL core. A query from outside that MQL
+      or the compiler refuses is the caller's fault and gets [`Bad_request]. An audit failure or a
+      database failure is a fault of the server and gets [`Internal_server_error]. The integration
+      tests call the MQL core directly, thus they use this function to check that no adversarial
+      query gets a 500. *)
+  val status_of_err : [< Sgs_mql_paged.query_err ] -> Cohttp.Code.status_code
 end

@@ -56,23 +56,20 @@ module Provider :
 
   module Gate = struct
     module Sql = struct
-      let read s =
-        s
-        |> CCString.split_on_char '\n'
-        |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
-        |> CCString.concat "\n"
-
       let gate = CCFun.(Terrat_gate.of_yojson %> CCResult.to_opt)
+      let insert_gate_approval_sql = Mql_sql.read [%blob "sql/insert_gate_approval.sql"]
 
       let insert_gate_approval =
         Pgsql_io.Typed_sql.(
           sql
-          /^ read [%blob "sql/insert_gate_approval.sql"]
+          /^ insert_gate_approval_sql
           /% Var.text "approver"
           /% Var.text "token"
           /% Var.bigint "repository"
           /% Var.bigint "pull_number"
           /% Var.text "sha")
+
+      let select_gate_approvals_sql = Mql_sql.read [%blob "sql/select_gate_approvals.sql"]
 
       let select_gate_approvals =
         Pgsql_io.Typed_sql.(
@@ -83,9 +80,11 @@ module Provider :
           //
           (* approver *)
           Ret.text
-          /^ read [%blob "sql/select_gate_approvals.sql"]
+          /^ select_gate_approvals_sql
           /% Var.bigint "repository"
           /% Var.bigint "pull_number")
+
+      let select_gates_sql = Mql_sql.read [%blob "sql/select_gates.sql"]
 
       let select_gates =
         Pgsql_io.Typed_sql.(
@@ -105,7 +104,7 @@ module Provider :
           //
           (* workspace *)
           Ret.text
-          /^ read [%blob "sql/select_gates.sql"]
+          /^ select_gates_sql
           /% Var.bigint "repository"
           /% Var.bigint "pull_number"
           /% Var.(str_array (text "dirs"))

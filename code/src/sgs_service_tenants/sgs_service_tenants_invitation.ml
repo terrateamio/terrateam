@@ -138,6 +138,8 @@ type preview = {
 }
 
 module Sql = struct
+  let insert_invitation_sql = Mql_sql.read [%blob "./sql/insert_tenant_invitation.sql"]
+
   let insert_invitation () =
     Pgsql_io.Typed_sql.(
       sql
@@ -150,7 +152,7 @@ module Sql = struct
       //
       (* expires_at *)
       Ret.text
-      /^ [%blob "./sql/insert_tenant_invitation.sql"]
+      /^ insert_invitation_sql
       /% Var.text "email"
       /% Var.smallint "ttl_hours"
       /% Var.uuid "invited_by"
@@ -158,12 +160,12 @@ module Sql = struct
       /% Var.uuid "tenant_id"
       /% Var.bytea "token_hash")
 
+  let expire_stale_sql = Mql_sql.read [%blob "./sql/expire_stale_tenant_invitations.sql"]
+
   let expire_stale () =
-    Pgsql_io.Typed_sql.(
-      sql
-      /^ [%blob "./sql/expire_stale_tenant_invitations.sql"]
-      /% Var.uuid "tenant_id"
-      /% Var.text "email")
+    Pgsql_io.Typed_sql.(sql /^ expire_stale_sql /% Var.uuid "tenant_id" /% Var.text "email")
+
+  let consume_sql = Mql_sql.read [%blob "./sql/consume_tenant_invitation.sql"]
 
   let consume () =
     Pgsql_io.Typed_sql.(
@@ -180,9 +182,11 @@ module Sql = struct
       //
       (* role *)
       Ret.text
-      /^ [%blob "./sql/consume_tenant_invitation.sql"]
+      /^ consume_sql
       /% Var.uuid "user_id"
       /% Var.bytea "token_hash")
+
+  let select_by_token_sql = Mql_sql.read [%blob "./sql/select_tenant_invitation_by_token.sql"]
 
   let select_by_token () =
     Pgsql_io.Typed_sql.(
@@ -214,8 +218,10 @@ module Sql = struct
       //
       (* inviter name *)
       Ret.text
-      /^ [%blob "./sql/select_tenant_invitation_by_token.sql"]
+      /^ select_by_token_sql
       /% Var.bytea "token_hash")
+
+  let select_by_tenant_sql = Mql_sql.read [%blob "./sql/select_tenant_invitations.sql"]
 
   let select_by_tenant () =
     Pgsql_io.Typed_sql.(
@@ -253,11 +259,13 @@ module Sql = struct
       //
       (* total_count *)
       Ret.bigint
-      /^ [%blob "./sql/select_tenant_invitations.sql"]
+      /^ select_by_tenant_sql
       /% Var.uuid "tenant_id"
       /% Var.(option (text "cursor"))
       /% Var.(option (uuid "cursor_id"))
       /% Var.smallint "limit")
+
+  let select_for_update_sql = Mql_sql.read [%blob "./sql/select_tenant_invitation_for_update.sql"]
 
   let select_for_update () =
     Pgsql_io.Typed_sql.(
@@ -283,9 +291,11 @@ module Sql = struct
       //
       (* tenant name *)
       Ret.text
-      /^ [%blob "./sql/select_tenant_invitation_for_update.sql"]
+      /^ select_for_update_sql
       /% Var.uuid "id"
       /% Var.uuid "tenant_id")
+
+  let revoke_sql = Mql_sql.read [%blob "./sql/revoke_tenant_invitation.sql"]
 
   let revoke () =
     Pgsql_io.Typed_sql.(
@@ -293,10 +303,12 @@ module Sql = struct
       //
       (* id *)
       Ret.uuid
-      /^ [%blob "./sql/revoke_tenant_invitation.sql"]
+      /^ revoke_sql
       /% Var.uuid "user_id"
       /% Var.uuid "id"
       /% Var.uuid "tenant_id")
+
+  let rotate_sql = Mql_sql.read [%blob "./sql/rotate_tenant_invitation.sql"]
 
   let rotate () =
     Pgsql_io.Typed_sql.(
@@ -310,18 +322,19 @@ module Sql = struct
       //
       (* expires_at *)
       Ret.text
-      /^ [%blob "./sql/rotate_tenant_invitation.sql"]
+      /^ rotate_sql
       /% Var.bytea "token_hash"
       /% Var.smallint "ttl_hours"
       /% Var.uuid "id"
       /% Var.uuid "tenant_id")
 
+  let record_send_sql = Mql_sql.read [%blob "./sql/record_tenant_invitation_send.sql"]
+
   let record_send () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ [%blob "./sql/record_tenant_invitation_send.sql"]
-      /% Var.(option (boolean "delivered"))
-      /% Var.uuid "id")
+      sql /^ record_send_sql /% Var.(option (boolean "delivered")) /% Var.uuid "id")
+
+  let count_by_inviter_sql = Mql_sql.read [%blob "./sql/count_tenant_invitations_by_inviter.sql"]
 
   let count_by_inviter () =
     Pgsql_io.Typed_sql.(
@@ -329,9 +342,11 @@ module Sql = struct
       //
       (* count *)
       Ret.bigint
-      /^ [%blob "./sql/count_tenant_invitations_by_inviter.sql"]
+      /^ count_by_inviter_sql
       /% Var.uuid "invited_by"
       /% Var.smallint "hours")
+
+  let count_pending_sql = Mql_sql.read [%blob "./sql/count_pending_tenant_invitations.sql"]
 
   let count_pending () =
     Pgsql_io.Typed_sql.(
@@ -339,7 +354,7 @@ module Sql = struct
       //
       (* count *)
       Ret.bigint
-      /^ [%blob "./sql/count_pending_tenant_invitations.sql"]
+      /^ count_pending_sql
       /% Var.uuid "tenant_id")
 end
 

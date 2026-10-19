@@ -9,15 +9,17 @@ type t = {
 }
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let insert_installation_sql = Mql_sql.read [%blob "sql/insert_gitlab_installation.sql"]
 
   let insert_installation () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read [%blob "sql/insert_gitlab_installation.sql"]
+      /^ insert_installation_sql
       /% Var.bigint "group_id"
       /% Var.text "name"
       /% Var.text "access_token")
+
+  let select_provisioned_sql = Mql_sql.read [%blob "sql/select_gitlab_installation_provisioned.sql"]
 
   let select_provisioned () =
     Pgsql_io.Typed_sql.(
@@ -31,7 +33,7 @@ module Sql = struct
       //
       (* core_id *)
       Ret.uuid
-      /^ read [%blob "sql/select_gitlab_installation_provisioned.sql"]
+      /^ select_provisioned_sql
       /% Var.bigint "group_id")
 end
 

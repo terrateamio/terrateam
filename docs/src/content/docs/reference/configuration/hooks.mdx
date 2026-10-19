@@ -52,6 +52,7 @@ The `run` hook type executes a command from the directory that Terrateam is oper
 | cmd | List | Command to run. |
 | run_on | String | Run the command depending on the state of the workflow.  Options are `success`, `failure`, or `always`. Default is `success`. |
 | capture_output | Boolean | When set to `true`, command output is recorded.  Secrets are masked with `***`.  Default is `false`. |
+| log_output | Boolean | Set to `false` to keep the command output out of the CI job log. `capture_output` still records it. Default is `true`. |
 | env | Object | Environment variables to set for this execution. Object keys are environment variable names and the value is a string. |
 | ignore_errors | Boolean | Set to `true` if failure should be ignored.  Default is `false`, except when `on_error` contains a gate, in which case it is `true`. |
 | visible_on | String | When the output of the command should be visible in a PR comment or the UI.  Options are `always`, `failure`, `success`.  Default is `failure`. |

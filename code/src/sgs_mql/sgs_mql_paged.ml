@@ -8,20 +8,36 @@ module Sql = struct
      parse time, not just terrateam ones. *)
   let terrateam_ctes = ",\n" ^ [%blob "./sql/select_mql_page_terrateam_ctes.sql"]
 
-  (* The page query per variant, exactly as sent modulo [{{q}}]. *)
+  (* The page query per variant, exactly as sent modulo the body of its [q] CTE. *)
   let select_page_sql ~orchestration =
     CCString.replace
       ~sub:"{{terrateam_ctes}}"
       ~by:(if orchestration then terrateam_ctes else "")
       [%blob "./sql/select_mql_page.sql"]
 
-  let select_page ~orchestration q =
+  (* The file writes a placeholder query in its [q] CTE, thus MQL reads the whole wrapper when the
+     module loads.  Each variant is read once here, because the variant a request takes is fixed by
+     the configuration.  The query of the user is a tree already, and it takes the place of the
+     placeholder.  A CTE body is a query and not an expression, thus a [$name] variable cannot hold
+     its place. *)
+  let select_mql_page = Mql_sql.read_ast (select_page_sql ~orchestration:false)
+  let select_mql_page_orchestration = Mql_sql.read_ast (select_page_sql ~orchestration:true)
+
+  let select_page_query ~orchestration q =
+    let open CCResult.Infix in
+    Mql_sql.subst_cte
+      ~name:"q"
+      q
+      (if orchestration then select_mql_page_orchestration else select_mql_page)
+    >>= Mql.Ast.to_string
+
+  let select_page q =
     Pgsql_io.Typed_sql.(
       sql
       //
       (* row *)
       Ret.jsonb
-      /^ CCString.replace ~sub:"{{q}}" ~by:q (select_page_sql ~orchestration)
+      /^ q
       /% Var.(ud (uuid "user_id") Sgs_user.id)
       /% Var.(str_array (text "texts"))
       /% Var.(str_array (json "json"))
@@ -32,14 +48,16 @@ module Sql = struct
       /% Var.(array (timestamptz "timestamptzs")))
 
   let set_timeout timeout =
-    Pgsql_io.Typed_sql.(sql /^ Printf.sprintf "set local statement_timeout = '%s'" timeout)
+    Pgsql_io.Typed_sql.(sql /^ Mql_sql.set ~local:true ~name:"statement_timeout" timeout)
 
-  let set_timezone () = Pgsql_io.Typed_sql.(sql /^ "set local timezone = $tz" /% Var.text "tz")
+  let set_timezone_sql = Mql_sql.read "set local timezone = $tz"
+  let set_timezone () = Pgsql_io.Typed_sql.(sql /^ set_timezone_sql /% Var.text "tz")
+  let disable_nestloop_sql = Mql_sql.read "set local enable_nestloop = off"
 
   (* #2469: The row estimates for foreign tables are bad. Then the planner
      selects nested loops that send one remote query for each outer row. This
      is necessary only because the foreign data wrapper abstraction is leaky. *)
-  let disable_nestloop () = Pgsql_io.Typed_sql.(sql /^ "set local enable_nestloop = off")
+  let disable_nestloop () = Pgsql_io.Typed_sql.(sql /^ disable_nestloop_sql)
 end
 
 (* The MQL table allow-list.
@@ -122,7 +140,6 @@ let stategraph_tables =
             make ~name:"dependencies" ~type_:(Type_.Complex "text[]") ();
             make ~name:"deposed" ~type_:Type_.Text ();
             make ~name:"fq_address" ~type_:Type_.Text ();
-            make ~name:"fq_resource_address" ~type_:Type_.Text ();
             make ~name:"identity" ~type_:Type_.Jsonb ();
             make ~name:"identity_schema_version" ~type_:Type_.Integer ();
             make ~name:"index_key" ~type_:Type_.Jsonb ();
@@ -570,7 +587,11 @@ let build_query_ast config ast page =
   let limit = CCInt.min max_limit @@ CCOption.get_or ~default:default_limit @@ Mql.Ast.limit ast in
   let fetch_limit = limit + 1 + if CCOption.is_some page then 1 else 0 in
   Abb.Future.return
-  @@ Mql_to_pgsql.of_mql ~max_limit:fetch_limit ~schema:(schema_for config)
+  @@ Mql_to_pgsql.of_mql
+       ~max_limit:fetch_limit
+       ~func_allow_list:Mql_to_pgsql.default_func_allow_list
+       ~cast_allow_list:Mql_to_pgsql.default_cast_allow_list
+       ~schema:(schema_for config)
   @@ Mql.Ast.set_limit fetch_limit ast
   >>| fun query -> (query, limit, limit_defaulted)
 
@@ -579,6 +600,11 @@ let build_query_ast config ast page =
    raw rows fetched from the database. *)
 let execute_query config storage user tz query =
   let open Abbs_fc.Infix_result_monad in
+  Abb.Future.return
+    (Sql.select_page_query
+       ~orchestration:(Sgs_config.orchestration_enabled config)
+       (Mql_to_pgsql.query query))
+  >>= fun query_str ->
   Pgsql_pool.with_conn storage ~f:(fun db ->
       Pgsql_io.tx db ~f:(fun () ->
           Pgsql_io.Prepared_stmt.execute db (Sql.set_timeout (Sgs_config.statement_timeout config))
@@ -597,9 +623,7 @@ let execute_query config storage user tz query =
           >>= fun () ->
           Pgsql_io.Prepared_stmt.fetch
             db
-            (Sql.select_page
-               ~orchestration:(Sgs_config.orchestration_enabled config)
-               (Mql.Ast.to_string @@ Mql_to_pgsql.query query))
+            (Sql.select_page query_str)
             ~f:CCFun.id
             user
             (CCVector.to_list @@ Mql_to_pgsql.texts query)
@@ -660,8 +684,16 @@ let decide_pagination ~excessive_rows ~page rows query =
       else
         match err with
         | `Column_not_in_row_err col -> `Paginate_err ("COLUMN_NOT_IN_ROW " ^ col)
+        (* Ordering by a jsonb/bool/array column: there is no scalar to build a
+           cursor from. The rows are still correct, so the page is returned with
+           a pagination-error header rather than the whole request failing. *)
+        | `Cursor_value_not_scalar_err (col, _) -> `Paginate_err ("CURSOR_VALUE_NOT_SCALAR " ^ col)
         | `Order_by_col_not_identifier_err e ->
-            `Paginate_err ("ORDER_BY_COL_NOT_IDENTIFIER " ^ Mql.Ast.expr_to_string e))
+            (* Diagnostic only, so fall back to the AST when the expression has
+               no rendering rather than failing the whole response. *)
+            `Paginate_err
+              ("ORDER_BY_COL_NOT_IDENTIFIER "
+              ^ CCResult.get_or ~default:(Mql_ast.show_expr e) (Mql.Ast.expr_to_string e)))
 
 type pagination_decision =
   [ `Paginate of string option * string option
@@ -682,8 +714,10 @@ type page = {
 type query_err =
   [ Mql_to_pgsql.apply_page_err
   | Mql_to_pgsql.of_mql_err
+  | Mql_to_pgsql.audit_err
   | Pgsql_io.err
   | Pgsql_pool.err
+  | Mql.Ast.err
   ]
 [@@deriving show]
 
@@ -780,6 +814,13 @@ let respond ~src ~tag ~decode_row ~body ~page config storage user ast ctx =
       bad_request ~id:"APPLY_PAGE_ERR" ~data:(Some (Mql_to_pgsql.show_apply_page_err err)) ctx
   | Error (#Mql_to_pgsql.of_mql_err as err) ->
       respond_500 "OF_MQL_ERR" Mql_to_pgsql.pp_of_mql_err err
+  (* The endpoint builds its own AST, so a query with no rendering is our bug,
+     not the caller's: a 500. *)
+  | Error (#Mql.Ast.err as err) -> respond_500 "MQL_RENDER_ERR" Mql.Ast.pp_err err
+  (* Likewise the compiler's post-condition audit rejecting the compiler's own
+     output -- a guard did not fire. *)
+  | Error (#Mql_to_pgsql.audit_err as err) ->
+      respond_500 "MQL_AUDIT_ERR" Mql_to_pgsql.pp_audit_err err
   | Error `Statement_timeout ->
       Logs.warn ~src (fun m -> m "%s : %s" token (label "TIMEOUT"));
       bad_request ~id:"TIMEOUT_ERR" ~data:None ctx
@@ -788,4 +829,5 @@ let respond ~src ~tag ~decode_row ~body ~page config storage user ast ctx =
 
 module Tests = struct
   let select_page_sql = Sql.select_page_sql
+  let select_page_query = Sql.select_page_query
 end

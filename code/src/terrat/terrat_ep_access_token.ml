@@ -9,6 +9,9 @@ let ensure_has_access_token_id user ctx =
 
 module Refresh = struct
   module Sql = struct
+    let select_capabilities_sql =
+      Mql_sql.read "select capabilities from access_tokens where id = $access_token_id"
+
     let select_capabilities () =
       Pgsql_io.Typed_sql.(
         sql
@@ -16,7 +19,7 @@ module Refresh = struct
         (* capabilities *)
         Ret.(
           option (u json CCFun.([%of_yojson: Terrat_user.Capability.t list] %> CCOption.of_result)))
-        /^ "select capabilities from access_tokens where id = $access_token_id"
+        /^ select_capabilities_sql
         /% Var.uuid "access_token_id")
   end
 

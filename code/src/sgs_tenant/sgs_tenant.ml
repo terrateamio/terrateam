@@ -53,14 +53,18 @@ let valid_name name =
   (not (CCString.is_empty name)) && CCString.length name <= max_name_length
 
 module Sql = struct
+  let insert_tenant_sql = Mql_sql.read [%blob "./sql/insert_tenant.sql"]
+
   let insert_tenant () =
     Pgsql_io.Typed_sql.(
       sql
       //
       (* id *)
       Ret.uuid
-      /^ [%blob "./sql/insert_tenant.sql"]
+      /^ insert_tenant_sql
       /% Var.text "name")
+
+  let insert_tenant_if_name_free_sql = Mql_sql.read [%blob "./sql/insert_tenant_if_name_free.sql"]
 
   let insert_tenant_if_name_free () =
     Pgsql_io.Typed_sql.(
@@ -68,12 +72,15 @@ module Sql = struct
       //
       (* id *)
       Ret.uuid
-      /^ [%blob "./sql/insert_tenant_if_name_free.sql"]
+      /^ insert_tenant_if_name_free_sql
       /% Var.text "name")
 
+  let add_user_sql = Mql_sql.read [%blob "./sql/insert_tenant_user.sql"]
+
   let add_user () =
-    Pgsql_io.Typed_sql.(
-      sql /^ [%blob "./sql/insert_tenant_user.sql"] /% Var.uuid "tenant_id" /% Var.uuid "user_id")
+    Pgsql_io.Typed_sql.(sql /^ add_user_sql /% Var.uuid "tenant_id" /% Var.uuid "user_id")
+
+  let select_by_user_id_sql = Mql_sql.read [%blob "./sql/select_tenants_by_user_id.sql"]
 
   let select_by_user_id () =
     Pgsql_io.Typed_sql.(
@@ -84,8 +91,10 @@ module Sql = struct
       //
       (* name *)
       Ret.text
-      /^ [%blob "./sql/select_tenants_by_user_id.sql"]
+      /^ select_by_user_id_sql
       /% Var.uuid "user_id")
+
+  let select_user_id_by_tenant_id_sql = Mql_sql.read [%blob "./sql/select_user_id_by_tenant_id.sql"]
 
   let select_user_id_by_tenant_id () =
     Pgsql_io.Typed_sql.(
@@ -93,9 +102,11 @@ module Sql = struct
       //
       (* user_id *)
       Ret.uuid
-      /^ [%blob "./sql/select_user_id_by_tenant_id.sql"]
+      /^ select_user_id_by_tenant_id_sql
       /% Var.uuid "user_id"
       /% Var.uuid "tenant_id")
+
+  let select_by_name_sql = Mql_sql.read [%blob "./sql/select_tenant_by_name.sql"]
 
   let select_by_name () =
     Pgsql_io.Typed_sql.(
@@ -106,19 +117,21 @@ module Sql = struct
       //
       (* name *)
       Ret.text
-      /^ [%blob "./sql/select_tenant_by_name.sql"]
+      /^ select_by_name_sql
       /% Var.text "name")
+
+  let add_user_idempotent_sql = Mql_sql.read [%blob "./sql/insert_tenant_user_idempotent.sql"]
 
   let add_user_idempotent () =
     Pgsql_io.Typed_sql.(
-      sql
-      /^ [%blob "./sql/insert_tenant_user_idempotent.sql"]
-      /% Var.uuid "tenant_id"
-      /% Var.uuid "user_id")
+      sql /^ add_user_idempotent_sql /% Var.uuid "tenant_id" /% Var.uuid "user_id")
+
+  let delete_tenant_user_sql = Mql_sql.read [%blob "./sql/delete_tenant_user.sql"]
 
   let delete_tenant_user () =
-    Pgsql_io.Typed_sql.(
-      sql /^ [%blob "./sql/delete_tenant_user.sql"] /% Var.uuid "tenant_id" /% Var.uuid "user_id")
+    Pgsql_io.Typed_sql.(sql /^ delete_tenant_user_sql /% Var.uuid "tenant_id" /% Var.uuid "user_id")
+
+  let select_tenant_sql = Mql_sql.read [%blob "./sql/select_tenant.sql"]
 
   let select_tenant () =
     Pgsql_io.Typed_sql.(
@@ -129,8 +142,10 @@ module Sql = struct
       //
       (* name *)
       Ret.text
-      /^ [%blob "./sql/select_tenant.sql"]
+      /^ select_tenant_sql
       /% Var.uuid "tenant_id")
+
+  let select_tenant_for_update_sql = Mql_sql.read [%blob "./sql/select_tenant_for_update.sql"]
 
   let select_tenant_for_update () =
     Pgsql_io.Typed_sql.(
@@ -141,8 +156,10 @@ module Sql = struct
       //
       (* name *)
       Ret.text
-      /^ [%blob "./sql/select_tenant_for_update.sql"]
+      /^ select_tenant_for_update_sql
       /% Var.uuid "tenant_id")
+
+  let update_tenant_name_sql = Mql_sql.read [%blob "./sql/update_tenant_name.sql"]
 
   let update_tenant_name () =
     Pgsql_io.Typed_sql.(
@@ -153,9 +170,12 @@ module Sql = struct
       //
       (* name *)
       Ret.text
-      /^ [%blob "./sql/update_tenant_name.sql"]
+      /^ update_tenant_name_sql
       /% Var.text "name"
       /% Var.uuid "tenant_id")
+
+  let select_tenant_member_capabilities_sql =
+    Mql_sql.read [%blob "./sql/select_tenant_member_capabilities.sql"]
 
   let select_tenant_member_capabilities () =
     Pgsql_io.Typed_sql.(
@@ -163,8 +183,10 @@ module Sql = struct
       //
       (* capability_trie *)
       Sgs_user.caps_ret
-      /^ [%blob "./sql/select_tenant_member_capabilities.sql"]
+      /^ select_tenant_member_capabilities_sql
       /% Var.uuid "tenant_id")
+
+  let select_tenant_users_sql = Mql_sql.read [%blob "./sql/select_tenant_users.sql"]
 
   let select_tenant_users () =
     Pgsql_io.Typed_sql.(
@@ -193,11 +215,13 @@ module Sql = struct
       //
       (* total_count *)
       Ret.bigint
-      /^ [%blob "./sql/select_tenant_users.sql"]
+      /^ select_tenant_users_sql
       /% Var.uuid "tenant_id"
       /% Var.(option (text "cursor"))
       /% Var.(option (uuid "cursor_id"))
       /% Var.smallint "limit")
+
+  let select_tenant_member_sql = Mql_sql.read [%blob "./sql/select_tenant_member.sql"]
 
   let select_tenant_member () =
     Pgsql_io.Typed_sql.(
@@ -223,7 +247,7 @@ module Sql = struct
       //
       (* joined_at *)
       Ret.text
-      /^ [%blob "./sql/select_tenant_member.sql"]
+      /^ select_tenant_member_sql
       /% Var.uuid "tenant_id"
       /% Var.uuid "user_id")
 end

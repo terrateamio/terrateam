@@ -46,12 +46,12 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
   module Gw = Terrat_github_webhooks
 
   module Sql = struct
-    let read s = Pgsql_io.clean_string s
+    let insert_github_installation_sql = Mql_sql.read [%blob "sql/insert_installation.sql"]
 
     let insert_github_installation =
       Pgsql_io.Typed_sql.(
         sql
-        /^ read [%blob "sql/insert_installation.sql"]
+        /^ insert_github_installation_sql
         /% Var.bigint "id"
         /% Var.text "login"
         /% Var.uuid "org"
@@ -59,29 +59,43 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         /% Var.text "tier"
         /% Var.text "installed_by")
 
+    let update_github_installation_unsuspend_sql =
+      Mql_sql.read
+        "update github_installations set state = 'installed', last_unsuspended_at = now(), \
+         last_unsuspended_by = $unsuspended_by where id = $id"
+
     let update_github_installation_unsuspend =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "update github_installations set state = 'installed', last_unsuspended_at = now(), \
-            last_unsuspended_by = $unsuspended_by where id = $id"
+        /^ update_github_installation_unsuspend_sql
         /% Var.bigint "id"
         /% Var.text "unsuspended_by")
+
+    let update_github_installation_uninstall_sql =
+      Mql_sql.read
+        "update github_installations set state = 'uninstalled', uninstalled_at = now(), \
+         uninstalled_by = $uninstalled_by where id = $id"
 
     let update_github_installation_uninstall =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "update github_installations set state = 'uninstalled', uninstalled_at = now(), \
-            uninstalled_by = $uninstalled_by where id = $id"
+        /^ update_github_installation_uninstall_sql
         /% Var.bigint "id"
         /% Var.text "uninstalled_by")
+
+    let update_github_installation_suspended_sql =
+      Mql_sql.read
+        "update github_installations set state = 'suspended', last_suspended_at = now(), \
+         last_suspended_by = $suspended_by where id = $id"
 
     let update_github_installation_suspended =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "update github_installations set state = 'suspended', last_suspended_at = now(), \
-            last_suspended_by = $suspended_by where id = $id"
+        /^ update_github_installation_suspended_sql
         /% Var.bigint "id"
         /% Var.text "suspended_by")
+
+    let insert_org_sql = Mql_sql.read [%blob "sql/insert_org.sql"]
 
     let insert_org =
       Pgsql_io.Typed_sql.(
@@ -89,8 +103,11 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         //
         (* id *)
         Ret.uuid
-        /^ read [%blob "sql/insert_org.sql"]
+        /^ insert_org_sql
         /% Var.text "name")
+
+    let select_github_installation_sql =
+      Mql_sql.read "select id from github_installations where id = $id"
 
     let select_github_installation =
       Pgsql_io.Typed_sql.(
@@ -98,7 +115,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         //
         (* id *)
         Ret.bigint
-        /^ "select id from github_installations where id = $id"
+        /^ select_github_installation_sql
         /% Var.bigint "id")
   end
 

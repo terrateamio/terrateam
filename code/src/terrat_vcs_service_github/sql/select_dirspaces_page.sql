@@ -111,4 +111,4 @@ select
     run_id,
     environment
 from q as gwm
-{{where}}
+where $where

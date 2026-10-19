@@ -6,7 +6,8 @@ type t = {
 }
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let select_tenant_installation_sql =
+    Mql_sql.read [%blob "sql/select_tenant_gitlab_installation.sql"]
 
   let select_tenant_installation () =
     Pgsql_io.Typed_sql.(
@@ -14,16 +15,16 @@ module Sql = struct
       //
       (* one *)
       Ret.integer
-      /^ read [%blob "sql/select_tenant_gitlab_installation.sql"]
+      /^ select_tenant_installation_sql
       /% Var.uuid "tenant_id"
       /% Var.bigint "group_id")
 
+  let update_token_sql = Mql_sql.read [%blob "sql/update_gitlab_installation_token.sql"]
+
   let update_token () =
-    Pgsql_io.Typed_sql.(
-      sql
-      /^ read [%blob "sql/update_gitlab_installation_token.sql"]
-      /% Var.text "access_token"
-      /% Var.bigint "group_id")
+    Pgsql_io.Typed_sql.(sql /^ update_token_sql /% Var.text "access_token" /% Var.bigint "group_id")
+
+  let update_secret_sql = Mql_sql.read [%blob "sql/update_gitlab_installation_secret.sql"]
 
   let update_secret () =
     Pgsql_io.Typed_sql.(
@@ -31,8 +32,10 @@ module Sql = struct
       //
       (* webhook_secret *)
       Ret.text
-      /^ read [%blob "sql/update_gitlab_installation_secret.sql"]
+      /^ update_secret_sql
       /% Var.bigint "group_id")
+
+  let select_rotated_sql = Mql_sql.read [%blob "sql/select_gitlab_installation_rotated.sql"]
 
   let select_rotated () =
     Pgsql_io.Typed_sql.(
@@ -43,7 +46,7 @@ module Sql = struct
       //
       (* state *)
       Ret.text
-      /^ read [%blob "sql/select_gitlab_installation_rotated.sql"]
+      /^ select_rotated_sql
       /% Var.bigint "group_id")
 end
 

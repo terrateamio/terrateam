@@ -4,7 +4,7 @@ module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Whoami = struct
   module Sql = struct
-    let read s = Pgsql_io.clean_string s
+    let select_github_user_sql = Mql_sql.read [%blob "sql/select_github_user2_by_user_id.sql"]
 
     let select_github_user () =
       Pgsql_io.Typed_sql.(
@@ -21,7 +21,7 @@ module Whoami = struct
         //
         (* avatar_url *)
         Ret.(option text)
-        /^ read [%blob "sql/select_github_user2_by_user_id.sql"]
+        /^ select_github_user_sql
         /% Var.uuid "user_id")
   end
 
@@ -68,13 +68,13 @@ end
 
 module Installations = struct
   module Sql = struct
-    let read s = Pgsql_io.clean_string s
-
     let tier_features =
       let module P = struct
         type t = Terrat_tier.t [@@deriving yojson]
       end in
       CCFun.(P.of_yojson %> CCResult.to_opt)
+
+    let select_installations_sql = Mql_sql.read [%blob "sql/select_user_installations.sql"]
 
     let select_installations () =
       Pgsql_io.Typed_sql.(
@@ -100,8 +100,10 @@ module Installations = struct
         //
         (* tier features *)
         Ret.u Ret.json tier_features
-        /^ read [%blob "sql/select_user_installations.sql"]
+        /^ select_installations_sql
         /% Var.(array (bigint "installation_ids")))
+
+    let upsert_user_installations_sql = Mql_sql.read [%blob "sql/upsert_user_installations.sql"]
 
     let upsert_user_installations () =
       Pgsql_io.Typed_sql.(
@@ -115,7 +117,7 @@ module Installations = struct
         //
         (* state *)
         Ret.text
-        /^ read [%blob "sql/upsert_user_installations.sql"]
+        /^ upsert_user_installations_sql
         /% Var.(uuid "user_id")
         /% Var.(array (bigint "installation_ids")))
   end

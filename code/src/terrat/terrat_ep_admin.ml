@@ -6,7 +6,7 @@ let admin_token_permission ctx admin_token =
 module Drift = struct
   module List = struct
     module Sql = struct
-      let read s = Pgsql_io.clean_string s
+      let select_admin_drift_list_sql = Mql_sql.read [%blob "sql/select_admin_drift_list.sql"]
 
       let select_admin_drift_list () =
         Pgsql_io.Typed_sql.(
@@ -35,7 +35,7 @@ module Drift = struct
           //
           (* unlocked *)
           Ret.boolean
-          /^ read [%blob "sql/select_admin_drift_list.sql"])
+          /^ select_admin_drift_list_sql)
     end
 
     let make_drift id owner name state run_type created_at completed_at unlocked =

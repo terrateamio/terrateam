@@ -19,6 +19,8 @@
   iter
   logs
   mirage-crypto-pk
+  mql
+  mql_sql
   pgsql_pool
   ppx_deriving
   prmths

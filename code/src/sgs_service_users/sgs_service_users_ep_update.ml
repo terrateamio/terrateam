@@ -5,6 +5,8 @@ module Fc = Abbs_fc
 module Common = Sgs_service_users_common
 
 module Sql = struct
+  let update_user_sql = Mql_sql.read [%blob "./sql/update_user.sql"]
+
   let update_user () =
     Pgsql_io.Typed_sql.(
       sql
@@ -32,7 +34,7 @@ module Sql = struct
       //
       (* created_at *)
       Ret.text
-      /^ [%blob "./sql/update_user.sql"]
+      /^ update_user_sql
       /% Var.(option (text "name"))
       /% Var.(option (text "email"))
       /% Var.(option (text "avatar_url"))

@@ -1,3 +1,6 @@
+let select_access_token_sql =
+  Mql_sql.read "select gi.access_token from gitlab_installations gi where gi.id = $installation_id"
+
 let src = Logs.Src.create "terrat_vcs_api_gitlab"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
@@ -527,7 +530,7 @@ let create_client ~request_id config account db =
       //
       (* access_token *)
       Ret.text
-      /^ "select gi.access_token from gitlab_installations gi where gi.id = $installation_id"
+      /^ select_access_token_sql
       /% Var.bigint "installation_id")
   in
   Pgsql_io.Prepared_stmt.fetch

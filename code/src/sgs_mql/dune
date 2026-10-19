@@ -10,6 +10,7 @@
   containers
   logs
   mql
+  mql_sql
   mql_to_pgsql
   pgsql_io
   pgsql_pool

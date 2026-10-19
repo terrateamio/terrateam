@@ -24,28 +24,58 @@ let rewritten ~table ~id json =
                id
                pattern))
 
-let backfill db ~table ~source ~target =
+module Sql = struct
+  (* The two statements for one column that the backfill rewrites.  The table and the columns are
+     names from this module and not input, and [run] names each set of them below, thus MQL reads
+     each statement when the module loads. *)
+  type backfill = {
+    table : string;
+    target : string;
+    select_sql : string;
+    update_sql : string;
+  }
+
+  let backfill ~table ~source ~target =
+    {
+      table;
+      target;
+      select_sql =
+        Mql_sql.read
+          (Printf.sprintf
+             "select id, %s from %s where id > $cursor and %s is null order by id limit $limit"
+             source
+             table
+             target);
+      update_sql =
+        Mql_sql.read (Printf.sprintf "update %s set %s = $rules where id = $id" table target);
+    }
+
+  let users_capabilities = backfill ~table:"users" ~source:"capabilities" ~target:"capability_trie"
+
+  let users_base_capabilities =
+    backfill ~table:"users" ~source:"base_capabilities" ~target:"base_capability_trie"
+
+  let access_tokens_capabilities =
+    backfill ~table:"access_tokens" ~source:"capabilities" ~target:"capability_trie"
+
+  let caps_group_rules_capabilities =
+    backfill ~table:"caps_group_rules" ~source:"capabilities" ~target:"capability_trie"
+
+  let select_default_caps_sql =
+    Mql_sql.read "select value from system_settings where key = 'default_user_caps'"
+
+  let insert_default_caps_sql =
+    Mql_sql.read
+      "insert into system_settings (key, value) values ('default_user_capability_trie', $value) on \
+       conflict (key) do nothing"
+end
+
+let backfill db { Sql.table; target; select_sql; update_sql } =
   let open Abbs_fc.Infix_result_monad in
   let select =
-    Ts.(
-      sql
-      // Ret.uuid
-      // Ret.jsonb
-      /^ Printf.sprintf
-           "select id, %s from %s where id > $cursor and %s is null order by id limit $limit"
-           source
-           table
-           target
-      /% Var.uuid "cursor"
-      /% Var.integer "limit")
+    Ts.(sql // Ret.uuid // Ret.jsonb /^ select_sql /% Var.uuid "cursor" /% Var.integer "limit")
   in
-  let update =
-    Ts.(
-      sql
-      /^ Printf.sprintf "update %s set %s = $rules where id = $id" table target
-      /% Var.json "rules"
-      /% Var.uuid "id")
-  in
+  let update = Ts.(sql /^ update_sql /% Var.json "rules" /% Var.uuid "id") in
   let write (id, json) =
     match rewritten ~table ~id:(Uuidm.to_string id) json with
     | Ok rules -> Ps.execute db update rules id
@@ -69,16 +99,8 @@ let backfill db ~table ~source ~target =
    of their own instead of a column. *)
 let backfill_default_caps db =
   let open Abbs_fc.Infix_result_monad in
-  let select =
-    Ts.(sql // Ret.jsonb /^ "select value from system_settings where key = 'default_user_caps'")
-  in
-  let insert =
-    Ts.(
-      sql
-      /^ "insert into system_settings (key, value) values ('default_user_capability_trie', $value) \
-          on conflict (key) do nothing"
-      /% Var.json "value")
-  in
+  let select = Ts.(sql // Ret.jsonb /^ Sql.select_default_caps_sql) in
+  let insert = Ts.(sql /^ Sql.insert_default_caps_sql /% Var.json "value") in
   Ps.fetch db select ~f:CCFun.id
   >>= function
   | [] ->
@@ -92,13 +114,13 @@ let backfill_default_caps db =
 let run db =
   let open Abbs_fc.Infix_result_monad in
   Logs.info (fun m -> m "CAPABILITY_TRIE : backfilling");
-  backfill db ~table:"users" ~source:"capabilities" ~target:"capability_trie"
+  backfill db Sql.users_capabilities
   >>= fun () ->
-  backfill db ~table:"users" ~source:"base_capabilities" ~target:"base_capability_trie"
+  backfill db Sql.users_base_capabilities
   >>= fun () ->
-  backfill db ~table:"access_tokens" ~source:"capabilities" ~target:"capability_trie"
+  backfill db Sql.access_tokens_capabilities
   >>= fun () ->
-  backfill db ~table:"caps_group_rules" ~source:"capabilities" ~target:"capability_trie"
+  backfill db Sql.caps_group_rules_capabilities
   >>= fun () ->
   backfill_default_caps db
   >>| fun () ->

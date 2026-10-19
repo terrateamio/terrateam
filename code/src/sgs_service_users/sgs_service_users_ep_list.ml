@@ -7,6 +7,8 @@ module Common = Sgs_service_users_common
 let max_page_size = 100
 
 module Sql = struct
+  let select_users_list_sql = Mql_sql.read [%blob "./sql/select_users_list.sql"]
+
   let select_users_list () =
     Pgsql_io.Typed_sql.(
       sql
@@ -37,7 +39,7 @@ module Sql = struct
       //
       (* total_count *)
       Ret.bigint
-      /^ [%blob "./sql/select_users_list.sql"]
+      /^ select_users_list_sql
       /% Var.(option (text "type"))
       /% Var.(option (text "search"))
       /% Var.(option (timestamptz "cursor"))

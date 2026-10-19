@@ -13,6 +13,7 @@
   githubc2_abb
   jwt
   logs
+  mql_sql
   openapi
   pgsql_io
   pgsql_pool

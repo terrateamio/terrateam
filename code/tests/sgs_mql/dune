@@ -1,6 +1,17 @@
 (test
  (name test)
- (libraries containers mql_to_pgsql oth sgs_api sgs_mql sln yojson)
+ (libraries
+  containers
+  mql
+  mql_adversarial_corpus
+  mql_ast
+  mql_sql
+  mql_to_pgsql
+  oth
+  sgs_api
+  sgs_mql
+  sln
+  yojson)
  (preprocessor_deps select_mql_page_terrateam_ctes.sql)
  (preprocess
   (pps ppx_blob)))

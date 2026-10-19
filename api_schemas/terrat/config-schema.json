@@ -1109,6 +1109,10 @@
           "default": false,
           "type": "boolean"
         },
+        "log_output": {
+          "default": true,
+          "type": "boolean"
+        },
         "on_error": {
           "items": {},
           "type": "array"
@@ -2021,6 +2025,10 @@
           },
           "type": "array"
         },
+        "log_output": {
+          "default": true,
+          "type": "boolean"
+        },
         "retry": {
           "$ref": "#/definitions/retry"
         },
@@ -2132,6 +2140,10 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "log_output": {
+          "default": true,
+          "type": "boolean"
         },
         "type": {
           "const": "init",
@@ -2249,6 +2261,10 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "log_output": {
+          "default": true,
+          "type": "boolean"
         },
         "mode": {
           "default": "strict",

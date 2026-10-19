@@ -1,0 +1,3 @@
+(library
+ (name mql_adversarial_corpus)
+ (libraries containers mql mql_to_pgsql))

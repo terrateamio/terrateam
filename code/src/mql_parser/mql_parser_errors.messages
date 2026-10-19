@@ -1,0 +1,10 @@
+# The catalogue of parse-error messages, one entry per Menhir state.  A query
+# that reaches a state with no entry reports "syntax error" (see [Mql.Ast]);
+# an entry names the fault instead.  To add one: run
+#
+#   menhir code/src/mql_parser/mql_parser.mly --list-errors
+#
+# which writes one entry per error state with the state number, the grammar
+# items, and the example input; fill in the message and put the entry in this
+# file.  [menhir --compile-errors] runs at every build and refuses a leftover
+# placeholder, so a half-filled file cannot ship silently.

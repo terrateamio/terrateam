@@ -6,7 +6,7 @@ type err =
 [@@deriving show]
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let select_user_token_sql = Mql_sql.read [%blob "sql/select_github_user2_tokens.sql"]
 
   let select_user_token () =
     Pgsql_io.Typed_sql.(
@@ -20,18 +20,22 @@ module Sql = struct
       //
       (* refresh_token *)
       Ret.text
-      /^ read [%blob "sql/select_github_user2_tokens.sql"]
+      /^ select_user_token_sql
       /% Var.uuid "user_id")
+
+  let update_github_user2_tokens_sql = Mql_sql.read [%blob "sql/update_github_user2_tokens.sql"]
 
   let update_github_user2_tokens () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ read [%blob "sql/update_github_user2_tokens.sql"]
+      /^ update_github_user2_tokens_sql
       /% Var.uuid "user_id"
       /% Var.text "token"
       /% Var.(option (timestamptz "expiration"))
       /% Var.(option (text "refresh_token"))
       /% Var.(option (timestamptz "refresh_expiration")))
+
+  let select_user_installation_sql = Mql_sql.read [%blob "sql/select_user_installation.sql"]
 
   let select_user_installation () =
     Pgsql_io.Typed_sql.(
@@ -39,7 +43,7 @@ module Sql = struct
       //
       (* installation_id *)
       Ret.bigint
-      /^ read [%blob "sql/select_user_installation.sql"]
+      /^ select_user_installation_sql
       /% Var.uuid "user_id"
       /% Var.bigint "installation_id")
 end

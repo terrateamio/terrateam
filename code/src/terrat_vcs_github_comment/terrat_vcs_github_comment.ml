@@ -8,7 +8,7 @@ let src = Logs.Src.create "vcs_github_comment"
 module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let select_comment_id_sql = Mql_sql.read [%blob "sql/select_comment_id.sql"]
 
   let select_comment_id =
     Pgsql_io.Typed_sql.(
@@ -16,10 +16,12 @@ module Sql = struct
       //
       (* comment_id *)
       Ret.bigint
-      /^ read [%blob "sql/select_comment_id.sql"]
+      /^ select_comment_id_sql
       /% Var.uuid "work_manifest"
       /% Var.text "dir"
       /% Var.text "workspace")
+
+  let select_comment_elements_sql = Mql_sql.read [%blob "sql/select_comment_elements.sql"]
 
   let select_comment_elements =
     Pgsql_io.Typed_sql.(
@@ -58,9 +60,12 @@ module Sql = struct
       //
       (* steps.step *)
       Ret.text
-      /^ read [%blob "sql/select_comment_elements.sql"]
+      /^ select_comment_elements_sql
       /% Var.bigint "comment_id"
       /% Var.uuid "work_manifest")
+
+  let upsert_github_work_manifest_comment_sql =
+    Mql_sql.read [%blob "sql/upsert_github_work_manifest_comment.sql"]
 
   let upsert_github_work_manifest_comment =
     Pgsql_io.Typed_sql.(
@@ -68,7 +73,7 @@ module Sql = struct
       //
       (* comment_id *)
       Ret.bigint
-      /^ read [%blob "sql/upsert_github_work_manifest_comment.sql"]
+      /^ upsert_github_work_manifest_comment_sql
       /% Var.bigint "comment_id"
       /% Var.uuid "work_manifest"
       /% Var.text "dir"

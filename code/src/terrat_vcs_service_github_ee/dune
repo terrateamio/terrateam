@@ -2,6 +2,7 @@
  (name terrat_vcs_service_github_ee)
  (libraries
   jsonu
+  mql_sql
   pgsql_io
   sln
   terrat_vcs_access_token

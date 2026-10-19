@@ -5,9 +5,10 @@ module Fc = Abbs_fc
 module Common = Sgs_service_users_common
 
 module Sql = struct
+  let delete_user_soft_sql = Mql_sql.read [%blob "./sql/delete_user_soft.sql"]
+
   let delete_user_soft () =
-    Pgsql_io.Typed_sql.(
-      sql // Ret.uuid /^ [%blob "./sql/delete_user_soft.sql"] /% Var.uuid "user_id")
+    Pgsql_io.Typed_sql.(sql // Ret.uuid /^ delete_user_soft_sql /% Var.uuid "user_id")
 end
 
 let run' ~actor_caps db user target_user_id =

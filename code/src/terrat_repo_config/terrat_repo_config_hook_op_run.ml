@@ -36,6 +36,7 @@ type t = {
   env : Env.t option; [@default None]
   format : Terrat_repo_config_hook_op_run_format.t option; [@default None]
   ignore_errors : bool; [@default false]
+  log_output : bool; [@default true]
   on_error : On_error.t option; [@default None]
   run_on : Terrat_repo_config_run_on.t option; [@default None]
   type_ : Type.t; [@key "type"]

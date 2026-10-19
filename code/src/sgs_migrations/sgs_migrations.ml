@@ -2,6 +2,9 @@ let src = Logs.Src.create "migrations"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
+(* A long migration must not be timed out. *)
+let no_idle_tx_timeout_sql = Mql_sql.read "set idle_in_transaction_session_timeout = 0"
+
 module Migrate = struct
   type tx = Pgsql_io.t
 
@@ -14,29 +17,31 @@ module Migrate = struct
   type err =
     [ Pgsql_io.err
     | Pgsql_pool.err
+    | `Mql_err of Mql.Ast.err
     ]
 
-  let create_migrations_table_sql =
-    Pgsql_io.Typed_sql.(
-      sql
-      /^ "create table if not exists migrations (date timestamp default now(), name varchar(256) \
-          primary key)")
+  let create_migrations_table_sql_text =
+    Mql_sql.read
+      "create table if not exists migrations (date timestamp default now(), name varchar(256) \
+       primary key)"
 
-  let add_migration_sql =
-    Pgsql_io.Typed_sql.(sql /^ "insert into migrations (name) values($name)" /% Var.varchar "name")
+  let create_migrations_table_sql = Pgsql_io.Typed_sql.(sql /^ create_migrations_table_sql_text)
+  let add_migration_sql_text = Mql_sql.read "insert into migrations (name) values($name)"
+  let add_migration_sql = Pgsql_io.Typed_sql.(sql /^ add_migration_sql_text /% Var.varchar "name")
+
+  let get_migrations_sql_text =
+    Mql_sql.read "select name from migrations order by date asc for update"
 
   (* Get all the migrations but also lock the table so that no other migrations
      may happen at the same time. *)
-  let get_migrations_sql =
-    Pgsql_io.Typed_sql.(
-      sql // Ret.varchar /^ "select name from migrations order by date asc for update")
+  let get_migrations_sql = Pgsql_io.Typed_sql.(sql // Ret.varchar /^ get_migrations_sql_text)
 
   let tx { config; storage; tx = _ } f =
     let open Abb.Future.Infix_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
         let open Abbs_fc.Infix_result_monad in
         (* Ensure we do not get timed out on a long operation *)
-        let idle_tx_sql = Pgsql_io.Typed_sql.(sql /^ "set idle_in_transaction_session_timeout=0") in
+        let idle_tx_sql = Pgsql_io.Typed_sql.(sql /^ no_idle_tx_timeout_sql) in
         Pgsql_io.Prepared_stmt.execute db idle_tx_sql
         >>= fun () ->
         let open Abb.Future.Infix_monad in
@@ -77,37 +82,46 @@ end
 
 module Mig = Data_mig.Make (Migrate)
 
-let run_sql ?(mode = `Tx) sql { Migrate.config = _; storage; tx = db } =
-  let conn ~f =
-    let open Abbs_fc.Infix_result_monad in
-    match mode with
-    | `Tx -> f db >>| fun () -> `Sync
-    | `Notx -> Pgsql_pool.with_conn storage ~f >>| fun () -> `Sync
-    | `Async -> Abbs_fc.return_ok (`Async (fun _ -> Pgsql_pool.with_conn storage ~f))
-  in
-  (* Deliberately not [Pgsql_io.split_statements]: migrations normalize with
-     [clean_string] rather than [trim], so a chunk that is nothing but comments
-     is dropped here.  Under the shared trim-based split it would survive and
-     then execute as empty SQL. *)
-  let stmts =
-    sql
-    |> CCString.split ~by:";\n\n"
-    |> CCList.map Pgsql_io.clean_string
-    |> CCList.filter CCFun.(CCString.trim %> CCString.is_empty %> not)
-  in
-  conn ~f:(fun db ->
-      Abbs_fc.List_result.iter
-        ~f:(fun stmt ->
-          let open Abbs_fc.Infix_result_monad in
-          let open Pgsql_io in
-          Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
-          (* Ensure we do not get timed out on a long operation *)
-          let idle_tx_sql = Typed_sql.(sql /^ "set idle_in_transaction_session_timeout=0") in
-          Prepared_stmt.execute db idle_tx_sql
-          >>= fun () ->
-          let stmt_sql = Typed_sql.(sql /^ Pgsql_io.clean_string stmt) in
-          Prepared_stmt.execute db stmt_sql)
-        stmts)
+(* The statements of one migration.  {!Mql_sql} decides where a statement ends, so a
+   semicolon inside a function body or a string literal is not a boundary and the
+   file needs no blank line after a statement -- which is what the old
+   [CCString.split ~by:";\n\n"] needed, and why [Pgsql_io.split_statements] is
+   still written that way.  MQL also discards comments, so [Pgsql_io.clean_string]
+   has nothing left to remove.
+
+   What executes is what MQL renders from the AST, not the text of the file: every
+   migration makes a round trip through MQL, and one MQL cannot read is an
+   error. *)
+let read_stmts = Mql_sql.read_multi_result ~variables:false
+
+(* [sql] is read here, where [run_sql] is applied to its blob, so the whole
+   migration stream is parsed once when [migrations] below is built. *)
+let run_sql ?(mode = `Tx) sql =
+  let stmts = read_stmts sql in
+  fun { Migrate.config = _; storage; tx = db } ->
+    let conn ~f =
+      let open Abbs_fc.Infix_result_monad in
+      match mode with
+      | `Tx -> f db >>| fun () -> `Sync
+      | `Notx -> Pgsql_pool.with_conn storage ~f >>| fun () -> `Sync
+      | `Async -> Abbs_fc.return_ok (`Async (fun _ -> Pgsql_pool.with_conn storage ~f))
+    in
+    match stmts with
+    | Ok stmts ->
+        conn ~f:(fun db ->
+            Abbs_fc.List_result.iter
+              ~f:(fun stmt ->
+                let open Abbs_fc.Infix_result_monad in
+                let open Pgsql_io in
+                Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
+                (* Ensure we do not get timed out on a long operation *)
+                let idle_tx_sql = Typed_sql.(sql /^ no_idle_tx_timeout_sql) in
+                Prepared_stmt.execute db idle_tx_sql
+                >>= fun () ->
+                let stmt_sql = Typed_sql.(sql /^ stmt) in
+                Prepared_stmt.execute db stmt_sql)
+              stmts)
+    | Error err -> Abbs_fc.return_err (`Mql_err err)
 
 let migrations =
   [

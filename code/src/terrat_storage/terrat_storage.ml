@@ -1,3 +1,5 @@
+let create_pgcrypto_sql = Mql_sql.read "create extension if not exists pgcrypto"
+let set_statement_timeout_sql = Mql_sql.read "set statement_timeout='300s'"
 let src = Logs.Src.create "storage"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
@@ -39,15 +41,13 @@ let on_connect ?(settings = []) idle_tx_timeout lock_timeout conn =
        Pgsql_io.Prepared_stmt.execute
          conn
          Pgsql_io.Typed_sql.(
-           sql /^ Printf.sprintf "set idle_in_transaction_session_timeout='%s'" idle_tx_timeout)
+           sql /^ Mql_sql.set ~name:"idle_in_transaction_session_timeout" idle_tx_timeout)
        >>= fun () ->
        Pgsql_io.Prepared_stmt.execute
          conn
-         Pgsql_io.Typed_sql.(sql /^ Printf.sprintf "set lock_timeout='%s'" lock_timeout)
+         Pgsql_io.Typed_sql.(sql /^ Mql_sql.set ~name:"lock_timeout" lock_timeout)
        >>= fun () ->
-       Pgsql_io.Prepared_stmt.execute
-         conn
-         Pgsql_io.Typed_sql.(sql /^ "set statement_timeout='300s'")
+       Pgsql_io.Prepared_stmt.execute conn Pgsql_io.Typed_sql.(sql /^ set_statement_timeout_sql)
        >>= fun () ->
        Fc.List_result.iter
          ~f:(fun setting -> Pgsql_io.Prepared_stmt.execute conn Pgsql_io.Typed_sql.(sql /^ setting))
@@ -97,9 +97,7 @@ let try_create config =
     (Terrat_config.db config)
   >>= fun storage ->
   Pgsql_pool.with_conn storage ~f:(fun db ->
-      Pgsql_io.Prepared_stmt.execute
-        db
-        Pgsql_io.Typed_sql.(sql /^ "create extension if not exists pgcrypto"))
+      Pgsql_io.Prepared_stmt.execute db Pgsql_io.Typed_sql.(sql /^ create_pgcrypto_sql))
   >>= function
   | Ok () -> Abb.Future.return (Ok storage)
   | Error _ as err -> Pgsql_pool.destroy storage >>| fun () -> err
@@ -121,7 +119,7 @@ let create config =
    book. The statements are prepared once for each connection and run up to 1000
    times for each batch, which is where the planner would change to a generic
    plan. *)
-let pricing_settings = [ "set plan_cache_mode='force_custom_plan'" ]
+let pricing_settings = [ Mql_sql.read "set plan_cache_mode='force_custom_plan'" ]
 
 let create_pricing config { Terrat_config.Infracost.db; host; password; port; sslmode; user } =
   create_pool

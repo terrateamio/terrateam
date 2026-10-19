@@ -181,6 +181,19 @@ check_entries as not materialized (
   inner join states as s
     on s.id = c.state_id
 ),
+transaction_apply_tasks as not materialized (
+  -- The task that ran a tx's apply, for the transaction_output_chunks CTE below.
+  -- It is not in the catalog (sgs_mql_paged.ml), so a user query cannot name
+  -- it. It comes before the transactions CTE so that it reads the real table:
+  -- the transactions CTE projects only the catalog columns, because a user
+  -- query can read every column of a CTE with select * or to_jsonb(row).
+  select
+    tx.id as tx_id,
+    tx.apply_task_id as apply_task_id
+  from transactions as tx
+  inner join tenants as t
+    on t.id = tx.tenant_id
+),
 transactions as (
   select
     tx.completed_at as completed_at,
@@ -191,11 +204,7 @@ transactions as (
     tx.params as params,
     tx.tenant_id as tenant_id,
     tx.created_by as created_by,
-    tx.completed_by as completed_by,
-    -- Projected for the transaction_output_chunks CTE below, which resolves a
-    -- tx's apply output through it; not in the catalog (sgs_mql_paged.ml), so
-    -- not selectable by name from a user query.
-    tx.apply_task_id as apply_task_id
+    tx.completed_by as completed_by
   from transactions as tx
   inner join tenants as t
     on t.id = tx.tenant_id
@@ -490,7 +499,7 @@ transaction_subgraphs as not materialized (
 ),
 transaction_output_chunks as not materialized (
   -- The captured output of a transaction's apply, as the stored chunk rows of
-  -- the task that ran it (transactions.apply_task_id). A task's rows hold the
+  -- the task that ran it (transaction_apply_tasks). A task's rows hold the
   -- base64 of a JSON payload, cut across idx in order. Reassembly (concatenate,
   -- base64-decode, parse) is the reader's job. payload names what the rows
   -- reassemble to, from the task's state: a completed apply stored its stdout
@@ -503,15 +512,15 @@ transaction_output_chunks as not materialized (
   -- "(sensitive value)" redaction. Tenant membership is the whole of the
   -- control, here and on the endpoint alike.
   select
-    tx.id as tx_id,
+    tat.tx_id as tx_id,
     tr.idx as idx,
     tr.data as data,
     case when tk.state = 'completed' then 'apply_stdout' else 'run_failure' end as payload
   from task_results as tr
   inner join tasks as tk
     on tk.id = tr.task_id
-  inner join transactions as tx
-    on tx.apply_task_id = tr.task_id
+  inner join transaction_apply_tasks as tat
+    on tat.apply_task_id = tr.task_id
 ),
 transaction_plan_operations as not materialized (
   -- Per-resource plan operations persisted at preview-finalize. One row per changed resource
@@ -668,6 +677,8 @@ focus_billing_sources as not materialized (
     on t.id = fbs.tenant_id
 ){{terrateam_ctes}},
 q as (
-{{q}}
+-- A placeholder that MQL reads.  The query of the user takes its place at the request; see
+-- [Sgs_mql_paged.Sql.select_page_sql].
+select 1 as placeholder
 )
 select to_json(q) from q

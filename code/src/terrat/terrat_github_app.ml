@@ -13,13 +13,19 @@ let poll_attention_span = 120.0
 
 module Sql = struct
   let columns =
-    "select id, slug, pem, client_id, client_secret, webhook_secret, html_url from github_app"
+    Mql_sql.read
+      "select id, slug, pem, client_id, client_secret, webhook_secret, html_url from github_app"
 
   (* The token, computed remotely: the poll runs for the life of the process and
      has no business copying the private key out of the database to hash it. The
      columns are the credentials, so a replaced App and a rotated key both move
      it; loaded_at is not among them, so a process marking itself loaded cannot
      make itself stale. *)
+  let select_token_sql =
+    Mql_sql.read
+      "select id, md5(slug || pem || client_id || client_secret || webhook_secret || html_url) \
+       from github_app"
+
   let select_token () =
     Pgsql_io.Typed_sql.(
       sql
@@ -29,8 +35,7 @@ module Sql = struct
       //
       (* digest *)
       Ret.text
-      /^ "select id, md5(slug || pem || client_id || client_secret || webhook_secret || html_url) \
-          from github_app")
+      /^ select_token_sql)
 
   let select_app () =
     Pgsql_io.Typed_sql.(
@@ -60,9 +65,8 @@ module Sql = struct
 
   (* Bound to the App this process runs: a replace landing between the read and
      this write must not have the console told the engine holds it. *)
-  let mark_loaded () =
-    Pgsql_io.Typed_sql.(
-      sql /^ "update github_app set loaded_at = now() where id = $id" /% Var.bigint "id")
+  let mark_loaded_sql = Mql_sql.read "update github_app set loaded_at = now() where id = $id"
+  let mark_loaded () = Pgsql_io.Typed_sql.(sql /^ mark_loaded_sql /% Var.bigint "id")
 end
 
 type err =

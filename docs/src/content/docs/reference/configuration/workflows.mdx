@@ -75,6 +75,7 @@ The `init`, `plan`, and `apply` step types run the corresponding command of the 
 | extra_args | List | Extra command line arguments passed to the command. |
 | env | Object | Environment variables to set for this execution. Object keys are environment variable names and the value is a string. |
 | visible_on | String | When the output should be visible in a PR comment or the UI.  Options are `always`, `failure`, `success`.  Default is `failure` for `init` and `always` for `plan` and `apply`. |
+| log_output | Boolean | Set to `false` to keep the command output out of the CI job log. The output still shows in a PR comment or the UI, as set by `visible_on`. Default is `true`. |
 
 ### Env
 Environment variables can be set two ways:
@@ -103,6 +104,7 @@ Custom commands can be run using the `run` step type.
 | cmd | List | Command to run from the directory that Terrateam is operating against. |
 | run_on | String | Run the command depending on the state of the workflow.  Options are `success`, `failure`, or `always`. Default is `success`. |
 | capture_output | Boolean | When set to `true`, command output is recorded.  Secrets are masked with `***`.  Default is `false`. |
+| log_output | Boolean | Set to `false` to keep the command output out of the CI job log. `capture_output` still records it. Default is `true`. |
 | env | Object | Environment variables to set for this execution. Object keys are environment variable names and the value is a string. |
 | ignore_errors | Boolean | Set to `true` if failure should be ignored.  Default is `false`, except when `on_error` contains a gate, in which case it is `true`. |
 | visible_on | String | When the output of the command should be visible in a PR comment or the UI.  Options are `always`, `failure`, `success`.  Default is `failure`. |

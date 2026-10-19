@@ -3,6 +3,9 @@ let src = Logs.Src.create "user_session"
 module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Sql = struct
+  let select_encryption_keys_sql =
+    Mql_sql.read "select data, type from encryption_keys order by rank"
+
   (* [data] is hex of the key bytes whatever the type holds, so one decode serves
      both: a 'hmac' row yields the raw secret, an 'rsa' row the PEM text. *)
   let select_encryption_keys () =
@@ -14,19 +17,19 @@ module Sql = struct
       //
       (* type *)
       Ret.text
-      /^ "select data, type from encryption_keys order by rank")
+      /^ select_encryption_keys_sql)
+
+  let insert_signing_key_sql =
+    Mql_sql.read
+      "insert into encryption_keys (rank, type, data) select (select coalesce(max(rank), -1) + 1 \
+       from encryption_keys), 'rsa', $data where not exists (select 1 from encryption_keys where \
+       type = 'rsa') on conflict (rank) do nothing"
 
   (* Takes the next free rank rather than a fixed one, because the HMAC rows own
      the ranks already in use. [where not exists] keeps a second instance from
      adding a redundant key once the first has committed one, and the [on
      conflict] settles the window where neither has. *)
-  let insert_signing_key () =
-    Pgsql_io.Typed_sql.(
-      sql
-      /^ "insert into encryption_keys (rank, type, data) select (select coalesce(max(rank), -1) + \
-          1 from encryption_keys), 'rsa', $data where not exists (select 1 from encryption_keys \
-          where type = 'rsa') on conflict (rank) do nothing"
-      /% Var.text "data")
+  let insert_signing_key () = Pgsql_io.Typed_sql.(sql /^ insert_signing_key_sql /% Var.text "data")
 end
 
 module Session = struct

@@ -8,7 +8,7 @@ type installation = {
 }
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let select_unclaimed_sql = Mql_sql.read [%blob "sql/select_unclaimed_github_installations.sql"]
 
   let select_unclaimed () =
     Pgsql_io.Typed_sql.(
@@ -31,10 +31,12 @@ module Sql = struct
       //
       (* created_at *)
       Ret.text
-      /^ read [%blob "sql/select_unclaimed_github_installations.sql"]
+      /^ select_unclaimed_sql
       /% Var.(option (timestamptz "cursor"))
       /% Var.(option (uuid "cursor_id"))
       /% Var.smallint "limit")
+
+  let select_claimable_sql = Mql_sql.read [%blob "sql/select_claimable_github_installations.sql"]
 
   let select_claimable () =
     Pgsql_io.Typed_sql.(
@@ -57,8 +59,11 @@ module Sql = struct
       //
       (* created_at *)
       Ret.text
-      /^ read [%blob "sql/select_claimable_github_installations.sql"]
+      /^ select_claimable_sql
       /% Var.(str_array (bigint "github_installation_ids")))
+
+  let select_claimable_by_core_id_sql =
+    Mql_sql.read [%blob "sql/select_claimable_github_installations_by_core_id.sql"]
 
   let select_claimable_by_core_id () =
     Pgsql_io.Typed_sql.(
@@ -81,7 +86,7 @@ module Sql = struct
       //
       (* created_at *)
       Ret.text
-      /^ read [%blob "sql/select_claimable_github_installations_by_core_id.sql"]
+      /^ select_claimable_by_core_id_sql
       /% Var.(str_array (uuid "installation_core_ids")))
 end
 

@@ -1,6 +1,15 @@
 (library
  (name sgs_tenant)
- (libraries abb abbs containers pgsql_io sg_caps_ops sgs_api sgs_user uuidm)
+ (libraries
+  abb
+  abbs
+  containers
+  mql_sql
+  pgsql_io
+  sg_caps_ops
+  sgs_api
+  sgs_user
+  uuidm)
  (preprocessor_deps
   (glob_files_rec sql/*))
  (preprocess
