@@ -1,0 +1,1009 @@
+{
+  "links": [
+    {
+      "label": "Support",
+      "href": "/docs/support"
+    }
+  ],
+  "tabs": [
+    {
+      "title": "Get started",
+      "root": "/docs/get-started",
+      "groups": [
+        {
+          "title": "Overview",
+          "items": [
+            {
+              "page": "/docs",
+              "label": "Home"
+            },
+            {
+              "page": "/docs/get-started/how-it-works",
+              "label": "How it works"
+            },
+            {
+              "page": "/docs/get-started/core-concepts",
+              "label": "Core concepts"
+            },
+            {
+              "page": "/docs/get-started/editions",
+              "label": "Editions and pricing"
+            },
+            {
+              "page": "/docs/get-started/integrations",
+              "label": "Integrations"
+            }
+          ]
+        },
+        {
+          "title": "Quickstart",
+          "items": [
+            {
+              "page": "/docs/get-started/quickstart",
+              "label": "Choose a path"
+            },
+            {
+              "page": "/docs/get-started/quickstart/cloud",
+              "label": "Stategraph Cloud"
+            },
+            {
+              "page": "/docs/get-started/quickstart/self-hosted-open-source",
+              "label": "Self-hosted Open Source"
+            },
+            {
+              "page": "/docs/get-started/quickstart/self-hosted",
+              "label": "Self-hosted Enterprise"
+            },
+            {
+              "page": "/docs/get-started/quickstart/import-state",
+              "label": "Import your state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Orchestration",
+      "root": "/docs/orchestration",
+      "groups": [
+        {
+          "title": "Introduction",
+          "items": [
+            {
+              "page": "/docs/orchestration",
+              "label": "Overview"
+            }
+          ]
+        },
+        {
+          "title": "Workflows",
+          "items": [
+            {
+              "page": "/docs/orchestration/workflows",
+              "label": "Pull request workflow"
+            },
+            {
+              "page": "/docs/orchestration/workflows/apply-after-merge",
+              "label": "Apply after merge"
+            },
+            {
+              "page": "/docs/orchestration/workflows/rollbacks",
+              "label": "Rollbacks"
+            },
+            {
+              "page": "/docs/orchestration/workflows/performance",
+              "label": "Performance"
+            },
+            {
+              "page": "/docs/orchestration/workflows/stale-runs",
+              "label": "Commits that move"
+            },
+            {
+              "label": "Advanced patterns",
+              "items": [
+                {
+                  "page": "/docs/orchestration/workflows/advanced/multi-environment",
+                  "label": "Multiple environments"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/stacks",
+                  "label": "Stacks"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/layered-runs",
+                  "label": "Layered runs"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/gitflow",
+                  "label": "Gitflow"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/tag-system",
+                  "label": "Tags and tag queries"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/lock-management",
+                  "label": "Locks and concurrency"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/engine-setup",
+                  "label": "Choosing an engine"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/custom-commands",
+                  "label": "Custom plan and apply steps"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/runs-on",
+                  "label": "Custom runners"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/dynamic-configuration",
+                  "label": "Dynamic configuration"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/terragrunt-config-builder",
+                  "label": "Terragrunt config builder"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/tree-builder-setup",
+                  "label": "Tree builder"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/yaml-anchors",
+                  "label": "YAML anchors"
+                },
+                {
+                  "page": "/docs/orchestration/workflows/advanced/github-reusable-workflows",
+                  "label": "GitHub reusable workflows"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Configuration",
+          "items": [
+            {
+              "page": "/docs/orchestration/configuration",
+              "label": "Configuration file"
+            },
+            {
+              "page": "/docs/orchestration/configuration/modules",
+              "label": "Modules"
+            },
+            {
+              "page": "/docs/orchestration/configuration/variables",
+              "label": "Secrets and variables"
+            },
+            {
+              "page": "/docs/orchestration/configuration/environment-variables",
+              "label": "Runner environment variables"
+            },
+            {
+              "page": "/docs/orchestration/configuration/codeowners",
+              "label": "CODEOWNERS"
+            }
+          ]
+        },
+        {
+          "title": "Integrations",
+          "items": [
+            {
+              "label": "Cloud providers",
+              "items": [
+                {
+                  "label": "AWS",
+                  "items": [
+                    {
+                      "page": "/docs/orchestration/cloud-providers/aws",
+                      "label": "Overview"
+                    },
+                    {
+                      "page": "/docs/orchestration/cloud-providers/aws/oidc",
+                      "label": "OIDC"
+                    },
+                    {
+                      "page": "/docs/orchestration/cloud-providers/aws/static-credentials",
+                      "label": "Static credentials"
+                    }
+                  ]
+                },
+                {
+                  "label": "GCP",
+                  "items": [
+                    {
+                      "page": "/docs/orchestration/cloud-providers/gcp",
+                      "label": "Overview"
+                    },
+                    {
+                      "page": "/docs/orchestration/cloud-providers/gcp/oidc",
+                      "label": "OIDC"
+                    },
+                    {
+                      "page": "/docs/orchestration/cloud-providers/gcp/static-credentials",
+                      "label": "Static credentials"
+                    }
+                  ]
+                },
+                {
+                  "label": "Azure",
+                  "items": [
+                    {
+                      "page": "/docs/orchestration/cloud-providers/azure",
+                      "label": "Overview"
+                    },
+                    {
+                      "page": "/docs/orchestration/cloud-providers/azure/oidc",
+                      "label": "OIDC"
+                    },
+                    {
+                      "page": "/docs/orchestration/cloud-providers/azure/static-credentials",
+                      "label": "Static credentials"
+                    }
+                  ]
+                },
+                {
+                  "page": "/docs/orchestration/cloud-providers/other",
+                  "label": "Other providers"
+                }
+              ]
+            },
+            {
+              "label": "IaC tools",
+              "items": [
+                {
+                  "page": "/docs/orchestration/iac-tools/terraform",
+                  "label": "Terraform"
+                },
+                {
+                  "page": "/docs/orchestration/iac-tools/opentofu",
+                  "label": "OpenTofu"
+                },
+                {
+                  "page": "/docs/orchestration/iac-tools/terragrunt",
+                  "label": "Terragrunt"
+                },
+                {
+                  "page": "/docs/orchestration/iac-tools/pulumi",
+                  "label": "Pulumi"
+                },
+                {
+                  "page": "/docs/orchestration/iac-tools/cdktf",
+                  "label": "CDKTF"
+                },
+                {
+                  "page": "/docs/orchestration/iac-tools/terraform-cloud-migration",
+                  "label": "Migrate from Terraform Cloud"
+                }
+              ]
+            },
+            {
+              "label": "External tools",
+              "items": [
+                {
+                  "page": "/docs/orchestration/external-tools/opa",
+                  "label": "OPA and Conftest"
+                },
+                {
+                  "page": "/docs/orchestration/external-tools/infracost",
+                  "label": "Infracost"
+                },
+                {
+                  "page": "/docs/orchestration/external-tools/webhooks",
+                  "label": "Webhooks"
+                },
+                {
+                  "page": "/docs/orchestration/external-tools/ai-integrations",
+                  "label": "AI integrations"
+                },
+                {
+                  "page": "/docs/orchestration/external-tools/installing-packages",
+                  "label": "Installing packages"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Security and governance",
+          "items": [
+            {
+              "label": "Security",
+              "items": [
+                {
+                  "page": "/docs/orchestration/security",
+                  "label": "Best practices"
+                },
+                {
+                  "page": "/docs/orchestration/security/cloud-credentials",
+                  "label": "Cloud credentials"
+                },
+                {
+                  "page": "/docs/orchestration/security/hardening-aws-oidc",
+                  "label": "Hardening AWS OIDC"
+                },
+                {
+                  "page": "/docs/orchestration/security/github-environments",
+                  "label": "GitHub environments"
+                },
+                {
+                  "page": "/docs/orchestration/security/private-runners",
+                  "label": "Private runners"
+                },
+                {
+                  "page": "/docs/orchestration/security/plan-file-storage",
+                  "label": "Plan file storage"
+                },
+                {
+                  "page": "/docs/orchestration/security/self-signed-certificates",
+                  "label": "Self-signed certificates"
+                },
+                {
+                  "page": "/docs/orchestration/security/audit-trail",
+                  "label": "Audit trail"
+                }
+              ]
+            },
+            {
+              "label": "Governance",
+              "items": [
+                {
+                  "page": "/docs/orchestration/governance/rbac",
+                  "label": "Role-based access control"
+                },
+                {
+                  "page": "/docs/orchestration/governance/gatekeeper",
+                  "label": "Gatekeeper"
+                },
+                {
+                  "page": "/docs/orchestration/governance/drift-detection",
+                  "label": "Drift detection"
+                },
+                {
+                  "page": "/docs/orchestration/governance/centralized-config",
+                  "label": "Centralized configuration"
+                },
+                {
+                  "page": "/docs/orchestration/governance/config-overrides",
+                  "label": "Branch configuration overrides"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Infrastructure as a Database",
+      "root": "/docs/infrastructure-as-a-database",
+      "groups": [
+        {
+          "title": "Introduction",
+          "items": [
+            {
+              "page": "/docs/infrastructure-as-a-database",
+              "label": "Overview"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/setup",
+              "label": "Setup"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/orchestration",
+              "label": "Use with Orchestration"
+            }
+          ]
+        },
+        {
+          "title": "Changes",
+          "items": [
+            {
+              "page": "/docs/infrastructure-as-a-database/transactions",
+              "label": "Transactions"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/resource-locking",
+              "label": "Resource-level locking"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/multi-state",
+              "label": "Multi-state transactions"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/refactoring",
+              "label": "Refactoring"
+            }
+          ]
+        },
+        {
+          "title": "Query and insights",
+          "items": [
+            {
+              "page": "/docs/infrastructure-as-a-database/query",
+              "label": "Overview"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/query/query",
+              "label": "SQL queries"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/query/instances",
+              "label": "Instances"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/query/modules",
+              "label": "Modules"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/query/resource-types",
+              "label": "Resource types"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/query/gap-analysis",
+              "label": "Gap analysis"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/query/dashboards",
+              "label": "Dashboards"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/query/dashboard-metrics",
+              "label": "Dashboard metrics"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/query/timeline",
+              "label": "Timeline"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/query/search",
+              "label": "Search"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/query/blast-radius",
+              "label": "Blast radius"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/query/graph-explorer",
+              "label": "Graph explorer"
+            }
+          ]
+        },
+        {
+          "title": "Cost",
+          "items": [
+            {
+              "page": "/docs/infrastructure-as-a-database/cost",
+              "label": "Overview"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/cost/plan-time",
+              "label": "Plan-time cost"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/cost/state-cost",
+              "label": "State and resource cost"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/cost/attribution",
+              "label": "Cost attribution"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/cost/billing-sources",
+              "label": "Cloud billing"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/cost/queries",
+              "label": "Querying cost data"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/cost/console",
+              "label": "Cost in the console"
+            }
+          ]
+        },
+        {
+          "title": "Security",
+          "items": [
+            {
+              "page": "/docs/infrastructure-as-a-database/security",
+              "label": "Security scanning"
+            }
+          ]
+        },
+        {
+          "title": "CI and orchestrators",
+          "items": [
+            {
+              "page": "/docs/infrastructure-as-a-database/ci",
+              "label": "Overview"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/ci/github-actions",
+              "label": "GitHub Actions"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/ci/gitlab-ci",
+              "label": "GitLab CI"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/ci/atlantis",
+              "label": "Atlantis"
+            },
+            {
+              "page": "/docs/infrastructure-as-a-database/ci/spacelift",
+              "label": "Spacelift"
+            }
+          ]
+        },
+        {
+          "title": "AI agents",
+          "items": [
+            {
+              "page": "/docs/infrastructure-as-a-database/ai-agents",
+              "label": "AI agents"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Administration",
+      "root": "/docs/admin",
+      "groups": [
+        {
+          "title": "Self-hosting",
+          "items": [
+            {
+              "page": "/docs/admin/self-hosting",
+              "label": "Overview"
+            },
+            {
+              "page": "/docs/admin/self-hosting/docker-compose",
+              "label": "Docker Compose"
+            },
+            {
+              "page": "/docs/admin/self-hosting/kubernetes",
+              "label": "Kubernetes"
+            },
+            {
+              "page": "/docs/admin/self-hosting/ecs",
+              "label": "Amazon ECS"
+            },
+            {
+              "page": "/docs/admin/self-hosting/cloud-run",
+              "label": "Google Cloud Run"
+            },
+            {
+              "page": "/docs/admin/self-hosting/orchestration",
+              "label": "Enable Orchestration"
+            },
+            {
+              "page": "/docs/admin/self-hosting/cost",
+              "label": "Enable cost estimation"
+            },
+            {
+              "page": "/docs/admin/self-hosting/security-scanning",
+              "label": "Enable security scanning"
+            },
+            {
+              "label": "Open Source",
+              "items": [
+                {
+                  "page": "/docs/admin/self-hosting/open-source",
+                  "label": "Overview"
+                },
+                {
+                  "page": "/docs/admin/self-hosting/open-source/kubernetes",
+                  "label": "Kubernetes"
+                },
+                {
+                  "page": "/docs/admin/self-hosting/open-source/ecs",
+                  "label": "Amazon ECS"
+                },
+                {
+                  "page": "/docs/admin/self-hosting/open-source/environment-variables",
+                  "label": "Environment variables"
+                },
+                {
+                  "page": "/docs/admin/self-hosting/open-source/observability",
+                  "label": "Observability and metrics"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Operations",
+          "items": [
+            {
+              "page": "/docs/admin/operations/environment-variables",
+              "label": "Environment variables"
+            },
+            {
+              "page": "/docs/admin/operations/upgrades",
+              "label": "Upgrades"
+            },
+            {
+              "page": "/docs/admin/operations/health-checks",
+              "label": "Health checks"
+            },
+            {
+              "page": "/docs/admin/operations/observability",
+              "label": "Observability"
+            }
+          ]
+        },
+        {
+          "title": "Access control",
+          "items": [
+            {
+              "page": "/docs/admin/access-control",
+              "label": "Authentication"
+            },
+            {
+              "page": "/docs/admin/access-control/local-authentication",
+              "label": "Local authentication"
+            },
+            {
+              "page": "/docs/admin/access-control/google-oauth",
+              "label": "Google OAuth"
+            },
+            {
+              "page": "/docs/admin/access-control/oidc",
+              "label": "OIDC"
+            },
+            {
+              "page": "/docs/admin/access-control/tenants",
+              "label": "Tenants and administration"
+            },
+            {
+              "page": "/docs/admin/access-control/access-tokens",
+              "label": "Access tokens and capabilities"
+            },
+            {
+              "page": "/docs/admin/access-control/group-rules",
+              "label": "Group rules"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "CLI",
+      "root": "/docs/cli",
+      "groups": [
+        {
+          "title": "Get started",
+          "items": [
+            {
+              "page": "/docs/cli",
+              "label": "Install and configure"
+            },
+            {
+              "page": "/docs/cli/config",
+              "label": "Client configuration"
+            },
+            {
+              "page": "/docs/cli/utilities",
+              "label": "info and version"
+            },
+            {
+              "page": "/docs/cli/diagnostics",
+              "label": "diagnostics"
+            }
+          ]
+        },
+        {
+          "title": "Commands",
+          "items": [
+            {
+              "page": "/docs/cli/tf",
+              "label": "tf"
+            },
+            {
+              "page": "/docs/cli/import",
+              "label": "import"
+            },
+            {
+              "page": "/docs/cli/states",
+              "label": "states"
+            },
+            {
+              "page": "/docs/cli/transactions",
+              "label": "tx"
+            },
+            {
+              "page": "/docs/cli/sql",
+              "label": "sql"
+            },
+            {
+              "page": "/docs/cli/refactor",
+              "label": "refactor"
+            },
+            {
+              "page": "/docs/cli/hcl",
+              "label": "hcl"
+            },
+            {
+              "page": "/docs/cli/cost",
+              "label": "cost"
+            },
+            {
+              "page": "/docs/cli/security",
+              "label": "security"
+            },
+            {
+              "page": "/docs/cli/tenant",
+              "label": "tenant"
+            },
+            {
+              "page": "/docs/cli/user",
+              "label": "user"
+            },
+            {
+              "page": "/docs/cli/capabilities",
+              "label": "capabilities"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Reference",
+      "root": "/docs/reference",
+      "groups": [
+        {
+          "title": "General",
+          "items": [
+            {
+              "page": "/docs/reference",
+              "label": "Overview"
+            },
+            {
+              "page": "/docs/reference/troubleshooting",
+              "label": "Troubleshooting"
+            },
+            {
+              "page": "/docs/reference/releases",
+              "label": "Releases and downloads"
+            },
+            {
+              "page": "/docs/reference/terraform-compatibility",
+              "label": "Terraform compatibility"
+            }
+          ]
+        },
+        {
+          "title": "API",
+          "items": [
+            {
+              "page": "/docs/reference/api",
+              "label": "Overview"
+            },
+            {
+              "page": "/docs/reference/api/users",
+              "label": "Users and sign-in"
+            },
+            {
+              "page": "/docs/reference/api/user-management",
+              "label": "User management"
+            },
+            {
+              "page": "/docs/reference/api/tenants",
+              "label": "Tenants and members"
+            },
+            {
+              "page": "/docs/reference/api/access-tokens",
+              "label": "API keys and access tokens"
+            },
+            {
+              "page": "/docs/reference/api/states",
+              "label": "States"
+            },
+            {
+              "page": "/docs/reference/api/transactions",
+              "label": "Transactions and tasks"
+            },
+            {
+              "page": "/docs/reference/api/queries",
+              "label": "Queries and gap analysis"
+            },
+            {
+              "page": "/docs/reference/api/cost",
+              "label": "Cost and billing"
+            },
+            {
+              "page": "/docs/reference/api/security",
+              "label": "Security"
+            },
+            {
+              "page": "/docs/reference/api/vcs-installations",
+              "label": "VCS installations"
+            },
+            {
+              "page": "/docs/reference/api/stacks",
+              "label": "Stacks"
+            },
+            {
+              "page": "/docs/reference/api/kv-store",
+              "label": "Key-value store"
+            },
+            {
+              "page": "/docs/reference/api/server",
+              "label": "Server"
+            }
+          ]
+        },
+        {
+          "title": "Infrastructure as a Database",
+          "items": [
+            {
+              "page": "/docs/reference/sql-syntax",
+              "label": "SQL syntax"
+            }
+          ]
+        },
+        {
+          "title": "Orchestration",
+          "items": [
+            {
+              "label": "Configuration keys",
+              "items": [
+                {
+                  "page": "/docs/reference/orchestration/configuration/access-control",
+                  "label": "access_control"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/apply-requirements",
+                  "label": "apply_requirements"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/automerge",
+                  "label": "automerge"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/batch-runs",
+                  "label": "batch_runs"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/config-builder",
+                  "label": "config_builder"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/cost-estimation",
+                  "label": "cost_estimation"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/default-branch-overrides",
+                  "label": "default_branch_overrides"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/definitions",
+                  "label": "definitions"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/destination-branches",
+                  "label": "destination_branches"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/dirs",
+                  "label": "dirs"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/drift",
+                  "label": "drift"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/enabled",
+                  "label": "enabled"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/engine",
+                  "label": "engine"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/hooks",
+                  "label": "hooks"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/indexer",
+                  "label": "indexer"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/lock-policy",
+                  "label": "lock_policy"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/notifications",
+                  "label": "notifications"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/parallel-runs",
+                  "label": "parallel_runs"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/stacks",
+                  "label": "stacks"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/storage",
+                  "label": "storage"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/tags",
+                  "label": "tags"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/tree-builder",
+                  "label": "tree_builder"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/version",
+                  "label": "version"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/when-modified",
+                  "label": "when_modified"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/workflows",
+                  "label": "workflows"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/tag-queries",
+                  "label": "Tag query syntax"
+                },
+                {
+                  "page": "/docs/reference/orchestration/configuration/ignore-patterns",
+                  "label": "Ignoring a directory"
+                }
+              ]
+            },
+            {
+              "label": "Pull request commands",
+              "items": [
+                {
+                  "page": "/docs/reference/orchestration/commands/help",
+                  "label": "stategraph help"
+                },
+                {
+                  "page": "/docs/reference/orchestration/commands/plan",
+                  "label": "stategraph plan"
+                },
+                {
+                  "page": "/docs/reference/orchestration/commands/apply",
+                  "label": "stategraph apply"
+                },
+                {
+                  "page": "/docs/reference/orchestration/commands/apply-autoapprove",
+                  "label": "stategraph apply-autoapprove"
+                },
+                {
+                  "page": "/docs/reference/orchestration/commands/apply-force",
+                  "label": "stategraph apply-force"
+                },
+                {
+                  "page": "/docs/reference/orchestration/commands/unlock",
+                  "label": "stategraph unlock"
+                },
+                {
+                  "page": "/docs/reference/orchestration/commands/gate-approve",
+                  "label": "stategraph gate approve"
+                },
+                {
+                  "page": "/docs/reference/orchestration/commands/repo-config",
+                  "label": "stategraph repo-config"
+                },
+                {
+                  "page": "/docs/reference/orchestration/commands/feedback",
+                  "label": "stategraph feedback"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

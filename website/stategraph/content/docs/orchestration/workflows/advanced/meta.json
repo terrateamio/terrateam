@@ -1,0 +1,5 @@
+{
+  "title": "Advanced patterns",
+  "order": 1,
+  "description": "Patterns for Stategraph Orchestration: environments, stacks, layered runs, tags, locks, engines, custom steps, runners, and generated configuration."
+}
