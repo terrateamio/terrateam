@@ -714,7 +714,7 @@ let test_notifications_orthogonal_settings =
            mode = N.Summary.Mode.Pull_request;
            output_details = { N.Summary.Output_details.enabled = true };
          };
-       plan = { N.Plan.visible_on = N.Visible_on.Never; _ };
+       plan = { N.Plan.visible_on = N.Plan_visible_on.Never; _ };
        apply = { N.Apply.visible_on = N.Visible_on.Failure; _ };
       } -> ()
       | n -> failwith ("unexpected notifications: " ^ N.show n))
@@ -742,7 +742,7 @@ let test_notifications_orthogonal_settings_without_summary =
       | {
        N.policies = _;
        summary = _;
-       plan = { N.Plan.visible_on = N.Visible_on.Never; _ };
+       plan = { N.Plan.visible_on = N.Plan_visible_on.Never; _ };
        apply = { N.Apply.visible_on = N.Visible_on.Success; _ };
       } -> ()
       | n -> failwith ("unexpected notifications: " ^ N.show n))
@@ -765,7 +765,7 @@ let test_notifications_orthogonal_defaults =
            mode = _;
            output_details = { N.Summary.Output_details.enabled = false };
          };
-       plan = { N.Plan.visible_on = N.Visible_on.Always; _ };
+       plan = { N.Plan.visible_on = N.Plan_visible_on.Always; _ };
        apply = { N.Apply.visible_on = N.Visible_on.Always; _ };
       } -> ()
       | n -> failwith ("unexpected notifications: " ^ N.show n))
@@ -811,6 +811,40 @@ let test_notifications_orthogonal_round_trip =
               } -> ()
           | _ -> failwith "Round-trip to Version_1 did not produce the notifications settings")
       | Error err -> failwith ("of_version_1_json failed: " ^ V1.show_of_version_1_json_err err))
+
+let test_notifications_plan_change_or_failure =
+  Oth.test ~name:"of_version_1_json: plan visible_on change_or_failure round-trips" (fun _ ->
+      let module N = V1.Notifications in
+      let module Nn = Repo.Notifications in
+      let json =
+        `Assoc
+          [
+            ( "notifications",
+              `Assoc [ ("plan", `Assoc [ ("visible_on", `String "change_or_failure") ]) ] );
+          ]
+      in
+      let cfg =
+        Oth.Assert.ok_show ~show:V1.show_of_version_1_json_err (V1.of_version_1_json json)
+      in
+      (match V1.notifications cfg with
+      | { N.plan = { N.Plan.visible_on = N.Plan_visible_on.Change_or_failure; _ }; _ } -> ()
+      | n -> failwith ("unexpected notifications: " ^ N.show n));
+      match (V1.to_version_1 cfg).Repo.Version_1.notifications with
+      | Some { Nn.plan = Some { Nn.Plan.visible_on = Some `Change_or_failure; _ }; _ } -> ()
+      | _ -> failwith "Round-trip to Version_1 did not keep change_or_failure")
+
+let test_notifications_apply_change_or_failure_rejected =
+  Oth.test ~name:"of_version_1_json: apply visible_on rejects change_or_failure" (fun _ ->
+      let json =
+        `Assoc
+          [
+            ( "notifications",
+              `Assoc [ ("apply", `Assoc [ ("visible_on", `String "change_or_failure") ]) ] );
+          ]
+      in
+      match V1.of_version_1_json json with
+      | Error _ -> ()
+      | Ok _ -> failwith "apply visible_on accepted change_or_failure")
 
 (* The per-dirspace commit checks: on unless the configuration turns them off, which is what a
    repository got before the setting existed.  [dirspace_status_checks_enabled] is what every
@@ -911,6 +945,7 @@ let test_notifications_classic_comment_visible =
       let module N = V1.Notifications in
       let module Sum = N.Summary in
       let module Vo = N.Visible_on in
+      let module Pv = N.Plan_visible_on in
       let t ~enabled ~mode ~plan_vo ~apply_vo =
         N.make
           ~summary:(Sum.make ~enabled:(Some enabled) ~mode ())
@@ -919,34 +954,42 @@ let test_notifications_classic_comment_visible =
           ()
       in
       let pr = Sum.Mode.Pull_request and hd = Sum.Mode.Header in
-      (* (enabled, mode, plan_vo, apply_vo, run, success, gates, expected) *)
+      (* (enabled, mode, plan_vo, apply_vo, run, success, has_changes, gates, expected) *)
       let cases =
         [
-          (true, pr, Vo.Never, Vo.Never, `Plan, true, false, false);
-          (true, pr, Vo.Never, Vo.Never, `Apply, true, false, false);
-          (true, pr, Vo.Always, Vo.Always, `Plan, false, false, true);
-          (true, pr, Vo.Success, Vo.Never, `Plan, true, false, true);
-          (true, pr, Vo.Success, Vo.Never, `Plan, false, false, false);
-          (true, pr, Vo.Failure, Vo.Never, `Plan, false, false, true);
-          (true, pr, Vo.Failure, Vo.Never, `Plan, true, false, false);
+          (true, pr, Pv.Never, Vo.Never, `Plan, true, true, false, false);
+          (true, pr, Pv.Never, Vo.Never, `Apply, true, true, false, false);
+          (true, pr, Pv.Always, Vo.Always, `Plan, false, true, false, true);
+          (true, pr, Pv.Always, Vo.Always, `Plan, true, false, false, true);
+          (true, pr, Pv.Success, Vo.Never, `Plan, true, true, false, true);
+          (true, pr, Pv.Success, Vo.Never, `Plan, false, true, false, false);
+          (true, pr, Pv.Failure, Vo.Never, `Plan, false, true, false, true);
+          (true, pr, Pv.Failure, Vo.Never, `Plan, true, true, false, false);
+          (* change_or_failure: a successful plan posts only when it has changes *)
+          (true, pr, Pv.Change_or_failure, Vo.Never, `Plan, true, true, false, true);
+          (true, pr, Pv.Change_or_failure, Vo.Never, `Plan, true, false, false, false);
+          (true, pr, Pv.Change_or_failure, Vo.Never, `Plan, false, false, false, true);
+          (true, pr, Pv.Change_or_failure, Vo.Never, `Plan, false, true, false, true);
+          (true, pr, Pv.Change_or_failure, Vo.Never, `Plan, true, false, true, true);
           (* visible_on is per run kind *)
-          (true, pr, Vo.Never, Vo.Always, `Apply, true, false, true);
+          (true, pr, Pv.Never, Vo.Always, `Apply, true, true, false, true);
+          (true, pr, Pv.Change_or_failure, Vo.Always, `Apply, true, false, false, true);
           (* forced posts: gates and access-control denials *)
-          (true, pr, Vo.Never, Vo.Never, `Plan, true, true, true);
+          (true, pr, Pv.Never, Vo.Never, `Plan, true, true, true, true);
           (* header mode does not force the comment: the header goes with it *)
-          (true, hd, Vo.Never, Vo.Never, `Plan, true, false, false);
-          (true, hd, Vo.Always, Vo.Always, `Plan, true, false, true);
+          (true, hd, Pv.Never, Vo.Never, `Plan, true, true, false, false);
+          (true, hd, Pv.Always, Vo.Always, `Plan, true, true, false, true);
           (* summary disabled: the setting still decides *)
-          (false, pr, Vo.Never, Vo.Never, `Plan, true, false, false);
-          (false, pr, Vo.Always, Vo.Always, `Plan, true, false, true);
+          (false, pr, Pv.Never, Vo.Never, `Plan, true, true, false, false);
+          (false, pr, Pv.Always, Vo.Always, `Plan, true, true, false, true);
         ]
       in
       CCList.iter
-        (fun (enabled, mode, plan_vo, apply_vo, run, success, gates, expected) ->
+        (fun (enabled, mode, plan_vo, apply_vo, run, success, has_changes, gates, expected) ->
           let t = t ~enabled ~mode ~plan_vo ~apply_vo in
-          let actual = N.classic_comment_visible t ~run ~success ~gates_or_denials:gates in
-          (* The message names the row: a bare equality assertion on a table of thirteen says
-             which value was wrong and not which case produced it. *)
+          let actual =
+            N.classic_comment_visible t ~run ~success ~has_changes ~gates_or_denials:gates
+          in
           Oth.Assert.true_ (actual = expected))
         cases)
 
@@ -1431,6 +1474,8 @@ let test =
       test_notifications_orthogonal_settings_without_summary;
       test_notifications_orthogonal_defaults;
       test_notifications_orthogonal_round_trip;
+      test_notifications_plan_change_or_failure;
+      test_notifications_apply_change_or_failure_rejected;
       test_notifications_status_checks_defaults;
       test_notifications_status_checks_configured;
       test_notifications_status_checks_round_trip;

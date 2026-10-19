@@ -19,7 +19,7 @@ module Plan = struct
 
   type t = {
     status_checks : Status_checks.t option; [@default None]
-    visible_on : Terrat_repo_config_summary_visible_on.t option; [@default None]
+    visible_on : Terrat_repo_config_plan_visible_on.t option; [@default None]
   }
   [@@deriving yojson { strict = true; meta = true }, make, show, eq]
 end

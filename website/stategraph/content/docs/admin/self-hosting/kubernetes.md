@@ -5,20 +5,19 @@ order: 3
 ---
 
 
-The Stategraph Helm chart deploys [Stategraph](/docs/admin/self-hosting) on Kubernetes, with an ingress, health probes, and a bundled or external PostgreSQL.
+The [Stategraph Helm chart](https://github.com/stategraph/helm-charts) deploys [Stategraph](/docs/admin/self-hosting) on Kubernetes, with an ingress, health probes, and a bundled or external PostgreSQL.
 
 ## Before you begin
 
 - Kubernetes 1.19 or later, Helm 3, and `kubectl` configured for your cluster.
 - An ingress controller, for external access.
-- The Helm chart repository URL, available on request with onboarding support: [contact Stategraph](https://stategraph.com/contact).
 
 ## Quick start
 
 Install the chart in its own namespace:
 
 ```bash
-helm repo add stategraph <stategraph-helm-repo>
+helm repo add stategraph https://stategraph.github.io/helm-charts
 helm repo update
 helm install stategraph stategraph/stategraph \
   --namespace stategraph \

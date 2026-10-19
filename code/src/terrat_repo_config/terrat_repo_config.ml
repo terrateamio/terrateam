@@ -71,6 +71,7 @@ module Notification_policy = Terrat_repo_config_notification_policy
 module Notifications = Terrat_repo_config_notifications
 module Notifications_summary = Terrat_repo_config_notifications_summary
 module Permission = Terrat_repo_config_permission
+module Plan_visible_on = Terrat_repo_config_plan_visible_on
 module Precheck = Terrat_repo_config_precheck
 module Precheck_config_file_patterns = Terrat_repo_config_precheck_config_file_patterns
 module Precheck_config_file_patterns_value = Terrat_repo_config_precheck_config_file_patterns_value
