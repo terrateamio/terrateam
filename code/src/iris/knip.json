@@ -2,7 +2,8 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "entry": [
     "src/main.js",
-    "src/App.svelte"
+    "src/App.svelte",
+    "src/**/*.test.ts"
   ],
   "project": [
     "src/**/*.{js,ts,svelte}"
